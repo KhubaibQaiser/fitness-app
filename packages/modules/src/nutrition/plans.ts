@@ -292,16 +292,17 @@ export const listPlans = async (db: Db, clientId: string) =>
 export const getPlanWithItems = async (db: Db, planId: string) => {
   const [plan] = await db.select().from(s.mealPlans).where(eq(s.mealPlans.id, planId)).limit(1);
   if (!plan) return null;
-  const items = await db
-    .select()
+  const rows = await db
+    .select({ item: s.mealPlanItems, foodName: s.foods.name })
     .from(s.mealPlanItems)
+    .innerJoin(s.foods, eq(s.foods.id, s.mealPlanItems.foodId))
     .where(eq(s.mealPlanItems.planId, planId))
     .orderBy(
       asc(s.mealPlanItems.day),
       asc(s.mealPlanItems.mealIndex),
       asc(s.mealPlanItems.position),
     );
-  return { plan, items };
+  return { plan, items: rows.map(({ item, foodName }) => ({ ...item, foodName })) };
 };
 
 export type PlanOp =

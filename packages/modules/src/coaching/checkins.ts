@@ -6,7 +6,7 @@ import {
   type AdjustmentRecommendation,
   type WeighIn,
 } from '@gymos/core/nutrition';
-import { isoDate, nowIso, schema as s, type Db } from '@gymos/db';
+import { dbTimestampToMillis, isoDate, nowIso, schema as s, type Db } from '@gymos/db';
 import { hasMedicalFlags } from '@gymos/db/schema';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
@@ -70,9 +70,7 @@ export const completeCheckIn = async (
     .orderBy(s.vitals.recordedAt);
 
   const weighIns: WeighIn[] = history.flatMap((v) =>
-    v.weightKg === null
-      ? []
-      : [{ t: DateTime.fromISO(v.recordedAt).toMillis(), weightKg: v.weightKg }],
+    v.weightKg === null ? [] : [{ t: dbTimestampToMillis(v.recordedAt), weightKg: v.weightKg }],
   );
   const baselineRestingHr = history.find((v) => v.restingHr !== null)?.restingHr ?? undefined;
 

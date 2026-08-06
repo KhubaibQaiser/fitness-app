@@ -1,5 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
-import { nowIso, schema as s, type Db } from '@gymos/db';
+import { nowIso, schema as s, toStrictIso, type Db } from '@gymos/db';
 
 export type RecordVitalsInput = {
   recordedAt?: string | undefined;
@@ -17,13 +17,16 @@ export type RecordVitalsInput = {
   notes?: string | undefined;
 };
 
-export const listVitals = async (db: Db, clientId: string, limit = 200) =>
-  db
+export const listVitals = async (db: Db, clientId: string, limit = 200) => {
+  const rows = await db
     .select()
     .from(s.vitals)
     .where(eq(s.vitals.clientId, clientId))
     .orderBy(desc(s.vitals.recordedAt))
     .limit(limit);
+  // Drivers emit SQL-format timestamps; clients get strict ISO, always.
+  return rows.map((row) => ({ ...row, recordedAt: toStrictIso(row.recordedAt) }));
+};
 
 export const recordVitals = async (
   db: Db,

@@ -250,7 +250,7 @@ const PlanEditor = ({
               <Card key={item.id} gap="$1.5">
                 <Row>
                   <YStack flex={1}>
-                    <Body fontWeight="600">{item.mealName.split(' — ')[0]}</Body>
+                    <Body fontWeight="600">{item.foodName}</Body>
                     <Muted>
                       {item.portionGrams} g · {item.macros.kcal} kcal · P {item.macros.proteinG}g
                     </Muted>

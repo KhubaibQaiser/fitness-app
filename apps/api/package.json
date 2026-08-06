@@ -8,7 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "openapi:generate": "tsx src/cli/generate-openapi.ts"
+    "openapi:generate": "tsx src/cli/generate-openapi.ts",
+    "dev:pglite": "tsx src/dev-pglite.ts"
   },
   "dependencies": {
     "@gymos/ai": "workspace:^",

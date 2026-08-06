@@ -26,7 +26,7 @@ const nextConfig = {
     const api = process.env.API_ORIGIN ?? 'http://localhost:8080';
     return [
       { source: '/v1/:path*', destination: `${api}/v1/:path*` },
-      { source: '/enter', destination: `${api}/enter` },
+      { source: '/gate/:path*', destination: `${api}/gate/:path*` },
       { source: '/health/:path*', destination: `${api}/health/:path*` },
     ];
   },

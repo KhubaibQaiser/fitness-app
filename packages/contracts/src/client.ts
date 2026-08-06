@@ -54,7 +54,7 @@ const request = async <TResponse>(
 };
 
 export const api = {
-  enter: (key: string) => request<{ ok: boolean }>('POST', '/enter', { key }),
+  enter: (key: string) => request<{ ok: boolean }>('POST', '/gate/enter', { key }),
   publicConfig: () => request<T.PublicConfig>('GET', '/v1/config/public'),
   me: () => request<T.Me>('GET', '/v1/me'),
 
