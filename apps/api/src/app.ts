@@ -901,6 +901,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const result = await generatePlan(db, c.get('principal'), manifest, clientId, {
         kind: 'INITIAL',
         ai: aiConfig,
+        mealCount: body.mealCount,
         ...(body.override !== undefined ? { override: body.override } : {}),
       });
       if (!result.ok) {

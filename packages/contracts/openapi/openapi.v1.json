@@ -1570,6 +1570,11 @@
                       }
                     },
                     "required": ["reason"]
+                  },
+                  "mealCount": {
+                    "type": "integer",
+                    "enum": [3, 4, 5],
+                    "default": 3
                   }
                 }
               }

@@ -58,6 +58,7 @@ export const seed = async (db: Db): Promise<SeedResult> => {
         foodGroup: food.foodGroup,
         cuisineTags: food.cuisineTags,
         allergenTags: food.allergenTags,
+        allowedSlots: food.allowedSlots,
         dietaryFlags: food.dietaryFlags,
         per100g: food.per100g,
         costTier: food.costTier,

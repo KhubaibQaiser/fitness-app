@@ -27,7 +27,7 @@ export const tenantManifestSchema = z
     units: z.enum(['metric', 'imperial']),
     aiConfig: z.object({
       cuisineContext: z.string().default('pakistani'),
-      mealCount: z.union([z.literal(3), z.literal(4), z.literal(5)]).default(4),
+      mealCount: z.union([z.literal(3), z.literal(4), z.literal(5)]).default(3),
       kcalTolerancePct: z.number().min(1).max(10).default(5),
       macroTolerancePct: z.number().min(5).max(20).default(10),
       budgetTier: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),

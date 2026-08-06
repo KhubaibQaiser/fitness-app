@@ -148,7 +148,11 @@ export const useApplyAdjustment = (clientId: string) => {
 export const useGeneratePlan = (clientId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (override?: { reason: string }) => api.plans.generate(clientId, override),
+    mutationFn: (input?: { reason?: string; mealCount?: 3 | 4 | 5 }) =>
+      api.plans.generate(clientId, {
+        ...(input?.reason !== undefined ? { override: { reason: input.reason } } : {}),
+        ...(input?.mealCount !== undefined ? { mealCount: input.mealCount } : {}),
+      }),
     onSuccess: () => invalidateClient(queryClient, clientId),
   });
 };

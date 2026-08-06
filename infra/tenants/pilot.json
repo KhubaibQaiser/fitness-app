@@ -13,7 +13,7 @@
   "units": "metric",
   "aiConfig": {
     "cuisineContext": "pakistani",
-    "mealCount": 4,
+    "mealCount": 3,
     "kcalTolerancePct": 5,
     "macroTolerancePct": 10,
     "budgetTier": 2,
