@@ -5,7 +5,47 @@
     "version": "1.0.0"
   },
   "components": {
-    "schemas": {},
+    "schemas": {
+      "ClientIntake": {
+        "type": "object",
+        "properties": {
+          "signaturePngBase64": {
+            "type": "string",
+            "minLength": 40,
+            "maxLength": 2000000
+          },
+          "signedAt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "heightDisplayUnit": {
+            "type": "string",
+            "enum": ["cm", "ft_in"]
+          }
+        }
+      },
+      "SignedClientIntake": {
+        "type": "object",
+        "properties": {
+          "signaturePngBase64": {
+            "type": "string",
+            "minLength": 40,
+            "maxLength": 2000000
+          },
+          "signedAt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "heightDisplayUnit": {
+            "type": "string",
+            "enum": ["cm", "ft_in"]
+          }
+        },
+        "required": ["signaturePngBase64", "signedAt"]
+      }
+    },
     "parameters": {}
   },
   "paths": {
@@ -256,10 +296,7 @@
                     }
                   },
                   "intake": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
+                    "$ref": "#/components/schemas/ClientIntake"
                   }
                 },
                 "required": ["name", "sex"]
@@ -374,24 +411,7 @@
                         }
                       },
                       "intake": {
-                        "type": "object",
-                        "properties": {
-                          "signaturePngBase64": {
-                            "type": "string",
-                            "minLength": 40,
-                            "maxLength": 2000000
-                          },
-                          "signedAt": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "heightDisplayUnit": {
-                            "type": "string",
-                            "enum": ["cm", "ft_in"]
-                          }
-                        },
-                        "required": ["signaturePngBase64", "signedAt"]
+                        "$ref": "#/components/schemas/SignedClientIntake"
                       }
                     },
                     "required": ["name", "sex", "heightCm", "activityLevel", "intake"]
@@ -677,10 +697,7 @@
                     }
                   },
                   "intake": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
+                    "$ref": "#/components/schemas/ClientIntake"
                   },
                   "status": {
                     "type": "string",
