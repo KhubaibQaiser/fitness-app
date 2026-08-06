@@ -1,0 +1,27 @@
+{
+  "name": "@gymos/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Background jobs — same deployable unit as the API, different entrypoint (spec carve-out #2).",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gymos/core": "workspace:^",
+    "@gymos/db": "workspace:^",
+    "@gymos/modules": "workspace:^",
+    "drizzle-orm": "^0.45.2",
+    "luxon": "^3.7.2",
+    "pg-boss": "^12.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^24.10.4",
+    "tsx": "^4.21.1",
+    "vitest": "^3.2.7"
+  }
+}

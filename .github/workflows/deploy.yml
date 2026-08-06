@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build-images:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: meta
+        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/khubaibqaiser/gymos-api:${{ steps.meta.outputs.tag }}
+            ghcr.io/khubaibqaiser/gymos-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build & push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/khubaibqaiser/gymos-web:${{ steps.meta.outputs.tag }}
+            ghcr.io/khubaibqaiser/gymos-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to pilot VM
+    needs: build-images
+    runs-on: ubuntu-latest
+    environment: production
+    # Deploy only when the VM is provisioned (secrets present).
+    if: ${{ vars.PILOT_DEPLOY_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run migrations against Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile --filter @gymos/db...
+          pnpm --filter @gymos/db db:migrate
+      - name: Ship compose + Caddy config
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ubuntu
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: 'infra/vm/compose.prod.yml,infra/vm/Caddyfile,infra/vm/caddy.Dockerfile,infra/vm/deploy.sh'
+          target: /srv/gymos
+          strip_components: 2
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ubuntu
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            chmod +x /srv/gymos/deploy.sh
+            /srv/gymos/deploy.sh ${{ needs.build-images.outputs.tag }} || /srv/gymos/deploy.sh --rollback

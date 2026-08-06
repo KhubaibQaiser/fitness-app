@@ -1,0 +1,30 @@
+# GymOS pilot edge — same-origin routing (ADR-0004):
+#   /v1/*, /enter, /health/* → api · everything else → web.
+# TLS via Let's Encrypt DNS-01 through DuckDNS (no port-80 coupling).
+# PILOT_HOSTNAME e.g. gymos-pilot.duckdns.org; DUCKDNS_TOKEN from env.
+
+{$PILOT_HOSTNAME} {
+	tls {
+		dns duckdns {$DUCKDNS_TOKEN}
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	@api path /v1/* /enter /health/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
