@@ -151,9 +151,13 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait a minute');
     if (!success)
       return problemResponse(c, 401, 'INVALID_ACCESS_KEY', 'That access key is not valid');
+    // Secure only over HTTPS (prod Caddy sets x-forwarded-proto). Plain
+    // http://localhost must stay non-Secure or the browser drops the cookie.
+    const https =
+      c.req.header('x-forwarded-proto') === 'https' || new URL(c.req.url).protocol === 'https:';
     setCookie(c, GATE_COOKIE_NAME, issueGateCookie(env.GATE_COOKIE_SECRET), {
       httpOnly: true,
-      secure: true,
+      secure: https,
       sameSite: 'Strict',
       path: '/',
       maxAge: 30 * 24 * 60 * 60,

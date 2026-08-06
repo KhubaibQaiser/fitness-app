@@ -18,8 +18,12 @@ corepack enable         # pnpm (version pinned in package.json)
 pnpm install
 cp .env.example .env    # fill local placeholders — never commit .env
 docker compose up -d    # local Postgres, queue-db, MinIO
-pnpm dev
+pnpm db:migrate && pnpm db:seed
+pnpm dev                # web :3000, api :8080, worker (loads root .env)
 ```
+
+Open `http://localhost:3000/gate/enter?key=<PILOT_ACCESS_KEY>` (key from your `.env`).
+Production pilot: `https://gymos-pilot.duckdns.org`.
 
 ## Security policy (non-negotiable)
 
