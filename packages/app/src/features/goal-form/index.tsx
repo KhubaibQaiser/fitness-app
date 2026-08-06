@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { ApiError } from '@gymos/contracts';
 import {
@@ -84,7 +85,15 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
 
   return (
     <AppScreen>
-      <PageHeader title="Set goal" subtitle="Targets come from Mifflin-St Jeor with hard floors" />
+      <PageHeader
+        title="Set goal"
+        subtitle="Targets come from Mifflin–St Jeor with hard floors"
+        action={
+          <Link href="/settings/nutrition">
+            <GhostButton minHeight={44}>How it works</GhostButton>
+          </Link>
+        }
+      />
       <Card gap="$4">
         <YStack gap="$2">
           <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
