@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { type ClientIntake } from '@gymos/core';
 import { clientStatusEnum, coachTierEnum, roleEnum, sexEnum } from './enums';
 import { createdAt, deletedAt, id, tstz, updatedAt } from './helpers';
 
@@ -91,11 +92,8 @@ export const clients = pgTable(
       physicianClearanceRequired?: boolean | undefined;
     }>(),
     status: clientStatusEnum('status').notNull().default('active'),
-    /**
-     * Intake meta (e-sign, display prefs). Keys are strings by design.
-     * Known: signaturePngBase64, signedAt, heightDisplayUnit.
-     */
-    intake: jsonb('intake').$type<Record<string, string>>(),
+    /** Intake meta (e-sign + display prefs). Null until onboarding completes. */
+    intake: jsonb('intake').$type<ClientIntake>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     deletedAt: deletedAt(),

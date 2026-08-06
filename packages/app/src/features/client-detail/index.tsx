@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Link } from 'solito/link';
+import { type ClientIntake } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
 import {
   AccentButton,
@@ -33,7 +34,7 @@ import {
 } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 
-const hasSignedIntake = (intake: Record<string, string> | null): boolean =>
+const hasSignedIntake = (intake: ClientIntake | null): boolean =>
   typeof intake?.signedAt === 'string' &&
   intake.signedAt.length > 0 &&
   typeof intake.signaturePngBase64 === 'string' &&

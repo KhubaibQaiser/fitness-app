@@ -1,9 +1,11 @@
 import { and, desc, eq, ilike, sql } from 'drizzle-orm';
-import { ok, type Result } from '@gymos/core';
+import { ok, type ClientIntake, type Result, type SignedClientIntake } from '@gymos/core';
 import { nowIso, schema as s, type Db } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
 import { createGoalTx, type CreateGoalInput, type GoalError } from './goals';
 import { recordVitals, type RecordVitalsInput } from './vitals';
+
+export type { ClientIntake, SignedClientIntake };
 
 export type ClientListItem = {
   id: string;
@@ -63,7 +65,7 @@ export type CreateClientInput = {
   heightCm?: number | undefined;
   activityLevel?: number | undefined;
   medicalFlags?: MedicalFlags | undefined;
-  intake?: Record<string, string> | undefined;
+  intake?: ClientIntake | undefined;
 };
 
 export const createClient = async (
@@ -121,11 +123,7 @@ export type OnboardClientInput = {
   client: CreateClientInput & {
     heightCm: number;
     activityLevel: number;
-    intake: {
-      signaturePngBase64: string;
-      signedAt: string;
-      heightDisplayUnit?: string | undefined;
-    };
+    intake: SignedClientIntake;
   };
   vitals: OnboardVitalsInput;
   goal: CreateGoalInput;
@@ -154,7 +152,7 @@ export const onboardClient = async (
 ): Promise<Result<OnboardClientResult, OnboardError>> => {
   try {
     return await db.transaction(async (tx) => {
-      const intake: Record<string, string> = {
+      const intake: ClientIntake = {
         signaturePngBase64: input.client.intake.signaturePngBase64,
         signedAt: input.client.intake.signedAt,
         ...(input.client.intake.heightDisplayUnit !== undefined
@@ -239,7 +237,7 @@ export type UpdateClientInput = {
   heightCm?: number | undefined;
   activityLevel?: number | undefined;
   medicalFlags?: MedicalFlags | undefined;
-  intake?: Record<string, string> | undefined;
+  intake?: ClientIntake | undefined;
   status?: 'active' | 'archived' | undefined;
 };
 

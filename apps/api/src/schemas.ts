@@ -13,6 +13,18 @@ export const macroTargetsSchema = z.object({
   fiberG: z.number(),
 });
 
+const clientIntakeObject = z.object({
+  signaturePngBase64: z.string().min(40).max(2_000_000),
+  signedAt: z.string().min(1).max(64),
+  heightDisplayUnit: z.enum(['cm', 'ft_in']).optional(),
+});
+
+/** Required e-sign payload (onboarding). */
+export const signedClientIntakeSchema = clientIntakeObject.openapi('SignedClientIntake');
+
+/** Soft persisted shape — all fields optional. */
+export const clientIntakeSchema = clientIntakeObject.partial().openapi('ClientIntake');
+
 export const createClientBody = z.object({
   name: z.string().min(1).max(120),
   sex: z.enum(['F', 'M']),
@@ -30,7 +42,7 @@ export const createClientBody = z.object({
       physicianClearanceRequired: z.boolean().optional(),
     })
     .optional(),
-  intake: z.record(z.string(), z.string()).optional(),
+  intake: clientIntakeSchema.optional(),
 });
 
 export const updateClientBody = createClientBody.partial().extend({
@@ -61,11 +73,7 @@ export const onboardClientBody = z.object({
         physicianClearanceRequired: z.boolean().optional(),
       })
       .optional(),
-    intake: z.object({
-      signaturePngBase64: z.string().min(40).max(2_000_000),
-      signedAt: z.string().min(1).max(64),
-      heightDisplayUnit: z.enum(['cm', 'ft_in']).optional(),
-    }),
+    intake: signedClientIntakeSchema,
   }),
   vitals: z.object({
     weightKg: z.number().min(20).max(400),

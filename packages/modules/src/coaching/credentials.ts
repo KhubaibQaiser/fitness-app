@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { err, ok, type Result } from '@gymos/core';
+import { err, ok, type ClientIntake, type Result } from '@gymos/core';
 import { schema as s, type Db } from '@gymos/db';
 import { getActiveGoal } from './goals';
 import { latestWeightKg, listVitals } from './vitals';
@@ -42,7 +42,7 @@ export const getCredentialsPdfData = async (
 };
 
 /** Soft check used by the client hub (incomplete onboarding banner). */
-export const clientHasSignedIntake = (intake: Record<string, string> | null): boolean =>
+export const clientHasSignedIntake = (intake: ClientIntake | null): boolean =>
   typeof intake?.signedAt === 'string' &&
   intake.signedAt.length > 0 &&
   typeof intake.signaturePngBase64 === 'string' &&
