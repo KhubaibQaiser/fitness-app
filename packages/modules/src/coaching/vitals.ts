@@ -1,5 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
-import { nowIso, schema as s, toStrictIso, type Db } from '@gymos/db';
+import { nowIso, schema as s, toStrictIso, type Db, type DbOrTx } from '@gymos/db';
 
 export type RecordVitalsInput = {
   recordedAt?: string | undefined;
@@ -29,7 +29,7 @@ export const listVitals = async (db: Db, clientId: string, limit = 200) => {
 };
 
 export const recordVitals = async (
-  db: Db,
+  db: DbOrTx,
   principal: { userId: string; outletId: string },
   clientId: string,
   input: RecordVitalsInput,

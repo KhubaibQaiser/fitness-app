@@ -18,18 +18,73 @@ export const createClientBody = z.object({
   sex: z.enum(['F', 'M']),
   dob: z.iso.date().optional(),
   phone: z.string().max(32).optional(),
+  email: z.email().max(254).optional(),
   heightCm: z.number().min(100).max(230).optional(),
   activityLevel: z
     .union([z.literal(1.2), z.literal(1.375), z.literal(1.55), z.literal(1.725), z.literal(1.9)])
     .optional(),
   medicalFlags: z
-    .object({ pregnant: z.boolean().optional(), conditions: z.array(z.string()).optional() })
+    .object({
+      pregnant: z.boolean().optional(),
+      conditions: z.array(z.string()).optional(),
+      physicianClearanceRequired: z.boolean().optional(),
+    })
     .optional(),
   intake: z.record(z.string(), z.string()).optional(),
 });
 
 export const updateClientBody = createClientBody.partial().extend({
   status: z.enum(['active', 'archived']).optional(),
+});
+
+export const activityLevelSchema = z.union([
+  z.literal(1.2),
+  z.literal(1.375),
+  z.literal(1.55),
+  z.literal(1.725),
+  z.literal(1.9),
+]);
+
+export const onboardClientBody = z.object({
+  client: z.object({
+    name: z.string().min(1).max(120),
+    sex: z.enum(['F', 'M']),
+    dob: z.iso.date().optional(),
+    phone: z.string().max(32).optional(),
+    email: z.email().max(254).optional(),
+    heightCm: z.number().min(100).max(230),
+    activityLevel: activityLevelSchema,
+    medicalFlags: z
+      .object({
+        pregnant: z.boolean().optional(),
+        conditions: z.array(z.string()).optional(),
+        physicianClearanceRequired: z.boolean().optional(),
+      })
+      .optional(),
+    intake: z.object({
+      signaturePngBase64: z.string().min(40).max(2_000_000),
+      signedAt: z.string().min(1).max(64),
+      heightDisplayUnit: z.enum(['cm', 'ft_in']).optional(),
+    }),
+  }),
+  vitals: z.object({
+    weightKg: z.number().min(20).max(400),
+    bodyFatPct: z.number().min(2).max(70).optional(),
+    chestCm: z.number().min(30).max(220).optional(),
+    waistCm: z.number().min(30).max(220).optional(),
+    hipCm: z.number().min(30).max(220).optional(),
+    armCm: z.number().min(10).max(90).optional(),
+    thighCm: z.number().min(20).max(120).optional(),
+  }),
+  goal: z.object({
+    preset: z.enum(['LOSE', 'GAIN', 'MAINTAIN', 'RECOMP']),
+    rate: z.enum(['CONSERVATIVE', 'STANDARD', 'AGGRESSIVE']),
+    startWeightKg: z.number().min(20).max(400),
+    targetWeightKg: z.number().min(20).max(400).optional(),
+    targetDate: z.iso.date().optional(),
+    checkinWeekday: z.number().int().min(0).max(6).optional(),
+    bodyFatPct: z.number().min(2).max(70).optional(),
+  }),
 });
 
 export const recordVitalsBody = z.object({

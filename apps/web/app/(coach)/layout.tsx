@@ -1,13 +1,15 @@
 'use client';
 
 import { type ReactNode } from 'react';
+import { AppShell } from '@gymos/app/features/shell/app-shell';
 import { GateGuard } from '@gymos/app/features/shell/gate-guard';
-import { TabBar } from '@gymos/app/features/shell/tab-bar';
+import { AppErrorBoundary } from '@gymos/ui';
 
 const CoachLayout = ({ children }: { children: ReactNode }) => (
   <GateGuard>
-    {children}
-    <TabBar />
+    <AppErrorBoundary>
+      <AppShell>{children}</AppShell>
+    </AppErrorBoundary>
   </GateGuard>
 );
 

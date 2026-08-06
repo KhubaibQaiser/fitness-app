@@ -1,16 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { Body, Card, Input, Muted, PrimaryButton, Screen, Title, YStack } from '@gymos/ui';
+import {
+  AppErrorBoundary,
+  Card,
+  Dumbbell,
+  FormField,
+  Muted,
+  PrimaryButton,
+  Screen,
+  Title,
+  YStack,
+} from '@gymos/ui';
 
 /** Access-gate entry — one key, once per device. No accounts in the pilot. */
-export const EnterScreen = () => {
+export const EnterScreen = () => (
+  <AppErrorBoundary>
+    <EnterForm />
+  </AppErrorBoundary>
+);
+
+const EnterForm = () => {
   const router = useRouter();
   const [key, setKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
 
   const submit = async () => {
     if (key.trim().length < 8 || busy) return;
@@ -18,7 +35,9 @@ export const EnterScreen = () => {
     setError(null);
     try {
       await api.enter(key.trim());
-      router.replace('/');
+      startTransition(() => {
+        router.replace('/');
+      });
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
@@ -31,29 +50,44 @@ export const EnterScreen = () => {
   };
 
   return (
-    <Screen justifyContent="center" paddingBottom="$4">
-      <YStack gap="$4" maxWidth={420} width="100%" alignSelf="center">
-        <YStack gap="$1" alignItems="center">
-          <Title>GymOS Coach</Title>
-          <Muted>Enter your access key to open the app on this device</Muted>
+    <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
+      <YStack gap="$5" maxWidth={440} width="100%" alignSelf="center">
+        <YStack gap="$2" alignItems="center">
+          <YStack
+            width={64}
+            height={64}
+            borderRadius={18}
+            backgroundColor="$primary"
+            alignItems="center"
+            justifyContent="center"
+            marginBottom="$2"
+          >
+            <Dumbbell size={32} color="$primaryFg" />
+          </YStack>
+          <Title textAlign="center">GymOS Coach</Title>
+          <Muted textAlign="center">Enter your access key to open the app on this device</Muted>
         </YStack>
-        <Card gap="$3">
-          <Input
+        <Card gap="$4" padding="$5">
+          <FormField
+            label="Access key"
             value={key}
             onChangeText={setKey}
-            placeholder="Access key"
+            placeholder="Paste your key"
             autoCapitalize="none"
             autoCorrect={false}
             secureTextEntry
-            size="$5"
+            required
+            error={error}
             onSubmitEditing={() => void submit()}
-            aria-label="Access key"
           />
-          {error ? <Body color="$danger">{error}</Body> : null}
-          <PrimaryButton disabled={busy || key.trim().length < 8} onPress={() => void submit()}>
+          <PrimaryButton
+            disabled={busy || key.trim().length < 8}
+            onPress={() => void submit()}
+            width="100%"
+          >
             {busy ? 'Checking…' : 'Open the app'}
           </PrimaryButton>
-          <Muted fontSize={12}>
+          <Muted fontSize={12} textAlign="center">
             You only do this once per device. Ask the platform operator if you lost your key.
           </Muted>
         </Card>

@@ -8,9 +8,36 @@ a:visited {
 html,
 body {
   height: 100%;
-  background: #f7f8f7;
+  margin: 0;
+  background: #e8ece9;
+  color-scheme: light dark;
+}
+
+html[data-theme='dark'],
+html[data-theme='dark'] body {
+  background: #070b0a;
+}
+
+*:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+html[data-theme='dark'] *:focus-visible {
+  outline-color: #2dd4bf;
 }
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

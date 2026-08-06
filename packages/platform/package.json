@@ -1,0 +1,23 @@
+{
+  "name": "@gymos/platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./storage": "./src/storage.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gymos/ui": "workspace:^",
+    "react": "^19.2.8",
+    "react-native": "^0.86.2",
+    "tamagui": "^2.7.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^5.9.3"
+  }
+}

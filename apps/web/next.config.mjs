@@ -10,7 +10,10 @@ const nextConfig = {
   transpilePackages: [
     'react-native',
     'react-native-web',
+    'react-native-svg',
     'tamagui',
+    '@tamagui/lucide-icons-2',
+    '@gymos/platform',
     '@gymos/ui',
     '@gymos/app',
     '@gymos/contracts',
@@ -19,6 +22,7 @@ const nextConfig = {
   turbopack: {
     resolveAlias: {
       'react-native': 'react-native-web',
+      'react-native-svg': '@tamagui/react-native-svg',
     },
   },
   // Dev-only same-origin proxy to the API; production routing is Caddy's job.
