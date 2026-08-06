@@ -1,0 +1,95 @@
+# Production compose project for the Oracle Always Free VM.
+# Secrets come from /srv/gymos/.env (root-only, written at deploy from
+# GitHub Environments — never committed).
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: caddy.Dockerfile
+    restart: unless-stopped
+    ports:
+      - '443:443'
+      - '80:80'
+    environment:
+      PILOT_HOSTNAME: ${PILOT_HOSTNAME}
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+      - api
+
+  web:
+    image: ghcr.io/khubaibqaiser/gymos-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+  api:
+    image: ghcr.io/khubaibqaiser/gymos-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      PILOT_ACCESS_KEY: ${PILOT_ACCESS_KEY}
+      GATE_COOKIE_SECRET: ${GATE_COOKIE_SECRET}
+      TENANT_MANIFEST_PATH: /repo/infra/tenants/pilot.json
+      AI_MODE: ${AI_MODE:-fallback}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      PORT: '8080'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8080/health/live || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    image: ghcr.io/khubaibqaiser/gymos-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PROCESS: worker
+      DATABASE_URL: ${DATABASE_URL}
+      QUEUE_DATABASE_URL: postgres://gymos:${QUEUE_DB_PASSWORD}@queue-db:5432/gymos_queue
+      TENANT_TIMEZONE: Asia/Karachi
+    depends_on:
+      queue-db:
+        condition: service_healthy
+
+  # pg-boss state only — deliberately ephemeral (no tenant data, no backups;
+  # ADR-0008). Lives here so the Neon free tier is never kept awake by polling.
+  queue-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gymos
+      POSTGRES_PASSWORD: ${QUEUE_DB_PASSWORD}
+      POSTGRES_DB: gymos_queue
+    volumes:
+      - queue-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gymos']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # llm: enable when the GGUF is provisioned (AI_MODE=local).
+  # llm:
+  #   image: ghcr.io/ggml-org/llama.cpp:server
+  #   restart: unless-stopped
+  #   command: >-
+  #     -m /models/qwen3-4b-instruct-q4_k_m.gguf --host 0.0.0.0 --port 8081
+  #     --ctx-size 4096 --parallel 1 --threads 2
+  #   volumes:
+  #     - /srv/gymos/models:/models:ro
+  #   networks:
+  #     default:
+  #   # No outbound network access — see §14 of the build plan.
+
+volumes:
+  caddy-data:
+  caddy-config:
+  queue-data:
