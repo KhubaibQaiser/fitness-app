@@ -25,7 +25,12 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
-import { useClientDetail, useDownloadCredentialsPdf, useVitals } from '../../api';
+import {
+  useClientCheckIns,
+  useClientDetail,
+  useDownloadCredentialsPdf,
+  useVitals,
+} from '../../api';
 import { AppScreen } from '../shell/app-screen';
 
 const hasSignedIntake = (intake: Record<string, string> | null): boolean =>
@@ -52,6 +57,7 @@ const TABS = [
 export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   const detail = useClientDetail(clientId);
   const vitals = useVitals(clientId);
+  const checkIns = useClientCheckIns(clientId);
   const downloadPdf = useDownloadCredentialsPdf(clientId);
   const [tab, setTab] = useState<string>('overview');
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -71,8 +77,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
     );
   }
 
-  const { client, goal, latestWeightKg, goalProgressPct, dietaryProfile, plans, recentCheckIns } =
-    detail.data;
+  const { client, goal, latestWeightKg, goalProgressPct, dietaryProfile, plans } = detail.data;
 
   const signed = hasSignedIntake(client.intake);
   const weighIns = (vitals.data?.items ?? [])
@@ -168,7 +173,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
             <Card gap="$3">
               <Row>
                 <YStack flex={1} gap="$1">
-                  <Body fontWeight="800">Credentials</Body>
+                  <Body fontWeight="800">Client Profile</Body>
                   <Muted>
                     Signed {client.intake?.signedAt ? client.intake.signedAt.slice(0, 10) : '—'}
                   </Muted>
@@ -323,33 +328,45 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
 
       {tab === 'history' ? (
         <YStack gap="$3">
-          {recentCheckIns.length === 0 ? (
+          {checkIns.isPending ? (
+            <LoadingState />
+          ) : checkIns.isError ? (
+            <ErrorState message="Could not load check-ins." retry={() => void checkIns.refetch()} />
+          ) : checkIns.data.items.length === 0 ? (
             <Muted>No check-ins yet.</Muted>
           ) : (
-            recentCheckIns.slice(0, 8).map((checkIn) => (
-              <Card key={checkIn.id}>
-                <Row>
-                  <Body fontWeight="700">{checkIn.scheduledFor}</Body>
-                  <Badge
-                    tone={
-                      checkIn.status === 'DUE'
-                        ? 'warning'
-                        : checkIn.engineOutput?.type === 'REFER_REVIEW'
-                          ? 'danger'
-                          : 'neutral'
-                    }
-                    label={
-                      checkIn.status === 'COMPLETED'
-                        ? (checkIn.engineOutput?.type ?? 'DONE')
-                        : checkIn.status
-                    }
-                  />
-                </Row>
-                {checkIn.adherenceRating !== null ? (
-                  <Muted>Adherence {checkIn.adherenceRating}/5</Muted>
-                ) : null}
-              </Card>
-            ))
+            checkIns.data.items.map((checkIn) => {
+              const href =
+                checkIn.status === 'DUE'
+                  ? `/clients/${clientId}/check-in`
+                  : `/clients/${clientId}/check-ins/${checkIn.id}`;
+              return (
+                <Link key={checkIn.id} href={href}>
+                  <Card interactive gap="$1">
+                    <Row>
+                      <Body fontWeight="700">{checkIn.scheduledFor}</Body>
+                      <Badge
+                        tone={
+                          checkIn.status === 'DUE'
+                            ? 'warning'
+                            : checkIn.engineOutput?.type === 'REFER_REVIEW'
+                              ? 'danger'
+                              : 'neutral'
+                        }
+                        label={
+                          checkIn.status === 'COMPLETED'
+                            ? (checkIn.engineOutput?.type ?? 'DONE')
+                            : checkIn.status
+                        }
+                      />
+                    </Row>
+                    {checkIn.adherenceRating !== null ? (
+                      <Muted>Adherence {checkIn.adherenceRating}/5</Muted>
+                    ) : null}
+                  </Card>
+                </Link>
+              );
+            })
           )}
         </YStack>
       ) : null}
