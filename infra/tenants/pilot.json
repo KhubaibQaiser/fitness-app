@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "slug": "pilot",
+  "name": "GymOS Pilot",
+  "branding": {
+    "appName": "GymOS Coach",
+    "colors": { "primary": "#0f766e", "accent": "#f59e0b" },
+    "radius": "soft"
+  },
+  "terminology": {},
+  "locales": { "default": "en", "enabled": ["en"] },
+  "currency": "PKR",
+  "units": "metric",
+  "aiConfig": {
+    "cuisineContext": "pakistani",
+    "mealCount": 4,
+    "kcalTolerancePct": 5,
+    "macroTolerancePct": 10,
+    "budgetTier": 2,
+    "prepTimeCeilingMin": 45,
+    "verbosity": "standard",
+    "monthlyGenerationQuota": 500
+  }
+}

@@ -8,6 +8,12 @@ import * as schema from './schema';
  */
 export type Db = PostgresJsDatabase<typeof schema>;
 
+/** The transaction handle passed to `db.transaction(async (tx) => …)`. */
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+/** Accepted by helpers that work identically inside or outside a transaction. */
+export type DbOrTx = Db | Tx;
+
 export type DbConnection = { db: Db; close: () => Promise<void> };
 
 /** Pooled connection for the API/worker (Neon pgbouncer endpoint in prod). */

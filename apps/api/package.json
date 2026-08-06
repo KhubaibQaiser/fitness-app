@@ -1,0 +1,30 @@
+{
+  "name": "@gymos/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hono modular-monolith API. Access-gate secured; OpenAPI generated from Zod.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "openapi:generate": "tsx src/cli/generate-openapi.ts"
+  },
+  "dependencies": {
+    "@gymos/ai": "workspace:^",
+    "@gymos/core": "workspace:^",
+    "@gymos/db": "workspace:^",
+    "@gymos/modules": "workspace:^",
+    "@hono/node-server": "^2.1.0",
+    "@hono/zod-openapi": "^1.5.1",
+    "hono": "^4.13.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
+    "@types/node": "^26.1.2",
+    "drizzle-orm": "^0.45.2",
+    "tsx": "^4.23.9",
+    "vitest": "^3.2.7"
+  }
+}
