@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+.expo/
+.turbo/
+out/
+*.tsbuildinfo
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Environment & secrets — never commit real env files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Local tooling caches
+.eslintcache
+.prettiercache
+
+# Model artifacts (checksum-pinned in R2, never in git)
+*.gguf

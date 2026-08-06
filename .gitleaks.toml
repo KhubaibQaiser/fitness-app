@@ -1,0 +1,13 @@
+# Gitleaks configuration — extends the default ruleset.
+# Scans run: pre-commit (staged), pre-push (history), and in CI on every PR.
+# Policy: zero real secrets in this repository, ever. Placeholders live in .env.example.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret files that trip entropy rules"
+paths = [
+  '''pnpm-lock\.yaml''',
+  '''\.gitleaks\.toml''',
+]
