@@ -1,0 +1,131 @@
+import { type Action } from './actions';
+import { type Role } from './roles';
+import { type ScopeLevel } from './scope';
+
+type Grants = Partial<Record<Action, ScopeLevel>>;
+
+const ALL_ORG: Grants = {
+  'client.list': 'org',
+  'client.read': 'org',
+  'client.manage': 'org',
+  'notes.read': 'org',
+  'notes.write': 'org',
+  'vitals.read': 'org',
+  'vitals.write': 'org',
+  'photos.read': 'org',
+  'photos.write': 'org',
+  'dietary.read': 'org',
+  'dietary.write': 'org',
+  'goal.read': 'org',
+  'goal.manage': 'org',
+  'checkin.read': 'org',
+  'checkin.write': 'org',
+  'plan.read': 'org',
+  'plan.generate': 'org',
+  'plan.edit': 'org',
+  'plan.publish': 'org',
+  'foods.read': 'org',
+  'notification.read': 'self',
+  'config.read': 'org',
+  'data.export': 'org',
+  'data.erase': 'org',
+};
+
+/**
+ * Capability matrix: role → action → scope level at which it is granted.
+ * Absent action = denied. This is the single authorization source of truth;
+ * the API middleware derives the actor's ScopeSet and calls `can()`.
+ */
+export const MATRIX: Record<Role, Grants> = {
+  // Break-glass platform access — time-limited and heavily audited (P0 enforces the audit path).
+  PLATFORM_OPERATOR: ALL_ORG,
+  SUPER_ADMIN: ALL_ORG,
+  ORG_ADMIN: ALL_ORG,
+  OUTLET_ADMIN: {
+    'client.list': 'outlet',
+    'client.read': 'outlet',
+    'client.manage': 'outlet',
+    'notes.read': 'outlet',
+    'vitals.read': 'outlet',
+    'photos.read': 'outlet',
+    'dietary.read': 'outlet',
+    'goal.read': 'outlet',
+    'checkin.read': 'outlet',
+    'plan.read': 'outlet',
+    'foods.read': 'org',
+    'notification.read': 'self',
+    'config.read': 'org',
+    'data.export': 'outlet',
+  },
+  COACH_MANAGER: {
+    'client.list': 'outlet',
+    'client.read': 'outlet',
+    'notes.read': 'outlet',
+    'vitals.read': 'outlet',
+    'photos.read': 'outlet',
+    'dietary.read': 'outlet',
+    'goal.read': 'outlet',
+    'checkin.read': 'outlet',
+    'plan.read': 'outlet',
+    'foods.read': 'org',
+    'notification.read': 'self',
+    'config.read': 'org',
+  },
+  COACH: {
+    'client.list': 'assigned',
+    'client.read': 'assigned',
+    'client.manage': 'assigned',
+    'notes.read': 'assigned',
+    'notes.write': 'assigned',
+    'vitals.read': 'assigned',
+    'vitals.write': 'assigned',
+    'photos.read': 'assigned',
+    'photos.write': 'assigned',
+    'dietary.read': 'assigned',
+    'dietary.write': 'assigned',
+    'goal.read': 'assigned',
+    'goal.manage': 'assigned',
+    'checkin.read': 'assigned',
+    'checkin.write': 'assigned',
+    'plan.read': 'assigned',
+    'plan.generate': 'assigned',
+    'plan.edit': 'assigned',
+    'plan.publish': 'assigned',
+    'foods.read': 'org',
+    'notification.read': 'self',
+    'config.read': 'org',
+    'data.export': 'assigned',
+  },
+  FRONT_DESK: {
+    'client.list': 'outlet',
+    'client.read': 'outlet',
+    'checkin.read': 'outlet',
+    'foods.read': 'org',
+    'notification.read': 'self',
+    'config.read': 'org',
+  },
+  INSTRUCTOR: {
+    'client.read': 'assigned',
+    'checkin.read': 'assigned',
+    'notification.read': 'self',
+    'config.read': 'org',
+  },
+  CLIENT: {
+    'vitals.read': 'self',
+    'photos.read': 'self',
+    'dietary.read': 'self',
+    'dietary.write': 'self',
+    'goal.read': 'self',
+    'checkin.read': 'self',
+    'plan.read': 'self',
+    'notification.read': 'self',
+    'config.read': 'org',
+    'data.export': 'self',
+    'data.erase': 'self',
+  },
+  GUARDIAN: {
+    // Dependent-scoped access designed in P5; until then guardians only see their own notifications.
+    'notification.read': 'self',
+    'config.read': 'org',
+  },
+};

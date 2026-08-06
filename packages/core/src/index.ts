@@ -1,3 +1,3 @@
-// @gymos/core — pure domain logic. Subpath modules land here:
-// nutrition (Layer 1 + solver + adaptive engine), money, units, rbac.
-export {};
+// @gymos/core — pure domain logic. Prefer subpath imports:
+// @gymos/core/nutrition · @gymos/core/money · @gymos/core/units · @gymos/core/rbac
+export * from './shared/result';

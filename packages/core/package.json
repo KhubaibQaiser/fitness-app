@@ -5,10 +5,14 @@
   "type": "module",
   "description": "Pure domain logic — zero React, zero platform imports. nutrition/money require 100% branch coverage.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./money": "./src/money/index.ts",
+    "./units": "./src/units/index.ts",
+    "./rbac": "./src/rbac/index.ts",
+    "./nutrition": "./src/nutrition/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --coverage"
   }
 }
