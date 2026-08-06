@@ -1,0 +1,22 @@
+{
+  "name": "@gymos/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tamagui/config": "^2.7.2",
+    "react": "^19.2.8",
+    "react-native-web": "^0.21.2",
+    "tamagui": "^2.7.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^5.9.3"
+  }
+}

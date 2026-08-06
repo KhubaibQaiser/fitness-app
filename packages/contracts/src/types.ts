@@ -1,0 +1,241 @@
+/**
+ * Hand-maintained response/request types mirroring the server DTOs.
+ * TODO(pilot-hardening): replace with hey-api codegen from openapi.v1.json
+ * with a CI drift gate (plan §9); the transport below already matches it.
+ */
+
+export type PublicConfig = {
+  appName: string;
+  colors: { primary: string; accent: string };
+  radius: 'sharp' | 'soft' | 'round';
+  terminology: Record<string, string>;
+  locales: { default: 'en' | 'ur'; enabled: ('en' | 'ur')[] };
+  units: 'metric' | 'imperial';
+  currency: string;
+};
+
+export type Me = {
+  userId: string;
+  name: string;
+  email: string | null;
+  locale: string;
+  unitPref: 'metric' | 'imperial';
+  roles: string[];
+};
+
+export type AttentionReason = { code: string; weight: number; since: string };
+
+export type ClientListItem = {
+  id: string;
+  name: string;
+  status: 'active' | 'archived';
+  attentionScore: number;
+  attentionReasons: AttentionReason[];
+  latestWeightKg: number | null;
+  goalPreset: string | null;
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  sex: 'F' | 'M';
+  dob: string | null;
+  phone: string | null;
+  heightCm: number | null;
+  activityLevel: number | null;
+  medicalFlags: { pregnant?: boolean; conditions?: string[] } | null;
+  status: 'active' | 'archived';
+  createdAt: string;
+};
+
+export type MacroTargets = {
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fiberG: number;
+};
+
+export type Goal = {
+  id: string;
+  preset: 'LOSE' | 'GAIN' | 'MAINTAIN' | 'RECOMP';
+  rate: 'CONSERVATIVE' | 'STANDARD' | 'AGGRESSIVE';
+  startDate: string;
+  startWeightKg: number;
+  targetWeightKg: number | null;
+  targetDate: string | null;
+  expectedWeeklyDeltaKg: number;
+  initialTargets: MacroTargets | null;
+  tdeeEstimate: number | null;
+  checkinWeekday: number;
+  status: 'ACTIVE' | 'ACHIEVED' | 'ABANDONED' | 'SUPERSEDED';
+};
+
+export type Vitals = {
+  id: string;
+  recordedAt: string;
+  weightKg: number | null;
+  bodyFatPct: number | null;
+  muscleMassKg: number | null;
+  chestCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  armCm: number | null;
+  thighCm: number | null;
+  restingHr: number | null;
+  bpSystolic: number | null;
+  bpDiastolic: number | null;
+  notes: string | null;
+};
+
+export type Restriction = {
+  type:
+    | 'ALLERGY_SEVERE'
+    | 'ALLERGY_MILD'
+    | 'INTOLERANCE'
+    | 'DISLIKE'
+    | 'RELIGIOUS'
+    | 'ETHICAL'
+    | 'MEDICAL';
+  code: string;
+  note?: string | null;
+};
+
+export type DietaryProfile = {
+  id: string;
+  version: number;
+  restrictions: Restriction[];
+} | null;
+
+export type PlanSummary = {
+  id: string;
+  version: number;
+  status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED' | 'NEEDS_REVIEW' | 'ARCHIVED';
+  targets: MacroTargets;
+  publishedAt: string | null;
+};
+
+export type PlanItem = {
+  id: string;
+  day: number;
+  mealIndex: number;
+  mealSlot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  mealName: string;
+  foodId: string;
+  portionGrams: number;
+  macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
+  prepNotes: string | null;
+  position: number;
+};
+
+export type PlanWithItems = { plan: PlanSummary & { clientId: string }; items: PlanItem[] };
+
+export type CheckIn = {
+  id: string;
+  clientId: string;
+  goalId: string;
+  scheduledFor: string;
+  completedAt: string | null;
+  adherenceRating: number | null;
+  coachNotes: string | null;
+  engineOutput: Verdict | null;
+  status: 'DUE' | 'COMPLETED' | 'SKIPPED';
+};
+
+export type DueCheckIn = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  goalId: string;
+  scheduledFor: string;
+  status: string;
+  overdueDays: number;
+};
+
+export type Verdict = {
+  type:
+    | 'INSUFFICIENT_DATA'
+    | 'HOLD'
+    | 'ADHERENCE_FOCUS'
+    | 'PLATEAU_PROTOCOL'
+    | 'ADJUST_TARGETS'
+    | 'REFER_REVIEW';
+  confidence: number;
+  reasons: string[];
+  actualWeeklyDeltaKg?: number;
+  expectedWeeklyDeltaKg?: number;
+  observedTdeeEstimate?: number;
+  deltaKcalPerDay?: number;
+  newTargets?: MacroTargets;
+  clampedBySafety?: boolean;
+  meanAdherence?: number;
+  flags?: string[];
+};
+
+export type ClientDetail = {
+  client: Client;
+  goal: Goal | null;
+  latestWeightKg: number | null;
+  goalProgressPct: number | null;
+  dietaryProfile: DietaryProfile;
+  plans: PlanSummary[];
+  recentCheckIns: CheckIn[];
+};
+
+export type Food = {
+  id: string;
+  name: string;
+  nameUr: string | null;
+  foodGroup: string;
+  per100g: { kcal: number; proteinG: number; fatG: number; carbsG: number; fiberG: number };
+  allergenTags: string[];
+  servingUnits: { name: string; grams: number }[];
+};
+
+export type Notification = {
+  id: string;
+  type: string;
+  priority: 'HIGH' | 'NORMAL';
+  payload: Record<string, unknown>;
+  deepLink: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type PlanDiffEntry = {
+  day: number;
+  slot: string;
+  foodId: string;
+  foodName: string;
+  kind: 'portion' | 'added' | 'removed';
+  fromGrams?: number;
+  toGrams?: number;
+  kcalDelta: number;
+};
+
+export type ApplyResult = {
+  plan: PlanSummary & { clientId: string };
+  items: PlanItem[];
+  diff: PlanDiffEntry[];
+};
+
+export type Problem = {
+  type: string;
+  title: string;
+  status: number;
+  code: string;
+  detail?: string;
+};
+
+export type PlanOp =
+  | { op: 'set-portion'; itemId: string; portionGrams: number }
+  | { op: 'swap'; itemId: string; foodId: string }
+  | { op: 'remove'; itemId: string }
+  | {
+      op: 'add';
+      day: number;
+      mealIndex: number;
+      mealSlot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+      foodId: string;
+      portionGrams: number;
+    };
