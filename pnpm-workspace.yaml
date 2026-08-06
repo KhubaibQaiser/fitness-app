@@ -5,3 +5,4 @@ packages:
 # pnpm 10 blocks postinstall scripts by default; allow only what we vetted.
 onlyBuiltDependencies:
   - lefthook
+  - esbuild
