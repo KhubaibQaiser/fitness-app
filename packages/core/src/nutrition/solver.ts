@@ -9,7 +9,8 @@ import { type MacroTargets } from './types';
  * Seeded PRNG ⇒ identical inputs + seed reproduce the identical plan.
  */
 
-export type FoodGroup = 'protein' | 'staple' | 'vegetable' | 'fruit' | 'dairy' | 'fat' | 'snack';
+export type FoodGroup =
+  'protein' | 'staple' | 'vegetable' | 'fruit' | 'dairy' | 'fat' | 'snack' | 'beverage';
 
 export type Per100g = {
   kcal: number;
@@ -27,11 +28,19 @@ export type CandidateFood = {
   readonly allergenTags: readonly string[];
   /** Native serving units; portions move in 0.5-unit steps of the first unit. */
   readonly servingUnits: readonly { name: string; grams: number }[];
+  /** Slots this food may appear in. Empty = never selected. */
+  readonly allowedSlots: readonly MealSlot[];
   /** Layer-4 ranking seam — higher ranks earlier. Default 1. */
   readonly rankScore?: number;
 };
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export type MealTemplateEntry = {
+  readonly slot: MealSlot;
+  readonly share: number;
+  readonly pattern: readonly FoodGroup[];
+};
 
 export type SolvedItem = {
   readonly foodId: string;
@@ -71,44 +80,63 @@ export type SolverConfig = {
 };
 
 export const DEFAULT_SOLVER_CONFIG: Omit<SolverConfig, 'seed'> = {
-  mealCount: 4,
+  mealCount: 3,
   kcalTolerancePct: 5,
   macroTolerancePct: 10,
 };
 
-/** Meal structure by meal count: slot + share of daily kcal + food-group pattern. */
-const MEAL_TEMPLATES: Record<3 | 4 | 5, { slot: MealSlot; share: number; pattern: FoodGroup[] }[]> =
-  {
-    3: [
-      { slot: 'breakfast', share: 0.3, pattern: ['protein', 'staple'] },
-      { slot: 'lunch', share: 0.4, pattern: ['protein', 'staple', 'vegetable'] },
-      { slot: 'dinner', share: 0.3, pattern: ['protein', 'staple', 'vegetable', 'fat'] },
-    ],
-    4: [
-      { slot: 'breakfast', share: 0.25, pattern: ['protein', 'staple'] },
-      { slot: 'lunch', share: 0.3, pattern: ['protein', 'staple', 'vegetable'] },
-      { slot: 'snack', share: 0.15, pattern: ['fruit', 'fat'] },
-      { slot: 'dinner', share: 0.3, pattern: ['protein', 'staple', 'vegetable'] },
-    ],
-    5: [
-      { slot: 'breakfast', share: 0.25, pattern: ['protein', 'staple'] },
-      { slot: 'snack', share: 0.1, pattern: ['fruit'] },
-      { slot: 'lunch', share: 0.3, pattern: ['protein', 'staple', 'vegetable'] },
-      { slot: 'snack', share: 0.1, pattern: ['fat'] },
-      { slot: 'dinner', share: 0.25, pattern: ['protein', 'staple', 'vegetable'] },
-    ],
-  };
+/** Breakfast foods coaches expect — also documented on the Tools meals page. */
+export const BREAKFAST_FOOD_NAMES = [
+  'Egg (whole, boiled)',
+  'Egg scrambled',
+  'Omelette',
+  'Greek yogurt (plain)',
+  'Granola yogurt bowl',
+  'Bran bread',
+  'Oats (dry)',
+  'Black coffee',
+  'Green tea',
+  'Chai with stevia',
+] as const;
+
+/**
+ * Meal structure by meal count: slot + share of daily kcal + food-group pattern.
+ * Dinner is protein + vegetables only; lunch carries fat and most carbs.
+ */
+export const MEAL_TEMPLATES: Record<3 | 4 | 5, readonly MealTemplateEntry[]> = {
+  3: [
+    { slot: 'breakfast', share: 0.28, pattern: ['protein', 'staple', 'beverage'] },
+    { slot: 'lunch', share: 0.47, pattern: ['protein', 'staple', 'vegetable', 'fat'] },
+    { slot: 'dinner', share: 0.25, pattern: ['protein', 'vegetable'] },
+  ],
+  4: [
+    { slot: 'breakfast', share: 0.25, pattern: ['protein', 'staple', 'beverage'] },
+    { slot: 'lunch', share: 0.35, pattern: ['protein', 'staple', 'vegetable', 'fat'] },
+    { slot: 'snack', share: 0.12, pattern: ['fruit', 'fat'] },
+    { slot: 'dinner', share: 0.28, pattern: ['protein', 'vegetable'] },
+  ],
+  5: [
+    { slot: 'breakfast', share: 0.24, pattern: ['protein', 'staple', 'beverage'] },
+    { slot: 'snack', share: 0.08, pattern: ['fruit'] },
+    { slot: 'lunch', share: 0.32, pattern: ['protein', 'staple', 'vegetable', 'fat'] },
+    { slot: 'snack', share: 0.08, pattern: ['fat'] },
+    { slot: 'dinner', share: 0.28, pattern: ['protein', 'vegetable'] },
+  ],
+};
 
 /** Groups that may substitute when a pattern group has no candidates. */
 const GROUP_FALLBACKS: Record<FoodGroup, FoodGroup[]> = {
   protein: ['dairy'],
-  staple: ['fruit'],
+  staple: ['dairy', 'fruit'],
   vegetable: ['fruit'],
   fruit: ['vegetable', 'snack'],
   dairy: ['protein'],
   fat: ['dairy', 'snack'],
   snack: ['fruit', 'fat'],
+  beverage: [],
 };
+
+const OLIVE_OIL_NAME = 'Olive oil';
 
 /** Deterministic PRNG (mulberry32 over a djb2 hash of the seed). */
 export const seededRandom = (seed: string): (() => number) => {
@@ -182,6 +210,8 @@ type MutableItem = {
   units: number; // portions in serving units (0.5 steps)
   unitGrams: number;
   unitName: string;
+  /** Beverages stay at 1 serving — excluded from hill-climb. */
+  fixedPortion: boolean;
 };
 
 const UNIT_MIN = 0.5;
@@ -212,16 +242,13 @@ const currentTotals = (items: readonly MutableItem[]) =>
 /**
  * Greedy hill-climb: repeatedly apply the single ±0.5-unit portion move that
  * most reduces the weighted error, until tolerance is met or no move helps.
- * Deterministic given item order.
+ * Deterministic given item order. Fixed-portion items (beverages) are skipped.
  */
 const optimizePortions = (
   items: MutableItem[],
   targets: MacroTargets,
   config: SolverConfig,
 ): void => {
-  // Termination guarantee: every accepted move strictly decreases the score
-  // over a finite portion grid, so the loop always exits via the tolerance
-  // return or the local-optimum return. No iteration cap needed.
   while (true) {
     const totals = currentTotals(items);
     if (withinTolerance(totals, targets, config)) return;
@@ -229,6 +256,7 @@ const optimizePortions = (
     let bestDelta = 0;
     let bestScore = errorScore(totals, targets);
     for (const item of items) {
+      if (item.fixedPortion) continue;
       for (const delta of [UNIT_STEP, -UNIT_STEP]) {
         const next = item.units + delta;
         if (next < UNIT_MIN || next > UNIT_MAX) continue;
@@ -242,22 +270,33 @@ const optimizePortions = (
         }
       }
     }
-    if (bestItem === null) return; // local optimum
+    if (bestItem === null) return;
     bestItem.units += bestDelta;
   }
+};
+
+const allowedForSlot = (food: CandidateFood, slot: MealSlot): boolean =>
+  food.allowedSlots.includes(slot);
+
+const effectiveRank = (food: CandidateFood, group: FoodGroup): number => {
+  const base = food.rankScore ?? 1;
+  if (group === 'fat' && food.name === OLIVE_OIL_NAME) return base + 2;
+  return base;
 };
 
 const pickCandidate = (
   pool: readonly CandidateFood[],
   group: FoodGroup,
+  slot: MealSlot,
   rand: () => number,
   used: ReadonlySet<string>,
 ): CandidateFood | undefined => {
   const groups = [group, ...GROUP_FALLBACKS[group]];
+  const slotPool = pool.filter((f) => allowedForSlot(f, slot));
   for (const g of groups) {
-    const inGroup = pool
+    const inGroup = slotPool
       .filter((f) => f.foodGroup === g)
-      .sort((a, b) => (b.rankScore ?? 1) - (a.rankScore ?? 1) || a.id.localeCompare(b.id));
+      .sort((a, b) => effectiveRank(b, g) - effectiveRank(a, g) || a.id.localeCompare(b.id));
     if (inGroup.length === 0) continue;
     const fresh = inGroup.filter((f) => !used.has(f.id));
     const pickFrom = fresh.length > 0 ? fresh : inGroup;
@@ -273,27 +312,34 @@ const ATTEMPTS_PER_DAY = 5;
 const buildItems = (
   targets: MacroTargets,
   candidates: readonly CandidateFood[],
-  template: { slot: MealSlot; share: number; pattern: FoodGroup[] }[],
+  template: readonly MealTemplateEntry[],
   rand: () => number,
 ): Result<MutableItem[], SolverError> => {
   const used = new Set<string>();
   const items: MutableItem[] = [];
   for (const [mealIndex, meal] of template.entries()) {
+    const adjustableGroups = meal.pattern.filter((g) => g !== 'beverage');
+    const adjustableCount = Math.max(1, adjustableGroups.length);
     for (const group of meal.pattern) {
-      const food = pickCandidate(candidates, group, rand, used);
+      const food = pickCandidate(candidates, group, meal.slot, rand, used);
       if (food === undefined) {
         return err({ code: 'NO_CANDIDATES', group });
       }
       used.add(food.id);
       const unit = food.servingUnits[0] ?? { name: 'g', grams: 100 };
-      // Initial guess: fill the meal's kcal share evenly across its pattern.
-      const perItemKcal = (targets.kcal * meal.share) / meal.pattern.length;
-      const kcalPerUnit = (food.per100g.kcal * unit.grams) / 100;
-      const rawUnits = kcalPerUnit > 0 ? perItemKcal / kcalPerUnit : UNIT_MIN;
-      const units = Math.min(
-        UNIT_MAX,
-        Math.max(UNIT_MIN, Math.round(rawUnits / UNIT_STEP) * UNIT_STEP),
-      );
+      const fixedPortion = group === 'beverage' || food.foodGroup === 'beverage';
+      let units: number;
+      if (fixedPortion) {
+        units = 1;
+      } else {
+        const perItemKcal = (targets.kcal * meal.share) / adjustableCount;
+        const kcalPerUnit = (food.per100g.kcal * unit.grams) / 100;
+        const rawUnits = kcalPerUnit > 0 ? perItemKcal / kcalPerUnit : UNIT_MIN;
+        units = Math.min(
+          UNIT_MAX,
+          Math.max(UNIT_MIN, Math.round(rawUnits / UNIT_STEP) * UNIT_STEP),
+        );
+      }
       items.push({
         food,
         slot: meal.slot,
@@ -301,6 +347,7 @@ const buildItems = (
         units,
         unitGrams: unit.grams,
         unitName: unit.name,
+        fixedPortion,
       });
     }
   }

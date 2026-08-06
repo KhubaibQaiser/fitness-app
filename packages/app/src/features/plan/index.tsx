@@ -3,17 +3,35 @@
 import { useState } from 'react';
 import { Link } from 'solito/link';
 import { ApiError } from '@gymos/contracts';
-import { Body, Card, ErrorState, LoadingState, PageHeader, PrimaryButton } from '@gymos/ui';
+import {
+  Body,
+  Card,
+  ErrorState,
+  LoadingState,
+  Muted,
+  PageHeader,
+  PrimaryButton,
+  SegmentedControl,
+  YStack,
+} from '@gymos/ui';
 import { useClientDetail, useGeneratePlan, usePlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanEditor } from './plan-editor';
+import { PrepPreferencesBanner } from './prep-preferences-banner';
+
+const MEAL_COUNT_OPTIONS = [
+  { value: 3, label: '3 meals' },
+  { value: 4, label: '+1 snack' },
+  { value: 5, label: '+2 snacks' },
+] as const;
 
 /** Plan view + editor: generate, tune portions, publish. Numbers are server truth. */
 export const PlanScreen = ({ clientId }: { clientId: string }) => {
   const detail = useClientDetail(clientId);
   const generate = useGeneratePlan(clientId);
   const [day, setDay] = useState(1);
+  const [mealCount, setMealCount] = useState<3 | 4 | 5>(3);
 
   const plans = detail.data?.plans ?? [];
   const planSummary =
@@ -54,31 +72,43 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
             </Link>
           </Card>
         ) : (
-          <Card gap="$3">
-            <Body>
-              Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '—'} kcal honoring
-              every dietary restriction.
-            </Body>
-            {blocked ? (
-              <OverridePrompt
-                onConfirm={(reason) => generate.mutate({ reason })}
-                busy={generate.isPending}
-                detail={generate.error instanceof ApiError ? (generate.error.detail ?? '') : ''}
-              />
-            ) : (
-              <PrimaryButton
-                disabled={generate.isPending}
-                onPress={() => generate.mutate(undefined)}
-              >
-                {generate.isPending ? 'Generating…' : 'Generate 7-day plan'}
-              </PrimaryButton>
-            )}
-            {generate.isError && !blocked ? (
-              <Body color="$danger" role="alert">
-                {generate.error.message}
+          <YStack gap="$3">
+            <PrepPreferencesBanner />
+            <Card gap="$3">
+              <Body>
+                Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '—'} kcal
+                honoring every dietary restriction.
               </Body>
-            ) : null}
-          </Card>
+              <YStack gap="$2">
+                <Muted fontSize={13}>Meals per day</Muted>
+                <SegmentedControl
+                  ariaLabel="Meals per day"
+                  options={[...MEAL_COUNT_OPTIONS]}
+                  value={mealCount}
+                  onChange={setMealCount}
+                />
+              </YStack>
+              {blocked ? (
+                <OverridePrompt
+                  onConfirm={(reason) => generate.mutate({ reason, mealCount })}
+                  busy={generate.isPending}
+                  detail={generate.error instanceof ApiError ? (generate.error.detail ?? '') : ''}
+                />
+              ) : (
+                <PrimaryButton
+                  disabled={generate.isPending}
+                  onPress={() => generate.mutate({ mealCount })}
+                >
+                  {generate.isPending ? 'Generating…' : 'Generate 7-day plan'}
+                </PrimaryButton>
+              )}
+              {generate.isError && !blocked ? (
+                <Body color="$danger" role="alert">
+                  {generate.error.message}
+                </Body>
+              ) : null}
+            </Card>
+          </YStack>
         )}
       </AppScreen>
     );

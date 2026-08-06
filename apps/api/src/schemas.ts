@@ -143,6 +143,7 @@ export const completeCheckInBody = z.object({
 
 export const generateBody = z.object({
   override: z.object({ reason: z.string().min(5).max(500) }).optional(),
+  mealCount: z.union([z.literal(3), z.literal(4), z.literal(5)]).default(3),
 });
 
 export const planOpSchema = z.discriminatedUnion('op', [

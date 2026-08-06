@@ -4,31 +4,33 @@ import { useState } from 'react';
 import { Link } from 'solito/link';
 import { ArrowLeft, Badge, GhostButton, PageHeader, Tabs, YStack } from '@gymos/ui';
 import { AppScreen } from '../shell/app-screen';
-import { CaloriesPanel } from './calories-panel';
-import { GoalsPanel } from './goals-panel';
-import { MacrosPanel } from './macros-panel';
+import { BreakfastPanel } from './breakfast-panel';
+import { DinnerPanel } from './dinner-panel';
+import { LunchPanel } from './lunch-panel';
 import { OverviewPanel } from './overview-panel';
-import { SafetyPanel } from './safety-panel';
+import { PrepPanel } from './prep-panel';
+import { SnacksPanel } from './snacks-panel';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'calories', label: 'Calories' },
-  { id: 'goals', label: 'Goals' },
-  { id: 'macros', label: 'Macros' },
-  { id: 'safety', label: 'Safety' },
+  { id: 'breakfast', label: 'Breakfast' },
+  { id: 'lunch', label: 'Lunch' },
+  { id: 'dinner', label: 'Dinner' },
+  { id: 'snacks', label: 'Snacks' },
+  { id: 'prep', label: 'Prep' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
 
-/** Coach explainer — numbers imported from Layer 1; tabs keep each topic scannable. */
-export const NutritionCriteriaScreen = () => {
+/** Coach explainer — Layer 2 meal templates and slot rules. */
+export const MealCompositionScreen = () => {
   const [tab, setTab] = useState<TabId>('overview');
 
   return (
     <AppScreen>
       <PageHeader
-        title="How targets work"
-        subtitle="Plain-language guide to the live nutrition engine"
+        title="How meals are planned"
+        subtitle="Slot templates and food pools from the live solver"
         leading={
           <Link href="/tools">
             <GhostButton
@@ -41,22 +43,23 @@ export const NutritionCriteriaScreen = () => {
             />
           </Link>
         }
-        action={<Badge tone="primary" label="Layer 1" />}
+        action={<Badge tone="primary" label="Layer 2" />}
       />
 
       <Tabs
         items={[...TABS]}
         value={tab}
         onChange={(id) => setTab(id as TabId)}
-        ariaLabel="Nutrition criteria sections"
+        ariaLabel="Meal composition sections"
       />
 
       <YStack key={tab} gap="$4">
         {tab === 'overview' ? <OverviewPanel /> : null}
-        {tab === 'calories' ? <CaloriesPanel /> : null}
-        {tab === 'goals' ? <GoalsPanel /> : null}
-        {tab === 'macros' ? <MacrosPanel /> : null}
-        {tab === 'safety' ? <SafetyPanel /> : null}
+        {tab === 'breakfast' ? <BreakfastPanel /> : null}
+        {tab === 'lunch' ? <LunchPanel /> : null}
+        {tab === 'dinner' ? <DinnerPanel /> : null}
+        {tab === 'snacks' ? <SnacksPanel /> : null}
+        {tab === 'prep' ? <PrepPanel /> : null}
       </YStack>
     </AppScreen>
   );

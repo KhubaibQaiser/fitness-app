@@ -15,13 +15,14 @@ import {
   Sun,
   Text,
   Users,
+  Utensils,
   XStack,
   YStack,
 } from '@gymos/ui';
 import { useUnreadCount } from '../../api';
 import { useAppChrome } from './use-app-chrome';
 
-type NavHref = '/' | '/clients' | '/notifications' | '/settings';
+type NavHref = '/' | '/clients' | '/tools' | '/notifications' | '/settings';
 
 type NavItem = {
   href: NavHref;
@@ -31,6 +32,7 @@ type NavItem = {
 const NAV: readonly NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/clients', label: 'Clients' },
+  { href: '/tools', label: 'Tools' },
   { href: '/notifications', label: 'Alerts' },
   { href: '/settings', label: 'Settings' },
 ];
@@ -44,6 +46,8 @@ const navIcon = (href: NavHref, size: number, color: string): ReactElement => {
       return <Home size={size} color={color} />;
     case '/clients':
       return <Users size={size} color={color} />;
+    case '/tools':
+      return <Utensils size={size} color={color} />;
     case '/notifications':
       return <Bell size={size} color={color} />;
     case '/settings':

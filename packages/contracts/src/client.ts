@@ -175,11 +175,11 @@ export const api = {
         `/v1/clients/${clientId}/meal-plans`,
       ),
     get: (planId: string) => request<T.PlanWithItems>('GET', `/v1/meal-plans/${planId}`),
-    generate: (clientId: string, override?: { reason: string }) =>
+    generate: (clientId: string, body?: { override?: { reason: string }; mealCount?: 3 | 4 | 5 }) =>
       request<T.PlanWithItems & { generationId: string }>(
         'POST',
         `/v1/clients/${clientId}/meal-plans/generate`,
-        override ? { override } : {},
+        body ?? {},
         { idempotent: true },
       ),
     patch: (planId: string, ops: T.PlanOp[]) =>

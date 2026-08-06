@@ -17,6 +17,7 @@ import {
 } from '@gymos/ui';
 import { usePatchPlan, usePublishPlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { PrepPreferencesBanner } from './prep-preferences-banner';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Mon' },
@@ -96,6 +97,8 @@ export const PlanEditor = ({
           </Body>
         </Card>
       ) : null}
+
+      <PrepPreferencesBanner />
 
       <Card>
         <Row>

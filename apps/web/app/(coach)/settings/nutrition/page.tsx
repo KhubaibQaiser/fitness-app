@@ -1,6 +1,8 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { NutritionCriteriaScreen } from '@gymos/app/features/nutrition-criteria';
+/** Old settings path — nutrition explainers live under Tools now. */
+const Page = () => {
+  redirect('/tools/targets');
+};
 
-const Page = () => <NutritionCriteriaScreen />;
 export default Page;

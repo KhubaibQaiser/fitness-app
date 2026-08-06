@@ -15,6 +15,13 @@
       "when": 1786100000000,
       "tag": "0001_client_email",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786200000000,
+      "tag": "0002_food_allowed_slots",
+      "breakpoints": true
     }
   ]
 }

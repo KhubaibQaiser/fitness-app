@@ -96,6 +96,11 @@ export const foods = pgTable(
     cuisineTags: text('cuisine_tags').array().notNull().default([]),
     /** Canonical allergen codes — Layer 2's hard filter operates on this. */
     allergenTags: text('allergen_tags').array().notNull().default([]),
+    /**
+     * Meal slots this food may appear in (breakfast | lunch | dinner | snack).
+     * Empty = never selected by the solver until backfilled.
+     */
+    allowedSlots: text('allowed_slots').array().notNull().default([]),
     dietaryFlags: jsonb('dietary_flags').$type<DietaryFlags>().notNull(),
     per100g: jsonb('per_100g').$type<Per100g>().notNull(),
     costTier: smallint('cost_tier').notNull().default(1),

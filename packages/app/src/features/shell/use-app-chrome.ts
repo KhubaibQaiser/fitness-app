@@ -18,6 +18,7 @@ export const useAppChrome = () => {
   const isPrimary =
     pathname === '/' ||
     pathname === '/clients' ||
+    pathname === '/tools' ||
     pathname === '/notifications' ||
     pathname === '/settings' ||
     isClientHub;

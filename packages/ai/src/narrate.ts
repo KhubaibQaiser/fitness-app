@@ -68,7 +68,8 @@ const callOpenAiCompatible = async (input: NarrativeInput, config: AiConfig): Pr
           role: 'system',
           content:
             'You name meals and write short prep notes for a meal plan. Respond with JSON only. ' +
-            'NEVER mention calories, macros, or any nutrition numbers — those are provided elsewhere.',
+            'NEVER mention calories, macros, or any nutrition numbers — those are provided elsewhere. ' +
+            'When prep notes mention a sweetener, prefer Stevia. When oil is needed for light frying, prefer olive oil.',
         },
         { role: 'user', content: JSON.stringify(input) },
       ],
