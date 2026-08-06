@@ -49,6 +49,7 @@ export default tseslint.config(
         'error',
         { allowConstantLoopConditions: true },
       ],
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
     },
   },
 

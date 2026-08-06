@@ -1,0 +1,42 @@
+{
+  "name": "@gymos/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": "./src/api/index.ts",
+    "./provider": "./src/provider/index.tsx",
+    "./features/shell/tab-bar": "./src/features/shell/tab-bar.tsx",
+    "./features/shell/gate-guard": "./src/features/shell/gate-guard.tsx",
+    "./features/enter": "./src/features/enter/index.tsx",
+    "./features/home": "./src/features/home/index.tsx",
+    "./features/roster": "./src/features/roster/index.tsx",
+    "./features/client-form": "./src/features/client-form/index.tsx",
+    "./features/client-detail": "./src/features/client-detail/index.tsx",
+    "./features/vitals-entry": "./src/features/vitals-entry/index.tsx",
+    "./features/goal-form": "./src/features/goal-form/index.tsx",
+    "./features/check-in": "./src/features/check-in/index.tsx",
+    "./features/plan": "./src/features/plan/index.tsx",
+    "./features/dietary": "./src/features/dietary/index.tsx",
+    "./features/notifications": "./src/features/notifications/index.tsx",
+    "./features/settings": "./src/features/settings/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gymos/contracts": "workspace:^",
+    "@gymos/core": "workspace:^",
+    "@gymos/ui": "workspace:^",
+    "@tanstack/react-query": "^5.101.4",
+    "react": "^19.2.8",
+    "react-native-web": "^0.21.2",
+    "solito": "^5.0.0",
+    "tamagui": "^2.7.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^5.9.3"
+  }
+}
