@@ -1,0 +1,29 @@
+{
+  "name": "@gymos/modules",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend domain modules (modular monolith). Public API per domain; no module reads another module's tables directly.",
+  "exports": {
+    "./tenancy": "./src/tenancy/index.ts",
+    "./identity": "./src/identity/index.ts",
+    "./coaching": "./src/coaching/index.ts",
+    "./nutrition": "./src/nutrition/index.ts",
+    "./notifications": "./src/notifications/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gymos/ai": "workspace:^",
+    "@gymos/core": "workspace:^",
+    "@gymos/db": "workspace:^",
+    "drizzle-orm": "^0.45.2",
+    "luxon": "^3.7.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1"
+  }
+}

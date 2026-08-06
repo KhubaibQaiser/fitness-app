@@ -1,0 +1,189 @@
+import { and, desc, eq, sql } from 'drizzle-orm';
+import { DateTime } from 'luxon';
+import { err, ok, type Result } from '@gymos/core';
+import {
+  computeTargets,
+  type GoalPreset,
+  type GoalRate,
+  type NutritionRefusal,
+} from '@gymos/core/nutrition';
+import { isoDate, schema as s, type Db } from '@gymos/db';
+import { writeAudit } from '../shared/audit';
+
+export type CreateGoalInput = {
+  preset: GoalPreset;
+  rate: GoalRate;
+  startWeightKg: number;
+  targetWeightKg?: number | undefined;
+  targetDate?: string | undefined;
+  checkinWeekday?: number | undefined;
+  bodyFatPct?: number | undefined;
+};
+
+export type GoalError =
+  | { code: 'CLIENT_NOT_FOUND' }
+  | { code: 'CLIENT_PROFILE_INCOMPLETE'; missing: string[] }
+  | { code: 'NUTRITION_REFUSAL'; refusal: NutritionRefusal };
+
+export const createGoal = async (
+  db: Db,
+  principal: { userId: string },
+  clientId: string,
+  input: CreateGoalInput,
+): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
+  const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
+  if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
+
+  const missing: string[] = [];
+  if (client.heightCm === null) missing.push('heightCm');
+  if (client.activityLevel === null) missing.push('activityLevel');
+  if (client.dob === null) missing.push('dob');
+  if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
+
+  const age = Math.floor(Math.abs(DateTime.fromISO(client.dob ?? '').diffNow('years').years));
+  const activity = (client.activityLevel ?? 1.55) as 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
+  const computation = computeTargets(
+    {
+      sex: client.sex,
+      ageYears: age,
+      heightCm: client.heightCm ?? 0,
+      weightKg: input.startWeightKg,
+      ...(input.bodyFatPct !== undefined ? { bodyFatPct: input.bodyFatPct } : {}),
+      activity,
+    },
+    input.preset,
+    input.rate,
+  );
+  if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
+
+  const goal = await db.transaction(async (tx) => {
+    await tx
+      .update(s.clientGoals)
+      .set({ status: 'SUPERSEDED' })
+      .where(and(eq(s.clientGoals.clientId, clientId), eq(s.clientGoals.status, 'ACTIVE')));
+    // Close any dangling DUE check-in from the previous goal.
+    await tx
+      .update(s.checkIns)
+      .set({ status: 'SKIPPED' })
+      .where(and(eq(s.checkIns.clientId, clientId), eq(s.checkIns.status, 'DUE')));
+
+    const weekday = input.checkinWeekday ?? 1;
+    const [created] = await tx
+      .insert(s.clientGoals)
+      .values({
+        clientId,
+        preset: input.preset,
+        rate: input.rate,
+        startDate: isoDate(DateTime.utc()),
+        startWeightKg: input.startWeightKg,
+        targetWeightKg: input.targetWeightKg ?? null,
+        targetDate: input.targetDate ?? null,
+        expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
+        initialTargets: computation.value.targets,
+        tdeeEstimate: computation.value.tdee,
+        checkinWeekday: weekday,
+        status: 'ACTIVE',
+      })
+      .returning();
+    if (!created) throw new Error('goal insert failed');
+
+    // First check-in: the next occurrence of the chosen weekday (≥ tomorrow).
+    const now = DateTime.utc();
+    let next = now.plus({ days: 1 });
+    while (next.weekday % 7 !== weekday) {
+      next = next.plus({ days: 1 });
+    }
+    await tx.insert(s.checkIns).values({
+      clientId,
+      goalId: created.id,
+      scheduledFor: isoDate(next),
+      status: 'DUE',
+    });
+
+    await writeAudit(tx, {
+      actorUserId: principal.userId,
+      actorRole: 'COACH',
+      action: 'goal.create',
+      resourceType: 'client_goal',
+      resourceId: created.id,
+      after: { preset: input.preset, rate: input.rate, targets: computation.value.targets },
+    });
+    return created;
+  });
+
+  return ok(goal);
+};
+
+export const listGoals = async (db: Db, clientId: string) =>
+  db
+    .select()
+    .from(s.clientGoals)
+    .where(eq(s.clientGoals.clientId, clientId))
+    .orderBy(desc(s.clientGoals.createdAt));
+
+export const getActiveGoal = async (db: Db, clientId: string) => {
+  const [goal] = await db
+    .select()
+    .from(s.clientGoals)
+    .where(and(eq(s.clientGoals.clientId, clientId), eq(s.clientGoals.status, 'ACTIVE')))
+    .limit(1);
+  return goal ?? null;
+};
+
+export const setGoalStatus = async (
+  db: Db,
+  principal: { userId: string },
+  goalId: string,
+  status: 'ACHIEVED' | 'ABANDONED',
+) => {
+  const [updated] = await db
+    .update(s.clientGoals)
+    .set({ status })
+    .where(eq(s.clientGoals.id, goalId))
+    .returning();
+  if (updated) {
+    await db
+      .update(s.checkIns)
+      .set({ status: 'SKIPPED' })
+      .where(and(eq(s.checkIns.goalId, goalId), eq(s.checkIns.status, 'DUE')));
+    await writeAudit(db, {
+      actorUserId: principal.userId,
+      actorRole: 'COACH',
+      action: 'goal.status',
+      resourceType: 'client_goal',
+      resourceId: goalId,
+      after: { status },
+    });
+  }
+  return updated ?? null;
+};
+
+/** Percent progress toward target weight, when a target exists. */
+export const goalProgressPct = (
+  startWeightKg: number,
+  targetWeightKg: number | null,
+  currentWeightKg: number | null,
+): number | null => {
+  if (targetWeightKg === null || currentWeightKg === null) return null;
+  const total = startWeightKg - targetWeightKg;
+  if (Math.abs(total) < 0.001) return 100;
+  const done = startWeightKg - currentWeightKg;
+  return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
+};
+
+export const nextDueCheckIns = async (db: Db, limit = 50) =>
+  db
+    .select({
+      id: s.checkIns.id,
+      clientId: s.checkIns.clientId,
+      clientName: s.clients.name,
+      goalId: s.checkIns.goalId,
+      scheduledFor: s.checkIns.scheduledFor,
+      status: s.checkIns.status,
+      overdueDays: sql<number>`greatest(0, (current_date - ${s.checkIns.scheduledFor}::date))::int`,
+    })
+    .from(s.checkIns)
+    .innerJoin(s.clients, eq(s.clients.id, s.checkIns.clientId))
+    .where(eq(s.checkIns.status, 'DUE'))
+    .orderBy(s.checkIns.scheduledFor)
+    .limit(limit);
