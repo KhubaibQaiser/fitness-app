@@ -1,9 +1,11 @@
 'use client';
 
+import { Link } from 'solito/link';
 import { useThemeMode } from '@gymos/platform';
 import {
   Body,
   Card,
+  ChevronRight,
   ErrorState,
   GhostButton,
   LoadingState,
@@ -13,6 +15,8 @@ import {
   Row,
   SectionTitle,
   Sun,
+  XStack,
+  YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { AppScreen } from '../shell/app-screen';
@@ -110,6 +114,23 @@ export const SettingsScreen = () => {
           <Muted>{config.data.locales.default}</Muted>
         </Row>
       </Card>
+
+      <SectionTitle>Nutrition engine</SectionTitle>
+      <Link href="/settings/nutrition">
+        <Card interactive gap="$2" minHeight={56} justifyContent="center">
+          <XStack alignItems="center" justifyContent="space-between" gap="$3">
+            <YStack flex={1} gap={2} minWidth={0}>
+              <Body fontFamily="$heading" fontWeight="700">
+                How targets are calculated
+              </Body>
+              <Muted fontSize={13}>
+                BMR, TDEE, goals, macros, fiber, and safety floors — live from the engine.
+              </Muted>
+            </YStack>
+            <ChevronRight size={20} color="$textMuted" />
+          </XStack>
+        </Card>
+      </Link>
 
       <SectionTitle>Privacy & safety</SectionTitle>
       <Card gap="$2">

@@ -28,8 +28,11 @@ export const bmr = (input: PhysiologyInput): number => {
 
 export const tdee = (input: PhysiologyInput): number => bmr(input) * input.activity;
 
-/** Goal adjustment as a fraction of TDEE, by preset and rate. */
-const GOAL_DELTA: Record<GoalPreset, Record<GoalRate, number>> = {
+/**
+ * Goal adjustment as a fraction of TDEE, by preset and rate.
+ * Exported so coach-facing explainers stay in lockstep with the engine.
+ */
+export const GOAL_DELTA: Record<GoalPreset, Record<GoalRate, number>> = {
   LOSE: { CONSERVATIVE: -0.1, STANDARD: -0.2, AGGRESSIVE: -0.25 },
   RECOMP: { CONSERVATIVE: -0.05, STANDARD: -0.1, AGGRESSIVE: -0.15 },
   MAINTAIN: { CONSERVATIVE: 0, STANDARD: 0, AGGRESSIVE: 0 },
@@ -40,17 +43,21 @@ export const goalDeltaFraction = (preset: GoalPreset, rate: GoalRate): number =>
   GOAL_DELTA[preset][rate];
 
 /** Protein g/kg by goal — higher in a deficit to preserve lean mass. */
-const PROTEIN_G_PER_KG: Record<GoalPreset, number> = {
+export const PROTEIN_G_PER_KG: Record<GoalPreset, number> = {
   LOSE: 2.2,
   RECOMP: 2.0,
   GAIN: 1.8,
   MAINTAIN: 1.6,
 };
 
-const FAT_G_PER_KG_DEFAULT = 0.9;
-const FAT_G_PER_KG_MIN = 0.8;
-const PROTEIN_G_PER_KG_MIN = 1.6;
+/** Atwater energy factors used when splitting kcal into macros (kcal/g). */
+export const KCAL_PER_G = { protein: 4, carbs: 4, fat: 9 } as const;
 
+export const FAT_G_PER_KG_DEFAULT = 0.9;
+export const FAT_G_PER_KG_MIN = 0.8;
+export const PROTEIN_G_PER_KG_MIN = 1.6;
+
+/** IOM Adequate Intake: grams of fiber per 1000 kcal of the calorie target. */
 export const FIBER_G_PER_1000_KCAL = 14;
 
 type MacroSplit = { proteinG: number; fatG: number; carbsG: number };
@@ -74,9 +81,9 @@ export const splitMacros = (
   for (const { proteinPerKg, fatPerKg } of attempts) {
     const proteinG = Math.round(proteinPerKg * weightKg);
     const fatG = Math.round(fatPerKg * weightKg);
-    const carbsKcal = kcal - proteinG * 4 - fatG * 9;
+    const carbsKcal = kcal - proteinG * KCAL_PER_G.protein - fatG * KCAL_PER_G.fat;
     if (carbsKcal >= 0) {
-      return ok({ proteinG, fatG, carbsG: Math.round(carbsKcal / 4) });
+      return ok({ proteinG, fatG, carbsG: Math.round(carbsKcal / KCAL_PER_G.carbs) });
     }
   }
   return err({

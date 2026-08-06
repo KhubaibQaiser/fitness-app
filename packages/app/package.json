@@ -22,7 +22,8 @@
     "./features/plan": "./src/features/plan/index.tsx",
     "./features/dietary": "./src/features/dietary/index.tsx",
     "./features/notifications": "./src/features/notifications/index.tsx",
-    "./features/settings": "./src/features/settings/index.tsx"
+    "./features/settings": "./src/features/settings/index.tsx",
+    "./features/nutrition-criteria": "./src/features/nutrition-criteria/index.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

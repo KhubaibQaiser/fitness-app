@@ -1,5 +1,5 @@
 import { clampToSafeKcal } from './floors';
-import { KCAL_PER_KG } from './layer1';
+import { FIBER_G_PER_1000_KCAL, KCAL_PER_G, KCAL_PER_KG } from './layer1';
 import { type GoalPreset, type GoalRate, type MacroTargets, type Sex } from './types';
 
 /**
@@ -145,17 +145,20 @@ export const retargetMacros = (
   const proteinG = current.proteinG;
   const fatMinG = Math.round(ADAPTIVE.fatGPerKgMin * weightKg);
   let fatG = current.fatG;
-  let carbsKcal = newKcal - proteinG * 4 - fatG * 9;
+  let carbsKcal = newKcal - proteinG * KCAL_PER_G.protein - fatG * KCAL_PER_G.fat;
   if (carbsKcal < 0) {
-    fatG = Math.max(fatMinG, Math.floor((newKcal - proteinG * 4) / 9));
-    carbsKcal = Math.max(0, newKcal - proteinG * 4 - fatG * 9);
+    fatG = Math.max(
+      fatMinG,
+      Math.floor((newKcal - proteinG * KCAL_PER_G.protein) / KCAL_PER_G.fat),
+    );
+    carbsKcal = Math.max(0, newKcal - proteinG * KCAL_PER_G.protein - fatG * KCAL_PER_G.fat);
   }
   return {
     kcal: newKcal,
     proteinG,
     fatG,
-    carbsG: Math.round(carbsKcal / 4),
-    fiberG: Math.round((14 * newKcal) / 1000),
+    carbsG: Math.round(carbsKcal / KCAL_PER_G.carbs),
+    fiberG: Math.round((FIBER_G_PER_1000_KCAL * newKcal) / 1000),
   };
 };
 
