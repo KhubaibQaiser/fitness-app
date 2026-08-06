@@ -4,6 +4,7 @@ import { useServerInsertedHTML } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { TamaguiProvider } from 'tamagui';
+import { ThemeModeProvider } from '@gymos/platform';
 import { tamaguiConfig } from '@gymos/ui';
 
 /** react-native-web's getSheet() is not in the public RN types. */
@@ -24,8 +25,8 @@ export const NextTamaguiProvider = ({ children }: { children: ReactNode }) => {
   });
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      {children}
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light" disableInjectCSS>
+      <ThemeModeProvider>{children}</ThemeModeProvider>
     </TamaguiProvider>
   );
 };

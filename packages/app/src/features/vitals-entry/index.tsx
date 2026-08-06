@@ -5,59 +5,67 @@ import { useRouter } from 'solito/navigation';
 import {
   Body,
   Card,
-  Input,
-  Label,
+  FormField,
+  FormSection,
   LoadingState,
   Muted,
+  PageHeader,
   PrimaryButton,
-  Row,
-  Screen,
-  Title,
-  YStack,
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
-type Field = {
-  key: string;
-  label: string;
-  unit: string;
-  priorKey:
-    | 'weightKg'
-    | 'bodyFatPct'
-    | 'waistCm'
-    | 'chestCm'
-    | 'hipCm'
-    | 'armCm'
-    | 'thighCm'
-    | 'restingHr'
-    | 'bpSystolic'
-    | 'bpDiastolic';
-};
+type FieldKey =
+  | 'weightKg'
+  | 'bodyFatPct'
+  | 'waistCm'
+  | 'chestCm'
+  | 'hipCm'
+  | 'armCm'
+  | 'thighCm'
+  | 'restingHr'
+  | 'bpSystolic'
+  | 'bpDiastolic';
 
-const FIELDS: Field[] = [
-  { key: 'weightKg', label: 'Weight', unit: 'kg', priorKey: 'weightKg' },
-  { key: 'bodyFatPct', label: 'Body fat', unit: '%', priorKey: 'bodyFatPct' },
-  { key: 'waistCm', label: 'Waist', unit: 'cm', priorKey: 'waistCm' },
-  { key: 'chestCm', label: 'Chest', unit: 'cm', priorKey: 'chestCm' },
-  { key: 'hipCm', label: 'Hip', unit: 'cm', priorKey: 'hipCm' },
-  { key: 'armCm', label: 'Arm', unit: 'cm', priorKey: 'armCm' },
-  { key: 'thighCm', label: 'Thigh', unit: 'cm', priorKey: 'thighCm' },
-  { key: 'restingHr', label: 'Resting HR', unit: 'bpm', priorKey: 'restingHr' },
-  { key: 'bpSystolic', label: 'BP systolic', unit: 'mmHg', priorKey: 'bpSystolic' },
-  { key: 'bpDiastolic', label: 'BP diastolic', unit: 'mmHg', priorKey: 'bpDiastolic' },
+type Field = { key: FieldKey; label: string; unit: string };
+
+const BODY: Field[] = [
+  { key: 'weightKg', label: 'Weight', unit: 'kg' },
+  { key: 'bodyFatPct', label: 'Body fat', unit: '%' },
 ];
 
-/** Fast one-screen vitals capture — prior values ghosted, numeric keypads. */
+const MEASURE: Field[] = [
+  { key: 'waistCm', label: 'Waist', unit: 'cm' },
+  { key: 'chestCm', label: 'Chest', unit: 'cm' },
+  { key: 'hipCm', label: 'Hip', unit: 'cm' },
+  { key: 'armCm', label: 'Arm', unit: 'cm' },
+  { key: 'thighCm', label: 'Thigh', unit: 'cm' },
+];
+
+const VITALS: Field[] = [
+  { key: 'restingHr', label: 'Resting HR', unit: 'bpm' },
+  { key: 'bpSystolic', label: 'BP systolic', unit: 'mmHg' },
+  { key: 'bpDiastolic', label: 'BP diastolic', unit: 'mmHg' },
+];
+
+/** Fast vitals capture — sectioned, prior values as hints, field-level errors. */
 export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
   const vitals = useVitals(clientId);
   const record = useRecordVitals(clientId);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  if (vitals.isPending) return <LoadingState />;
+  if (vitals.isPending) {
+    return (
+      <AppScreen>
+        <LoadingState />
+      </AppScreen>
+    );
+  }
 
   const latest = vitals.data?.items ?? [];
-  const priorOf = (key: Field['priorKey']): number | null => {
+  const priorOf = (key: FieldKey): number | null => {
     for (const row of latest) {
       const value = row[key];
       if (value !== null) return value;
@@ -66,45 +74,70 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   };
 
   const filled = Object.entries(values).filter(([, v]) => v.trim() !== '');
+
+  const validate = (): boolean => {
+    const next: Record<string, string> = {};
+    for (const [k, v] of filled) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) next[k] = 'Enter a valid number';
+      else if (n <= 0) next[k] = 'Must be greater than zero';
+    }
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const submit = () => {
     if (filled.length === 0 || record.isPending) return;
+    if (!validate()) return;
     const payload = Object.fromEntries(filled.map(([k, v]) => [k, Number(v)]));
     record.mutate(payload, { onSuccess: () => router.back() });
   };
 
+  const renderFields = (fields: Field[]) =>
+    fields.map((field) => {
+      const prior = priorOf(field.key);
+      return (
+        <FormField
+          key={field.key}
+          label={`${field.label} (${field.unit})`}
+          value={values[field.key] ?? ''}
+          onChangeText={(text) => {
+            setValues((v) => ({ ...v, [field.key]: text }));
+            setFieldErrors((e) => {
+              const { [field.key]: _, ...rest } = e;
+              return rest;
+            });
+          }}
+          placeholder={prior !== null ? `Last: ${prior}` : '—'}
+          inputMode="decimal"
+          hint={prior !== null ? `Previous: ${prior} ${field.unit}` : null}
+          error={fieldErrors[field.key] ?? null}
+        />
+      );
+    });
+
   return (
-    <Screen>
-      <Title>Record vitals</Title>
-      <Muted>Fill only what you measured — history is never overwritten.</Muted>
-      <Card gap="$3">
-        {FIELDS.map((field) => {
-          const prior = priorOf(field.priorKey);
-          return (
-            <YStack key={field.key} gap="$1">
-              <Row>
-                <Label>{field.label}</Label>
-                <Muted fontSize={12}>
-                  {prior !== null ? `last: ${prior} ${field.unit}` : field.unit}
-                </Muted>
-              </Row>
-              <Input
-                value={values[field.key] ?? ''}
-                onChangeText={(text) => setValues((v) => ({ ...v, [field.key]: text }))}
-                placeholder={prior !== null ? String(prior) : '—'}
-                inputMode="decimal"
-                size="$4"
-                aria-label={field.label}
-              />
-            </YStack>
-          );
-        })}
-        {record.isError ? <Body color="$danger">{record.error.message}</Body> : null}
+    <AppScreen>
+      <PageHeader
+        title="Record vitals"
+        subtitle="Fill only what you measured — history is never overwritten."
+      />
+      <Card gap="$5">
+        <FormSection title="Body">{renderFields(BODY)}</FormSection>
+        <FormSection title="Measurements">{renderFields(MEASURE)}</FormSection>
+        <FormSection title="Cardio">{renderFields(VITALS)}</FormSection>
+        {record.isError ? (
+          <Body color="$danger" role="alert">
+            {record.error.message}
+          </Body>
+        ) : null}
         <PrimaryButton disabled={filled.length === 0 || record.isPending} onPress={submit}>
           {record.isPending
             ? 'Saving…'
             : `Save ${filled.length || ''} measurement${filled.length === 1 ? '' : 's'}`}
         </PrimaryButton>
+        <Muted fontSize={12}>Empty fields are skipped. Prior values are never overwritten.</Muted>
       </Card>
-    </Screen>
+    </AppScreen>
   );
 };

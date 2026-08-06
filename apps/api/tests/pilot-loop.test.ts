@@ -325,6 +325,76 @@ describe('the pilot core loop', () => {
     });
     expect(conflict.status).toBe(409);
   });
+
+  it('onboards a client atomically and serves a credentials PDF', async () => {
+    const signaturePngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+    const onboard = await req('/v1/clients/onboard', {
+      method: 'POST',
+      json: {
+        client: {
+          name: 'Onboard Suite',
+          sex: 'M',
+          phone: '+923001112233',
+          email: 'onboard@example.com',
+          heightCm: 178,
+          activityLevel: 1.55,
+          medicalFlags: {
+            conditions: ['asthma'],
+            physicianClearanceRequired: true,
+          },
+          intake: {
+            signaturePngBase64,
+            signedAt: '2026-08-06T12:00:00.000Z',
+            heightDisplayUnit: 'cm',
+          },
+        },
+        vitals: { weightKg: 82, waistCm: 90 },
+        goal: { preset: 'LOSE', rate: 'STANDARD', startWeightKg: 82, targetWeightKg: 75 },
+      },
+    });
+    expect(onboard.status).toBe(200);
+    const body = (await onboard.json()) as {
+      client: { id: string; email: string | null; intake: Record<string, string> | null };
+      vitals: { weightKg: number | null };
+      goal: { preset: string };
+    };
+    expect(body.client.email).toBe('onboard@example.com');
+    expect(body.client.intake?.signedAt).toBe('2026-08-06T12:00:00.000Z');
+    expect(body.vitals.weightKg).toBe(82);
+    expect(body.goal.preset).toBe('LOSE');
+
+    const pdf = await req(`/v1/clients/${body.client.id}/credentials.pdf`);
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers.get('content-type')).toContain('application/pdf');
+    const bytes = await pdf.arrayBuffer();
+    expect(bytes.byteLength).toBeGreaterThan(500);
+    const magic = String.fromCharCode(...new Uint8Array(bytes).slice(0, 4));
+    expect(magic).toBe('%PDF');
+
+    const unsignedPdf = await req(`/v1/clients/${demoClientId}/credentials.pdf`);
+    expect(unsignedPdf.status).toBe(422);
+  });
+
+  it('creates a goal without DOB using the age-30 fallback', async () => {
+    const create = await req('/v1/clients', {
+      method: 'POST',
+      json: {
+        name: 'No DOB Client',
+        sex: 'M',
+        heightCm: 175,
+        activityLevel: 1.55,
+      },
+    });
+    expect(create.status).toBe(200);
+    const client = (await create.json()) as { id: string };
+    const goal = await req(`/v1/clients/${client.id}/goals`, {
+      method: 'POST',
+      json: { preset: 'MAINTAIN', rate: 'STANDARD', startWeightKg: 80 },
+    });
+    expect(goal.status).toBe(200);
+  });
 });
 
 describe('openapi document', () => {

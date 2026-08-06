@@ -14,6 +14,7 @@ import {
   getActiveGoal,
   getCheckIn,
   getClient,
+  getCredentialsPdfData,
   goalProgressPct,
   latestWeightKg,
   listCheckIns,
@@ -22,6 +23,7 @@ import {
   listNotes,
   listVitals,
   nextDueCheckIns,
+  onboardClient,
   recordVitals,
   setGoalStatus,
   updateClient,
@@ -46,6 +48,7 @@ import {
   putProfile,
 } from '@gymos/modules/nutrition';
 import { type TenantManifest } from '@gymos/modules/tenancy';
+import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { type Env } from './env';
 import {
   createRateLimiter,
@@ -377,6 +380,93 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'client.manage');
       const client = await createClient(db, c.get('principal'), c.req.valid('json'));
       return c.json(client);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/v1/clients/onboard',
+      operationId: 'onboardClient',
+      request: { body: json(dto.onboardClientBody) },
+      responses: {
+        200: { description: 'Onboarded client with vitals and goal', ...json(dto.anyObject) },
+        ...problemDocs(422),
+      },
+    }),
+    async (c) => {
+      authorize(c, 'client.manage');
+      const body = c.req.valid('json');
+      const result = await onboardClient(db, c.get('principal'), {
+        client: {
+          name: body.client.name,
+          sex: body.client.sex,
+          ...(body.client.dob !== undefined ? { dob: body.client.dob } : {}),
+          ...(body.client.phone !== undefined ? { phone: body.client.phone } : {}),
+          ...(body.client.email !== undefined ? { email: body.client.email } : {}),
+          heightCm: body.client.heightCm,
+          activityLevel: body.client.activityLevel,
+          ...(body.client.medicalFlags !== undefined
+            ? { medicalFlags: body.client.medicalFlags }
+            : {}),
+          intake: {
+            signaturePngBase64: body.client.intake.signaturePngBase64,
+            signedAt: body.client.intake.signedAt,
+            ...(body.client.intake.heightDisplayUnit !== undefined
+              ? { heightDisplayUnit: body.client.intake.heightDisplayUnit }
+              : {}),
+          },
+        },
+        vitals: body.vitals,
+        goal: body.goal,
+      });
+      if (!result.ok) {
+        throw new ProblemError(
+          422,
+          result.error.code,
+          'Onboarding could not complete',
+          JSON.stringify(result.error),
+        );
+      }
+      return c.json(result.value);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/v1/clients/{clientId}/credentials.pdf',
+      operationId: 'downloadCredentialsPdf',
+      request: { params: dto.clientIdParam },
+      responses: {
+        200: { description: 'Credentials PDF' },
+        ...problemDocs(404, 422),
+      },
+    }),
+    async (c) => {
+      const { clientId } = c.req.valid('param');
+      authorize(c, 'client.read', { clientId });
+      const result = await getCredentialsPdfData(db, clientId);
+      if (!result.ok) {
+        if (result.error.code === 'CLIENT_NOT_FOUND') {
+          throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
+        }
+        throw new ProblemError(
+          422,
+          'SIGNATURE_MISSING',
+          'Client has not completed e-sign onboarding',
+        );
+      }
+      const pdf = await renderCredentialsPdf(result.value);
+      const filename = credentialsFilename(result.value.client.name);
+      return new Response(new Uint8Array(pdf), {
+        status: 200,
+        headers: {
+          'content-type': 'application/pdf',
+          'content-disposition': `attachment; filename="${filename}"`,
+          'cache-control': 'no-store',
+        },
+      });
     },
   );
 

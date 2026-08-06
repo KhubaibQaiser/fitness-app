@@ -1,23 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { Link } from 'solito/link';
 import {
+  Avatar,
   Badge,
-  Body,
   Card,
+  ChevronRight,
   EmptyState,
   ErrorState,
   Input,
+  ListRow,
   LoadingState,
-  Muted,
+  PageHeader,
+  Plus,
   PrimaryButton,
-  Row,
-  Screen,
-  Title,
   XStack,
 } from '@gymos/ui';
 import { useClients } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 const REASON_TONE: Record<string, 'danger' | 'warning' | 'success' | 'neutral'> = {
   RED_FLAG: 'danger',
@@ -32,19 +33,32 @@ export const RosterScreen = () => {
   const clients = useClients(q.trim() === '' ? undefined : q.trim());
 
   return (
-    <Screen>
-      <Row>
-        <Title>Clients</Title>
-        <Link href="/clients/new">
-          <PrimaryButton size="$3">+ New</PrimaryButton>
-        </Link>
-      </Row>
+    <AppScreen>
+      <PageHeader
+        title="Clients"
+        subtitle="Search and jump into a hub"
+        action={
+          <Link href="/clients/new">
+            <PrimaryButton icon={<Plus size={18} color="$primaryFg" />} aria-label="Add client">
+              New
+            </PrimaryButton>
+          </Link>
+        }
+      />
       <Input
         value={q}
-        onChangeText={setQ}
+        onChangeText={(text) => {
+          startTransition(() => setQ(text));
+        }}
         placeholder="Search by name…"
         size="$4"
+        minHeight={48}
+        borderRadius={12}
+        borderWidth={1.5}
+        borderColor="$borderColor"
+        backgroundColor="$elevatedBg"
         aria-label="Search clients"
+        focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
       />
 
       {clients.isPending ? (
@@ -58,7 +72,7 @@ export const RosterScreen = () => {
           action={
             q ? undefined : (
               <Link href="/clients/new">
-                <PrimaryButton>Add a client</PrimaryButton>
+                <PrimaryButton icon={<Plus size={18} />}>Add a client</PrimaryButton>
               </Link>
             )
           }
@@ -66,29 +80,31 @@ export const RosterScreen = () => {
       ) : (
         clients.data.items.map((client) => (
           <Link key={client.id} href={`/clients/${client.id}`}>
-            <Card pressStyle={{ opacity: 0.9 }}>
-              <Row>
-                <Body fontWeight="700" fontSize={16}>
-                  {client.name}
-                </Body>
-                <Muted>
-                  {client.latestWeightKg !== null ? `${client.latestWeightKg} kg` : '—'}
-                </Muted>
-              </Row>
-              <XStack gap="$2" flexWrap="wrap">
-                {client.goalPreset ? <Badge tone="neutral" label={client.goalPreset} /> : null}
-                {client.attentionReasons.slice(0, 2).map((reason) => (
-                  <Badge
-                    key={reason.code}
-                    tone={REASON_TONE[reason.code] ?? 'neutral'}
-                    label={reason.code.replaceAll('_', ' ')}
-                  />
-                ))}
-              </XStack>
+            <Card interactive>
+              <ListRow
+                leading={<Avatar name={client.name} />}
+                title={client.name}
+                subtitle={
+                  client.latestWeightKg !== null ? `${client.latestWeightKg} kg` : 'No weigh-in yet'
+                }
+                trailing={
+                  <XStack gap="$2" alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+                    {client.goalPreset ? <Badge tone="neutral" label={client.goalPreset} /> : null}
+                    {client.attentionReasons.slice(0, 1).map((reason) => (
+                      <Badge
+                        key={reason.code}
+                        tone={REASON_TONE[reason.code] ?? 'neutral'}
+                        label={reason.code.replaceAll('_', ' ')}
+                      />
+                    ))}
+                    <ChevronRight size={18} color="$textMuted" />
+                  </XStack>
+                }
+              />
             </Card>
           </Link>
         ))
       )}
-    </Screen>
+    </AppScreen>
   );
 };

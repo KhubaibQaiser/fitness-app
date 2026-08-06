@@ -86,6 +86,22 @@ export const useCreateClient = () => {
   });
 };
 
+export const useOnboardClient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.clients.onboard,
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: qk.clients() });
+      invalidateClient(queryClient, data.client.id);
+    },
+  });
+};
+
+export const useDownloadCredentialsPdf = (clientId: string) =>
+  useMutation({
+    mutationFn: () => api.clients.credentialsPdf(clientId),
+  });
+
 export const useRecordVitals = (clientId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

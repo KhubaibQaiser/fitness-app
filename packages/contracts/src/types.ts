@@ -41,9 +41,15 @@ export type Client = {
   sex: 'F' | 'M';
   dob: string | null;
   phone: string | null;
+  email: string | null;
   heightCm: number | null;
   activityLevel: number | null;
-  medicalFlags: { pregnant?: boolean; conditions?: string[] } | null;
+  medicalFlags: {
+    pregnant?: boolean;
+    conditions?: string[];
+    physicianClearanceRequired?: boolean;
+  } | null;
+  intake: Record<string, string> | null;
   status: 'active' | 'archived';
   createdAt: string;
 };
@@ -86,6 +92,52 @@ export type Vitals = {
   bpSystolic: number | null;
   bpDiastolic: number | null;
   notes: string | null;
+};
+
+export type OnboardClientInput = {
+  client: {
+    name: string;
+    sex: 'F' | 'M';
+    dob?: string;
+    phone?: string;
+    email?: string;
+    heightCm: number;
+    activityLevel: 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
+    medicalFlags?: {
+      pregnant?: boolean;
+      conditions?: string[];
+      physicianClearanceRequired?: boolean;
+    };
+    intake: {
+      signaturePngBase64: string;
+      signedAt: string;
+      heightDisplayUnit?: 'cm' | 'ft_in';
+    };
+  };
+  vitals: {
+    weightKg: number;
+    bodyFatPct?: number;
+    chestCm?: number;
+    waistCm?: number;
+    hipCm?: number;
+    armCm?: number;
+    thighCm?: number;
+  };
+  goal: {
+    preset: Goal['preset'];
+    rate: Goal['rate'];
+    startWeightKg: number;
+    targetWeightKg?: number;
+    targetDate?: string;
+    checkinWeekday?: number;
+    bodyFatPct?: number;
+  };
+};
+
+export type OnboardClientResult = {
+  client: Client;
+  vitals: Vitals;
+  goal: Goal;
 };
 
 export type Restriction = {

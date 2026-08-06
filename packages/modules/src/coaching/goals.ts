@@ -7,8 +7,17 @@ import {
   type GoalRate,
   type NutritionRefusal,
 } from '@gymos/core/nutrition';
-import { isoDate, schema as s, type Db } from '@gymos/db';
+import { isoDate, schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
+
+/** Used when DOB is omitted during onboarding — Mifflin still needs an age. */
+export const DEFAULT_AGE_YEARS = 30;
+
+export const ageYearsFromDob = (dob: string | null): number => {
+  if (dob === null || dob === '') return DEFAULT_AGE_YEARS;
+  const years = Math.floor(Math.abs(DateTime.fromISO(dob).diffNow('years').years));
+  return Number.isFinite(years) && years > 0 ? years : DEFAULT_AGE_YEARS;
+};
 
 export type CreateGoalInput = {
   preset: GoalPreset;
@@ -25,22 +34,24 @@ export type GoalError =
   | { code: 'CLIENT_PROFILE_INCOMPLETE'; missing: string[] }
   | { code: 'NUTRITION_REFUSAL'; refusal: NutritionRefusal };
 
-export const createGoal = async (
-  db: Db,
-  principal: { userId: string },
-  clientId: string,
-  input: CreateGoalInput,
-): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
-  const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
-  if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
-
+const profileMissing = (client: typeof s.clients.$inferSelect): string[] => {
   const missing: string[] = [];
   if (client.heightCm === null) missing.push('heightCm');
   if (client.activityLevel === null) missing.push('activityLevel');
-  if (client.dob === null) missing.push('dob');
+  return missing;
+};
+
+/** Insert an ACTIVE goal (+ first DUE check-in). Works inside or outside a transaction. */
+export const createGoalTx = async (
+  db: DbOrTx,
+  principal: { userId: string },
+  client: typeof s.clients.$inferSelect,
+  input: CreateGoalInput,
+): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
+  const missing = profileMissing(client);
   if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
 
-  const age = Math.floor(Math.abs(DateTime.fromISO(client.dob ?? '').diffNow('years').years));
+  const age = ageYearsFromDob(client.dob);
   const activity = (client.activityLevel ?? 1.55) as 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
   const computation = computeTargets(
     {
@@ -56,62 +67,69 @@ export const createGoal = async (
   );
   if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
 
-  const goal = await db.transaction(async (tx) => {
-    await tx
-      .update(s.clientGoals)
-      .set({ status: 'SUPERSEDED' })
-      .where(and(eq(s.clientGoals.clientId, clientId), eq(s.clientGoals.status, 'ACTIVE')));
-    // Close any dangling DUE check-in from the previous goal.
-    await tx
-      .update(s.checkIns)
-      .set({ status: 'SKIPPED' })
-      .where(and(eq(s.checkIns.clientId, clientId), eq(s.checkIns.status, 'DUE')));
+  await db
+    .update(s.clientGoals)
+    .set({ status: 'SUPERSEDED' })
+    .where(and(eq(s.clientGoals.clientId, client.id), eq(s.clientGoals.status, 'ACTIVE')));
+  await db
+    .update(s.checkIns)
+    .set({ status: 'SKIPPED' })
+    .where(and(eq(s.checkIns.clientId, client.id), eq(s.checkIns.status, 'DUE')));
 
-    const weekday = input.checkinWeekday ?? 1;
-    const [created] = await tx
-      .insert(s.clientGoals)
-      .values({
-        clientId,
-        preset: input.preset,
-        rate: input.rate,
-        startDate: isoDate(DateTime.utc()),
-        startWeightKg: input.startWeightKg,
-        targetWeightKg: input.targetWeightKg ?? null,
-        targetDate: input.targetDate ?? null,
-        expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
-        initialTargets: computation.value.targets,
-        tdeeEstimate: computation.value.tdee,
-        checkinWeekday: weekday,
-        status: 'ACTIVE',
-      })
-      .returning();
-    if (!created) throw new Error('goal insert failed');
+  const weekday = input.checkinWeekday ?? 1;
+  const [created] = await db
+    .insert(s.clientGoals)
+    .values({
+      clientId: client.id,
+      preset: input.preset,
+      rate: input.rate,
+      startDate: isoDate(DateTime.utc()),
+      startWeightKg: input.startWeightKg,
+      targetWeightKg: input.targetWeightKg ?? null,
+      targetDate: input.targetDate ?? null,
+      expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
+      initialTargets: computation.value.targets,
+      tdeeEstimate: computation.value.tdee,
+      checkinWeekday: weekday,
+      status: 'ACTIVE',
+    })
+    .returning();
+  if (!created) throw new Error('goal insert failed');
 
-    // First check-in: the next occurrence of the chosen weekday (≥ tomorrow).
-    const now = DateTime.utc();
-    let next = now.plus({ days: 1 });
-    while (next.weekday % 7 !== weekday) {
-      next = next.plus({ days: 1 });
-    }
-    await tx.insert(s.checkIns).values({
-      clientId,
-      goalId: created.id,
-      scheduledFor: isoDate(next),
-      status: 'DUE',
-    });
-
-    await writeAudit(tx, {
-      actorUserId: principal.userId,
-      actorRole: 'COACH',
-      action: 'goal.create',
-      resourceType: 'client_goal',
-      resourceId: created.id,
-      after: { preset: input.preset, rate: input.rate, targets: computation.value.targets },
-    });
-    return created;
+  const now = DateTime.utc();
+  let next = now.plus({ days: 1 });
+  while (next.weekday % 7 !== weekday) {
+    next = next.plus({ days: 1 });
+  }
+  await db.insert(s.checkIns).values({
+    clientId: client.id,
+    goalId: created.id,
+    scheduledFor: isoDate(next),
+    status: 'DUE',
   });
 
-  return ok(goal);
+  await writeAudit(db, {
+    actorUserId: principal.userId,
+    actorRole: 'COACH',
+    action: 'goal.create',
+    resourceType: 'client_goal',
+    resourceId: created.id,
+    after: { preset: input.preset, rate: input.rate, targets: computation.value.targets },
+  });
+
+  return ok(created);
+};
+
+export const createGoal = async (
+  db: Db,
+  principal: { userId: string },
+  clientId: string,
+  input: CreateGoalInput,
+): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
+  const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
+  if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
+
+  return db.transaction(async (tx) => createGoalTx(tx, principal, client, input));
 };
 
 export const listGoals = async (db: Db, clientId: string) =>
