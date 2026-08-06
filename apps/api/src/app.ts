@@ -13,6 +13,7 @@ import {
   createNote,
   getActiveGoal,
   getCheckIn,
+  getCheckInDetail,
   getClient,
   getCredentialsPdfData,
   goalProgressPct,
@@ -26,6 +27,7 @@ import {
   onboardClient,
   recordVitals,
   setGoalStatus,
+  updateAndRerunCheckIn,
   updateClient,
 } from '@gymos/modules/coaching';
 import { getPilotPrincipal, type Principal } from '@gymos/modules/identity';
@@ -762,6 +764,53 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
           throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
         }
         throw new ProblemError(422, result.error.code, 'Check-in cannot be completed');
+      }
+      return c.json(result.value);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/v1/check-ins/{id}',
+      operationId: 'getCheckIn',
+      request: { params: dto.idParam },
+      responses: {
+        200: { description: 'Check-in detail', ...json(dto.anyObject) },
+        ...problemDocs(404),
+      },
+    }),
+    async (c) => {
+      const detail = await getCheckInDetail(db, c.req.valid('param').id);
+      if (!detail) throw new ProblemError(404, 'NOT_FOUND', 'Check-in not found');
+      authorize(c, 'checkin.read', { clientId: detail.clientId });
+      return c.json(detail);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'patch',
+      path: '/v1/check-ins/{id}',
+      operationId: 'updateCheckIn',
+      request: { params: dto.idParam, body: json(dto.completeCheckInBody) },
+      responses: {
+        200: { description: 'Re-run adaptive-engine verdict', ...json(dto.anyObject) },
+        ...problemDocs(404, 422),
+      },
+    }),
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const existing = await getCheckIn(db, id);
+      if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Check-in not found');
+      authorize(c, 'checkin.write', { clientId: existing.clientId });
+
+      const result = await updateAndRerunCheckIn(db, c.get('principal'), id, c.req.valid('json'));
+      if (!result.ok) {
+        if (result.error.code === 'NOT_FOUND' || result.error.code === 'CLIENT_NOT_FOUND') {
+          throw new ProblemError(404, 'NOT_FOUND', 'Check-in not found');
+        }
+        throw new ProblemError(422, result.error.code, 'Check-in cannot be updated');
       }
       return c.json(result.value);
     },

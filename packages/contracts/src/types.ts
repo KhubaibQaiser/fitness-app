@@ -189,10 +189,13 @@ export type CheckIn = {
   goalId: string;
   scheduledFor: string;
   completedAt: string | null;
+  vitalsId: string | null;
   adherenceRating: number | null;
   coachNotes: string | null;
   engineOutput: Verdict | null;
   status: 'DUE' | 'COMPLETED' | 'SKIPPED';
+  /** Present on GET /v1/check-ins/{id} when a vitals row is linked. */
+  weightKg?: number | null;
 };
 
 export type DueCheckIn = {
