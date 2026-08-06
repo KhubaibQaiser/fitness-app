@@ -83,7 +83,7 @@ export const seed = async (db: Db): Promise<SeedResult> => {
       heightCm: 175,
       activityLevel: 1.55,
       status: 'active',
-      intake: { source: 'seed', goal: 'Lose ~8 kg for a wedding in 4 months' },
+      intake: null,
     })
     .returning();
   if (!demo) throw new Error('demo client insert failed');

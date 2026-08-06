@@ -356,7 +356,7 @@ describe('the pilot core loop', () => {
     });
     expect(onboard.status).toBe(200);
     const body = (await onboard.json()) as {
-      client: { id: string; email: string | null; intake: Record<string, string> | null };
+      client: { id: string; email: string | null; intake: { signedAt?: string } | null };
       vitals: { weightKg: number | null };
       goal: { preset: string };
     };

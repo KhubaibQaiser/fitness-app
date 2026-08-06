@@ -4,6 +4,10 @@
  * with a CI drift gate (plan §9); the transport below already matches it.
  */
 
+import { type ClientIntake, type SignedClientIntake } from '@gymos/core';
+
+export type { ClientIntake, SignedClientIntake };
+
 export type PublicConfig = {
   appName: string;
   colors: { primary: string; accent: string };
@@ -49,7 +53,7 @@ export type Client = {
     conditions?: string[];
     physicianClearanceRequired?: boolean;
   } | null;
-  intake: Record<string, string> | null;
+  intake: ClientIntake | null;
   status: 'active' | 'archived';
   createdAt: string;
 };
@@ -108,11 +112,7 @@ export type OnboardClientInput = {
       conditions?: string[];
       physicianClearanceRequired?: boolean;
     };
-    intake: {
-      signaturePngBase64: string;
-      signedAt: string;
-      heightDisplayUnit?: 'cm' | 'ft_in';
-    };
+    intake: SignedClientIntake;
   };
   vitals: {
     weightKg: number;
