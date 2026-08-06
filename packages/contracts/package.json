@@ -1,0 +1,14 @@
+{
+  "name": "@gymos/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API contract: committed OpenAPI spec + typed client. The repo-split seam.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi.json": "./openapi/openapi.v1.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
