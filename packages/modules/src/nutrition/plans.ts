@@ -37,6 +37,7 @@ export type GenerateOptions = {
   kind: 'INITIAL' | 'ADJUSTMENT';
   targetsOverride?: MacroTargets;
   override?: { reason: string };
+  mealCount?: 3 | 4 | 5;
   ai: AiConfig;
 };
 
@@ -67,6 +68,7 @@ export const generatePlan = async (
 
   const profile = await getActiveProfile(db, clientId);
   const restrictions = profile?.restrictions ?? [];
+  const mealCount = options.mealCount ?? manifest.aiConfig.mealCount;
 
   // 1. Safety gates — blocked unless an explicit, logged coach override exists.
   const gateReasons = safetyGateReasons(client, restrictions);
@@ -77,7 +79,7 @@ export const generatePlan = async (
       kind: options.kind,
       status: 'BLOCKED_REQUIRES_OVERRIDE',
       inputs: { gateReasons },
-      config: { mealCount: manifest.aiConfig.mealCount },
+      config: { mealCount },
     });
     return err({ code: 'BLOCKED_REQUIRES_OVERRIDE', reasons: gateReasons });
   }
@@ -144,7 +146,7 @@ export const generatePlan = async (
         restrictionCodes: restrictions.map((r) => r.code),
       },
       config: {
-        mealCount: manifest.aiConfig.mealCount,
+        mealCount,
         kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
         macroTolerancePct: manifest.aiConfig.macroTolerancePct,
         budgetTier: manifest.aiConfig.budgetTier,
@@ -170,7 +172,7 @@ export const generatePlan = async (
 
   const candidates = await candidatesForRestrictions(db, restrictions, manifest);
   const solved = solveWeek(targets, candidates, {
-    mealCount: manifest.aiConfig.mealCount,
+    mealCount,
     kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
     macroTolerancePct: manifest.aiConfig.macroTolerancePct,
     seed: generation.id,
