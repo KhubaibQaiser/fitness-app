@@ -6,15 +6,20 @@ WORKDIR /repo
 
 # Install with the full workspace context (source-exports monorepo, tsx runtime).
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+# Every workspace package.json must be present for --frozen-lockfile (lockfile importers).
 COPY apps/api/package.json apps/api/
 COPY apps/worker/package.json apps/worker/
+COPY apps/web/package.json apps/web/
 COPY packages/core/package.json packages/core/
 COPY packages/db/package.json packages/db/
 COPY packages/ai/package.json packages/ai/
 COPY packages/modules/package.json packages/modules/
 COPY packages/contracts/package.json packages/contracts/
+COPY packages/ui/package.json packages/ui/
+COPY packages/app/package.json packages/app/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --filter @gymos/api... --filter @gymos/worker...
+    pnpm install --frozen-lockfile --ignore-scripts \
+      --filter @gymos/api... --filter @gymos/worker...
 
 COPY tsconfig.base.json ./
 COPY apps/api apps/api
