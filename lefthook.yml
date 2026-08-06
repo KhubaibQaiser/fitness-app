@@ -1,0 +1,17 @@
+# Git hooks — the local half of the security/quality gate (CI is the enforcing half).
+pre-commit:
+  parallel: true
+  commands:
+    secrets:
+      run: PATH="$HOME/.tools/bin:$PATH" gitleaks git --pre-commit --staged --redact
+    format:
+      glob: '*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}'
+      run: pnpm exec prettier --check {staged_files}
+    lint:
+      glob: '*.{ts,tsx}'
+      run: pnpm exec eslint --max-warnings 0 {staged_files}
+
+pre-push:
+  commands:
+    secrets-history:
+      run: PATH="$HOME/.tools/bin:$PATH" gitleaks git --redact
