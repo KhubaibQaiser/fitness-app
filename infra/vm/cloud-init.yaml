@@ -1,0 +1,43 @@
+#cloud-config
+# GymOS pilot VM (Oracle Always Free VM.Standard.A1.Flex, Ubuntu 24.04).
+# The VM is a stateless pet: tenant data lives on Neon, media on R2 —
+# rebuild from this file in <30 minutes with zero data loss.
+
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - fail2ban
+  - unattended-upgrades
+
+write_files:
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      maxretry = 5
+      bantime = 1h
+
+  - path: /etc/sysctl.d/99-gymos.conf
+    content: |
+      net.core.somaxconn = 1024
+      vm.swappiness = 10
+
+runcmd:
+  # Docker (official convenience script pins the stable channel)
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker ubuntu
+  # 2G swap — headroom for image builds on the 12GB box
+  - fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  # App directory; deploy writes /srv/gymos/.env (root-only) and compose files
+  - mkdir -p /srv/gymos/models && chown -R ubuntu:ubuntu /srv/gymos
+  # Firewall: SSH + HTTPS (+80 for redirects) only. Oracle security lists must match.
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+  - systemctl enable --now fail2ban
