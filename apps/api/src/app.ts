@@ -161,7 +161,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     return c.json({ ok: true });
   };
 
-  app.post('/enter', async (c) => {
+  app.post('/gate/enter', async (c) => {
     const parsed = dto.enterBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { key }');
@@ -170,7 +170,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
   });
 
   // Link flow: the coach bookmarks /enter?key=… once per device.
-  app.get('/enter', async (c) => {
+  app.get('/gate/enter', async (c) => {
     const key = c.req.query('key');
     if (key === undefined) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Missing ?key');

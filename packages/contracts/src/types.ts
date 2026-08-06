@@ -121,6 +121,7 @@ export type PlanItem = {
   mealIndex: number;
   mealSlot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   mealName: string;
+  foodName: string;
   foodId: string;
   portionGrams: number;
   macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };

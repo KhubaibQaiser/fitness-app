@@ -66,10 +66,10 @@ describe('access gate', () => {
   });
 
   it('rejects a wrong key and accepts the right one', async () => {
-    const bad = await req('/enter', { method: 'POST', json: { key: 'wrong-key-000000' } });
+    const bad = await req('/gate/enter', { method: 'POST', json: { key: 'wrong-key-000000' } });
     expect(bad.status).toBe(401);
 
-    const good = await req('/enter', { method: 'POST', json: { key: ACCESS_KEY } });
+    const good = await req('/gate/enter', { method: 'POST', json: { key: ACCESS_KEY } });
     expect(good.status).toBe(200);
     const setCookie = good.headers.get('set-cookie');
     expect(setCookie).toContain('gymos_gate=');
@@ -250,14 +250,11 @@ describe('the pilot core loop', () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { verdict: { type: string; confidence: number } };
-    expect([
-      'HOLD',
-      'ADJUST_TARGETS',
-      'ADHERENCE_FOCUS',
-      'PLATEAU_PROTOCOL',
-      'INSUFFICIENT_DATA',
-      'REFER_REVIEW',
-    ]).toContain(body.verdict.type);
+    // The seed provides 8 weeks of weigh-ins: INSUFFICIENT_DATA here would mean
+    // the timestamp parsing regressed (Postgres SQL-format vs strict ISO).
+    expect(['HOLD', 'ADJUST_TARGETS', 'ADHERENCE_FOCUS', 'PLATEAU_PROTOCOL']).toContain(
+      body.verdict.type,
+    );
     expect(body.verdict.confidence).toBeGreaterThanOrEqual(0);
     expect(body.verdict.confidence).toBeLessThanOrEqual(1);
 

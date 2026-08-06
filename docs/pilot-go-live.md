@@ -54,7 +54,7 @@ AI_MODE=fallback
       auto-rollback.
 - [ ] Seed once: from your machine
       `DATABASE_URL=<neon direct url> pnpm --filter @gymos/db db:seed`
-- [ ] Open `https://<host>/enter?key=<PILOT_ACCESS_KEY>` on the coach's phone,
+- [ ] Open `https://<host>/gate/enter?key=<PILOT_ACCESS_KEY>` on the coach's phone,
       add to home screen (PWA).
 
 ## 5. Enabling the local LLM later (optional, still $0)
