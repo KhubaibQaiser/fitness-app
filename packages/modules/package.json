@@ -24,6 +24,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@types/luxon": "^3.7.1"
   }
 }

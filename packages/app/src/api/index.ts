@@ -18,6 +18,7 @@ export const qk = {
   goals: (clientId: string) => ['goals', clientId] as const,
   dueCheckIns: ['check-ins', 'due'] as const,
   clientCheckIns: (clientId: string) => ['check-ins', clientId] as const,
+  checkIn: (id: string) => ['check-ins', 'one', id] as const,
   plans: (clientId: string) => ['plans', clientId] as const,
   plan: (planId: string) => ['plan', planId] as const,
   foods: (q?: string) => ['foods', q ?? ''] as const,
@@ -46,6 +47,12 @@ export const useClientCheckIns = (clientId: string) =>
   useQuery({
     queryKey: qk.clientCheckIns(clientId),
     queryFn: () => api.checkIns.forClient(clientId),
+  });
+
+export const useCheckIn = (checkInId: string) =>
+  useQuery({
+    queryKey: qk.checkIn(checkInId),
+    queryFn: () => api.checkIns.get(checkInId),
   });
 
 export const usePlan = (planId: string | null) =>
@@ -134,6 +141,23 @@ export const useCompleteCheckIn = (clientId: string) => {
     mutationFn: (input: Parameters<typeof api.checkIns.complete>[1]) =>
       api.checkIns.complete(clientId, input),
     onSuccess: () => invalidateClient(queryClient, clientId),
+  });
+};
+
+export const useUpdateCheckIn = (clientId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      checkInId,
+      input,
+    }: {
+      checkInId: string;
+      input: Parameters<typeof api.checkIns.update>[1];
+    }) => api.checkIns.update(checkInId, input),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: qk.checkIn(vars.checkInId) });
+      invalidateClient(queryClient, clientId);
+    },
   });
 };
 

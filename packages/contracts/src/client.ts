@@ -143,6 +143,7 @@ export const api = {
     due: () => request<{ items: T.DueCheckIn[] }>('GET', '/v1/check-ins'),
     forClient: (clientId: string) =>
       request<{ items: T.CheckIn[] }>('GET', `/v1/clients/${clientId}/check-ins`),
+    get: (checkInId: string) => request<T.CheckIn>('GET', `/v1/check-ins/${checkInId}`),
     complete: (
       clientId: string,
       input: {
@@ -156,6 +157,19 @@ export const api = {
         `/v1/clients/${clientId}/check-ins`,
         input,
         { idempotent: true },
+      ),
+    update: (
+      checkInId: string,
+      input: {
+        vitals?: Record<string, number | string | undefined>;
+        adherenceRating?: 1 | 2 | 3 | 4 | 5;
+        coachNotes?: string;
+      },
+    ) =>
+      request<{ checkInId: string; verdict: T.Verdict; vitalsId: string | null }>(
+        'PATCH',
+        `/v1/check-ins/${checkInId}`,
+        input,
       ),
     apply: (checkInId: string) =>
       request<T.ApplyResult>('POST', `/v1/check-ins/${checkInId}/apply`, undefined, {

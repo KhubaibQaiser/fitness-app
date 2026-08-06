@@ -204,6 +204,11 @@
                     "type": "string",
                     "maxLength": 32
                   },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
                   "heightCm": {
                     "type": "number",
                     "minimum": 100,
@@ -244,6 +249,9 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "physicianClearanceRequired": {
+                        "type": "boolean"
                       }
                     }
                   },
@@ -262,6 +270,263 @@
         "responses": {
           "200": {
             "description": "Created client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/clients/onboard": {
+      "post": {
+        "operationId": "onboardClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "sex": {
+                        "type": "string",
+                        "enum": ["F", "M"]
+                      },
+                      "dob": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                      },
+                      "email": {
+                        "type": "string",
+                        "maxLength": 254,
+                        "format": "email"
+                      },
+                      "heightCm": {
+                        "type": "number",
+                        "minimum": 100,
+                        "maximum": 230
+                      },
+                      "activityLevel": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "enum": [1.2]
+                          },
+                          {
+                            "type": "number",
+                            "enum": [1.375]
+                          },
+                          {
+                            "type": "number",
+                            "enum": [1.55]
+                          },
+                          {
+                            "type": "number",
+                            "enum": [1.725]
+                          },
+                          {
+                            "type": "number",
+                            "enum": [1.9]
+                          }
+                        ]
+                      },
+                      "medicalFlags": {
+                        "type": "object",
+                        "properties": {
+                          "pregnant": {
+                            "type": "boolean"
+                          },
+                          "conditions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "physicianClearanceRequired": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "intake": {
+                        "type": "object",
+                        "properties": {
+                          "signaturePngBase64": {
+                            "type": "string",
+                            "minLength": 40,
+                            "maxLength": 2000000
+                          },
+                          "signedAt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "heightDisplayUnit": {
+                            "type": "string",
+                            "enum": ["cm", "ft_in"]
+                          }
+                        },
+                        "required": ["signaturePngBase64", "signedAt"]
+                      }
+                    },
+                    "required": ["name", "sex", "heightCm", "activityLevel", "intake"]
+                  },
+                  "vitals": {
+                    "type": "object",
+                    "properties": {
+                      "weightKg": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 400
+                      },
+                      "bodyFatPct": {
+                        "type": "number",
+                        "minimum": 2,
+                        "maximum": 70
+                      },
+                      "chestCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "waistCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "hipCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "armCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
+                      "thighCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      }
+                    },
+                    "required": ["weightKg"]
+                  },
+                  "goal": {
+                    "type": "object",
+                    "properties": {
+                      "preset": {
+                        "type": "string",
+                        "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP"]
+                      },
+                      "rate": {
+                        "type": "string",
+                        "enum": ["CONSERVATIVE", "STANDARD", "AGGRESSIVE"]
+                      },
+                      "startWeightKg": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 400
+                      },
+                      "targetWeightKg": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 400
+                      },
+                      "targetDate": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "checkinWeekday": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 6
+                      },
+                      "bodyFatPct": {
+                        "type": "number",
+                        "minimum": 2,
+                        "maximum": 70
+                      }
+                    },
+                    "required": ["preset", "rate", "startWeightKg"]
+                  }
+                },
+                "required": ["client", "vitals", "goal"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Onboarded client with vitals and goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/clients/{clientId}/credentials.pdf": {
+      "get": {
+        "operationId": "downloadCredentialsPdf",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credentials PDF"
+          },
+          "404": {
+            "description": "Problem details",
             "content": {
               "application/json": {
                 "schema": {
@@ -360,6 +625,11 @@
                     "type": "string",
                     "maxLength": 32
                   },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
                   "heightCm": {
                     "type": "number",
                     "minimum": 100,
@@ -400,6 +670,9 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "physicianClearanceRequired": {
+                        "type": "boolean"
                       }
                     }
                   },
@@ -1205,6 +1478,202 @@
         }
       }
     },
+    "/v1/check-ins/{id}": {
+      "get": {
+        "operationId": "getCheckIn",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check-in detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCheckIn",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vitals": {
+                    "type": "object",
+                    "properties": {
+                      "recordedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "weightKg": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 400
+                      },
+                      "bodyFatPct": {
+                        "type": "number",
+                        "minimum": 2,
+                        "maximum": 70
+                      },
+                      "muscleMassKg": {
+                        "type": "number",
+                        "minimum": 5,
+                        "maximum": 120
+                      },
+                      "chestCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "waistCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "hipCm": {
+                        "type": "number",
+                        "minimum": 30,
+                        "maximum": 220
+                      },
+                      "armCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
+                      "thighCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "restingHr": {
+                        "type": "integer",
+                        "minimum": 25,
+                        "maximum": 220
+                      },
+                      "bpSystolic": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 260
+                      },
+                      "bpDiastolic": {
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 180
+                      },
+                      "notes": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    }
+                  },
+                  "adherenceRating": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "enum": [1]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [2]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [3]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [4]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [5]
+                      }
+                    ]
+                  },
+                  "coachNotes": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Re-run adaptive-engine verdict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/check-ins/{id}/apply": {
       "post": {
         "operationId": "applyAdjustment",
@@ -1572,8 +2041,20 @@
                     "required": ["reason"]
                   },
                   "mealCount": {
-                    "type": "integer",
-                    "enum": [3, 4, 5],
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "enum": [3]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [4]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [5]
+                      }
+                    ],
                     "default": 3
                   }
                 }
