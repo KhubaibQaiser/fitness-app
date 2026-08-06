@@ -22,3 +22,22 @@ export const isoDate = (dt: DateTime): string => {
   if (value === null) throw new Error('invalid DateTime');
   return value;
 };
+
+/**
+ * Parse a Postgres timestamptz string. Drivers return SQL format
+ * ('2026-08-06 10:46:52.235+00'), not strict ISO — fromISO alone
+ * silently fails on it, so always try both.
+ */
+export const parseDbTimestamp = (value: string): DateTime => {
+  const isoParsed = DateTime.fromISO(value, { setZone: true });
+  if (isoParsed.isValid) return isoParsed;
+  const sqlParsed = DateTime.fromSQL(value, { setZone: true });
+  if (sqlParsed.isValid) return sqlParsed;
+  throw new Error(`unparseable timestamp from database: ${value}`);
+};
+
+/** Strict ISO (with 'T') from a database timestamptz string. */
+export const toStrictIso = (value: string): string => iso(parseDbTimestamp(value).toUTC());
+
+/** Epoch milliseconds from a database timestamptz string. */
+export const dbTimestampToMillis = (value: string): number => parseDbTimestamp(value).toMillis();

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { type ReactNode } from 'react';
 import { AppProviders } from '@gymos/app/provider';
 import { NextTamaguiProvider } from '../components/next-tamagui-provider';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'GymOS Coach',
