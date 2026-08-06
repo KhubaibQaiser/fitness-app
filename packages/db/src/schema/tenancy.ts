@@ -81,15 +81,20 @@ export const clients = pgTable(
     sex: sexEnum('sex').notNull(),
     dob: text('dob'), // ISO date; nullable — age gates use it when present
     phone: text('phone'),
+    email: text('email'),
     heightCm: numeric('height_cm', { precision: 5, scale: 1, mode: 'number' }),
     activityLevel: numeric('activity_level', { precision: 4, scale: 3, mode: 'number' }),
-    /** { pregnant?: boolean; conditions?: string[] } — drives safety gates. */
+    /** Drives safety gates + onboarding medical answers. */
     medicalFlags: jsonb('medical_flags').$type<{
       pregnant?: boolean | undefined;
       conditions?: string[] | undefined;
+      physicianClearanceRequired?: boolean | undefined;
     }>(),
     status: clientStatusEnum('status').notNull().default('active'),
-    /** Intake questionnaire answers, free-form by design. */
+    /**
+     * Intake meta (e-sign, display prefs). Keys are strings by design.
+     * Known: signaturePngBase64, signedAt, heightDisplayUnit.
+     */
     intake: jsonb('intake').$type<Record<string, string>>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

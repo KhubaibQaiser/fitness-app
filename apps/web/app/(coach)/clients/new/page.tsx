@@ -1,6 +1,6 @@
 'use client';
 
-import { ClientFormScreen } from '@gymos/app/features/client-form';
+import { ClientOnboardingScreen } from '@gymos/app/features/client-onboarding';
 
-const Page = () => <ClientFormScreen />;
+const Page = () => <ClientOnboardingScreen />;
 export default Page;

@@ -69,13 +69,37 @@ export const api = {
       sex: 'F' | 'M';
       dob?: string;
       phone?: string;
+      email?: string;
       heightCm?: number;
       activityLevel?: number;
-      medicalFlags?: { pregnant?: boolean; conditions?: string[] };
+      medicalFlags?: {
+        pregnant?: boolean;
+        conditions?: string[];
+        physicianClearanceRequired?: boolean;
+      };
     }) => request<T.Client>('POST', '/v1/clients', input, { idempotent: true }),
+    onboard: (input: T.OnboardClientInput) =>
+      request<T.OnboardClientResult>('POST', '/v1/clients/onboard', input, { idempotent: true }),
     detail: (clientId: string) => request<T.ClientDetail>('GET', `/v1/clients/${clientId}`),
     update: (clientId: string, input: Record<string, unknown>) =>
       request<T.Client>('PATCH', `/v1/clients/${clientId}`, input),
+    credentialsPdf: async (clientId: string): Promise<Blob> => {
+      const response = await fetch(`/v1/clients/${clientId}/credentials.pdf`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'x-client-version': 'pilot-web' },
+      });
+      if (!response.ok) {
+        const problem = (await response.json().catch(() => null)) as T.Problem | null;
+        throw new ApiError(
+          response.status,
+          problem?.code ?? 'UNKNOWN',
+          problem?.title ?? response.statusText,
+          problem?.detail,
+        );
+      }
+      return response.blob();
+    },
   },
 
   vitals: {

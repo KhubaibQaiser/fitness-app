@@ -2,19 +2,18 @@
 
 import { Link } from 'solito/link';
 import {
+  Avatar,
   Badge,
-  Body,
   Card,
+  ChevronRight,
   EmptyState,
   ErrorState,
+  ListRow,
   LoadingState,
-  Muted,
-  Row,
-  Screen,
-  SectionTitle,
-  Title,
+  PageHeader,
 } from '@gymos/ui';
 import { useClients, useDueCheckIns, useMe } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 /** Coach home: what needs attention today, nothing else. */
 export const HomeScreen = () => {
@@ -22,12 +21,18 @@ export const HomeScreen = () => {
   const due = useDueCheckIns();
   const clients = useClients();
 
-  if (due.isPending || clients.isPending) return <LoadingState />;
+  if (due.isPending || clients.isPending) {
+    return (
+      <AppScreen>
+        <LoadingState />
+      </AppScreen>
+    );
+  }
   if (due.isError) {
     return (
-      <Screen>
+      <AppScreen>
         <ErrorState message="Could not load your day." retry={() => void due.refetch()} />
-      </Screen>
+      </AppScreen>
     );
   }
 
@@ -35,52 +40,85 @@ export const HomeScreen = () => {
   const atRisk = (clients.data?.items ?? []).filter((c) =>
     c.attentionReasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG'),
   );
+  const firstName = me.data?.name.split(' ')[0] ?? 'Coach';
 
   return (
-    <Screen>
-      <Title>Salaam, {me.data?.name.split(' ')[0] ?? 'Coach'} 👋</Title>
+    <AppScreen>
+      <PageHeader title={`Salaam, ${firstName}`} subtitle="Your coaching day at a glance" />
 
-      <SectionTitle>Check-ins due</SectionTitle>
+      <Card gap="$3" padding="$4">
+        <ListRow
+          title="Check-ins due"
+          subtitle={
+            dueItems.length === 0
+              ? 'All caught up'
+              : `${dueItems.length} client${dueItems.length === 1 ? '' : 's'} waiting`
+          }
+          trailing={
+            dueItems.some((i) => i.overdueDays > 0) ? (
+              <Badge tone="danger" label="Overdue" />
+            ) : dueItems.length > 0 ? (
+              <Badge tone="warning" label="Due" />
+            ) : (
+              <Badge tone="success" label="Clear" />
+            )
+          }
+        />
+      </Card>
+
       {dueItems.length === 0 ? (
-        <EmptyState title="All caught up" hint="No check-ins due today." />
+        <EmptyState title="All caught up" hint="No check-ins due today. Nice work." />
       ) : (
         dueItems.map((item) => (
           <Link key={item.id} href={`/clients/${item.clientId}/check-in`}>
-            <Card pressStyle={{ opacity: 0.9 }}>
-              <Row>
-                <Body fontWeight="700">{item.clientName}</Body>
-                {item.overdueDays > 0 ? (
-                  <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
-                ) : (
-                  <Badge tone="success" label="Due today" />
-                )}
-              </Row>
-              <Muted>Weekly check-in · scheduled {item.scheduledFor}</Muted>
+            <Card interactive>
+              <ListRow
+                leading={<Avatar name={item.clientName} />}
+                title={item.clientName}
+                subtitle={`Weekly check-in · scheduled ${item.scheduledFor}`}
+                trailing={
+                  item.overdueDays > 0 ? (
+                    <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
+                  ) : (
+                    <Badge tone="success" label="Due today" />
+                  )
+                }
+              />
             </Card>
           </Link>
         ))
       )}
 
-      <SectionTitle>Needs attention</SectionTitle>
+      <PageHeader title="Needs attention" subtitle="Off-track or red-flag clients" />
       {atRisk.length === 0 ? (
-        <Muted>No off-track or red-flag clients right now.</Muted>
+        <EmptyState
+          title="No flags right now"
+          hint="Off-track and red-flag clients will land here."
+        />
       ) : (
         atRisk.map((client) => (
           <Link key={client.id} href={`/clients/${client.id}`}>
-            <Card pressStyle={{ opacity: 0.9 }}>
-              <Row>
-                <Body fontWeight="700">{client.name}</Body>
-                {client.attentionReasons[0] ? (
-                  <Badge
-                    tone={client.attentionReasons[0].code === 'RED_FLAG' ? 'danger' : 'warning'}
-                    label={client.attentionReasons[0].code.replaceAll('_', ' ')}
-                  />
-                ) : null}
-              </Row>
+            <Card interactive>
+              <ListRow
+                leading={<Avatar name={client.name} />}
+                title={client.name}
+                subtitle={client.attentionReasons[0]?.code.replaceAll('_', ' ') ?? null}
+                trailing={
+                  <>
+                    {client.attentionReasons[0] ? (
+                      <Badge
+                        tone={client.attentionReasons[0].code === 'RED_FLAG' ? 'danger' : 'warning'}
+                        label={client.attentionReasons[0].code.replaceAll('_', ' ')}
+                      />
+                    ) : null}
+                    <ChevronRight size={18} color="$textMuted" />
+                  </>
+                }
+              />
             </Card>
           </Link>
         ))
       )}
-    </Screen>
+    </AppScreen>
   );
 };

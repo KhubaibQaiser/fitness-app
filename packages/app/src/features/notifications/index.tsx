@@ -10,11 +10,12 @@ import {
   GhostButton,
   LoadingState,
   Muted,
+  PageHeader,
   Row,
-  Screen,
-  Title,
+  YStack,
 } from '@gymos/ui';
 import { useMarkAllRead, useNotifications } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 const TYPE_LABEL: Record<string, string> = {
   CHECKIN_DUE: 'Check-in due',
@@ -31,27 +32,36 @@ export const NotificationsScreen = () => {
   const notifications = useNotifications();
   const markAll = useMarkAllRead();
 
-  if (notifications.isPending) return <LoadingState />;
+  if (notifications.isPending) {
+    return (
+      <AppScreen>
+        <LoadingState />
+      </AppScreen>
+    );
+  }
   if (notifications.isError) {
     return (
-      <Screen>
+      <AppScreen>
         <ErrorState message="Could not load alerts." retry={() => void notifications.refetch()} />
-      </Screen>
+      </AppScreen>
     );
   }
 
   const items = notifications.data.items;
 
   return (
-    <Screen>
-      <Row>
-        <Title>Alerts</Title>
-        {items.some((n) => n.readAt === null) ? (
-          <GhostButton size="$3" onPress={() => markAll.mutate()}>
-            Mark all read
-          </GhostButton>
-        ) : null}
-      </Row>
+    <AppScreen>
+      <PageHeader
+        title="Alerts"
+        subtitle="Check-ins, safety flags, plan blocks"
+        action={
+          items.some((n) => n.readAt === null) ? (
+            <GhostButton size="$3" minHeight={44} onPress={() => markAll.mutate()}>
+              Mark all read
+            </GhostButton>
+          ) : null
+        }
+      />
       {items.length === 0 ? (
         <EmptyState title="No alerts" hint="Check-in reminders and safety flags land here." />
       ) : (
@@ -59,19 +69,19 @@ export const NotificationsScreen = () => {
           const clientName = typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
           const body = (
             <Card
-              key={n.id}
-              opacity={n.readAt === null ? 1 : 0.6}
+              interactive={n.deepLink !== null}
+              opacity={n.readAt === null ? 1 : 0.65}
               borderLeftWidth={4}
               borderLeftColor={n.priority === 'HIGH' ? '$danger' : '$primary'}
             >
               <Row>
-                <Body fontWeight={n.readAt === null ? '800' : '500'}>
+                <Body fontWeight={n.readAt === null ? '800' : '500'} flex={1}>
                   {TYPE_LABEL[n.type] ?? n.type}
                 </Body>
                 {n.priority === 'HIGH' ? <Badge tone="danger" label="HIGH" /> : null}
               </Row>
               {clientName !== null ? <Muted>{clientName}</Muted> : null}
-              <Muted fontSize={11}>{new Date(n.createdAt).toLocaleString()}</Muted>
+              <Muted fontSize={12}>{new Date(n.createdAt).toLocaleString()}</Muted>
             </Card>
           );
           return n.deepLink !== null ? (
@@ -79,10 +89,10 @@ export const NotificationsScreen = () => {
               {body}
             </Link>
           ) : (
-            body
+            <YStack key={n.id}>{body}</YStack>
           );
         })
       )}
-    </Screen>
+    </AppScreen>
   );
 };

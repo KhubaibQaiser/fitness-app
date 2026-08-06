@@ -7,16 +7,17 @@ import {
   Badge,
   Body,
   Card,
+  ErrorState,
   GhostButton,
   LoadingState,
   Muted,
+  PageHeader,
   PrimaryButton,
-  Screen,
   SectionTitle,
-  Title,
   XStack,
 } from '@gymos/ui';
 import { useClientDetail, usePutDietary } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 const ALLERGENS = [
   'peanut',
@@ -56,7 +57,20 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     setLoadedVersion(version);
   }, [detail.data, loadedVersion]);
 
-  if (detail.isPending) return <LoadingState />;
+  if (detail.isPending) {
+    return (
+      <AppScreen>
+        <LoadingState />
+      </AppScreen>
+    );
+  }
+  if (detail.isError) {
+    return (
+      <AppScreen>
+        <ErrorState message="Could not load dietary profile." retry={() => void detail.refetch()} />
+      </AppScreen>
+    );
+  }
 
   const toggle = (code: string, type: Restriction['type']) => {
     setSelection((current) => {
@@ -72,7 +86,6 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     put.mutate([...selection.values()], {
       onSuccess: (result) => {
         if (!result.planFlagged) router.back();
-        // If the plan was flagged we stay put and show the warning below.
       },
     });
   };
@@ -87,10 +100,12 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     return (
       <GhostButton
         key={code}
-        size="$3"
+        minHeight={44}
         onPress={() => toggle(code, type)}
         backgroundColor={active ? (tone === 'danger' ? '$danger' : '$primary') : 'transparent'}
-        color={active ? 'white' : '$color'}
+        color={active ? (tone === 'danger' ? '$dangerFg' : '$primaryFg') : '$color'}
+        borderColor={active ? (tone === 'danger' ? '$danger' : '$primary') : '$borderColor'}
+        aria-pressed={active}
       >
         {label}
       </GhostButton>
@@ -98,12 +113,11 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
   };
 
   return (
-    <Screen>
-      <Title>Dietary profile</Title>
-      <Muted>
-        Version {profile?.version ?? 0} · every change is versioned and instantly re-validates the
-        published plan.
-      </Muted>
+    <AppScreen>
+      <PageHeader
+        title="Dietary profile"
+        subtitle={`Version ${profile?.version ?? 0} · changes re-validate the live plan`}
+      />
 
       <SectionTitle>Severe allergies</SectionTitle>
       <Card>
@@ -124,7 +138,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
       </Card>
 
       {put.data?.planFlagged ? (
-        <Card borderColor="$danger" borderWidth={2} gap="$2">
+        <Card tone="danger" gap="$2">
           <Body color="$danger" fontWeight="800">
             The published plan violates the new restrictions.
           </Body>
@@ -132,16 +146,19 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
             It has been blocked (NEEDS_REVIEW) and flagged — regenerate or edit it before the client
             follows it further.
           </Body>
-          <XStack gap="$2">
-            <Badge tone="danger" label="Plan blocked" />
-          </XStack>
+          <Badge tone="danger" label="Plan blocked" />
         </Card>
       ) : null}
 
-      {put.isError ? <Body color="$danger">{put.error.message}</Body> : null}
+      {put.isError ? (
+        <Body color="$danger" role="alert">
+          {put.error.message}
+        </Body>
+      ) : null}
       <PrimaryButton disabled={put.isPending} onPress={save}>
         {put.isPending ? 'Saving & re-validating…' : 'Save profile'}
       </PrimaryButton>
-    </Screen>
+      <Muted fontSize={12}>Severe allergies are hard blocks in the meal engine.</Muted>
+    </AppScreen>
   );
 };

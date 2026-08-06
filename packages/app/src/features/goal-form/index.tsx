@@ -6,23 +6,22 @@ import { ApiError } from '@gymos/contracts';
 import {
   Body,
   Card,
+  FormField,
   GhostButton,
-  Input,
-  Label,
   Muted,
+  PageHeader,
   PrimaryButton,
-  Screen,
-  Title,
-  XStack,
+  SegmentedControl,
   YStack,
 } from '@gymos/ui';
 import { useClientDetail, useCreateGoal } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 const PRESETS = [
   { value: 'LOSE', label: 'Lose fat' },
   { value: 'RECOMP', label: 'Recomp' },
   { value: 'MAINTAIN', label: 'Maintain' },
-  { value: 'GAIN', label: 'Gain muscle' },
+  { value: 'GAIN', label: 'Gain' },
 ] as const;
 
 const RATES = [
@@ -40,16 +39,26 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const [rate, setRate] = useState<(typeof RATES)[number]['value']>('STANDARD');
   const [startWeight, setStartWeight] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ start?: string; target?: string; form?: string }>({});
 
   const latest = detail.data?.latestWeightKg;
   const effectiveStart =
     startWeight !== '' ? startWeight : latest !== null ? String(latest ?? '') : '';
-  const valid = effectiveStart !== '' && Number(effectiveStart) > 0;
 
   const submit = () => {
-    if (!valid || create.isPending) return;
-    setError(null);
+    const next: typeof errors = {};
+    if (effectiveStart === '' || Number(effectiveStart) <= 0) {
+      next.start = 'Enter a starting weight greater than zero';
+    }
+    if (targetWeight !== '' && Number(targetWeight) <= 0) {
+      next.target = 'Target must be greater than zero';
+    }
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      return;
+    }
+    if (create.isPending) return;
+    setErrors({});
     create.mutate(
       {
         preset,
@@ -60,88 +69,81 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
       {
         onSuccess: () => router.replace(`/clients/${clientId}`),
         onError: (e) => {
-          setError(
-            e instanceof ApiError && e.code === 'NUTRITION_REFUSAL'
-              ? 'These settings would breach the calorie safety floor. Choose a gentler rate.'
-              : e instanceof ApiError && e.code === 'CLIENT_PROFILE_INCOMPLETE'
-                ? 'Complete the client profile first (height, date of birth, activity).'
-                : e.message,
-          );
+          setErrors({
+            form:
+              e instanceof ApiError && e.code === 'NUTRITION_REFUSAL'
+                ? 'These settings would breach the calorie safety floor. Choose a gentler rate.'
+                : e instanceof ApiError && e.code === 'CLIENT_PROFILE_INCOMPLETE'
+                  ? 'Complete the client profile first (height, activity).'
+                  : e.message,
+          });
         },
       },
     );
   };
 
   return (
-    <Screen>
-      <Title>Set goal</Title>
-      <Card gap="$3">
-        <YStack gap="$1.5">
-          <Label>Goal</Label>
-          <XStack gap="$2" flexWrap="wrap">
-            {PRESETS.map((p) => (
-              <GhostButton
-                key={p.value}
-                size="$3"
-                onPress={() => setPreset(p.value)}
-                backgroundColor={preset === p.value ? '$primary' : 'transparent'}
-                color={preset === p.value ? '$primaryFg' : '$color'}
-              >
-                {p.label}
-              </GhostButton>
-            ))}
-          </XStack>
-        </YStack>
-
-        <YStack gap="$1.5">
-          <Label>Pace</Label>
-          <XStack gap="$2">
-            {RATES.map((r) => (
-              <GhostButton
-                key={r.value}
-                flex={1}
-                size="$3"
-                onPress={() => setRate(r.value)}
-                backgroundColor={rate === r.value ? '$primary' : 'transparent'}
-                color={rate === r.value ? '$primaryFg' : '$color'}
-              >
-                {r.label}
-              </GhostButton>
-            ))}
-          </XStack>
-        </YStack>
-
-        <YStack gap="$1.5">
-          <Label>Starting weight (kg)</Label>
-          <Input
-            value={effectiveStart}
-            onChangeText={setStartWeight}
-            placeholder={latest !== null && latest !== undefined ? String(latest) : '80'}
-            inputMode="decimal"
-            size="$4"
+    <AppScreen>
+      <PageHeader title="Set goal" subtitle="Targets come from Mifflin-St Jeor with hard floors" />
+      <Card gap="$4">
+        <YStack gap="$2">
+          <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
+            Goal
+          </Body>
+          <SegmentedControl
+            ariaLabel="Goal preset"
+            options={[...PRESETS]}
+            value={preset}
+            onChange={setPreset}
           />
         </YStack>
 
-        <YStack gap="$1.5">
-          <Label>Target weight (kg, optional)</Label>
-          <Input
-            value={targetWeight}
-            onChangeText={setTargetWeight}
-            placeholder="—"
-            inputMode="decimal"
-            size="$4"
-          />
+        <YStack gap="$2">
+          <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
+            Pace
+          </Body>
+          <SegmentedControl ariaLabel="Pace" options={[...RATES]} value={rate} onChange={setRate} />
         </YStack>
 
-        {error !== null ? <Body color="$danger">{error}</Body> : null}
-        <PrimaryButton disabled={!valid || create.isPending} onPress={submit}>
+        <FormField
+          label="Starting weight (kg)"
+          value={effectiveStart}
+          onChangeText={(t) => {
+            setStartWeight(t);
+            setErrors(({ start: _removed, ...rest }) => rest);
+          }}
+          placeholder={latest !== null && latest !== undefined ? String(latest) : '80'}
+          inputMode="decimal"
+          required
+          error={errors.start ?? null}
+        />
+
+        <FormField
+          label="Target weight (kg)"
+          value={targetWeight}
+          onChangeText={(t) => {
+            setTargetWeight(t);
+            setErrors(({ target: _removed, ...rest }) => rest);
+          }}
+          placeholder="Optional"
+          inputMode="decimal"
+          error={errors.target ?? null}
+        />
+
+        {errors.form ? (
+          <Body color="$danger" role="alert">
+            {errors.form}
+          </Body>
+        ) : null}
+
+        <PrimaryButton disabled={create.isPending} onPress={submit}>
           {create.isPending ? 'Computing targets…' : 'Create goal'}
         </PrimaryButton>
+        <GhostButton onPress={() => router.back()}>Cancel</GhostButton>
         <Muted fontSize={12}>
-          Targets come from established formulas (Mifflin-St Jeor), with hard calorie floors — the
-          AI never invents numbers. Weekly check-ins keep the plan adaptive.
+          The AI never invents numbers. Weekly check-ins keep the plan adaptive.
         </Muted>
       </Card>
-    </Screen>
+    </AppScreen>
   );
 };

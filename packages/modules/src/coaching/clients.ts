@@ -1,6 +1,9 @@
 import { and, desc, eq, ilike, sql } from 'drizzle-orm';
+import { ok, type Result } from '@gymos/core';
 import { nowIso, schema as s, type Db } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
+import { createGoalTx, type CreateGoalInput, type GoalError } from './goals';
+import { recordVitals, type RecordVitalsInput } from './vitals';
 
 export type ClientListItem = {
   id: string;
@@ -10,6 +13,12 @@ export type ClientListItem = {
   attentionReasons: { code: string; weight: number; since: string }[];
   latestWeightKg: number | null;
   goalPreset: string | null;
+};
+
+export type MedicalFlags = {
+  pregnant?: boolean | undefined;
+  conditions?: string[] | undefined;
+  physicianClearanceRequired?: boolean | undefined;
 };
 
 export const listClients = async (
@@ -50,9 +59,10 @@ export type CreateClientInput = {
   sex: 'F' | 'M';
   dob?: string | undefined;
   phone?: string | undefined;
+  email?: string | undefined;
   heightCm?: number | undefined;
   activityLevel?: number | undefined;
-  medicalFlags?: { pregnant?: boolean | undefined; conditions?: string[] | undefined } | undefined;
+  medicalFlags?: MedicalFlags | undefined;
   intake?: Record<string, string> | undefined;
 };
 
@@ -70,6 +80,7 @@ export const createClient = async (
         sex: input.sex,
         dob: input.dob ?? null,
         phone: input.phone ?? null,
+        email: input.email ?? null,
         heightCm: input.heightCm ?? null,
         activityLevel: input.activityLevel ?? null,
         medicalFlags: input.medicalFlags ?? null,
@@ -101,6 +112,119 @@ export const createClient = async (
   });
 };
 
+export type OnboardVitalsInput = Pick<
+  RecordVitalsInput,
+  'weightKg' | 'chestCm' | 'waistCm' | 'hipCm' | 'armCm' | 'thighCm' | 'bodyFatPct'
+> & { weightKg: number };
+
+export type OnboardClientInput = {
+  client: CreateClientInput & {
+    heightCm: number;
+    activityLevel: number;
+    intake: {
+      signaturePngBase64: string;
+      signedAt: string;
+      heightDisplayUnit?: string | undefined;
+    };
+  };
+  vitals: OnboardVitalsInput;
+  goal: CreateGoalInput;
+};
+
+export type OnboardClientResult = {
+  client: typeof s.clients.$inferSelect;
+  vitals: typeof s.vitals.$inferSelect;
+  goal: typeof s.clientGoals.$inferSelect;
+};
+
+export type OnboardError = GoalError;
+
+class OnboardAbortError extends Error {
+  constructor(readonly result: Result<never, OnboardError>) {
+    super('onboard_aborted');
+    this.name = 'OnboardAbortError';
+  }
+}
+
+/** Atomic onboarding: client + assignment + initial vitals + goal. */
+export const onboardClient = async (
+  db: Db,
+  principal: { userId: string; coachId: string; outletId: string },
+  input: OnboardClientInput,
+): Promise<Result<OnboardClientResult, OnboardError>> => {
+  try {
+    return await db.transaction(async (tx) => {
+      const intake: Record<string, string> = {
+        signaturePngBase64: input.client.intake.signaturePngBase64,
+        signedAt: input.client.intake.signedAt,
+        ...(input.client.intake.heightDisplayUnit !== undefined
+          ? { heightDisplayUnit: input.client.intake.heightDisplayUnit }
+          : {}),
+      };
+
+      const [client] = await tx
+        .insert(s.clients)
+        .values({
+          outletId: principal.outletId,
+          name: input.client.name,
+          sex: input.client.sex,
+          dob: input.client.dob ?? null,
+          phone: input.client.phone ?? null,
+          email: input.client.email ?? null,
+          heightCm: input.client.heightCm,
+          activityLevel: input.client.activityLevel,
+          medicalFlags: input.client.medicalFlags ?? null,
+          intake,
+        })
+        .returning();
+      if (!client) throw new Error('client insert failed');
+
+      await tx.insert(s.coachAssignments).values({
+        coachId: principal.coachId,
+        clientId: client.id,
+        outletId: principal.outletId,
+        assignedBy: principal.userId,
+      });
+      await tx.insert(s.clientAttention).values({
+        clientId: client.id,
+        score: 50,
+        reasons: [{ code: 'NEW_CLIENT', weight: 50, since: nowIso() }],
+        computedAt: nowIso(),
+      });
+      await writeAudit(tx, {
+        actorUserId: principal.userId,
+        actorRole: 'COACH',
+        action: 'client.onboard',
+        resourceType: 'client',
+        resourceId: client.id,
+        after: { name: client.name },
+      });
+
+      const vitals = await recordVitals(tx, principal, client.id, {
+        weightKg: input.vitals.weightKg,
+        ...(input.vitals.chestCm !== undefined ? { chestCm: input.vitals.chestCm } : {}),
+        ...(input.vitals.waistCm !== undefined ? { waistCm: input.vitals.waistCm } : {}),
+        ...(input.vitals.hipCm !== undefined ? { hipCm: input.vitals.hipCm } : {}),
+        ...(input.vitals.armCm !== undefined ? { armCm: input.vitals.armCm } : {}),
+        ...(input.vitals.thighCm !== undefined ? { thighCm: input.vitals.thighCm } : {}),
+        ...(input.vitals.bodyFatPct !== undefined ? { bodyFatPct: input.vitals.bodyFatPct } : {}),
+      });
+
+      const goalResult = await createGoalTx(tx, principal, client, input.goal);
+      if (!goalResult.ok) {
+        throw new OnboardAbortError(goalResult);
+      }
+
+      return ok({ client, vitals, goal: goalResult.value });
+    });
+  } catch (caught) {
+    if (caught instanceof OnboardAbortError) {
+      return caught.result;
+    }
+    throw caught;
+  }
+};
+
 export const getClient = async (db: Db, clientId: string) => {
   const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
   return client ?? null;
@@ -111,9 +235,10 @@ export type UpdateClientInput = {
   sex?: 'F' | 'M' | undefined;
   dob?: string | undefined;
   phone?: string | undefined;
+  email?: string | undefined;
   heightCm?: number | undefined;
   activityLevel?: number | undefined;
-  medicalFlags?: { pregnant?: boolean | undefined; conditions?: string[] | undefined } | undefined;
+  medicalFlags?: MedicalFlags | undefined;
   intake?: Record<string, string> | undefined;
   status?: 'active' | 'archived' | undefined;
 };
@@ -131,9 +256,11 @@ export const updateClient = async (
       ...(input.sex !== undefined ? { sex: input.sex } : {}),
       ...(input.dob !== undefined ? { dob: input.dob } : {}),
       ...(input.phone !== undefined ? { phone: input.phone } : {}),
+      ...(input.email !== undefined ? { email: input.email } : {}),
       ...(input.heightCm !== undefined ? { heightCm: input.heightCm } : {}),
       ...(input.activityLevel !== undefined ? { activityLevel: input.activityLevel } : {}),
       ...(input.medicalFlags !== undefined ? { medicalFlags: input.medicalFlags } : {}),
+      ...(input.intake !== undefined ? { intake: input.intake } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
     })
     .where(eq(s.clients.id, clientId))

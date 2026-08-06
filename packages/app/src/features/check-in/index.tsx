@@ -7,20 +7,18 @@ import {
   Badge,
   Body,
   Card,
+  FormField,
   GhostButton,
-  Input,
-  Label,
   Muted,
+  PageHeader,
   PrimaryButton,
   Row,
-  Screen,
   SectionTitle,
-  TextArea,
-  Title,
   XStack,
   YStack,
 } from '@gymos/ui';
 import { useApplyAdjustment, useCompleteCheckIn } from '../../api';
+import { AppScreen } from '../shell/app-screen';
 
 const VERDICT_COPY: Record<
   Verdict['type'],
@@ -42,9 +40,15 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   const [weight, setWeight] = useState('');
   const [adherence, setAdherence] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
   const [notes, setNotes] = useState('');
+  const [weightError, setWeightError] = useState<string | null>(null);
   const [result, setResult] = useState<{ checkInId: string; verdict: Verdict } | null>(null);
 
   const submit = () => {
+    if (weight !== '' && !(Number(weight) > 0)) {
+      setWeightError('Enter a valid weight');
+      return;
+    }
+    setWeightError(null);
     if (complete.isPending) return;
     complete.mutate(
       {
@@ -60,15 +64,11 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
     const copy = VERDICT_COPY[result.verdict.type];
     const verdict = result.verdict;
     return (
-      <Screen>
-        <Title>Check-in verdict</Title>
-        <Card
-          gap="$3"
-          borderWidth={2}
-          borderColor={copy.tone === 'danger' ? '$danger' : '$borderColor'}
-        >
+      <AppScreen>
+        <PageHeader title="Check-in verdict" />
+        <Card gap="$3" tone={copy.tone === 'danger' ? 'danger' : 'default'}>
           <Row>
-            <Body fontWeight="800" fontSize={17}>
+            <Body fontWeight="800" fontSize={17} flex={1}>
               {copy.title}
             </Body>
             <Badge tone={copy.tone} label={verdict.type.replaceAll('_', ' ')} />
@@ -106,7 +106,11 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
               >
                 {apply.isPending ? 'Re-solving plan…' : 'Apply — draft an adjusted plan'}
               </PrimaryButton>
-              {apply.isError ? <Body color="$danger">{apply.error.message}</Body> : null}
+              {apply.isError ? (
+                <Body color="$danger" role="alert">
+                  {apply.error.message}
+                </Body>
+              ) : null}
             </YStack>
           ) : null}
           {verdict.type === 'REFER_REVIEW' ? (
@@ -117,36 +121,42 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           ) : null}
           <GhostButton onPress={() => router.replace(`/clients/${clientId}`)}>Done</GhostButton>
         </Card>
-      </Screen>
+      </AppScreen>
     );
   }
 
   return (
-    <Screen>
-      <Title>Weekly check-in</Title>
-      <Card gap="$3">
-        <YStack gap="$1.5">
-          <Label>Today's weight (kg)</Label>
-          <Input
-            value={weight}
-            onChangeText={setWeight}
-            placeholder="e.g. 84.2"
-            inputMode="decimal"
-            size="$5"
-          />
-        </YStack>
+    <AppScreen>
+      <PageHeader title="Weekly check-in" subtitle="Capture → verdict → optional apply" />
+      <Card gap="$4">
+        <FormField
+          label="Today's weight (kg)"
+          value={weight}
+          onChangeText={(t) => {
+            setWeight(t);
+            setWeightError(null);
+          }}
+          placeholder="e.g. 84.2"
+          inputMode="decimal"
+          error={weightError}
+        />
 
-        <YStack gap="$1.5">
-          <Label>How well did they follow the plan this week?</Label>
-          <XStack gap="$2">
+        <YStack gap="$2">
+          <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
+            Plan adherence (1–5)
+          </Body>
+          <XStack gap="$2" role="group" aria-label="Adherence rating">
             {([1, 2, 3, 4, 5] as const).map((n) => (
               <GhostButton
                 key={n}
                 flex={1}
-                size="$4"
+                minHeight={48}
                 onPress={() => setAdherence(n)}
                 backgroundColor={adherence === n ? '$primary' : 'transparent'}
                 color={adherence === n ? '$primaryFg' : '$color'}
+                borderColor={adherence === n ? '$primary' : '$borderColor'}
+                aria-pressed={adherence === n}
+                aria-label={`Adherence ${n}`}
               >
                 {n}
               </GhostButton>
@@ -155,22 +165,24 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           <Muted fontSize={12}>1 = barely · 5 = nailed it. Low adherence changes the advice.</Muted>
         </YStack>
 
-        <YStack gap="$1.5">
-          <Label>Notes (optional)</Label>
-          <TextArea
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Sleep, stress, travel, injuries…"
-            size="$4"
-            numberOfLines={3}
-          />
-        </YStack>
+        <FormField
+          label="Notes (optional)"
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Sleep, stress, travel, injuries…"
+          multiline
+          numberOfLines={3}
+        />
 
-        {complete.isError ? <Body color="$danger">{complete.error.message}</Body> : null}
+        {complete.isError ? (
+          <Body color="$danger" role="alert">
+            {complete.error.message}
+          </Body>
+        ) : null}
         <PrimaryButton disabled={complete.isPending} onPress={submit}>
           {complete.isPending ? 'Analyzing…' : 'Complete check-in'}
         </PrimaryButton>
       </Card>
-    </Screen>
+    </AppScreen>
   );
 };

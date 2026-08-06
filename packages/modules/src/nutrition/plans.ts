@@ -98,7 +98,6 @@ export const generatePlan = async (
     const missing: string[] = [];
     if (client.heightCm === null) missing.push('heightCm');
     if (client.activityLevel === null) missing.push('activityLevel');
-    if (client.dob === null) missing.push('dob');
     if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
 
     const weightRows = await db
@@ -109,11 +108,14 @@ export const generatePlan = async (
       .limit(1);
     const weightKg = weightRows[0]?.weightKg ?? goal.startWeightKg;
 
-    const age = Math.floor(Math.abs(DateTime.fromISO(client.dob ?? '').diffNow('years').years));
+    const age =
+      client.dob !== null && client.dob !== ''
+        ? Math.floor(Math.abs(DateTime.fromISO(client.dob).diffNow('years').years))
+        : 30;
     const computation = computeTargets(
       {
         sex: client.sex,
-        ageYears: age,
+        ageYears: age > 0 ? age : 30,
         heightCm: client.heightCm ?? 0,
         weightKg,
         activity: (client.activityLevel ?? 1.55) as 1.2 | 1.375 | 1.55 | 1.725 | 1.9,
