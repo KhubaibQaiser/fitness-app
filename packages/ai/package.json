@@ -1,0 +1,18 @@
+{
+  "name": "@gymos/ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Layer 3 — language only. Local llama.cpp client, deterministic fallback, de-identification guard. Never computes a number.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gymos/core": "workspace:^",
+    "zod": "^4.0.0"
+  }
+}

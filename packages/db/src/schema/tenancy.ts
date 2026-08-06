@@ -84,7 +84,10 @@ export const clients = pgTable(
     heightCm: numeric('height_cm', { precision: 5, scale: 1, mode: 'number' }),
     activityLevel: numeric('activity_level', { precision: 4, scale: 3, mode: 'number' }),
     /** { pregnant?: boolean; conditions?: string[] } — drives safety gates. */
-    medicalFlags: jsonb('medical_flags').$type<{ pregnant?: boolean; conditions?: string[] }>(),
+    medicalFlags: jsonb('medical_flags').$type<{
+      pregnant?: boolean | undefined;
+      conditions?: string[] | undefined;
+    }>(),
     status: clientStatusEnum('status').notNull().default('active'),
     /** Intake questionnaire answers, free-form by design. */
     intake: jsonb('intake').$type<Record<string, string>>(),
@@ -151,6 +154,9 @@ export const coachNotes = pgTable(
 
 export const isMetricPref = (pref: string | null): boolean => pref !== 'imperial';
 
-export type MedicalFlags = { pregnant?: boolean; conditions?: string[] };
+export type MedicalFlags = {
+  pregnant?: boolean | undefined;
+  conditions?: string[] | undefined;
+};
 export const hasMedicalFlags = (flags: MedicalFlags | null): boolean =>
   flags !== null && (flags.pregnant === true || (flags.conditions?.length ?? 0) > 0);
