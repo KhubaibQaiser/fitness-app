@@ -1,0 +1,22 @@
+{
+  "name": "gymos",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GymOS — coaching-first gym platform. Pilot: single-coach responsive web app with AI meal planning and adaptive progress tracking.",
+  "packageManager": "pnpm@10.34.4",
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "security:secrets": "gitleaks git --redact",
+    "security:secrets:staged": "gitleaks git --pre-commit --staged --redact",
+    "prepare": "lefthook install"
+  }
+}
