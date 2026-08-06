@@ -1,0 +1,14 @@
+{
+  "name": "@gymos/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure domain logic — zero React, zero platform imports. nutrition/money require 100% branch coverage.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
