@@ -17,6 +17,9 @@ import { writeAudit } from '../shared/audit';
 import { type TenantManifest } from '../tenancy';
 import { getActiveProfile, restrictedAllergenCodes } from './dietary';
 import { candidatesForRestrictions, foodsById } from './foods';
+import { applyPlanOps, PatchFoodMissing, type PlanOp } from './plan-ops';
+
+export type { PlanOp } from './plan-ops';
 
 export type GenerateError =
   | { code: 'CLIENT_NOT_FOUND' }
@@ -514,39 +517,12 @@ export const getDietPlanPdfData = async (
   });
 };
 
-export type PlanOp =
-  | { op: 'set-portion'; itemId: string; portionGrams: number }
-  | { op: 'swap'; itemId: string; foodId: string }
-  | { op: 'remove'; itemId: string }
-  | {
-      op: 'add';
-      day: number;
-      mealIndex: number;
-      mealSlot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-      foodId: string;
-      portionGrams: number;
-    }
-  | {
-      op: 'override-macros';
-      itemId: string;
-      macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
-      reason?: string | undefined;
-    }
-  | { op: 'apply-day-to-week'; day: number };
-
 export type PatchError =
   | { code: 'PLAN_NOT_FOUND' }
   | { code: 'PLAN_NOT_EDITABLE'; status: string }
   | { code: 'ITEM_NOT_FOUND'; itemId: string }
   | { code: 'FOOD_NOT_FOUND'; foodId: string }
   | { code: 'DAY_NOT_FOUND'; day: number };
-
-const gramsMacros = (per100g: s.Per100g, grams: number) => ({
-  kcal: Math.round((per100g.kcal * grams) / 100),
-  proteinG: Math.round(((per100g.proteinG * grams) / 100) * 10) / 10,
-  fatG: Math.round(((per100g.fatG * grams) / 100) * 10) / 10,
-  carbsG: Math.round(((per100g.carbsG * grams) / 100) * 10) / 10,
-});
 
 /** Coach edits — food_db macros from catalog; override-macros is audited coach judgment. */
 export const patchPlan = async (
@@ -579,7 +555,7 @@ export const patchPlan = async (
   }
 
   try {
-    await applyOps(db, principal, planId, existing.items, ops);
+    await applyPlanOps(db, principal, planId, existing.items, ops);
   } catch (error) {
     if (error instanceof PatchFoodMissing) {
       return err({ code: 'FOOD_NOT_FOUND', foodId: error.foodId });
@@ -591,137 +567,6 @@ export const patchPlan = async (
   if (!updated) return err({ code: 'PLAN_NOT_FOUND' });
   return ok(updated);
 };
-
-const applyOps = async (
-  db: Db,
-  principal: { userId: string; coachId: string },
-  planId: string,
-  existingItems: readonly (typeof s.mealPlanItems.$inferSelect & { foodName?: string })[],
-  ops: PlanOp[],
-): Promise<void> => {
-  const existing = { items: [...existingItems] };
-  await db.transaction(async (tx) => {
-    for (const op of ops) {
-      if (op.op === 'remove') {
-        await tx.delete(s.mealPlanItems).where(eq(s.mealPlanItems.id, op.itemId));
-        existing.items = existing.items.filter((i) => i.id !== op.itemId);
-      } else if (op.op === 'set-portion') {
-        const item = existing.items.find((i) => i.id === op.itemId);
-        if (!item) continue;
-        const food = await foodsById(tx, [item.foodId]);
-        const per100g = food.get(item.foodId)?.per100g;
-        if (!per100g) continue;
-        const macros = gramsMacros(per100g, op.portionGrams);
-        await tx
-          .update(s.mealPlanItems)
-          .set({
-            portionGrams: op.portionGrams,
-            macros,
-            macrosSource: 'food_db',
-          })
-          .where(eq(s.mealPlanItems.id, op.itemId));
-        item.portionGrams = op.portionGrams;
-        item.macros = macros;
-        item.macrosSource = 'food_db';
-      } else if (op.op === 'swap') {
-        const item = existing.items.find((i) => i.id === op.itemId);
-        if (!item) continue;
-        const food = await foodsById(tx, [op.foodId]);
-        const per100g = food.get(op.foodId)?.per100g;
-        if (!per100g) throw new PatchFoodMissing(op.foodId);
-        const macros = gramsMacros(per100g, item.portionGrams);
-        await tx
-          .update(s.mealPlanItems)
-          .set({ foodId: op.foodId, macros, macrosSource: 'food_db' })
-          .where(eq(s.mealPlanItems.id, op.itemId));
-        await tx.insert(s.aiFeedbackEvents).values({
-          planId,
-          coachId: principal.coachId,
-          kind: 'SWAP',
-          payload: { from: item.foodId, to: op.foodId, slot: item.mealSlot },
-        });
-        item.foodId = op.foodId;
-        item.macros = macros;
-        item.macrosSource = 'food_db';
-      } else if (op.op === 'override-macros') {
-        const item = existing.items.find((i) => i.id === op.itemId);
-        if (!item) continue;
-        await tx
-          .update(s.mealPlanItems)
-          .set({ macros: op.macros, macrosSource: 'coach_override' })
-          .where(eq(s.mealPlanItems.id, op.itemId));
-        item.macros = op.macros;
-        item.macrosSource = 'coach_override';
-        await tx.insert(s.aiFeedbackEvents).values({
-          planId,
-          coachId: principal.coachId,
-          kind: 'EDIT',
-          payload: {
-            op: 'override-macros',
-            itemId: op.itemId,
-            macros: op.macros,
-            reason: op.reason ?? null,
-          },
-        });
-      } else if (op.op === 'apply-day-to-week') {
-        const source = existing.items.filter((i) => i.day === op.day);
-        await tx
-          .delete(s.mealPlanItems)
-          .where(and(eq(s.mealPlanItems.planId, planId), sql`${s.mealPlanItems.day} <> ${op.day}`));
-        const clones = [];
-        for (let day = 1; day <= 7; day += 1) {
-          if (day === op.day) continue;
-          for (const item of source) {
-            clones.push({
-              planId,
-              day,
-              mealIndex: item.mealIndex,
-              mealSlot: item.mealSlot,
-              mealName: item.mealName,
-              foodId: item.foodId,
-              portionGrams: item.portionGrams,
-              macros: item.macros,
-              macrosSource: item.macrosSource,
-              prepNotes: item.prepNotes,
-              position: item.position,
-            });
-          }
-        }
-        if (clones.length > 0) {
-          await tx.insert(s.mealPlanItems).values(clones);
-        }
-      } else {
-        const food = await foodsById(tx, [op.foodId]);
-        const per100g = food.get(op.foodId)?.per100g;
-        if (!per100g) throw new PatchFoodMissing(op.foodId);
-        await tx.insert(s.mealPlanItems).values({
-          planId,
-          day: op.day,
-          mealIndex: op.mealIndex,
-          mealSlot: op.mealSlot,
-          mealName: `${op.mealSlot} — day ${op.day}`,
-          foodId: op.foodId,
-          portionGrams: op.portionGrams,
-          macros: gramsMacros(per100g, op.portionGrams),
-          macrosSource: 'food_db',
-          position: 99,
-        });
-      }
-    }
-    await tx.insert(s.aiFeedbackEvents).values({
-      planId,
-      coachId: principal.coachId,
-      kind: 'EDIT',
-      payload: { ops: ops.map((o) => o.op) },
-    });
-  });
-};
-
-class PatchFoodMissing extends Error {
-  constructor(readonly foodId: string) {
-    super(`food not found: ${foodId}`);
-  }
-}
 
 export type PublishOptions = {
   reviewed: boolean;

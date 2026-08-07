@@ -12,6 +12,7 @@ import {
   Home as HomeRaw,
   MessageCircle as MessageCircleRaw,
   Moon as MoonRaw,
+  Pencil as PencilRaw,
   Plus as PlusRaw,
   Scale as ScaleRaw,
   Settings as SettingsRaw,
@@ -22,6 +23,7 @@ import {
   Users as UsersRaw,
   Utensils as UtensilsRaw,
   Wrench as WrenchRaw,
+  X as XRaw,
 } from '@tamagui/lucide-icons-2';
 import { createElement, type ReactElement } from 'react';
 
@@ -58,6 +60,7 @@ export const Home: GymosIcon = fromLucide(HomeRaw);
 export const MessageCircle: GymosIcon = fromLucide(MessageCircleRaw);
 export const Moon: GymosIcon = fromLucide(MoonRaw);
 export const Plus: GymosIcon = fromLucide(PlusRaw);
+export const Pencil: GymosIcon = fromLucide(PencilRaw);
 export const Scale: GymosIcon = fromLucide(ScaleRaw);
 export const Settings: GymosIcon = fromLucide(SettingsRaw);
 export const ShieldAlert: GymosIcon = fromLucide(ShieldAlertRaw);
@@ -67,3 +70,4 @@ export const UserPlus: GymosIcon = fromLucide(UserPlusRaw);
 export const Users: GymosIcon = fromLucide(UsersRaw);
 export const Utensils: GymosIcon = fromLucide(UtensilsRaw);
 export const Wrench: GymosIcon = fromLucide(WrenchRaw);
+export const X: GymosIcon = fromLucide(XRaw);
