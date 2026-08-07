@@ -42,6 +42,7 @@ import {
   foodsById,
   generatePlan,
   getActiveProfile,
+  getDietPlanPdfData,
   getPlanWithItems,
   listFoods,
   listPlans,
@@ -51,6 +52,7 @@ import {
 } from '@gymos/modules/nutrition';
 import { CURRENCY_CODES, type TenantManifest } from '@gymos/modules/tenancy';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
+import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
 import { type Env } from './env';
 import {
   createRateLimiter,
@@ -981,8 +983,9 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'plan.generate', { clientId });
       const body = c.req.valid('json');
+      const existing = await listPlans(db, clientId);
       const result = await generatePlan(db, c.get('principal'), manifest, clientId, {
-        kind: 'INITIAL',
+        kind: existing.length > 0 ? 'ADJUSTMENT' : 'INITIAL',
         ai: aiConfig,
         mealCount: body.mealCount,
         ...(body.override !== undefined ? { override: body.override } : {}),
@@ -1007,6 +1010,39 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
         );
       }
       return c.json(result.value);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/v1/meal-plans/{id}/diet-plan.pdf',
+      operationId: 'downloadDietPlanPdf',
+      request: { params: dto.idParam },
+      responses: {
+        200: { description: 'Diet plan PDF (Day-1 template)' },
+        ...problemDocs(404),
+      },
+    }),
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const existing = await getPlanWithItems(db, id);
+      if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
+      authorize(c, 'plan.read', { clientId: existing.plan.clientId });
+      const result = await getDietPlanPdfData(db, id);
+      if (!result.ok) {
+        throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
+      }
+      const pdf = await renderDietPlanPdf(result.value);
+      const filename = dietPlanFilename(result.value.clientName);
+      return new Response(new Uint8Array(pdf), {
+        status: 200,
+        headers: {
+          'content-type': 'application/pdf',
+          'content-disposition': `attachment; filename="${filename}"`,
+          'cache-control': 'no-store',
+        },
+      });
     },
   );
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Link } from 'solito/link';
-import { ApiError } from '@gymos/contracts';
+import { ApiError, type PlanSummary } from '@gymos/contracts';
 import {
   Body,
   Card,
@@ -26,23 +26,34 @@ const MEAL_COUNT_OPTIONS = [
   { value: 5, label: '+2 snacks' },
 ] as const;
 
-/** Plan view + editor: generate, tune portions, publish. Numbers are server truth. */
+const pickPreferredPlanId = (plans: PlanSummary[]): string | null => {
+  const preferred =
+    plans.find((p) => p.status === 'NEEDS_REVIEW') ??
+    plans.find((p) => p.status === 'DRAFT') ??
+    plans.find((p) => p.status === 'PUBLISHED') ??
+    plans[0] ??
+    null;
+  return preferred?.id ?? null;
+};
+
+/** Plan view + editor: generate, tune portions, publish, download PDF. */
 export const PlanScreen = ({ clientId }: { clientId: string }) => {
   const detail = useClientDetail(clientId);
   const generate = useGeneratePlan(clientId);
   const [day, setDay] = useState(1);
   const [mealCount, setMealCount] = useState<3 | 4 | 5>(3);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
   const plans = detail.data?.plans ?? [];
-  const planSummary =
-    plans.find((p) => p.status === 'NEEDS_REVIEW') ??
-    plans.find((p) => p.status === 'DRAFT') ??
-    plans.find((p) => p.status === 'PUBLISHED') ??
-    null;
+  const preferredId = pickPreferredPlanId(plans);
+  const activePlanId =
+    selectedPlanId !== null && plans.some((p) => p.id === selectedPlanId)
+      ? selectedPlanId
+      : preferredId;
 
-  const plan = usePlan(planSummary?.id ?? null);
+  const plan = usePlan(activePlanId);
 
-  if (detail.isPending || (planSummary !== null && plan.isPending)) {
+  if (detail.isPending || (activePlanId !== null && plan.isPending)) {
     return (
       <AppScreen>
         <LoadingState />
@@ -60,7 +71,16 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
   const blocked =
     generate.error instanceof ApiError && generate.error.code === 'BLOCKED_REQUIRES_OVERRIDE';
 
-  if (planSummary === null || plan.data === undefined) {
+  const runGenerate = (input?: { reason?: string; mealCount?: 3 | 4 | 5 }) => {
+    generate.mutate(input, {
+      onSuccess: (data) => {
+        setSelectedPlanId(data.plan.id);
+        setDay(1);
+      },
+    });
+  };
+
+  if (activePlanId === null || plan.data === undefined) {
     return (
       <AppScreen>
         <PageHeader title="Meal plan" subtitle="7-day generation from goal targets" />
@@ -90,14 +110,14 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
               </YStack>
               {blocked ? (
                 <OverridePrompt
-                  onConfirm={(reason) => generate.mutate({ reason, mealCount })}
+                  onConfirm={(reason) => runGenerate({ reason, mealCount })}
                   busy={generate.isPending}
                   detail={generate.error instanceof ApiError ? (generate.error.detail ?? '') : ''}
                 />
               ) : (
                 <PrimaryButton
                   disabled={generate.isPending}
-                  onPress={() => generate.mutate({ mealCount })}
+                  onPress={() => runGenerate({ mealCount })}
                 >
                   {generate.isPending ? 'Generating…' : 'Generate 7-day plan'}
                 </PrimaryButton>
@@ -117,6 +137,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
   return (
     <PlanEditor
       clientId={clientId}
+      clientName={detail.data.client.name}
       planId={plan.data.plan.id}
       status={plan.data.plan.status}
       targets={plan.data.plan.targets}
@@ -124,6 +145,17 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
       day={day}
       setDay={setDay}
       version={plan.data.plan.version}
+      plans={plans}
+      onSelectPlan={(id) => {
+        setSelectedPlanId(id);
+        setDay(1);
+      }}
+      mealCount={mealCount}
+      setMealCount={setMealCount}
+      onGenerate={runGenerate}
+      generatePending={generate.isPending}
+      generateError={generate.error}
+      generateBlocked={blocked}
     />
   );
 };
