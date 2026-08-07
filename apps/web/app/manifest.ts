@@ -3,7 +3,8 @@ import type { MetadataRoute } from 'next';
 const manifest = (): MetadataRoute.Manifest => ({
   name: 'GymOS Coach',
   short_name: 'GymOS',
-  description: 'Coaching-first client management with adaptive AI meal planning.',
+  description:
+    'Coaching-first client management: vitals, adaptive goals, coach-reviewed meal plans.',
   start_url: '/',
   display: 'standalone',
   background_color: '#FEFBFF',

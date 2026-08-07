@@ -23,7 +23,8 @@ const mono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: 'GymOS Coach',
-  description: 'Coaching-first client management: vitals, adaptive goals, AI meal plans.',
+  description:
+    'Coaching-first client management: vitals, adaptive goals, coach-reviewed meal plans.',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, title: 'GymOS Coach', statusBarStyle: 'default' },
 };
