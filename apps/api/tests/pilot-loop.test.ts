@@ -240,6 +240,50 @@ describe('the pilot core loop', () => {
     expect(plan.status).toBe('PUBLISHED');
   });
 
+  it('regenerates a new draft without superseding the live published plan', async () => {
+    const before = await req(`/v1/clients/${demoClientId}/meal-plans`);
+    const beforeList = (await before.json()) as {
+      items: { id: string; version: number; status: string }[];
+    };
+    const published = beforeList.items.find((p) => p.status === 'PUBLISHED');
+    expect(published).toBeDefined();
+    if (!published) return;
+
+    const regen = await req(`/v1/clients/${demoClientId}/meal-plans/generate`, {
+      method: 'POST',
+      json: { mealCount: 3 },
+    });
+    expect(regen.status).toBe(200);
+    const body = (await regen.json()) as {
+      plan: { id: string; version: number; status: string };
+    };
+    expect(body.plan.status).toBe('DRAFT');
+    expect(body.plan.version).toBeGreaterThan(published.version);
+
+    const after = await req(`/v1/clients/${demoClientId}/meal-plans`);
+    const afterList = (await after.json()) as {
+      items: { id: string; version: number; status: string }[];
+    };
+    expect(afterList.items.find((p) => p.id === published.id)?.status).toBe('PUBLISHED');
+    expect(afterList.items.find((p) => p.id === body.plan.id)?.status).toBe('DRAFT');
+
+    const pdf = await req(`/v1/meal-plans/${body.plan.id}/diet-plan.pdf`);
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers.get('content-type')).toContain('application/pdf');
+    expect(pdf.headers.get('content-disposition') ?? '').toContain('Diet-Plan');
+    const bytes = await pdf.arrayBuffer();
+    expect(bytes.byteLength).toBeGreaterThan(400);
+    const magic = String.fromCharCode(...new Uint8Array(bytes).slice(0, 4));
+    expect(magic).toBe('%PDF');
+
+    const republish = await req(`/v1/meal-plans/${body.plan.id}/publish`, { method: 'POST' });
+    expect(republish.status).toBe(200);
+    const final = await req(`/v1/clients/${demoClientId}/meal-plans`);
+    const finalList = (await final.json()) as { items: { id: string; status: string }[] };
+    expect(finalList.items.find((p) => p.id === body.plan.id)?.status).toBe('PUBLISHED');
+    expect(finalList.items.find((p) => p.id === published.id)?.status).toBe('SUPERSEDED');
+  });
+
   it('re-validates the published plan when dietary restrictions change (safety loop)', async () => {
     // The plan certainly contains a milk-tagged food? Not guaranteed — use wheat_gluten:
     // roti/staple is near-certain in a Pakistani plan; assert flagging only if present.

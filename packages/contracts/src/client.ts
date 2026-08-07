@@ -205,6 +205,23 @@ export const api = {
       request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, undefined, {
         idempotent: true,
       }),
+    dietPlanPdf: async (planId: string): Promise<Blob> => {
+      const response = await fetch(`/v1/meal-plans/${planId}/diet-plan.pdf`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'x-client-version': 'pilot-web' },
+      });
+      if (!response.ok) {
+        const problem = (await response.json().catch(() => null)) as T.Problem | null;
+        throw new ApiError(
+          response.status,
+          problem?.code ?? 'UNKNOWN',
+          problem?.title ?? response.statusText,
+          problem?.detail,
+        );
+      }
+      return response.blob();
+    },
   },
 
   notifications: {

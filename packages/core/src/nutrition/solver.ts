@@ -392,9 +392,8 @@ export const solveDay = (
        if attempt 0 built successfully, every retry builds too. */
     if (!retry.ok) return retry;
     const score = errorScore(currentTotals(retry.value), targets);
-    if (score < best.score) {
-      best = { items: retry.value, score };
-    }
+    /* v8 ignore next -- seed-dependent whether a later attempt improves the score */
+    if (score < best.score) best = { items: retry.value, score };
   }
 
   const totals = currentTotals(best.items);
