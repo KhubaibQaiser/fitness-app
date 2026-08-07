@@ -56,9 +56,7 @@ export const NotificationsScreen = () => {
         subtitle="Check-ins, safety flags, plan blocks"
         action={
           items.some((n) => n.readAt === null) ? (
-            <GhostButton size="$3" minHeight={44} onPress={() => markAll.mutate()}>
-              Mark all read
-            </GhostButton>
+            <GhostButton onPress={() => markAll.mutate()}>Mark all read</GhostButton>
           ) : null
         }
       />

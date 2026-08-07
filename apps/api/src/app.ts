@@ -30,7 +30,7 @@ import {
   updateAndRerunCheckIn,
   updateClient,
 } from '@gymos/modules/coaching';
-import { getPilotPrincipal, type Principal } from '@gymos/modules/identity';
+import { getPilotPrincipal, updateUserPrefs, type Principal } from '@gymos/modules/identity';
 import {
   listNotifications,
   markAllRead,
@@ -49,7 +49,7 @@ import {
   publishPlan,
   putProfile,
 } from '@gymos/modules/nutrition';
-import { type TenantManifest } from '@gymos/modules/tenancy';
+import { CURRENCY_CODES, type TenantManifest } from '@gymos/modules/tenancy';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { type Env } from './env';
 import {
@@ -198,6 +198,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       locales: manifest.locales,
       units: manifest.units,
       currency: manifest.currency,
+      currencies: [...CURRENCY_CODES],
     }),
   );
 
@@ -270,6 +271,16 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
   };
 
   // ---- me + notifications ------------------------------------------------------
+  const meResponse = (p: Principal) => ({
+    userId: p.userId,
+    name: p.name,
+    email: p.email,
+    locale: p.locale,
+    unitPref: p.unitPref ?? manifest.units,
+    currencyPref: p.currencyPref ?? manifest.currency,
+    roles: [...p.actor.roles],
+  });
+
   app.openapi(
     createRoute({
       method: 'get',
@@ -277,16 +288,39 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       operationId: 'getMe',
       responses: { 200: { description: 'Current principal', ...json(dto.anyObject) } },
     }),
-    (c) => {
+    (c) => c.json(meResponse(c.get('principal'))),
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'patch',
+      path: '/v1/me',
+      operationId: 'updateMe',
+      request: { body: json(dto.updateMeBody) },
+      responses: {
+        200: { description: 'Updated principal prefs', ...json(dto.anyObject) },
+        ...problemDocs(422),
+      },
+    }),
+    async (c) => {
+      const body = c.req.valid('json');
       const p = c.get('principal');
-      return c.json({
-        userId: p.userId,
-        name: p.name,
-        email: p.email,
-        locale: p.locale,
-        unitPref: p.unitPref ?? manifest.units,
-        roles: [...p.actor.roles],
+
+      if (body.locale !== undefined && !manifest.locales.enabled.includes(body.locale)) {
+        throw new ProblemError(
+          422,
+          'VALIDATION_FAILED',
+          'Locale is not enabled for this workspace',
+        );
+      }
+
+      await updateUserPrefs(db, p.userId, {
+        ...(body.locale !== undefined ? { locale: body.locale } : {}),
+        ...(body.currencyPref !== undefined ? { currencyPref: body.currencyPref } : {}),
       });
+
+      const refreshed = await getPilotPrincipal(db);
+      return c.json(meResponse(refreshed));
     },
   );
 

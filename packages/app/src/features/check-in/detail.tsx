@@ -208,7 +208,6 @@ export const CheckInDetailScreen = ({
               <GhostButton
                 key={n}
                 flex={1}
-                minHeight={48}
                 disabled={!editable}
                 onPress={() => setAdherence(n)}
                 backgroundColor={adherence === n ? '$primary' : 'transparent'}

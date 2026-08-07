@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Link } from 'solito/link';
-import { ArrowLeft, Badge, GhostButton, PageHeader, Tabs, YStack } from '@gymos/ui';
+import { ArrowLeft, Badge, IconButton, PageHeader, Tabs, YStack } from '@gymos/ui';
 import { AppScreen } from '../shell/app-screen';
 import { BreakfastPanel } from './breakfast-panel';
 import { DinnerPanel } from './dinner-panel';
@@ -33,14 +33,7 @@ export const MealCompositionScreen = () => {
         subtitle="Slot templates and food pools from the live solver"
         leading={
           <Link href="/tools">
-            <GhostButton
-              circular
-              size="$4"
-              minHeight={44}
-              minWidth={44}
-              icon={<ArrowLeft size={20} color="$color" />}
-              aria-label="Back to tools"
-            />
+            <IconButton icon={<ArrowLeft size={22} color="$color" />} aria-label="Back to tools" />
           </Link>
         }
         action={<Badge tone="primary" label="Layer 2" />}

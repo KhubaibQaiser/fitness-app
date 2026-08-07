@@ -1,6 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 
+export const LOCALE_CODES = ['en', 'ur'] as const;
+export type LocaleCode = (typeof LOCALE_CODES)[number];
+
+export const CURRENCY_CODES = ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'] as const;
+export type CurrencyCode = (typeof CURRENCY_CODES)[number];
+
 /**
  * Tenant manifest — config-not-code. The pilot loads one committed file;
  * P0 swaps the loader for the registry-backed config service (same type).
@@ -20,10 +26,10 @@ export const tenantManifestSchema = z
     }),
     terminology: z.record(z.string(), z.string()).default({}),
     locales: z.object({
-      default: z.enum(['en', 'ur']),
-      enabled: z.array(z.enum(['en', 'ur'])).min(1),
+      default: z.enum(LOCALE_CODES),
+      enabled: z.array(z.enum(LOCALE_CODES)).min(1),
     }),
-    currency: z.enum(['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR']),
+    currency: z.enum(CURRENCY_CODES),
     units: z.enum(['metric', 'imperial']),
     aiConfig: z.object({
       cuisineContext: z.string().default('pakistani'),
