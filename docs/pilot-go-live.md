@@ -64,6 +64,13 @@ service in `compose.prod.yml`, set `AI_MODE=local` and
 `AI_BASE_URL=http://llm:8081/v1` in `.env`, redeploy. Fallback naming keeps
 working if the model misbehaves — generation can never fail on the LLM.
 
+### Smoke checklist
+
+1. `docker compose -f compose.prod.yml ps` — `llm` healthy
+2. From the API container: `wget -qO- http://llm:8081/v1/models` (or curl) returns model id
+3. Generate a draft plan; `plan_generations.validation` should show `fellBack=false` when local is healthy
+4. Kill the llm container briefly — generation still succeeds with `fellBack=true` / circuit may open after repeated failures
+
 ## 6. Day-2
 
 - Runbooks: [`docs/runbooks/`](./runbooks/) — every alert has one.
