@@ -2023,6 +2023,66 @@
                             "foodId",
                             "portionGrams"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "op": {
+                              "type": "string",
+                              "enum": ["override-macros"]
+                            },
+                            "itemId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "macros": {
+                              "type": "object",
+                              "properties": {
+                                "kcal": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 10000
+                                },
+                                "proteinG": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1000
+                                },
+                                "fatG": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1000
+                                },
+                                "carbsG": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1000
+                                }
+                              },
+                              "required": ["kcal", "proteinG", "fatG", "carbsG"]
+                            },
+                            "reason": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 500
+                            }
+                          },
+                          "required": ["op", "itemId", "macros"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "op": {
+                              "type": "string",
+                              "enum": ["apply-day-to-week"]
+                            },
+                            "day": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 7
+                            }
+                          },
+                          "required": ["op", "day"]
                         }
                       ]
                     },
@@ -2219,6 +2279,25 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reviewed": {
+                    "type": "boolean",
+                    "enum": [true]
+                  },
+                  "acknowledgeDrift": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["reviewed"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Published plan",

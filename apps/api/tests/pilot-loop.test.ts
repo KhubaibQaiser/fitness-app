@@ -181,6 +181,17 @@ describe('the pilot core loop', () => {
     expect(new Set(body.items.map((i) => i.day)).size).toBe(7);
     expect(body.items.every((i) => i.mealName.length > 0)).toBe(true);
 
+    // Daily template: all days share the same foods/portions.
+    const sig = (day: number) =>
+      body.items
+        .filter((i) => i.day === day)
+        .map((i) => `${i.mealIndex}:${i.foodId}:${i.portionGrams}`)
+        .sort()
+        .join('|');
+    for (let d = 2; d <= 7; d += 1) {
+      expect(sig(d)).toBe(sig(1));
+    }
+
     // Independent verification: no peanut-tagged and no non-halal foods present.
     const foodIds = [...new Set(body.items.map((i) => i.foodId))];
     const foods = await Promise.all(
@@ -234,7 +245,10 @@ describe('the pilot core loop', () => {
     const editedItem = after.items.find((i) => i.id === first.id);
     expect(editedItem?.macros.kcal).toBeGreaterThan(first.macros.kcal * 1.8);
 
-    const published = await req(`/v1/meal-plans/${draft.id}/publish`, { method: 'POST' });
+    const published = await req(`/v1/meal-plans/${draft.id}/publish`, {
+      method: 'POST',
+      json: { reviewed: true, acknowledgeDrift: true },
+    });
     expect(published.status).toBe(200);
     const plan = (await published.json()) as { status: string };
     expect(plan.status).toBe('PUBLISHED');
@@ -276,7 +290,10 @@ describe('the pilot core loop', () => {
     const magic = String.fromCharCode(...new Uint8Array(bytes).slice(0, 4));
     expect(magic).toBe('%PDF');
 
-    const republish = await req(`/v1/meal-plans/${body.plan.id}/publish`, { method: 'POST' });
+    const republish = await req(`/v1/meal-plans/${body.plan.id}/publish`, {
+      method: 'POST',
+      json: { reviewed: true, acknowledgeDrift: true },
+    });
     expect(republish.status).toBe(200);
     const final = await req(`/v1/clients/${demoClientId}/meal-plans`);
     const finalList = (await final.json()) as { items: { id: string; status: string }[] };

@@ -167,6 +167,8 @@ export const mealPlans = pgTable(
 
 export type ItemMacros = { kcal: number; proteinG: number; fatG: number; carbsG: number };
 
+export type MacrosSource = 'food_db' | 'coach_override';
+
 export const mealPlanItems = pgTable(
   'meal_plan_items',
   {
@@ -182,8 +184,9 @@ export const mealPlanItems = pgTable(
       .notNull()
       .references(() => foods.id),
     portionGrams: numeric('portion_grams', { precision: 6, scale: 1, mode: 'number' }).notNull(),
-    /** Server-recomputed from foods — never client-supplied. */
+    /** From food DB by default; coach_override when explicitly set. */
     macros: jsonb('macros').$type<ItemMacros>().notNull(),
+    macrosSource: text('macros_source').$type<MacrosSource>().notNull().default('food_db'),
     prepNotes: text('prep_notes'),
     position: smallint('position').notNull().default(0),
   },

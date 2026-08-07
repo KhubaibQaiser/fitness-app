@@ -170,9 +170,29 @@ export const planOpSchema = z.discriminatedUnion('op', [
     foodId: z.uuid(),
     portionGrams: z.number().min(1).max(3000),
   }),
+  z.object({
+    op: z.literal('override-macros'),
+    itemId: z.uuid(),
+    macros: z.object({
+      kcal: z.number().min(0).max(10000),
+      proteinG: z.number().min(0).max(1000),
+      fatG: z.number().min(0).max(1000),
+      carbsG: z.number().min(0).max(1000),
+    }),
+    reason: z.string().min(1).max(500).optional(),
+  }),
+  z.object({
+    op: z.literal('apply-day-to-week'),
+    day: z.number().int().min(1).max(7),
+  }),
 ]);
 
 export const patchPlanBody = z.object({ ops: z.array(planOpSchema).min(1).max(50) });
+
+export const publishBody = z.object({
+  reviewed: z.literal(true),
+  acknowledgeDrift: z.boolean().optional(),
+});
 
 export const noteBody = z.object({ body: z.string().min(1).max(4000) });
 
