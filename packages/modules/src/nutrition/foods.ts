@@ -76,6 +76,7 @@ export const candidatesForRestrictions = async (
   db: Db,
   restrictions: readonly RestrictionInput[],
   manifest: TenantManifest,
+  opts?: { goalPreset?: string },
 ): Promise<CandidateFood[]> => {
   const allergens = restrictedAllergenCodes(restrictions);
   const codes = new Set(restrictions.map((r) => r.code));
@@ -111,6 +112,15 @@ export const candidatesForRestrictions = async (
       sql`coalesce((${s.foods.dietaryFlags}->>'containsAlcohol')::boolean, false) = false`,
     );
   }
+  // Explicit dislike codes: dislike:<foodUuid>
+  for (const code of codes) {
+    if (code.startsWith('dislike:')) {
+      const foodId = code.slice('dislike:'.length);
+      if (foodId.length > 0) {
+        conditions.push(sql`${s.foods.id} <> ${foodId}::uuid`);
+      }
+    }
+  }
 
   const rows = await db
     .select({
@@ -129,8 +139,26 @@ export const candidatesForRestrictions = async (
     rows.map((r) => r.id),
   );
 
+  const rankByFood = new Map<string, number>();
+  if (opts?.goalPreset) {
+    const rankings = await db
+      .select({
+        foodId: s.foodRankings.foodId,
+        score: s.foodRankings.score,
+      })
+      .from(s.foodRankings)
+      .where(eq(s.foodRankings.goal, opts.goalPreset));
+    for (const row of rankings) {
+      const prev = rankByFood.get(row.foodId) ?? 1;
+      rankByFood.set(row.foodId, Math.max(prev, row.score));
+    }
+  }
+
   return rows.map((r) => {
-    const base: CandidateFood = {
+    const learned = rankByFood.get(r.id);
+    const oliveBoost = r.name === 'Olive oil' ? 3 : 1;
+    const rankScore = Math.max(learned ?? 1, oliveBoost);
+    return {
       id: r.id,
       name: r.name,
       foodGroup: r.foodGroup as FoodGroup,
@@ -138,8 +166,8 @@ export const candidatesForRestrictions = async (
       allergenTags: r.allergenTags,
       allowedSlots: r.allowedSlots as MealSlot[],
       servingUnits: units.get(r.id) ?? [],
+      rankScore,
     };
-    return r.name === 'Olive oil' ? { ...base, rankScore: 3 } : base;
   });
 };
 

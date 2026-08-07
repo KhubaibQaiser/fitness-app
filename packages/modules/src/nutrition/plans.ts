@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { narrate, narrativeOutputSchema, type AiConfig, type NarrativeOutput } from '@gymos/ai';
 import { err, ok, type Result } from '@gymos/core';
@@ -173,7 +173,9 @@ export const generatePlan = async (
     return err(error);
   };
 
-  const candidates = await candidatesForRestrictions(db, restrictions, manifest);
+  const candidates = await candidatesForRestrictions(db, restrictions, manifest, {
+    goalPreset: goal.preset,
+  });
   const solved = solveWeek(targets, candidates, {
     mealCount,
     kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
@@ -784,6 +786,31 @@ export const publishPlan = async (
       .where(eq(s.mealPlans.id, planId))
       .returning();
     if (!row) throw new Error('publish failed');
+
+    const [editEvent] = await tx
+      .select({ id: s.aiFeedbackEvents.id })
+      .from(s.aiFeedbackEvents)
+      .where(
+        and(
+          eq(s.aiFeedbackEvents.planId, planId),
+          inArray(s.aiFeedbackEvents.kind, ['EDIT', 'SWAP']),
+        ),
+      )
+      .limit(1);
+
+    if (!editEvent) {
+      const day1Foods = items
+        .filter((i) => i.day === 1)
+        .map((i) => ({ foodId: i.foodId, slot: i.mealSlot }));
+      await tx.insert(s.aiFeedbackEvents).values({
+        planId,
+        coachId: principal.coachId,
+        ...(plan.generationId !== null ? { generationId: plan.generationId } : {}),
+        kind: 'PUBLISH_UNCHANGED',
+        payload: { foods: day1Foods },
+      });
+    }
+
     await writeAudit(tx, {
       actorUserId: principal.userId,
       actorRole: 'COACH',
@@ -795,6 +822,7 @@ export const publishPlan = async (
         reviewed: true,
         acknowledgeDrift: options.acknowledgeDrift === true,
         driftedDays: drift,
+        publishSignal: editEvent ? 'EDITED' : 'PUBLISH_UNCHANGED',
       },
     });
     return row;

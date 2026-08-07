@@ -2,6 +2,7 @@ import { PgBoss } from 'pg-boss';
 import { z } from 'zod';
 import { createDb } from '@gymos/db';
 import { getPilotPrincipal } from '@gymos/modules/identity';
+import { refreshFoodRankings } from '@gymos/modules/nutrition';
 import { cleanupExpired, refreshAttention, rollCheckIns } from './jobs/checkins-roll';
 
 const env = z
@@ -25,6 +26,7 @@ const QUEUES = {
   checkinsRoll: 'maintenance.checkins-roll',
   attention: 'maintenance.attention-refresh',
   cleanup: 'maintenance.cleanup',
+  rankingRefresh: 'learning.ranking-refresh',
 } as const;
 
 await boss.start();
@@ -35,6 +37,7 @@ for (const queue of Object.values(QUEUES)) {
 // Schedules (UTC cron): nightly rolls at 21:05 UTC ≈ 02:05 Asia/Karachi.
 await boss.schedule(QUEUES.checkinsRoll, '5 21 * * *');
 await boss.schedule(QUEUES.attention, '15 21 * * *');
+await boss.schedule(QUEUES.rankingRefresh, '25 21 * * *');
 await boss.schedule(QUEUES.cleanup, '30 22 * * *');
 
 await boss.work(QUEUES.checkinsRoll, async () => {
@@ -46,6 +49,11 @@ await boss.work(QUEUES.checkinsRoll, async () => {
 await boss.work(QUEUES.attention, async () => {
   await refreshAttention(db, env.TENANT_TIMEZONE);
   console.log('attention-refresh: done');
+});
+
+await boss.work(QUEUES.rankingRefresh, async () => {
+  const count = await refreshFoodRankings(db);
+  console.log(`ranking-refresh: upserted ${count} rows`);
 });
 
 await boss.work(QUEUES.cleanup, async () => {
