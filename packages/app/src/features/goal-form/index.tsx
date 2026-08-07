@@ -90,7 +90,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         subtitle="Targets come from Mifflin–St Jeor with hard floors"
         action={
           <Link href="/settings/nutrition">
-            <GhostButton minHeight={44}>How it works</GhostButton>
+            <GhostButton>How it works</GhostButton>
           </Link>
         }
       />

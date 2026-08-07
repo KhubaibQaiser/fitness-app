@@ -8,7 +8,7 @@
     "radius": "soft"
   },
   "terminology": {},
-  "locales": { "default": "en", "enabled": ["en"] },
+  "locales": { "default": "en", "enabled": ["en", "ur"] },
   "currency": "PKR",
   "units": "metric",
   "aiConfig": {

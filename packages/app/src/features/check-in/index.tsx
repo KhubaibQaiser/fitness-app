@@ -139,7 +139,6 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
               <GhostButton
                 key={n}
                 flex={1}
-                minHeight={48}
                 onPress={() => setAdherence(n)}
                 backgroundColor={adherence === n ? '$primary' : 'transparent'}
                 color={adherence === n ? '$primaryFg' : '$color'}

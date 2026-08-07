@@ -1,6 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { type Actor } from '@gymos/core/rbac';
 import { schema as s, type Db } from '@gymos/db';
+import { type CurrencyCode, type LocaleCode } from '../tenancy/manifest';
 
 export type Principal = {
   readonly actor: Actor;
@@ -11,7 +12,8 @@ export type Principal = {
   readonly name: string;
   readonly email: string | null;
   readonly unitPref: 'metric' | 'imperial' | null;
-  readonly locale: string;
+  readonly locale: LocaleCode;
+  readonly currencyPref: CurrencyCode | null;
 };
 
 type Cached = { principal: Principal; at: number };
@@ -39,6 +41,7 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
       email: s.users.email,
       unitPref: s.users.unitPref,
       locale: s.users.locale,
+      currencyPref: s.users.currencyPref,
     })
     .from(s.coaches)
     .innerJoin(s.users, eq(s.users.id, s.coaches.userId))
@@ -81,7 +84,8 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
     name: coach.name,
     email: coach.email,
     unitPref: coach.unitPref,
-    locale: coach.locale,
+    locale: coach.locale as LocaleCode,
+    currencyPref: coach.currencyPref,
     actor: {
       userId: coach.userId,
       roles: membershipRows.map((m) => m.role),
@@ -95,4 +99,26 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
   };
   cache = { principal, at: Date.now() };
   return principal;
+};
+
+export type UpdateUserPrefsInput = {
+  locale?: LocaleCode;
+  currencyPref?: CurrencyCode;
+};
+
+/** Persist coach prefs on `users` and drop the principal cache. */
+export const updateUserPrefs = async (
+  db: Db,
+  userId: string,
+  prefs: UpdateUserPrefsInput,
+): Promise<void> => {
+  const patch: {
+    locale?: LocaleCode;
+    currencyPref?: CurrencyCode;
+  } = {};
+  if (prefs.locale !== undefined) patch.locale = prefs.locale;
+  if (prefs.currencyPref !== undefined) patch.currencyPref = prefs.currencyPref;
+
+  await db.update(s.users).set(patch).where(eq(s.users.id, userId));
+  resetPrincipalCache();
 };

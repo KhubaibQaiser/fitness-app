@@ -178,6 +178,15 @@ export const noteBody = z.object({ body: z.string().min(1).max(4000) });
 
 export const enterBody = z.object({ key: z.string().min(8).max(200) });
 
+export const updateMeBody = z
+  .object({
+    locale: z.enum(['en', 'ur']).optional(),
+    currencyPref: z.enum(['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR']).optional(),
+  })
+  .refine((body) => body.locale !== undefined || body.currencyPref !== undefined, {
+    message: 'Provide locale and/or currencyPref',
+  });
+
 /** Loose-but-typed response envelopes (tightened in the contracts milestone). */
 export const anyObject = z.record(z.string(), z.unknown());
 export const objectList = z.object({ items: z.array(anyObject) });

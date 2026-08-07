@@ -81,16 +81,46 @@ describe('access gate', () => {
   it('serves /v1/me once gated', async () => {
     const res = await req('/v1/me');
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { name: string; roles: string[] };
+    const body = (await res.json()) as {
+      name: string;
+      roles: string[];
+      locale: string;
+      currencyPref: string;
+    };
     expect(body.name).toBe('Pilot Coach');
     expect(body.roles).toContain('COACH');
+    expect(body.locale).toBe('en');
+    expect(body.currencyPref).toBe('PKR');
+  });
+
+  it('patches locale and currency prefs on /v1/me', async () => {
+    const patched = await req('/v1/me', {
+      method: 'PATCH',
+      json: { locale: 'ur', currencyPref: 'USD' },
+    });
+    expect(patched.status).toBe(200);
+    const body = (await patched.json()) as { locale: string; currencyPref: string };
+    expect(body.locale).toBe('ur');
+    expect(body.currencyPref).toBe('USD');
+
+    const again = await req('/v1/me');
+    expect(again.status).toBe(200);
+    const me = (await again.json()) as { locale: string; currencyPref: string };
+    expect(me.locale).toBe('ur');
+    expect(me.currencyPref).toBe('USD');
   });
 
   it('exposes public config without the gate', async () => {
     const res = await app.request('/v1/config/public');
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { appName: string };
+    const body = (await res.json()) as {
+      appName: string;
+      currencies: string[];
+      locales: { enabled: string[] };
+    };
     expect(body.appName).toBe('GymOS Coach');
+    expect(body.currencies).toContain('PKR');
+    expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
   });
 });
 

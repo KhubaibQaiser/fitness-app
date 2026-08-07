@@ -42,6 +42,10 @@ export const users = pgTable('users', {
   locale: text('locale').notNull().default('en'),
   /** NULL falls back to the tenant default from the manifest. */
   unitPref: text('unit_pref', { enum: ['metric', 'imperial'] }),
+  /** NULL falls back to the tenant default from the manifest. */
+  currencyPref: text('currency_pref', {
+    enum: ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'],
+  }),
   avatarKey: text('avatar_key'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

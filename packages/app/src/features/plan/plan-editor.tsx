@@ -5,7 +5,7 @@ import {
   Badge,
   Body,
   Card,
-  GhostButton,
+  IconButton,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -138,25 +138,21 @@ export const PlanEditor = ({
                     </Muted>
                   </YStack>
                   {editable ? (
-                    <XStack gap="$2">
-                      <GhostButton
-                        circular
-                        minHeight={44}
-                        minWidth={44}
+                    <XStack gap="$1.5">
+                      <IconButton
+                        tone="ghost"
                         onPress={() => step(item, -1)}
                         aria-label="Smaller portion"
                       >
                         −
-                      </GhostButton>
-                      <GhostButton
-                        circular
-                        minHeight={44}
-                        minWidth={44}
+                      </IconButton>
+                      <IconButton
+                        tone="ghost"
                         onPress={() => step(item, 1)}
                         aria-label="Bigger portion"
                       >
                         +
-                      </GhostButton>
+                      </IconButton>
                     </XStack>
                   ) : null}
                 </Row>

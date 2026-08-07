@@ -4,6 +4,7 @@ export { Screen } from './components/screen';
 export { Card } from './components/card';
 export { Title, Body, Muted, SectionTitle, Row } from './components/typography';
 export { PrimaryButton, AccentButton, GhostButton } from './components/buttons';
+export { IconButton } from './components/icon-button';
 export { Badge } from './components/badge';
 export type { BadgeTone } from './components/badge';
 export { LoadingState, EmptyState, ErrorState } from './components/states';

@@ -1,5 +1,6 @@
 'use client';
 
+import type { LocaleCode } from '@gymos/contracts';
 import { useThemeMode } from '@gymos/platform';
 import {
   Body,
@@ -12,14 +13,22 @@ import {
   PageHeader,
   Row,
   SectionTitle,
+  SegmentedControl,
   Sun,
+  YStack,
 } from '@gymos/ui';
-import { useMe, usePublicConfig } from '../../api';
+import { useMe, usePublicConfig, useUpdateMe } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+
+const LOCALE_LABELS: Record<LocaleCode, string> = {
+  en: 'English',
+  ur: 'Urdu',
+};
 
 export const SettingsScreen = () => {
   const me = useMe();
   const config = usePublicConfig();
+  const updateMe = useUpdateMe();
   const { mode, setMode } = useThemeMode();
 
   if (me.isPending || config.isPending) {
@@ -43,6 +52,10 @@ export const SettingsScreen = () => {
     );
   }
 
+  const locale: LocaleCode = me.data.locale === 'ur' ? 'ur' : 'en';
+  const currency = me.data.currencyPref;
+  const saving = updateMe.isPending;
+
   return (
     <AppScreen>
       <PageHeader title="Settings" subtitle="Workspace, appearance, safety" />
@@ -53,8 +66,7 @@ export const SettingsScreen = () => {
           <Body fontWeight="700">Theme</Body>
           <Row gap="$2">
             <GhostButton
-              minHeight={44}
-              icon={<Sun size={16} />}
+              icon={<Sun size={18} />}
               backgroundColor={mode === 'light' ? '$primary' : 'transparent'}
               color={mode === 'light' ? '$primaryFg' : '$color'}
               borderColor={mode === 'light' ? '$primary' : '$borderColor'}
@@ -64,8 +76,7 @@ export const SettingsScreen = () => {
               Light
             </GhostButton>
             <GhostButton
-              minHeight={44}
-              icon={<Moon size={16} />}
+              icon={<Moon size={18} />}
               backgroundColor={mode === 'dark' ? '$primary' : 'transparent'}
               color={mode === 'dark' ? '$primaryFg' : '$color'}
               borderColor={mode === 'dark' ? '$primary' : '$borderColor'}
@@ -77,6 +88,47 @@ export const SettingsScreen = () => {
           </Row>
         </Row>
         <Muted>Preference is saved on this device.</Muted>
+      </Card>
+
+      <SectionTitle>Preferences</SectionTitle>
+      <Card gap="$4">
+        <YStack gap="$2" width="100%">
+          <Body fontWeight="700">Language</Body>
+          <SegmentedControl
+            ariaLabel="Language"
+            value={locale}
+            onChange={(next) => {
+              if (next === locale || saving) return;
+              updateMe.mutate({ locale: next });
+            }}
+            options={config.data.locales.enabled.map((code) => ({
+              value: code,
+              label: LOCALE_LABELS[code],
+            }))}
+          />
+        </YStack>
+        <YStack gap="$2" width="100%">
+          <Body fontWeight="700">Currency</Body>
+          <SegmentedControl
+            ariaLabel="Currency"
+            value={currency}
+            onChange={(next) => {
+              if (next === currency || saving) return;
+              updateMe.mutate({ currencyPref: next });
+            }}
+            options={config.data.currencies.map((code) => ({
+              value: code,
+              label: code,
+            }))}
+          />
+        </YStack>
+        {updateMe.isError ? (
+          <Body color="$danger" role="alert" fontSize={13}>
+            {updateMe.error.message}
+          </Body>
+        ) : (
+          <Muted>Saved to your coach profile and applied on every device.</Muted>
+        )}
       </Card>
 
       <SectionTitle>Coach</SectionTitle>
@@ -92,22 +144,6 @@ export const SettingsScreen = () => {
         <Row>
           <Body>Units</Body>
           <Muted>{me.data.unitPref}</Muted>
-        </Row>
-      </Card>
-
-      <SectionTitle>Workspace</SectionTitle>
-      <Card>
-        <Row>
-          <Body>App</Body>
-          <Muted>{config.data.appName}</Muted>
-        </Row>
-        <Row>
-          <Body>Currency</Body>
-          <Muted>{config.data.currency}</Muted>
-        </Row>
-        <Row>
-          <Body>Language</Body>
-          <Muted>{config.data.locales.default}</Muted>
         </Row>
       </Card>
 

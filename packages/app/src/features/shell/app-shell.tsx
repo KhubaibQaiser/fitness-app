@@ -7,8 +7,8 @@ import { useThemeMode } from '@gymos/platform';
 import {
   Bell,
   Body,
-  GhostButton,
   Home,
+  IconButton,
   Moon,
   Muted,
   Settings,
@@ -59,14 +59,10 @@ const ThemeToggle = () => {
   const { mode, toggle } = useThemeMode();
   const dark = mode === 'dark';
   return (
-    <GhostButton
-      circular
-      size="$4"
-      minHeight={44}
-      minWidth={44}
+    <IconButton
       onPress={toggle}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      icon={dark ? <Sun size={20} color="$color" /> : <Moon size={20} color="$color" />}
+      icon={dark ? <Sun size={22} color="$color" /> : <Moon size={22} color="$color" />}
     />
   );
 };
@@ -159,6 +155,57 @@ export const SideNav = () => {
   const pathname = usePathname() ?? '/';
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
+  const primary = NAV.filter((item) => item.href !== '/settings');
+  const settings = NAV.find((item) => item.href === '/settings');
+
+  const link = ({ href, label }: NavItem) => {
+    const active = isActive(pathname, href);
+    const color = active ? '$primary' : '$textMuted';
+    return (
+      <Link key={href} href={href}>
+        <XStack
+          alignItems="center"
+          gap="$3"
+          minHeight={40}
+          paddingHorizontal="$3"
+          borderRadius="$radiusControl"
+          backgroundColor={active ? '$elevatedBg' : 'transparent'}
+          borderWidth={active ? 1 : 0}
+          borderColor="$borderColor"
+          hoverStyle={{ backgroundColor: '$elevatedBg' }}
+          focusVisibleStyle={{
+            outlineWidth: 2,
+            outlineColor: '$focusRing',
+            outlineStyle: 'solid',
+          }}
+        >
+          {navIcon(href, 20, color)}
+          <Body
+            fontWeight={active ? '800' : '600'}
+            color={active ? '$color' : '$textMuted'}
+            flex={1}
+          >
+            {label}
+          </Body>
+          {href === '/notifications' && count > 0 ? (
+            <YStack
+              backgroundColor="$danger"
+              borderRadius={999}
+              minWidth={22}
+              height={22}
+              alignItems="center"
+              justifyContent="center"
+              paddingHorizontal={6}
+            >
+              <Text color="$dangerFg" fontSize={11} fontWeight="800">
+                {count > 9 ? '9+' : count}
+              </Text>
+            </YStack>
+          ) : null}
+        </XStack>
+      </Link>
+    );
+  };
 
   return (
     <YStack
@@ -194,55 +241,10 @@ export const SideNav = () => {
       </XStack>
 
       <YStack gap="$1" flex={1}>
-        {NAV.map(({ href, label }) => {
-          const active = isActive(pathname, href);
-          const color = active ? '$primary' : '$textMuted';
-          return (
-            <Link key={href} href={href}>
-              <XStack
-                alignItems="center"
-                gap="$3"
-                minHeight={48}
-                paddingHorizontal="$3"
-                borderRadius={12}
-                backgroundColor={active ? '$elevatedBg' : 'transparent'}
-                borderWidth={active ? 1 : 0}
-                borderColor="$borderColor"
-                hoverStyle={{ backgroundColor: '$elevatedBg' }}
-                focusVisibleStyle={{
-                  outlineWidth: 2,
-                  outlineColor: '$focusRing',
-                  outlineStyle: 'solid',
-                }}
-              >
-                {navIcon(href, 20, color)}
-                <Body
-                  fontWeight={active ? '800' : '600'}
-                  color={active ? '$color' : '$textMuted'}
-                  flex={1}
-                >
-                  {label}
-                </Body>
-                {href === '/notifications' && count > 0 ? (
-                  <YStack
-                    backgroundColor="$danger"
-                    borderRadius={999}
-                    minWidth={22}
-                    height={22}
-                    alignItems="center"
-                    justifyContent="center"
-                    paddingHorizontal={6}
-                  >
-                    <Text color="$dangerFg" fontSize={11} fontWeight="800">
-                      {count > 9 ? '9+' : count}
-                    </Text>
-                  </YStack>
-                ) : null}
-              </XStack>
-            </Link>
-          );
-        })}
+        {primary.map(link)}
       </YStack>
+
+      {settings ? link(settings) : null}
     </YStack>
   );
 };

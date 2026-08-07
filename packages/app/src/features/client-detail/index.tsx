@@ -125,11 +125,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
         action={
           client.phone ? (
             <Link href={`https://wa.me/${client.phone.replace(/[^\d]/g, '')}`} target="_blank">
-              <GhostButton
-                icon={<MessageCircle size={18} />}
-                aria-label="Open WhatsApp"
-                minWidth={48}
-              >
+              <GhostButton icon={<MessageCircle size={18} />} aria-label="Open WhatsApp">
                 Chat
               </GhostButton>
             </Link>

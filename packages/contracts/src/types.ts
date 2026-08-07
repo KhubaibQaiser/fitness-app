@@ -8,23 +8,33 @@ import { type ClientIntake, type SignedClientIntake } from '@gymos/core';
 
 export type { ClientIntake, SignedClientIntake };
 
+export type CurrencyCode = 'PKR' | 'USD' | 'EUR' | 'GBP' | 'AED' | 'SAR';
+export type LocaleCode = 'en' | 'ur';
+
 export type PublicConfig = {
   appName: string;
   colors: { primary: string; accent: string };
   radius: 'sharp' | 'soft' | 'round';
   terminology: Record<string, string>;
-  locales: { default: 'en' | 'ur'; enabled: ('en' | 'ur')[] };
+  locales: { default: LocaleCode; enabled: LocaleCode[] };
   units: 'metric' | 'imperial';
-  currency: string;
+  currency: CurrencyCode;
+  currencies: CurrencyCode[];
 };
 
 export type Me = {
   userId: string;
   name: string;
   email: string | null;
-  locale: string;
+  locale: LocaleCode;
   unitPref: 'metric' | 'imperial';
+  currencyPref: CurrencyCode;
   roles: string[];
+};
+
+export type UpdateMeInput = {
+  locale?: LocaleCode;
+  currencyPref?: CurrencyCode;
 };
 
 export type AttentionReason = { code: string; weight: number; since: string };

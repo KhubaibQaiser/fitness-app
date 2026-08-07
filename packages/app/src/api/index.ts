@@ -26,10 +26,28 @@ export const qk = {
   unread: ['notifications', 'unread'] as const,
 };
 
-export const useMe = () => useQuery({ queryKey: qk.me, queryFn: api.me, staleTime: 60_000 });
+export const useMe = () =>
+  useQuery({
+    queryKey: qk.me,
+    queryFn: api.me.get,
+    // Cookie lasts 30d; avoid refetching on every focus / soft nav.
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
+  });
 
 export const usePublicConfig = () =>
   useQuery({ queryKey: qk.config, queryFn: api.publicConfig, staleTime: 300_000 });
+
+export const useUpdateMe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.me.update,
+    onSuccess: (data) => {
+      queryClient.setQueryData(qk.me, data);
+    },
+  });
+};
 
 export const useClients = (q?: string) =>
   useQuery({ queryKey: qk.clients(q), queryFn: () => api.clients.list(q) });
