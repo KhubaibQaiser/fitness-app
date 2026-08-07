@@ -75,6 +75,7 @@ export type AppDeps = {
     | 'AI_BASE_URL'
     | 'AI_MODEL'
     | 'AI_API_KEY'
+    | 'AI_ADAPTER_VERSION'
   >;
 };
 
@@ -92,12 +93,28 @@ const problemDocs = (...statuses: number[]) =>
   );
 
 export const buildApp = ({ db, manifest, env }: AppDeps) => {
-  const aiConfig: AiConfig = {
-    mode: env.AI_MODE,
-    verbosity: manifest.aiConfig.verbosity,
-    ...(env.AI_BASE_URL !== undefined ? { baseUrl: env.AI_BASE_URL } : {}),
-    ...(env.AI_MODEL !== undefined ? { model: env.AI_MODEL } : {}),
-    ...(env.AI_API_KEY !== undefined ? { apiKey: env.AI_API_KEY } : {}),
+  const flags = manifest.aiConfig.featureFlags;
+  const canaryVersion = manifest.aiConfig.promptVersionCanary;
+  const canaryPct = manifest.aiConfig.promptCanaryPercent ?? 0;
+
+  /** Resolve per generation so prompt canary % applies across requests. */
+  const resolveAiConfig = (): AiConfig => {
+    const useCanary =
+      canaryVersion !== undefined && canaryPct > 0 && Math.random() * 100 < canaryPct;
+    return {
+      mode: flags?.aiMode ?? env.AI_MODE,
+      verbosity: manifest.aiConfig.verbosity,
+      ...(env.AI_BASE_URL !== undefined ? { baseUrl: env.AI_BASE_URL } : {}),
+      ...(env.AI_MODEL !== undefined ? { model: env.AI_MODEL } : {}),
+      ...(env.AI_API_KEY !== undefined ? { apiKey: env.AI_API_KEY } : {}),
+      ...(env.AI_ADAPTER_VERSION !== undefined ? { adapterVersion: env.AI_ADAPTER_VERSION } : {}),
+      ...(flags?.adapterVersion !== undefined ? { adapterVersion: flags.adapterVersion } : {}),
+      ...(flags?.promptVersion !== undefined ? { promptVersion: flags.promptVersion } : {}),
+      ...(useCanary ? { promptVersion: canaryVersion } : {}),
+      ...(manifest.aiConfig.promptPackId !== undefined
+        ? { promptPackId: manifest.aiConfig.promptPackId }
+        : { promptPackId: manifest.aiConfig.cuisineContext }),
+    };
   };
 
   const enterLimiter = createRateLimiter(5, 60_000);
@@ -880,9 +897,17 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const generated = await generatePlan(db, c.get('principal'), manifest, checkIn.clientId, {
         kind: 'ADJUSTMENT',
         targetsOverride: verdict.newTargets as dto.MacroTargets,
-        ai: aiConfig,
+        ai: resolveAiConfig(),
       });
       if (!generated.ok) {
+        if (generated.error.code === 'QUOTA_EXCEEDED') {
+          throw new ProblemError(
+            429,
+            'QUOTA_EXCEEDED',
+            'Monthly plan generation quota exceeded',
+            `used ${generated.error.used} of ${generated.error.limit}`,
+          );
+        }
         throw new ProblemError(
           422,
           generated.error.code,
@@ -976,7 +1001,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       request: { params: dto.clientIdParam, body: json(dto.generateBody) },
       responses: {
         200: { description: 'Draft plan with items', ...json(dto.anyObject) },
-        ...problemDocs(403, 404, 422),
+        ...problemDocs(403, 404, 422, 429),
       },
     }),
     async (c) => {
@@ -986,9 +1011,10 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const existing = await listPlans(db, clientId);
       const result = await generatePlan(db, c.get('principal'), manifest, clientId, {
         kind: existing.length > 0 ? 'ADJUSTMENT' : 'INITIAL',
-        ai: aiConfig,
+        ai: resolveAiConfig(),
         mealCount: body.mealCount,
         ...(body.override !== undefined ? { override: body.override } : {}),
+        ...(body.idempotencyKey !== undefined ? { idempotencyKey: body.idempotencyKey } : {}),
       });
       if (!result.ok) {
         if (result.error.code === 'CLIENT_NOT_FOUND') {
@@ -1000,6 +1026,14 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
             'BLOCKED_REQUIRES_OVERRIDE',
             'Safety gate: coach override with reason required',
             result.error.reasons.join(', '),
+          );
+        }
+        if (result.error.code === 'QUOTA_EXCEEDED') {
+          throw new ProblemError(
+            429,
+            'QUOTA_EXCEEDED',
+            'Monthly plan generation quota exceeded',
+            `used ${result.error.used} of ${result.error.limit}`,
           );
         }
         throw new ProblemError(

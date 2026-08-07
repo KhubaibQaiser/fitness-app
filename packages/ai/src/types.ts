@@ -12,6 +12,8 @@ export type AiConfig = {
   readonly promptVersion?: string;
   /** Optional LoRA / adapter id served by llama.cpp. */
   readonly adapterVersion?: string;
+  /** Tenant prompt/cuisine pack id (see prompts/packs.ts). */
+  readonly promptPackId?: string;
 };
 
 /** De-identified Layer-3 input — food names and grams only, never PII. */

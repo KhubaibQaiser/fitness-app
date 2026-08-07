@@ -237,6 +237,12 @@ export type Verdict = {
   clampedBySafety?: boolean;
   meanAdherence?: number;
   flags?: string[];
+  /** Layer-3 adaptive narrative (digit-free); optional on older rows. */
+  narrative?: {
+    title: string;
+    coachSummary: string;
+    clientSummary: string;
+  };
 };
 
 export type ClientDetail = {
@@ -310,7 +316,7 @@ export type PlanOp =
       op: 'override-macros';
       itemId: string;
       macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
-      reason?: string;
+      reason?: string | undefined;
     }
   | { op: 'apply-day-to-week'; day: number };
 
