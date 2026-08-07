@@ -116,7 +116,7 @@ export const WeightChart = ({ points, goalWeightKg = null, height = 200 }: Weigh
         alignItems="center"
         justifyContent="center"
         backgroundColor="$elevatedBg"
-        borderRadius={14}
+        borderRadius="$radiusCard"
         borderWidth={1}
         borderColor="$borderColor"
       >
@@ -128,10 +128,10 @@ export const WeightChart = ({ points, goalWeightKg = null, height = 200 }: Weigh
   const { sorted, goalY, minW, maxW } = layout;
   const visibleCount = Math.max(2, Math.ceil(sorted.length * Math.max(progress, 0.02)));
   const visible = sorted.slice(0, visibleCount);
-  const stroke = String(theme.primary?.val ?? '#0f766e');
-  const goalStroke = String(theme.accent?.val ?? '#f59e0b');
-  const muted = String(theme.textMuted?.val ?? '#3d4f48');
-  const grid = String(theme.borderColor?.val ?? '#c5d0cd');
+  const stroke = String(theme.primary?.val ?? '#005DB8');
+  const goalStroke = String(theme.accent?.val ?? '#5150BE');
+  const muted = String(theme.textMuted?.val ?? '#44474E');
+  const grid = String(theme.borderColor?.val ?? '#C4C6D0');
   const activePoint = active !== null ? sorted[active] : null;
 
   const yTicks = [maxW, (maxW + minW) / 2, minW];
@@ -141,7 +141,7 @@ export const WeightChart = ({ points, goalWeightKg = null, height = 200 }: Weigh
       <YStack
         width="100%"
         aspectRatio={WIDTH / height}
-        borderRadius={14}
+        borderRadius="$radiusCard"
         overflow="hidden"
         backgroundColor="$elevatedBg"
         borderWidth={1}
