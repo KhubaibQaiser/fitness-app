@@ -559,6 +559,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
         plans: plans.map((plan) => ({
           id: plan.id,
           version: plan.version,
+          title: plan.title,
           status: plan.status,
           targets: plan.targets,
           publishedAt: plan.publishedAt,

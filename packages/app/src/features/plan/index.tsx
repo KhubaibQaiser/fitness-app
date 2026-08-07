@@ -140,6 +140,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
       clientName={detail.data.client.name}
       planId={plan.data.plan.id}
       status={plan.data.plan.status}
+      title={plan.data.plan.title}
       targets={plan.data.plan.targets}
       items={plan.data.items}
       day={day}

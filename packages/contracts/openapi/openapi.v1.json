@@ -2083,6 +2083,20 @@
                             }
                           },
                           "required": ["op", "day"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "op": {
+                              "type": "string",
+                              "enum": ["set-title"]
+                            },
+                            "title": {
+                              "type": "string",
+                              "maxLength": 50
+                            }
+                          },
+                          "required": ["op", "title"]
                         }
                       ]
                     },

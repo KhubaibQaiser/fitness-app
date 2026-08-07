@@ -9,7 +9,6 @@ import {
   Card,
   GhostButton,
   Muted,
-  PageHeader,
   PrimaryButton,
   Row,
   SectionTitle,
@@ -20,8 +19,10 @@ import {
 import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
+import { PlanFoodPicker } from './plan-food-picker';
 import { PlanItemCard } from './plan-item-card';
 import { PlanPublishConfirm } from './plan-publish-confirm';
+import { PlanTitleHeader } from './plan-title-header';
 import { PrepPreferencesBanner } from './prep-preferences-banner';
 
 const DAY_OPTIONS = [
@@ -40,6 +41,13 @@ const MEAL_COUNT_OPTIONS = [
   { value: 5, label: '+2 snacks' },
 ] as const;
 
+const SLOT_LABEL: Record<PlanItem['mealSlot'], string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+  snack: 'Snack',
+};
+
 const dietPlanDownloadName = (clientName: string): string => {
   const first = clientName.trim().split(/\s+/)[0] ?? 'Client';
   const safe = first.replace(/[^\w\-]+/g, '').slice(0, 40);
@@ -54,11 +62,20 @@ const daySignature = (items: readonly PlanItem[], day: number): string =>
     .sort()
     .join('|');
 
+const planSwitcherLabel = (title: string | null, version: number): string => {
+  if (title !== null && title.trim() !== '') {
+    const t = title.trim();
+    return t.length > 18 ? `${t.slice(0, 16)}…` : t;
+  }
+  return `v${version}`;
+};
+
 export const PlanEditor = ({
   clientId,
   clientName,
   planId,
   status,
+  title,
   targets,
   items,
   day,
@@ -77,6 +94,7 @@ export const PlanEditor = ({
   clientName: string;
   planId: string;
   status: string;
+  title: string | null;
   targets: { kcal: number; proteinG: number; fatG: number; carbsG: number };
   items: PlanItem[];
   day: number;
@@ -96,6 +114,7 @@ export const PlanEditor = ({
   const downloadPdf = useDownloadDietPlanPdf(planId);
   const [regenOpen, setRegenOpen] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [addMealIndex, setAddMealIndex] = useState<number | null>(null);
   const editable = status === 'DRAFT' || status === 'NEEDS_REVIEW';
   const nextVersion = Math.max(...plans.map((p) => p.version), version) + 1;
   const hasPublished = plans.some((p) => p.status === 'PUBLISHED');
@@ -103,12 +122,13 @@ export const PlanEditor = ({
   useEffect(() => {
     setRegenOpen(false);
     setPdfError(null);
+    setAddMealIndex(null);
   }, [planId]);
 
   const dayItems = items.filter((i) => i.day === day);
-  const meals = [...new Map(dayItems.map((i) => [i.mealIndex, i.mealName])).entries()].sort(
-    (a, b) => a[0] - b[0],
-  );
+  const meals = [
+    ...new Map(dayItems.map((i) => [i.mealIndex, i.mealSlot] as const)).entries(),
+  ].sort((a, b) => a[0] - b[0]);
   const dayTotals = dayItems.reduce(
     (acc, i) => ({
       kcal: acc.kcal + i.macros.kcal,
@@ -132,16 +152,13 @@ export const PlanEditor = ({
 
   return (
     <AppScreen>
-      <PageHeader
-        title={`Plan v${version}`}
-        action={
-          <Badge
-            tone={
-              status === 'PUBLISHED' ? 'success' : status === 'NEEDS_REVIEW' ? 'danger' : 'warning'
-            }
-            label={status}
-          />
-        }
+      <PlanTitleHeader
+        title={title}
+        version={version}
+        status={status}
+        editable={editable}
+        busy={patch.isPending}
+        onSave={(nextTitle) => patch.mutate([{ op: 'set-title', title: nextTitle }])}
       />
 
       {plans.length > 1 ? (
@@ -151,7 +168,7 @@ export const PlanEditor = ({
             ariaLabel="Plan version"
             options={plans.map((p) => ({
               value: p.id,
-              label: `v${p.version}`,
+              label: planSwitcherLabel(p.title, p.version),
             }))}
             value={planId}
             onChange={onSelectPlan}
@@ -159,6 +176,7 @@ export const PlanEditor = ({
           <Muted fontSize={12}>
             {plans.find((p) => p.id === planId)?.status ?? status}
             {status === 'SUPERSEDED' ? ' — superseded by a newer published plan' : ''}
+            {` · v${version}`}
           </Muted>
         </YStack>
       ) : null}
@@ -184,64 +202,68 @@ export const PlanEditor = ({
 
       <PrepPreferencesBanner />
 
-      <XStack gap="$2" flexWrap="wrap">
-        <GhostButton
-          flex={1}
-          minWidth={140}
-          disabled={downloadPdf.isPending}
-          onPress={onDownloadPdf}
-        >
-          {downloadPdf.isPending ? 'Preparing…' : 'Download PDF'}
-        </GhostButton>
-        <GhostButton
-          flex={1}
-          minWidth={140}
-          disabled={generatePending}
-          onPress={() => setRegenOpen((open) => !open)}
-        >
-          {regenOpen ? 'Cancel regenerate' : 'Regenerate'}
-        </GhostButton>
-      </XStack>
-      {pdfError ? (
-        <Body color="$danger" role="alert">
-          {pdfError}
-        </Body>
-      ) : null}
-
-      {regenOpen ? (
-        <Card gap="$3" tone="accent">
-          <Body fontWeight="800">Create draft v{nextVersion}</Body>
-          <Muted>
-            {hasPublished
-              ? 'Creates a new draft. The current published plan stays live until you publish this one.'
-              : 'Creates a new draft version. Publish when you are ready for the client to follow it.'}
-          </Muted>
-          <YStack gap="$2">
-            <Muted fontSize={13}>Meals per day</Muted>
-            <SegmentedControl
-              ariaLabel="Meals per day"
-              options={[...MEAL_COUNT_OPTIONS]}
-              value={mealCount}
-              onChange={setMealCount}
-            />
-          </YStack>
-          {generateBlocked && generateError instanceof ApiError ? (
-            <OverridePrompt
-              onConfirm={(reason) => onGenerate({ reason, mealCount })}
-              busy={generatePending}
-              detail={generateError.detail ?? ''}
-            />
-          ) : (
-            <PrimaryButton disabled={generatePending} onPress={() => onGenerate({ mealCount })}>
-              {generatePending ? 'Generating…' : `Generate draft v${nextVersion}`}
-            </PrimaryButton>
-          )}
-          {generateError && !generateBlocked ? (
+      {status !== 'DRAFT' ? (
+        <>
+          <XStack gap="$2" flexWrap="wrap">
+            <GhostButton
+              flex={1}
+              minWidth={140}
+              disabled={downloadPdf.isPending}
+              onPress={onDownloadPdf}
+            >
+              {downloadPdf.isPending ? 'Preparing…' : 'Download PDF'}
+            </GhostButton>
+            <GhostButton
+              flex={1}
+              minWidth={140}
+              disabled={generatePending}
+              onPress={() => setRegenOpen((open) => !open)}
+            >
+              {regenOpen ? 'Cancel regenerate' : 'Regenerate'}
+            </GhostButton>
+          </XStack>
+          {pdfError ? (
             <Body color="$danger" role="alert">
-              {generateError.message}
+              {pdfError}
             </Body>
           ) : null}
-        </Card>
+
+          {regenOpen ? (
+            <Card gap="$3" tone="accent">
+              <Body fontWeight="800">Create draft v{nextVersion}</Body>
+              <Muted>
+                {hasPublished
+                  ? 'Creates a new draft. The current published plan stays live until you publish this one.'
+                  : 'Creates a new draft version. Publish when you are ready for the client to follow it.'}
+              </Muted>
+              <YStack gap="$2">
+                <Muted fontSize={13}>Meals per day</Muted>
+                <SegmentedControl
+                  ariaLabel="Meals per day"
+                  options={[...MEAL_COUNT_OPTIONS]}
+                  value={mealCount}
+                  onChange={setMealCount}
+                />
+              </YStack>
+              {generateBlocked && generateError instanceof ApiError ? (
+                <OverridePrompt
+                  onConfirm={(reason) => onGenerate({ reason, mealCount })}
+                  busy={generatePending}
+                  detail={generateError.detail ?? ''}
+                />
+              ) : (
+                <PrimaryButton disabled={generatePending} onPress={() => onGenerate({ mealCount })}>
+                  {generatePending ? 'Generating…' : `Generate draft v${nextVersion}`}
+                </PrimaryButton>
+              )}
+              {generateError && !generateBlocked ? (
+                <Body color="$danger" role="alert">
+                  {generateError.message}
+                </Body>
+              ) : null}
+            </Card>
+          ) : null}
+        </>
       ) : null}
 
       <Card>
@@ -282,9 +304,9 @@ export const PlanEditor = ({
         ) : null}
       </YStack>
 
-      {meals.map(([mealIndex, mealName]) => (
+      {meals.map(([mealIndex, mealSlot]) => (
         <YStack key={mealIndex} gap="$2">
-          <SectionTitle>{mealName}</SectionTitle>
+          <SectionTitle>{SLOT_LABEL[mealSlot]}</SectionTitle>
           {dayItems
             .filter((i) => i.mealIndex === mealIndex)
             .map((item) => (
@@ -296,6 +318,36 @@ export const PlanEditor = ({
                 onPatch={(ops) => patch.mutate(ops)}
               />
             ))}
+          {editable ? (
+            <YStack gap="$2">
+              <GhostButton
+                disabled={patch.isPending}
+                onPress={() =>
+                  setAddMealIndex((current) => (current === mealIndex ? null : mealIndex))
+                }
+              >
+                {addMealIndex === mealIndex ? 'Cancel add' : 'Add food'}
+              </GhostButton>
+              {addMealIndex === mealIndex ? (
+                <PlanFoodPicker
+                  busy={patch.isPending}
+                  onSelect={(food) => {
+                    patch.mutate([
+                      {
+                        op: 'add',
+                        day,
+                        mealIndex,
+                        mealSlot,
+                        foodId: food.id,
+                        portionGrams: 100,
+                      },
+                    ]);
+                    setAddMealIndex(null);
+                  }}
+                />
+              ) : null}
+            </YStack>
+          ) : null}
         </YStack>
       ))}
 

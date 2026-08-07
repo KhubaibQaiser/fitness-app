@@ -172,6 +172,7 @@ export type DietaryProfile = {
 export type PlanSummary = {
   id: string;
   version: number;
+  title: string | null;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED' | 'NEEDS_REVIEW' | 'ARCHIVED';
   targets: MacroTargets;
   publishedAt: string | null;
@@ -318,7 +319,8 @@ export type PlanOp =
       macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
       reason?: string | undefined;
     }
-  | { op: 'apply-day-to-week'; day: number };
+  | { op: 'apply-day-to-week'; day: number }
+  | { op: 'set-title'; title: string };
 
 export type PublishPlanBody = {
   reviewed: true;

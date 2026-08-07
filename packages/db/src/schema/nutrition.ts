@@ -148,6 +148,8 @@ export const mealPlans = pgTable(
       .notNull()
       .references(() => outlets.id),
     version: integer('version').notNull(),
+    /** Coach-facing label; null falls back to "Plan v{version}" in UI. */
+    title: text('title'),
     status: planStatusEnum('status').notNull().default('DRAFT'),
     targets: jsonb('targets').$type<PlanTargets>().notNull(),
     generationId: uuid('generation_id'),

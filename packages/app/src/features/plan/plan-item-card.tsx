@@ -14,9 +14,9 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
-import { useFoods } from '../../api';
+import { PlanFoodPicker } from './plan-food-picker';
 
-/** Single plan line — portion, swap, optional macro override. */
+/** Single plan line — portion, swap, remove, optional macro override. */
 export const PlanItemCard = ({
   item,
   editable,
@@ -30,12 +30,10 @@ export const PlanItemCard = ({
 }) => {
   const [swapOpen, setSwapOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
-  const [query, setQuery] = useState('');
   const [kcal, setKcal] = useState(String(item.macros.kcal));
   const [proteinG, setProteinG] = useState(String(item.macros.proteinG));
   const [fatG, setFatG] = useState(String(item.macros.fatG));
   const [carbsG, setCarbsG] = useState(String(item.macros.carbsG));
-  const foods = useFoods(query.length >= 2 ? query : undefined);
 
   const step = (direction: 1 | -1) => {
     const next = Math.max(
@@ -48,7 +46,6 @@ export const PlanItemCard = ({
   const swapTo = (food: Food) => {
     onPatch([{ op: 'swap', itemId: item.id, foodId: food.id }]);
     setSwapOpen(false);
-    setQuery('');
   };
 
   const applyOverride = () => {
@@ -119,27 +116,13 @@ export const PlanItemCard = ({
           >
             {overrideOpen ? 'Cancel macros' : 'Override macros'}
           </GhostButton>
+          <GhostButton disabled={busy} onPress={() => onPatch([{ op: 'remove', itemId: item.id }])}>
+            Remove
+          </GhostButton>
         </XStack>
       ) : null}
       {swapOpen ? (
-        <YStack gap="$2">
-          <FormField
-            label="Search foods"
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Type at least 2 characters"
-            autoCapitalize="none"
-          />
-          {foods.isFetching ? <Muted fontSize={12}>Searching…</Muted> : null}
-          {(foods.data?.items ?? [])
-            .filter((f) => f.id !== item.foodId)
-            .slice(0, 8)
-            .map((food) => (
-              <GhostButton key={food.id} disabled={busy} onPress={() => swapTo(food)}>
-                {food.name} · {Math.round(food.per100g.kcal)} kcal/100g
-              </GhostButton>
-            ))}
-        </YStack>
+        <PlanFoodPicker busy={busy} excludeFoodId={item.foodId} onSelect={swapTo} />
       ) : null}
       {overrideOpen ? (
         <YStack gap="$2">
