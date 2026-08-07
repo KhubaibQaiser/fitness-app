@@ -9,6 +9,7 @@ const envSchema = z.object({
   AI_BASE_URL: z.url().optional(),
   AI_MODEL: z.string().optional(),
   AI_API_KEY: z.string().optional(),
+  AI_ADAPTER_VERSION: z.string().min(1).optional(),
   PORT: z.coerce.number().int().positive().default(8080),
 });
 

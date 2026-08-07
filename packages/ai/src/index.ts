@@ -4,5 +4,7 @@ export * from './deidentify';
 export * from './fallback';
 export * from './guardrails';
 export * from './narrate';
+export * from './narrate-adjustment';
 export * from './prompts/meal-narrative.v1';
+export * from './prompts/packs';
 export * from './types';

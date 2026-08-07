@@ -122,6 +122,8 @@ export const CheckInDetailScreen = ({
   const checkIn = detail.data;
   const editable = checkIn.status === 'COMPLETED';
   const copy = verdict !== null ? VERDICT_COPY[verdict.type] : null;
+  const narrative = verdict?.narrative;
+  const displayTitle = narrative?.title ?? copy?.title ?? null;
 
   const submit = () => {
     if (!editable || update.isPending) return;
@@ -156,7 +158,7 @@ export const CheckInDetailScreen = ({
         subtitle={editable ? 'Edit inputs and re-run the engine' : `${checkIn.status} — view only`}
       />
 
-      {copy !== null && verdict !== null ? (
+      {copy !== null && verdict !== null && displayTitle !== null ? (
         <Card
           gap="$4"
           tone={copy.tone === 'danger' ? 'danger' : 'default'}
@@ -182,10 +184,16 @@ export const CheckInDetailScreen = ({
           <YStack gap="$3" width="100%" alignItems="stretch">
             <Row>
               <Body fontWeight="800" fontSize={17} flex={1}>
-                {copy.title}
+                {displayTitle}
               </Body>
               <Badge tone={copy.tone} label={verdict.type.replaceAll('_', ' ')} />
             </Row>
+            {narrative !== undefined ? (
+              <>
+                <Body fontSize={14}>{narrative.coachSummary}</Body>
+                <Muted>{narrative.clientSummary}</Muted>
+              </>
+            ) : null}
             {verdict.actualWeeklyDeltaKg !== undefined ? (
               <Muted>
                 Actual {verdict.actualWeeklyDeltaKg} kg/wk vs expected{' '}
@@ -193,11 +201,13 @@ export const CheckInDetailScreen = ({
                 {(verdict.confidence * 100).toFixed(0)}%
               </Muted>
             ) : null}
-            {verdict.reasons.map((reason) => (
-              <Body key={reason} fontSize={14}>
-                • {reason}
-              </Body>
-            ))}
+            {narrative === undefined
+              ? verdict.reasons.map((reason) => (
+                  <Body key={reason} fontSize={14}>
+                    • {reason}
+                  </Body>
+                ))
+              : null}
             {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
               <YStack gap="$2">
                 <SectionTitle>Proposed targets</SectionTitle>

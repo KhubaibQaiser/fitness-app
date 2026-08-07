@@ -2179,6 +2179,11 @@
                       }
                     ],
                     "default": 3
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
                   }
                 }
               }
@@ -2220,6 +2225,17 @@
             }
           },
           "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Problem details",
             "content": {
               "application/json": {

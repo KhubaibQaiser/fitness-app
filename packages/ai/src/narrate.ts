@@ -13,6 +13,7 @@ import {
   MEAL_NARRATIVE_SYSTEM,
   PROMPT_VERSION,
 } from './prompts/meal-narrative.v1';
+import { resolvePromptPack } from './prompts/packs';
 import { type AiConfig, type NarrativeInput, type NarrativeOutput } from './types';
 
 export type NarrateResult = {
@@ -181,6 +182,11 @@ const callOpenAiCompatible = async (
   promptVersion: string,
 ): Promise<unknown> => {
   if (!config.baseUrl) throw new Error('AI_BASE_URL not configured');
+  const pack = resolvePromptPack(config.promptPackId);
+  const system =
+    pack.systemAddendum.length > 0
+      ? `${MEAL_NARRATIVE_SYSTEM} ${pack.systemAddendum}`
+      : MEAL_NARRATIVE_SYSTEM;
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -188,11 +194,12 @@ const callOpenAiCompatible = async (
       ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}),
       'x-gymos-prompt-version': promptVersion,
       ...(config.adapterVersion ? { 'x-gymos-adapter-version': config.adapterVersion } : {}),
+      ...(pack.id !== 'default' ? { 'x-gymos-prompt-pack': pack.id } : {}),
     },
     body: JSON.stringify({
       model: config.model,
       messages: [
-        { role: 'system', content: MEAL_NARRATIVE_SYSTEM },
+        { role: 'system', content: system },
         { role: 'user', content: JSON.stringify(input) },
       ],
       response_format: {

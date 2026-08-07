@@ -1,5 +1,6 @@
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { DateTime } from 'luxon';
+import { narrateAdjustment } from '@gymos/ai';
 import { err, ok, type Result } from '@gymos/core';
 import {
   evaluateProgress,
@@ -28,7 +29,13 @@ export type CheckInError =
 
 export type CompletedCheckIn = {
   checkInId: string;
-  verdict: AdjustmentRecommendation;
+  verdict: AdjustmentRecommendation & {
+    narrative?: {
+      title: string;
+      coachSummary: string;
+      clientSummary: string;
+    };
+  };
   vitalsId: string | null;
 };
 
@@ -160,6 +167,9 @@ export const completeCheckIn = async (
     now: DateTime.utc().toMillis(),
   });
 
+  const narrative = narrateAdjustment(verdict, { mode: 'fallback', verbosity: 'terse' });
+  const engineOutput = { ...verdict, narrative };
+
   // 3. Persist: complete this check-in, schedule the next one.
   await db.transaction(async (tx) => {
     await tx
@@ -169,7 +179,7 @@ export const completeCheckIn = async (
         vitalsId,
         adherenceRating: input.adherenceRating ?? null,
         coachNotes: input.coachNotes ?? null,
-        engineOutput: verdict,
+        engineOutput,
         status: 'COMPLETED',
       })
       .where(eq(s.checkIns.id, due.id));
@@ -211,7 +221,7 @@ export const completeCheckIn = async (
     });
   }
 
-  return ok({ checkInId: due.id, verdict, vitalsId });
+  return ok({ checkInId: due.id, verdict: { ...verdict, narrative }, vitalsId });
 };
 
 /** Update a completed check-in's inputs and re-run the adaptive engine (no new DUE). */
@@ -330,6 +340,9 @@ export const updateAndRerunCheckIn = async (
     now: cutoffMs,
   });
 
+  const narrative = narrateAdjustment(verdict, { mode: 'fallback', verbosity: 'terse' });
+  const engineOutput = { ...verdict, narrative };
+
   await db.transaction(async (tx) => {
     await tx
       .update(s.checkIns)
@@ -337,7 +350,7 @@ export const updateAndRerunCheckIn = async (
         vitalsId,
         adherenceRating: adherenceRating ?? null,
         coachNotes: coachNotes ?? null,
-        engineOutput: verdict,
+        engineOutput,
       })
       .where(eq(s.checkIns.id, checkIn.id));
 
@@ -353,7 +366,7 @@ export const updateAndRerunCheckIn = async (
     });
   });
 
-  return ok({ checkInId: checkIn.id, verdict, vitalsId });
+  return ok({ checkInId: checkIn.id, verdict: { ...verdict, narrative }, vitalsId });
 };
 
 export const listCheckIns = async (db: Db, clientId: string, limit = 50) =>
