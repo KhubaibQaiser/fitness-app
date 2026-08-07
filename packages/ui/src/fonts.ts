@@ -3,22 +3,22 @@ import { createFont, isWeb } from 'tamagui';
 
 /**
  * Cross-platform font faces.
- * Web: CSS vars from next/font (DM Sans) — see apps/web/app/layout.tsx.
+ * Web: CSS vars from next/font (Roboto) — see apps/web/app/layout.tsx.
  * Native (P3): load the same family via expo-font / useFonts using `face` names.
  *
- * One simple geometric sans for heading + body — readable, not elongated.
+ * Roboto matches the TradeBlock MD3 typeface (regular + medium weights).
  */
-const dmSansFace = {
-  400: { normal: 'DMSans' },
-  500: { normal: 'DMSans-Medium' },
-  600: { normal: 'DMSans-SemiBold' },
-  700: { normal: 'DMSans-Bold' },
-  800: { normal: 'DMSans-Bold' },
-  bold: { normal: 'DMSans-Bold' },
+const robotoFace = {
+  400: { normal: 'Roboto' },
+  500: { normal: 'Roboto-Medium' },
+  600: { normal: 'Roboto-Medium' },
+  700: { normal: 'Roboto-Bold' },
+  800: { normal: 'Roboto-Bold' },
+  bold: { normal: 'Roboto-Bold' },
 } as const;
 
-const familyWeb = 'var(--font-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif';
-const familyNative = 'DMSans';
+const familyWeb = 'var(--font-sans), Roboto, ui-sans-serif, system-ui, sans-serif';
+const familyNative = 'Roboto';
 
 export const headingFont = createFont({
   family: isWeb ? familyWeb : familyNative,
@@ -26,7 +26,7 @@ export const headingFont = createFont({
   lineHeight: defaultConfig.fonts.heading.lineHeight,
   weight: defaultConfig.fonts.heading.weight,
   letterSpacing: defaultConfig.fonts.heading.letterSpacing,
-  face: dmSansFace,
+  face: robotoFace,
 });
 
 export const bodyFont = createFont({
@@ -35,5 +35,5 @@ export const bodyFont = createFont({
   lineHeight: defaultConfig.fonts.body.lineHeight,
   weight: defaultConfig.fonts.body.weight,
   letterSpacing: defaultConfig.fonts.body.letterSpacing,
-  face: dmSansFace,
+  face: robotoFace,
 });

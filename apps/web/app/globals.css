@@ -9,22 +9,22 @@ html,
 body {
   height: 100%;
   margin: 0;
-  background: #e8ece9;
+  background: #fefbff;
   color-scheme: light dark;
 }
 
 html[data-theme='dark'],
 html[data-theme='dark'] body {
-  background: #070b0a;
+  background: #1b1b1f;
 }
 
 *:focus-visible {
-  outline: 2px solid #0f766e;
+  outline: 2px solid #005db8;
   outline-offset: 2px;
 }
 
 html[data-theme='dark'] *:focus-visible {
-  outline-color: #2dd4bf;
+  outline-color: #aac7ff;
 }
 
 * {
