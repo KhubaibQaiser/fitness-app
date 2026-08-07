@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { type Verdict } from '@gymos/contracts';
 import {
+  AlertTriangle,
   Badge,
   Body,
   Card,
+  Check,
+  ClipboardList,
   ErrorState,
   FormField,
   GhostButton,
@@ -16,11 +19,13 @@ import {
   PrimaryButton,
   Row,
   SectionTitle,
-  XStack,
+  StickyFormFooter,
   YStack,
 } from '@gymos/ui';
 import { useApplyAdjustment, useCheckIn, useUpdateCheckIn } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { useAppChrome } from '../shell/use-app-chrome';
+import { adherenceBarTone, adherencePctToRating, adherenceRatingToPct } from './adherence';
 import { VERDICT_COPY } from './verdict-copy';
 
 const asAdherence = (n: number | null): 1 | 2 | 3 | 4 | 5 | null =>
@@ -42,6 +47,27 @@ const asVerdict = (value: unknown): Verdict | null => {
   return value as Verdict;
 };
 
+const VERDICT_ICON_BG = {
+  success: '$successMuted',
+  warning: '$warningMuted',
+  danger: '$dangerMuted',
+  neutral: '$elevatedBg',
+} as const;
+
+const VERDICT_ICON_FG = {
+  success: '$success',
+  warning: '$warning',
+  danger: '$danger',
+  neutral: '$textMuted',
+} as const;
+
+const BAR_COLOR = {
+  success: '$success',
+  warning: '$warning',
+  danger: '$danger',
+  primary: '$primary',
+} as const;
+
 /** View / edit a completed check-in and re-run the adaptive engine. */
 export const CheckInDetailScreen = ({
   clientId,
@@ -51,22 +77,28 @@ export const CheckInDetailScreen = ({
   checkInId: string;
 }) => {
   const router = useRouter();
+  const { showMobileTabBar } = useAppChrome();
   const detail = useCheckIn(checkInId);
   const update = useUpdateCheckIn(clientId);
   const apply = useApplyAdjustment(clientId);
 
   const [weight, setWeight] = useState('');
-  const [adherence, setAdherence] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
+  const [adherencePct, setAdherencePct] = useState('');
   const [notes, setNotes] = useState('');
   const [weightError, setWeightError] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
+  const bottomInset = showMobileTabBar ? 72 : 12;
+  const pctNum = Math.max(0, Math.min(100, Number(adherencePct) || 0));
+  const barTone = adherenceBarTone(pctNum);
+
   useEffect(() => {
     if (!detail.data || hydrated) return;
     const row = detail.data;
     setWeight(row.weightKg != null ? String(row.weightKg) : '');
-    setAdherence(asAdherence(row.adherenceRating));
+    const rating = asAdherence(row.adherenceRating);
+    setAdherencePct(rating !== null ? String(adherenceRatingToPct(rating)) : '');
     setNotes(row.coachNotes ?? '');
     setVerdict(asVerdict(row.engineOutput));
     setHydrated(true);
@@ -98,12 +130,13 @@ export const CheckInDetailScreen = ({
       return;
     }
     setWeightError(null);
+    const hasPct = adherencePct.trim() !== '' && Number.isFinite(Number(adherencePct));
     update.mutate(
       {
         checkInId,
         input: {
           ...(weight !== '' ? { vitals: { weightKg: Number(weight) } } : {}),
-          ...(adherence !== null ? { adherenceRating: adherence } : {}),
+          ...(hasPct ? { adherenceRating: adherencePctToRating(Number(adherencePct)) } : {}),
           ...(notes.trim() !== '' ? { coachNotes: notes.trim() } : {}),
         },
       },
@@ -124,69 +157,94 @@ export const CheckInDetailScreen = ({
       />
 
       {copy !== null && verdict !== null ? (
-        <Card gap="$3" tone={copy.tone === 'danger' ? 'danger' : 'default'} marginBottom="$4">
-          <Row>
-            <Body fontWeight="800" fontSize={17} flex={1}>
-              {copy.title}
-            </Body>
-            <Badge tone={copy.tone} label={verdict.type.replaceAll('_', ' ')} />
-          </Row>
-          {verdict.actualWeeklyDeltaKg !== undefined ? (
-            <Muted>
-              Actual {verdict.actualWeeklyDeltaKg} kg/wk vs expected {verdict.expectedWeeklyDeltaKg}{' '}
-              kg/wk · confidence {(verdict.confidence * 100).toFixed(0)}%
-            </Muted>
-          ) : null}
-          {verdict.reasons.map((reason) => (
-            <Body key={reason} fontSize={14}>
-              • {reason}
-            </Body>
-          ))}
-          {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
-            <YStack gap="$2">
-              <SectionTitle>Proposed targets</SectionTitle>
-              <Body fontWeight="700">
-                {verdict.newTargets.kcal} kcal (
-                {verdict.deltaKcalPerDay !== undefined && verdict.deltaKcalPerDay > 0 ? '+' : ''}
-                {verdict.deltaKcalPerDay} kcal/day)
+        <Card
+          gap="$4"
+          tone={copy.tone === 'danger' ? 'danger' : 'default'}
+          marginBottom="$4"
+          alignItems="center"
+        >
+          <YStack
+            width={72}
+            height={72}
+            borderRadius={999}
+            backgroundColor={VERDICT_ICON_BG[copy.tone]}
+            alignItems="center"
+            justifyContent="center"
+          >
+            {copy.tone === 'success' ? (
+              <Check size={32} color={VERDICT_ICON_FG[copy.tone]} />
+            ) : copy.tone === 'neutral' ? (
+              <ClipboardList size={32} color={VERDICT_ICON_FG[copy.tone]} />
+            ) : (
+              <AlertTriangle size={32} color={VERDICT_ICON_FG[copy.tone]} />
+            )}
+          </YStack>
+          <YStack gap="$3" width="100%" alignItems="stretch">
+            <Row>
+              <Body fontWeight="800" fontSize={17} flex={1}>
+                {copy.title}
               </Body>
+              <Badge tone={copy.tone} label={verdict.type.replaceAll('_', ' ')} />
+            </Row>
+            {verdict.actualWeeklyDeltaKg !== undefined ? (
               <Muted>
-                P {verdict.newTargets.proteinG}g · F {verdict.newTargets.fatG}g · C{' '}
-                {verdict.newTargets.carbsG}g
+                Actual {verdict.actualWeeklyDeltaKg} kg/wk vs expected{' '}
+                {verdict.expectedWeeklyDeltaKg} kg/wk · confidence{' '}
+                {(verdict.confidence * 100).toFixed(0)}%
               </Muted>
-              {editable ? (
-                <>
-                  <PrimaryButton
-                    disabled={apply.isPending}
-                    onPress={() =>
-                      apply.mutate(checkInId, {
-                        onSuccess: () => router.replace(`/clients/${clientId}/plan`),
-                      })
-                    }
-                  >
-                    {apply.isPending ? 'Re-solving plan…' : 'Apply — draft an adjusted plan'}
-                  </PrimaryButton>
-                  {apply.isError ? (
-                    <Body color="$danger" role="alert">
-                      {apply.error.message}
-                    </Body>
-                  ) : null}
-                </>
-              ) : null}
-            </YStack>
-          ) : null}
-          {verdict.type === 'REFER_REVIEW' ? (
-            <Body color="$danger">
-              Automatic adjustments are paused. Review the client before changing anything. This is
-              not medical advice.
-            </Body>
-          ) : null}
+            ) : null}
+            {verdict.reasons.map((reason) => (
+              <Body key={reason} fontSize={14}>
+                • {reason}
+              </Body>
+            ))}
+            {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
+              <YStack gap="$2">
+                <SectionTitle>Proposed targets</SectionTitle>
+                <Body fontWeight="700">
+                  {verdict.newTargets.kcal} kcal (
+                  {verdict.deltaKcalPerDay !== undefined && verdict.deltaKcalPerDay > 0 ? '+' : ''}
+                  {verdict.deltaKcalPerDay} kcal/day)
+                </Body>
+                <Muted>
+                  P {verdict.newTargets.proteinG}g · F {verdict.newTargets.fatG}g · C{' '}
+                  {verdict.newTargets.carbsG}g
+                </Muted>
+                {editable ? (
+                  <>
+                    <PrimaryButton
+                      disabled={apply.isPending}
+                      onPress={() =>
+                        apply.mutate(checkInId, {
+                          onSuccess: () => router.replace(`/clients/${clientId}/plan`),
+                        })
+                      }
+                    >
+                      {apply.isPending ? 'Re-solving plan…' : 'Apply — draft an adjusted plan'}
+                    </PrimaryButton>
+                    {apply.isError ? (
+                      <Body color="$danger" role="alert">
+                        {apply.error.message}
+                      </Body>
+                    ) : null}
+                  </>
+                ) : null}
+              </YStack>
+            ) : null}
+            {verdict.type === 'REFER_REVIEW' ? (
+              <Body color="$danger">
+                Automatic adjustments are paused. Review the client before changing anything. This
+                is not medical advice.
+              </Body>
+            ) : null}
+          </YStack>
         </Card>
       ) : null}
 
       <Card gap="$4">
         <FormField
-          label="Weight (kg)"
+          label="Weight"
+          unit="kg"
           value={weight}
           onChangeText={(t) => {
             if (!editable) return;
@@ -200,26 +258,27 @@ export const CheckInDetailScreen = ({
         />
 
         <YStack gap="$2">
-          <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
-            Plan adherence (1–5)
-          </Body>
-          <XStack gap="$2" role="group" aria-label="Adherence rating">
-            {([1, 2, 3, 4, 5] as const).map((n) => (
-              <GhostButton
-                key={n}
-                flex={1}
-                disabled={!editable}
-                onPress={() => setAdherence(n)}
-                backgroundColor={adherence === n ? '$primary' : 'transparent'}
-                color={adherence === n ? '$primaryFg' : '$color'}
-                borderColor={adherence === n ? '$primary' : '$borderColor'}
-                aria-pressed={adherence === n}
-                aria-label={`Adherence ${n}`}
-              >
-                {n}
-              </GhostButton>
-            ))}
-          </XStack>
+          <FormField
+            label="Plan adherence"
+            unit="%"
+            value={adherencePct}
+            onChangeText={(t) => {
+              if (!editable) return;
+              setAdherencePct(t);
+            }}
+            placeholder="0–100"
+            inputMode="numeric"
+            disabled={!editable}
+          />
+          <YStack
+            height={8}
+            width="100%"
+            backgroundColor="$elevatedBg"
+            borderRadius={999}
+            overflow="hidden"
+          >
+            <YStack height={8} width={`${pctNum}%`} backgroundColor={BAR_COLOR[barTone]} />
+          </YStack>
         </YStack>
 
         <FormField
@@ -240,15 +299,18 @@ export const CheckInDetailScreen = ({
             {update.error.message}
           </Body>
         ) : null}
+      </Card>
 
+      <StickyFormFooter bottomInset={bottomInset}>
+        <GhostButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
+          {editable ? 'Cancel' : 'Back'}
+        </GhostButton>
         {editable ? (
-          <PrimaryButton disabled={update.isPending} onPress={submit}>
+          <PrimaryButton flex={1} disabled={update.isPending} onPress={submit}>
             {update.isPending ? 'Re-running…' : 'Save & re-run'}
           </PrimaryButton>
         ) : null}
-
-        <GhostButton onPress={() => router.replace(`/clients/${clientId}`)}>Back</GhostButton>
-      </Card>
+      </StickyFormFooter>
     </AppScreen>
   );
 };

@@ -21,6 +21,7 @@ import {
   UserPlus as UserPlusRaw,
   Users as UsersRaw,
   Utensils as UtensilsRaw,
+  Wrench as WrenchRaw,
 } from '@tamagui/lucide-icons-2';
 import { createElement, type ReactElement } from 'react';
 
@@ -65,3 +66,4 @@ export const Target: GymosIcon = fromLucide(TargetRaw);
 export const UserPlus: GymosIcon = fromLucide(UserPlusRaw);
 export const Users: GymosIcon = fromLucide(UsersRaw);
 export const Utensils: GymosIcon = fromLucide(UtensilsRaw);
+export const Wrench: GymosIcon = fromLucide(WrenchRaw);

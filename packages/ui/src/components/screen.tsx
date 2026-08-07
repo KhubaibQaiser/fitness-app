@@ -1,15 +1,16 @@
 import { styled, YStack } from 'tamagui';
 
 /**
- * Page chrome. Bottom padding clears mobile tab bar; desktop shell zeros it
- * via `chrome="desktop"`. Always wrap loading/error inside Screen.
+ * Page chrome. Kit content inset: $5 mobile / $8 desktop.
+ * Strip headers (Home, Client hub) use paddingHorizontal={0} on Screen and
+ * apply the same inset on both the strip and the body so edges align.
  */
 export const Screen = styled(YStack, {
   name: 'Screen',
   flex: 1,
   backgroundColor: '$screenBg',
-  paddingHorizontal: '$4',
-  paddingTop: '$4',
+  paddingHorizontal: '$5',
+  paddingTop: '$5',
   paddingBottom: 96,
   gap: '$4',
   width: '100%',
@@ -22,14 +23,17 @@ export const Screen = styled(YStack, {
       mobile: {
         paddingBottom: 96,
         maxWidth: 920,
+        paddingHorizontal: '$5',
       },
       desktop: {
         paddingBottom: '$6',
         maxWidth: 1100,
+        paddingHorizontal: '$8',
       },
       bare: {
         paddingBottom: '$4',
         maxWidth: 920,
+        paddingHorizontal: '$5',
       },
     },
     density: {

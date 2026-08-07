@@ -6,15 +6,13 @@ import {
   Body,
   Card,
   ErrorState,
-  GhostButton,
   LoadingState,
-  Moon,
   Muted,
   PageHeader,
   Row,
   SectionTitle,
   SegmentedControl,
-  Sun,
+  Switch,
   YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig, useUpdateMe } from '../../api';
@@ -55,6 +53,7 @@ export const SettingsScreen = () => {
   const locale: LocaleCode = me.data.locale === 'ur' ? 'ur' : 'en';
   const currency = me.data.currencyPref;
   const saving = updateMe.isPending;
+  const dark = mode === 'dark';
 
   return (
     <AppScreen>
@@ -62,32 +61,20 @@ export const SettingsScreen = () => {
 
       <SectionTitle>Appearance</SectionTitle>
       <Card gap="$3">
-        <Row>
-          <Body fontWeight="700">Theme</Body>
-          <Row gap="$2">
-            <GhostButton
-              icon={<Sun size={18} />}
-              backgroundColor={mode === 'light' ? '$primary' : 'transparent'}
-              color={mode === 'light' ? '$primaryFg' : '$color'}
-              borderColor={mode === 'light' ? '$primary' : '$borderColor'}
-              onPress={() => setMode('light')}
-              aria-pressed={mode === 'light'}
-            >
-              Light
-            </GhostButton>
-            <GhostButton
-              icon={<Moon size={18} />}
-              backgroundColor={mode === 'dark' ? '$primary' : 'transparent'}
-              color={mode === 'dark' ? '$primaryFg' : '$color'}
-              borderColor={mode === 'dark' ? '$primary' : '$borderColor'}
-              onPress={() => setMode('dark')}
-              aria-pressed={mode === 'dark'}
-            >
-              Dark
-            </GhostButton>
-          </Row>
+        <Row minHeight={48}>
+          <YStack flex={1} gap={2} minWidth={0}>
+            <Body fontWeight="700">Dark mode</Body>
+            <Muted fontSize={12}>Preference is saved on this device.</Muted>
+          </YStack>
+          <Switch
+            checked={dark}
+            onCheckedChange={(v) => setMode(v ? 'dark' : 'light')}
+            size="$3"
+            aria-label="Dark mode"
+          >
+            <Switch.Thumb />
+          </Switch>
         </Row>
-        <Muted>Preference is saved on this device.</Muted>
       </Card>
 
       <SectionTitle>Preferences</SectionTitle>
@@ -144,6 +131,18 @@ export const SettingsScreen = () => {
         <Row>
           <Body>Units</Body>
           <Muted>{me.data.unitPref}</Muted>
+        </Row>
+      </Card>
+
+      <SectionTitle>About</SectionTitle>
+      <Card>
+        <Row>
+          <Body>Product</Body>
+          <Muted>GymOS Coach</Muted>
+        </Row>
+        <Row>
+          <Body>Version</Body>
+          <Muted fontFamily="$mono">0.1.0-pilot</Muted>
         </Row>
       </Card>
 

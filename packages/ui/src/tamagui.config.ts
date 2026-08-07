@@ -4,7 +4,7 @@
 import { defaultConfig } from '@tamagui/config/v4';
 import { createTamagui } from 'tamagui';
 import manifest from '../../../infra/tenants/pilot.json';
-import { bodyFont, headingFont } from './fonts';
+import { bodyFont, headingFont, monoFont } from './fonts';
 
 /**
  * Design system config. Brand colors flow from the tenant manifest at build
@@ -12,6 +12,7 @@ import { bodyFont, headingFont } from './fonts';
  *
  * MD3-inspired blue/violet brand (TradeBlock palette mapped to Tamagui roles).
  * Light + dark ship together and persist via ThemeModeProvider.
+ * Tokens aligned to GymOS Coach UI Kit (Figma Make).
  */
 const brand = manifest.branding.colors;
 const radius = manifest.branding.radius; // 'soft' | future variants
@@ -24,6 +25,7 @@ export const config = createTamagui({
   fonts: {
     heading: headingFont,
     body: bodyFont,
+    mono: monoFont,
   },
   themes: {
     ...defaultConfig.themes,
@@ -39,6 +41,7 @@ export const config = createTamagui({
       screenBg: '#FEFBFF',
       cardBg: '#FAF9FD',
       elevatedBg: '#EFEDF1',
+      sidebar: '#F3F1F7',
       borderColor: '#C4C6D0',
       borderColorHover: '#74777F',
       // Text — onSurface / onSurfaceVariant / outline
@@ -48,10 +51,13 @@ export const config = createTamagui({
       // Status
       danger: '#C00011',
       dangerFg: '#ffffff',
+      dangerMuted: '#FFDAD6',
       success: '#1AC057',
       successFg: '#ffffff',
+      successMuted: '#CCFFD9',
       warning: '#E7B008',
       warningFg: '#1B1B1F',
+      warningMuted: '#FFF2C2',
       focusRing: brand.primary,
       // Radius semantic aliases consumed by primitives
       radiusCard: radiusScale.card,
@@ -67,17 +73,21 @@ export const config = createTamagui({
       screenBg: '#1B1B1F',
       cardBg: '#121316',
       elevatedBg: '#1F1F23',
-      borderColor: '#44474E',
+      sidebar: '#17181C',
+      borderColor: '#2E3038',
       borderColorHover: '#8E9099',
       color: '#E3E2E6',
       textMuted: '#C4C6D0',
       placeholderColor: '#8E9099',
       danger: '#FFB4AB',
       dangerFg: '#690005',
+      dangerMuted: '#3A0009',
       success: '#3BE362',
       successFg: '#00390F',
+      successMuted: '#002E0A',
       warning: '#ECC306',
       warningFg: '#3B2F00',
+      warningMuted: '#2A1F00',
       focusRing: '#AAC7FF',
       radiusCard: radiusScale.card,
       radiusControl: radiusScale.control,
