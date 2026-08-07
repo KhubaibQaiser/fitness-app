@@ -189,7 +189,7 @@ export const ClientHubPlan = ({
               Generate a 7-day plan from the goal targets and dietary profile.
             </Muted>
             <Link href={`/clients/${clientId}/plan`}>
-              <PrimaryButton>Generate meal plan</PrimaryButton>
+              <PrimaryButton>Generate draft plan</PrimaryButton>
             </Link>
           </Card>
         ) : null

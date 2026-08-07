@@ -2,7 +2,7 @@
   "name": "gymos",
   "version": "0.0.0",
   "private": true,
-  "description": "GymOS — coaching-first gym platform. Pilot: single-coach responsive web app with AI meal planning and adaptive progress tracking.",
+  "description": "GymOS — coaching-first gym platform. Pilot: single-coach responsive web app with hybrid nutrition + coach-reviewed meal plans and adaptive progress tracking.",
   "packageManager": "pnpm@10.34.4",
   "engines": {
     "node": ">=22.11.0"

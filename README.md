@@ -1,13 +1,13 @@
 # GymOS
 
-Coaching-first gym platform. Current phase: **Pilot** — a single-coach, mobile-first web app where a coach records client vitals, generates AI meal plans (deterministic nutrition engine + local LLM for language), tracks weekly check-ins, and gets adaptive plan adjustments — at $0/month infrastructure cost.
+Coaching-first gym platform. Current phase: **Pilot** — a single-coach, mobile-first web app where a coach records client vitals, generates draft meal plans (deterministic nutrition engine + optional local LLM for meal names/prep notes only), reviews and edits before publish, tracks weekly check-ins, and gets adaptive plan adjustments — at $0/month infrastructure cost. See [docs/adr/0001-hybrid-ai-nutrition.md](docs/adr/0001-hybrid-ai-nutrition.md).
 
 ## Architecture (pilot)
 
 - **Monorepo**: Turborepo + pnpm. Feature code uses React Native primitives (`packages/app`) rendered on web via Tamagui + react-native-web, so native mobile (P3) is a deployment, not a rewrite. `apps/mobile` must always bundle green in CI.
 - **Apps**: `web` (Next.js 16, installable PWA) · `api` (Hono modular monolith) · `worker` (same image, pg-boss) · `mobile` (Expo shell, CI gate only).
 - **Data**: PostgreSQL 17 (Neon free tier), Drizzle ORM. Queue state in an ephemeral VM-local Postgres (pg-boss).
-- **AI**: llama.cpp + Qwen3 (Apache 2.0) on our own VM — JSON-schema-constrained, language-only (all numbers are deterministic). No data leaves our infrastructure.
+- **AI**: Hybrid — Layers 1–2 own calories/macros; llama.cpp + Qwen3 (optional) names meals only. Coach must review before publish. No data leaves our infrastructure.
 - **Infra**: Oracle Always Free VM + Caddy (DuckDNS DNS-01 TLS) + Cloudflare R2. Everything free.
 
 ## Getting started
