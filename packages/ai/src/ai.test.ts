@@ -146,12 +146,11 @@ describe('narrate', () => {
       {
         expectedMealCount: 2,
         cache: {
-          get: async (hash) => {
-            const hit = store.get(hash.toString('hex'));
-            return (hit as typeof cached | undefined) ?? null;
-          },
-          set: async (hash, output) => {
+          get: (hash) =>
+            Promise.resolve((store.get(hash.toString('hex')) as typeof cached | undefined) ?? null),
+          set: (hash, output) => {
             store.set(hash.toString('hex'), output);
+            return Promise.resolve();
           },
         },
       },
@@ -171,8 +170,9 @@ describe('narrate', () => {
       {
         expectedMealCount: 2,
         cache: {
-          get: async (h) => (store.get(h.toString('hex')) as typeof cached | undefined) ?? null,
-          set: async () => undefined,
+          get: (h) =>
+            Promise.resolve((store.get(h.toString('hex')) as typeof cached | undefined) ?? null),
+          set: () => Promise.resolve(),
         },
       },
     );
