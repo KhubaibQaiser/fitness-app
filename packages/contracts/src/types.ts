@@ -187,6 +187,7 @@ export type PlanItem = {
   foodId: string;
   portionGrams: number;
   macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
+  macrosSource: 'food_db' | 'coach_override';
   prepNotes: string | null;
   position: number;
 };
@@ -304,4 +305,16 @@ export type PlanOp =
       mealSlot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       foodId: string;
       portionGrams: number;
-    };
+    }
+  | {
+      op: 'override-macros';
+      itemId: string;
+      macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
+      reason?: string;
+    }
+  | { op: 'apply-day-to-week'; day: number };
+
+export type PublishPlanBody = {
+  reviewed: true;
+  acknowledgeDrift?: boolean;
+};

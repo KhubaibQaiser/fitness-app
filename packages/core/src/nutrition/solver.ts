@@ -424,26 +424,36 @@ const sumRounded = (items: readonly SolvedItem[]) => {
   };
 };
 
-/** Solve a full 7-day week; food variety comes from per-day seeded picks. */
+/**
+ * Solve a weekly plan as a daily template: one day solved, then cloned to days 2–7.
+ * Per-day variety is coach-authored via edits, not solver randomness (ADR-0001).
+ */
 export const solveWeek = (
   targets: MacroTargets,
   candidates: readonly CandidateFood[],
   config: SolverConfig,
 ): Result<SolvedDay[], SolverError> => {
-  const days: SolvedDay[] = [];
-  for (let day = 1; day <= 7; day += 1) {
-    let solved = solveDay(day, targets, candidates, config);
-    // A few seeds land just outside macro tolerance after hill-climb. Retry the
-    // day with alternate seeds before failing the whole week (pilot flake).
-    for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
-      if (solved.error.code !== 'SOLVER_INFEASIBLE') return solved;
-      solved = solveDay(day, targets, candidates, {
-        ...config,
-        seed: `${config.seed}:r${recovery}`,
-      });
-    }
-    if (!solved.ok) return solved;
-    days.push(solved.value);
+  let solved = solveDay(1, targets, candidates, config);
+  for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
+    if (solved.error.code !== 'SOLVER_INFEASIBLE') return solved;
+    solved = solveDay(1, targets, candidates, {
+      ...config,
+      seed: `${config.seed}:r${recovery}`,
+    });
+  }
+  if (!solved.ok) return solved;
+
+  const template = solved.value;
+  const days: SolvedDay[] = [template];
+  for (let day = 2; day <= 7; day += 1) {
+    days.push({
+      day,
+      meals: template.meals.map((meal) => ({
+        ...meal,
+        items: meal.items.map((item) => ({ ...item })),
+      })),
+      totals: { ...template.totals },
+    });
   }
   return ok(days);
 };
