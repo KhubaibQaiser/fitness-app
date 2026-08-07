@@ -1,5 +1,6 @@
 import { styled, YStack } from 'tamagui';
 
+/** Flat bordered card (kit) — no heavy elevation shadow. */
 export const Card = styled(YStack, {
   name: 'Card',
   backgroundColor: '$cardBg',
@@ -8,18 +9,13 @@ export const Card = styled(YStack, {
   gap: '$2',
   borderWidth: 1,
   borderColor: '$borderColor',
-  shadowColor: 'rgba(0,0,0,0.12)',
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 4 },
-  elevation: 2,
 
   variants: {
     interactive: {
       true: {
         cursor: 'pointer',
         hoverStyle: {
-          borderColor: '$borderColorHover',
-          backgroundColor: '$elevatedBg',
+          borderColor: '$primary',
         },
         pressStyle: { opacity: 0.92, scale: 0.995 },
         focusVisibleStyle: {
@@ -33,7 +29,7 @@ export const Card = styled(YStack, {
       default: {},
       danger: {
         borderColor: '$danger',
-        borderWidth: 2,
+        borderWidth: 1,
       },
       accent: {
         borderColor: '$accent',

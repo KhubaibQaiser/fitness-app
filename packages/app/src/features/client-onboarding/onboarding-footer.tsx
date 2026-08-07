@@ -1,6 +1,7 @@
 'use client';
 
-import { GhostButton, PrimaryButton, XStack } from '@gymos/ui';
+import { GhostButton, PrimaryButton, StickyFormFooter } from '@gymos/ui';
+import { useAppChrome } from '../shell/use-app-chrome';
 
 export const OnboardingFooter = ({
   canGoBack,
@@ -14,15 +15,20 @@ export const OnboardingFooter = ({
   pending?: boolean;
   onBack: () => void;
   onNext: () => void;
-}) => (
-  <XStack gap="$2" width="100%" paddingTop="$2">
-    {canGoBack ? (
-      <GhostButton flex={1} onPress={onBack} disabled={pending === true}>
-        Back
-      </GhostButton>
-    ) : null}
-    <PrimaryButton flex={1} onPress={onNext} disabled={pending === true}>
-      {pending === true ? 'Saving…' : isLast ? 'Finish' : 'Continue'}
-    </PrimaryButton>
-  </XStack>
-);
+}) => {
+  const { showMobileTabBar } = useAppChrome();
+  const bottomInset = showMobileTabBar ? 72 : 12;
+
+  return (
+    <StickyFormFooter bottomInset={bottomInset}>
+      {canGoBack ? (
+        <GhostButton flex={1} onPress={onBack} disabled={pending === true}>
+          Back
+        </GhostButton>
+      ) : null}
+      <PrimaryButton flex={1} onPress={onNext} disabled={pending === true}>
+        {pending === true ? 'Saving…' : isLast ? 'Finish' : 'Continue'}
+      </PrimaryButton>
+    </StickyFormFooter>
+  );
+};

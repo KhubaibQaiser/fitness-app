@@ -2,7 +2,7 @@
 
 import { useRouter } from 'solito/navigation';
 import type { OnboardClientInput } from '@gymos/contracts';
-import { Body, Card, PageHeader, YStack } from '@gymos/ui';
+import { Body, Card, PageHeader } from '@gymos/ui';
 import { useOnboardClient } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { parsePositive } from './height-units';
@@ -144,20 +144,18 @@ export const ClientOnboardingScreen = () => {
             {onboard.error.message}
           </Body>
         ) : null}
-
-        <OnboardingFooter
-          canGoBack={stepIndex > 0}
-          isLast={isLast}
-          pending={onboard.isPending}
-          onBack={() => {
-            setErrors({});
-            setStepIndex((i) => Math.max(0, i - 1));
-          }}
-          onNext={goNext}
-        />
       </Card>
 
-      <YStack height={24} />
+      <OnboardingFooter
+        canGoBack={stepIndex > 0}
+        isLast={isLast}
+        pending={onboard.isPending}
+        onBack={() => {
+          setErrors({});
+          setStepIndex((i) => Math.max(0, i - 1));
+        }}
+        onNext={goNext}
+      />
     </AppScreen>
   );
 };

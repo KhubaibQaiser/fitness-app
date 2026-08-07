@@ -1,76 +1,189 @@
 'use client';
 
-import { startTransition, useState } from 'react';
+import { startTransition, useMemo, useState } from 'react';
 import { Link } from 'solito/link';
+import { useDebouncedValue } from '@gymos/platform';
 import {
-  Avatar,
-  Badge,
-  Card,
-  ChevronRight,
   EmptyState,
   ErrorState,
   Input,
-  ListRow,
   LoadingState,
   PageHeader,
   Plus,
   PrimaryButton,
+  Text,
+  useMedia,
   XStack,
+  YStack,
 } from '@gymos/ui';
 import { useClients } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { RosterRow } from './roster-row';
 
-const REASON_TONE: Record<string, 'danger' | 'warning' | 'success' | 'neutral'> = {
-  RED_FLAG: 'danger',
-  CHECKIN_DUE: 'warning',
-  OFF_TRACK: 'warning',
-  NEW_CLIENT: 'success',
-};
+type FilterId = 'all' | 'attention' | 'on-track' | 'new';
 
-/** Roster — attention-first, searchable, one-handed. */
+const isAttention = (reasons: { code: string }[]) =>
+  reasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG');
+
+const isNew = (reasons: { code: string }[]) => reasons.some((r) => r.code === 'NEW_CLIENT');
+
+const FILTERS: { id: FilterId; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'attention', label: 'Attention' },
+  { id: 'on-track', label: 'On track' },
+  { id: 'new', label: 'New' },
+];
+
+/** Kit desktop column template: 1fr · 120 · 100 · 160 · 100 (+ gap 16). */
+const COL = {
+  weight: 120,
+  goal: 100,
+  status: 160,
+  progress: 100,
+} as const;
+
+const SEARCH_DEBOUNCE_MS = 300;
+
+/** Roster — kit search/filter row + fixed-column desktop list. */
 export const RosterScreen = () => {
   const [q, setQ] = useState('');
-  const clients = useClients(q.trim() === '' ? undefined : q.trim());
+  const debouncedQ = useDebouncedValue(q.trim(), SEARCH_DEBOUNCE_MS);
+  const [filter, setFilter] = useState<FilterId>('all');
+  const clients = useClients(debouncedQ === '' ? undefined : debouncedQ);
+  const media = useMedia();
+  const isDesktop = Boolean(media.md);
+
+  const items = clients.data?.items ?? [];
+  const counts = useMemo(() => {
+    const attention = items.filter((c) => isAttention(c.attentionReasons)).length;
+    const neu = items.filter((c) => isNew(c.attentionReasons)).length;
+    const onTrack = items.filter(
+      (c) => !isAttention(c.attentionReasons) && !isNew(c.attentionReasons),
+    ).length;
+    return { all: items.length, attention, 'on-track': onTrack, new: neu } as const;
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    let list = items;
+    if (filter === 'attention') list = list.filter((c) => isAttention(c.attentionReasons));
+    else if (filter === 'new') list = list.filter((c) => isNew(c.attentionReasons));
+    else if (filter === 'on-track')
+      list = list.filter((c) => !isAttention(c.attentionReasons) && !isNew(c.attentionReasons));
+    return [...list].sort((a, b) => {
+      const rank = (c: (typeof list)[0]) =>
+        isAttention(c.attentionReasons) ? 0 : isNew(c.attentionReasons) ? 1 : 2;
+      return rank(a) - rank(b) || a.name.localeCompare(b.name);
+    });
+  }, [items, filter]);
 
   return (
     <AppScreen>
       <PageHeader
         title="Clients"
-        subtitle="Search and jump into a hub"
+        subtitle={`${items.length} active in caseload`}
         action={
           <Link href="/clients/new">
-            <PrimaryButton icon={<Plus size={18} color="$primaryFg" />} aria-label="Add client">
-              New
+            <PrimaryButton
+              size="$3"
+              height={36}
+              minHeight={36}
+              icon={<Plus size={14} color="$primaryFg" />}
+              aria-label="New client"
+            >
+              New client
             </PrimaryButton>
           </Link>
         }
       />
-      <Input
-        value={q}
-        onChangeText={(text) => {
-          startTransition(() => setQ(text));
-        }}
-        placeholder="Search by name…"
-        size="$4"
-        minHeight={48}
-        borderRadius={12}
-        borderWidth={1.5}
-        borderColor="$borderColor"
-        backgroundColor="$elevatedBg"
-        aria-label="Search clients"
-        focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
-      />
+
+      {/* Search + compact filter — kit sm:flex-row */}
+      <XStack
+        flexDirection="column"
+        gap="$3"
+        $sm={{ flexDirection: 'row', alignItems: 'center' }}
+        width="100%"
+      >
+        <Input
+          flex={1}
+          value={q}
+          onChangeText={setQ}
+          placeholder="Search by name…"
+          height={36}
+          minHeight={36}
+          borderRadius="$radiusControl"
+          borderWidth={1}
+          borderColor="$borderColor"
+          backgroundColor="$cardBg"
+          fontSize={13}
+          paddingHorizontal="$3"
+          aria-label="Search clients"
+          focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
+        />
+        <XStack
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius="$radiusControl"
+          backgroundColor="$elevatedBg"
+          overflow="hidden"
+          flexShrink={0}
+          alignSelf="stretch"
+          $sm={{ alignSelf: 'center' }}
+        >
+          {FILTERS.map((f) => {
+            const selected = filter === f.id;
+            return (
+              <YStack
+                key={f.id}
+                role="tab"
+                aria-selected={selected}
+                height={36}
+                paddingHorizontal="$3"
+                justifyContent="center"
+                backgroundColor={selected ? '$primary' : 'transparent'}
+                cursor="pointer"
+                hoverStyle={{ backgroundColor: selected ? '$primary' : '$cardBg' }}
+                pressStyle={{ opacity: 0.9 }}
+                onPress={() => {
+                  startTransition(() => setFilter(f.id));
+                }}
+              >
+                <XStack alignItems="center" gap={6}>
+                  <Text
+                    fontSize={12}
+                    fontWeight="500"
+                    color={selected ? '$primaryFg' : '$textMuted'}
+                    whiteSpace="nowrap"
+                  >
+                    {f.label}
+                  </Text>
+                  <Text
+                    fontSize={10}
+                    color={selected ? '$primaryFg' : '$textMuted'}
+                    opacity={selected ? 0.7 : 1}
+                  >
+                    {counts[f.id]}
+                  </Text>
+                </XStack>
+              </YStack>
+            );
+          })}
+        </XStack>
+      </XStack>
 
       {clients.isPending ? (
         <LoadingState />
       ) : clients.isError ? (
         <ErrorState message="Could not load clients." retry={() => void clients.refetch()} />
-      ) : clients.data.items.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
-          title={q ? 'No matches' : 'No clients yet'}
-          hint={q ? 'Try another name.' : 'Add your first client to get started.'}
+          title={q || filter !== 'all' ? 'No clients match' : 'No clients yet'}
+          hint={
+            q || filter !== 'all'
+              ? 'Try adjusting the search or filter.'
+              : 'Add your first client to get started.'
+          }
           action={
-            q ? undefined : (
+            q || filter !== 'all' ? undefined : (
               <Link href="/clients/new">
                 <PrimaryButton icon={<Plus size={18} />}>Add a client</PrimaryButton>
               </Link>
@@ -78,32 +191,70 @@ export const RosterScreen = () => {
           }
         />
       ) : (
-        clients.data.items.map((client) => (
-          <Link key={client.id} href={`/clients/${client.id}`}>
-            <Card interactive>
-              <ListRow
-                leading={<Avatar name={client.name} />}
-                title={client.name}
-                subtitle={
-                  client.latestWeightKg !== null ? `${client.latestWeightKg} kg` : 'No weigh-in yet'
-                }
-                trailing={
-                  <XStack gap="$2" alignItems="center" flexWrap="wrap" justifyContent="flex-end">
-                    {client.goalPreset ? <Badge tone="neutral" label={client.goalPreset} /> : null}
-                    {client.attentionReasons.slice(0, 1).map((reason) => (
-                      <Badge
-                        key={reason.code}
-                        tone={REASON_TONE[reason.code] ?? 'neutral'}
-                        label={reason.code.replaceAll('_', ' ')}
-                      />
-                    ))}
-                    <ChevronRight size={18} color="$textMuted" />
-                  </XStack>
-                }
-              />
-            </Card>
-          </Link>
-        ))
+        <YStack gap="$1.5" width="100%">
+          {isDesktop ? (
+            <XStack paddingHorizontal="$4" gap="$4" marginBottom="$1">
+              <Text
+                flex={1}
+                fontSize={10}
+                fontWeight="600"
+                color="$textMuted"
+                textTransform="uppercase"
+                letterSpacing={1}
+              >
+                Client
+              </Text>
+              <Text
+                width={COL.weight}
+                fontSize={10}
+                fontWeight="600"
+                color="$textMuted"
+                textTransform="uppercase"
+                letterSpacing={1}
+                flexShrink={0}
+              >
+                Weight
+              </Text>
+              <Text
+                width={COL.goal}
+                fontSize={10}
+                fontWeight="600"
+                color="$textMuted"
+                textTransform="uppercase"
+                letterSpacing={1}
+                flexShrink={0}
+              >
+                Goal
+              </Text>
+              <Text
+                width={COL.status}
+                fontSize={10}
+                fontWeight="600"
+                color="$textMuted"
+                textTransform="uppercase"
+                letterSpacing={1}
+                flexShrink={0}
+              >
+                Status
+              </Text>
+              <Text
+                width={COL.progress}
+                fontSize={10}
+                fontWeight="600"
+                color="$textMuted"
+                textTransform="uppercase"
+                letterSpacing={1}
+                flexShrink={0}
+              >
+                Progress
+              </Text>
+            </XStack>
+          ) : null}
+
+          {filtered.map((client) => (
+            <RosterRow key={client.id} client={client} desktop={isDesktop} />
+          ))}
+        </YStack>
       )}
     </AppScreen>
   );

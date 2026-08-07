@@ -5,15 +5,20 @@ import { useRouter } from 'solito/navigation';
 import {
   Body,
   Card,
+  Check,
   FormField,
   FormSection,
+  GhostButton,
   LoadingState,
   Muted,
   PageHeader,
   PrimaryButton,
+  StickyFormFooter,
+  YStack,
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { useAppChrome } from '../shell/use-app-chrome';
 
 type FieldKey =
   | 'weightKg'
@@ -51,15 +56,45 @@ const VITALS: Field[] = [
 /** Fast vitals capture — sectioned, prior values as hints, field-level errors. */
 export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const { showMobileTabBar } = useAppChrome();
   const vitals = useVitals(clientId);
   const record = useRecordVitals(clientId);
   const [values, setValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+
+  const bottomInset = showMobileTabBar ? 72 : 12;
 
   if (vitals.isPending) {
     return (
       <AppScreen>
         <LoadingState />
+      </AppScreen>
+    );
+  }
+
+  if (saved) {
+    return (
+      <AppScreen>
+        <YStack flex={1} alignItems="center" justifyContent="center" gap="$4" paddingVertical="$8">
+          <YStack
+            width={72}
+            height={72}
+            borderRadius={999}
+            backgroundColor="$successMuted"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Check size={32} color="$success" />
+          </YStack>
+          <Body fontFamily="$heading" fontWeight="800" fontSize={20}>
+            Vitals saved
+          </Body>
+          <Muted textAlign="center">
+            History was appended — prior readings were not overwritten.
+          </Muted>
+          <PrimaryButton onPress={() => router.back()}>Back</PrimaryButton>
+        </YStack>
       </AppScreen>
     );
   }
@@ -90,7 +125,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     if (filled.length === 0 || record.isPending) return;
     if (!validate()) return;
     const payload = Object.fromEntries(filled.map(([k, v]) => [k, Number(v)]));
-    record.mutate(payload, { onSuccess: () => router.back() });
+    record.mutate(payload, { onSuccess: () => setSaved(true) });
   };
 
   const renderFields = (fields: Field[]) =>
@@ -99,7 +134,8 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
       return (
         <FormField
           key={field.key}
-          label={`${field.label} (${field.unit})`}
+          label={field.label}
+          unit={field.unit}
           value={values[field.key] ?? ''}
           onChangeText={(text) => {
             setValues((v) => ({ ...v, [field.key]: text }));
@@ -122,22 +158,32 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         title="Record vitals"
         subtitle="Fill only what you measured — history is never overwritten."
       />
-      <Card gap="$5">
-        <FormSection title="Body">{renderFields(BODY)}</FormSection>
-        <FormSection title="Measurements">{renderFields(MEASURE)}</FormSection>
+      <Card gap="$4">
+        <FormSection title="Body composition">{renderFields(BODY)}</FormSection>
+      </Card>
+      <Card gap="$4">
+        <FormSection title="Circumferences">{renderFields(MEASURE)}</FormSection>
+      </Card>
+      <Card gap="$4">
         <FormSection title="Cardio">{renderFields(VITALS)}</FormSection>
-        {record.isError ? (
-          <Body color="$danger" role="alert">
-            {record.error.message}
-          </Body>
-        ) : null}
-        <PrimaryButton disabled={filled.length === 0 || record.isPending} onPress={submit}>
+      </Card>
+      {record.isError ? (
+        <Body color="$danger" role="alert">
+          {record.error.message}
+        </Body>
+      ) : null}
+      <Muted fontSize={12}>Empty fields are skipped. Prior values are never overwritten.</Muted>
+
+      <StickyFormFooter bottomInset={bottomInset}>
+        <GhostButton flex={1} onPress={() => router.back()}>
+          Cancel
+        </GhostButton>
+        <PrimaryButton flex={1} disabled={filled.length === 0 || record.isPending} onPress={submit}>
           {record.isPending
             ? 'Saving…'
             : `Save ${filled.length || ''} measurement${filled.length === 1 ? '' : 's'}`}
         </PrimaryButton>
-        <Muted fontSize={12}>Empty fields are skipped. Prior values are never overwritten.</Muted>
-      </Card>
+      </StickyFormFooter>
     </AppScreen>
   );
 };

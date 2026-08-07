@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Input, Label, TextArea, YStack, type ColorTokens } from 'tamagui';
+import { Input, Label, Text, TextArea, XStack, YStack, type ColorTokens } from 'tamagui';
 import { Body, Muted } from './typography';
 
 type FormFieldProps = {
@@ -20,6 +20,8 @@ type FormFieldProps = {
   numberOfLines?: number;
   onSubmitEditing?: () => void;
   disabled?: boolean;
+  /** Mono unit suffix (kg, cm, %, bpm) — kit Input pattern. */
+  unit?: string;
 };
 
 /**
@@ -42,6 +44,7 @@ export const FormField = ({
   numberOfLines = 3,
   onSubmitEditing,
   disabled = false,
+  unit,
 }: FormFieldProps) => {
   const id = useId();
   const errorId = `${id}-error`;
@@ -55,7 +58,7 @@ export const FormField = ({
 
   return (
     <YStack gap="$1.5" width="100%">
-      <Label htmlFor={id} fontFamily="$heading" fontWeight="700" fontSize={13} color="$color">
+      <Label htmlFor={id} fontFamily="$heading" fontWeight="500" fontSize={14} color="$color">
         {label}
         {required ? ' *' : ''}
       </Label>
@@ -67,9 +70,9 @@ export const FormField = ({
           placeholder={placeholder}
           disabled={disabled}
           size="$4"
-          borderWidth={1.5}
+          borderWidth={1}
           borderColor={borderColor}
-          backgroundColor="$elevatedBg"
+          backgroundColor="$cardBg"
           color="$color"
           placeholderTextColor="$placeholderColor"
           borderRadius="$radiusControl"
@@ -87,44 +90,65 @@ export const FormField = ({
           }}
         />
       ) : (
-        <Input
-          id={id}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          disabled={disabled}
-          size="$4"
-          minHeight={48}
-          borderWidth={1.5}
-          borderColor={borderColor}
-          backgroundColor="$elevatedBg"
-          color="$color"
-          placeholderTextColor="$placeholderColor"
-          borderRadius="$radiusControl"
-          paddingHorizontal="$3"
-          fontFamily="$body"
-          secureTextEntry={secureTextEntry}
-          {...(autoCapitalize !== undefined ? { autoCapitalize } : {})}
-          {...(autoCorrect !== undefined ? { autoCorrect } : {})}
-          {...(inputMode !== undefined ? { inputMode } : {})}
-          {...(onSubmitEditing !== undefined ? { onSubmitEditing } : {})}
-          aria-invalid={Boolean(error)}
-          aria-required={required}
-          aria-describedby={describedBy || undefined}
-          focusStyle={{
-            borderColor: focusBorder,
-            outlineWidth: 2,
-            outlineColor: '$focusRing',
-            outlineStyle: 'solid',
-          }}
-        />
+        <XStack position="relative" alignItems="center" width="100%">
+          <Input
+            id={id}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            disabled={disabled}
+            size="$4"
+            minHeight={40}
+            height={40}
+            flex={1}
+            width="100%"
+            borderWidth={1}
+            borderColor={borderColor}
+            backgroundColor="$cardBg"
+            color="$color"
+            placeholderTextColor="$placeholderColor"
+            borderRadius="$radiusControl"
+            paddingHorizontal="$3"
+            paddingRight={unit ? 40 : undefined}
+            fontFamily="$body"
+            fontSize={14}
+            secureTextEntry={secureTextEntry}
+            {...(autoCapitalize !== undefined ? { autoCapitalize } : {})}
+            {...(autoCorrect !== undefined ? { autoCorrect } : {})}
+            {...(inputMode !== undefined ? { inputMode } : {})}
+            {...(onSubmitEditing !== undefined ? { onSubmitEditing } : {})}
+            aria-invalid={Boolean(error)}
+            aria-required={required}
+            aria-describedby={describedBy || undefined}
+            focusStyle={{
+              borderColor: focusBorder,
+              outlineWidth: 2,
+              outlineColor: '$focusRing',
+              outlineStyle: 'solid',
+            }}
+          />
+          {unit ? (
+            <Text
+              position="absolute"
+              right={12}
+              fontFamily="$mono"
+              fontSize={14}
+              color="$textMuted"
+              pointerEvents="none"
+            >
+              {unit}
+            </Text>
+          ) : null}
+        </XStack>
       )}
       {error ? (
-        <Body id={errorId} color="$danger" fontSize={13} fontWeight="600" role="alert">
+        <Body id={errorId} color="$danger" fontSize={12} fontWeight="600" role="alert">
           {error}
         </Body>
       ) : hint ? (
-        <Muted id={hintId}>{hint}</Muted>
+        <Muted id={hintId} fontSize={12}>
+          {hint}
+        </Muted>
       ) : null}
     </YStack>
   );
