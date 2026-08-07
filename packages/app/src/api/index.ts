@@ -223,7 +223,8 @@ export const usePatchPlan = (planId: string, clientId: string) => {
 export const usePublishPlan = (planId: string, clientId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => api.plans.publish(planId),
+    mutationFn: (body: { reviewed: true; acknowledgeDrift?: boolean }) =>
+      api.plans.publish(planId, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.plan(planId) });
       invalidateClient(queryClient, clientId);

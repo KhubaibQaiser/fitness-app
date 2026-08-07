@@ -201,8 +201,8 @@ export const api = {
       ),
     patch: (planId: string, ops: T.PlanOp[]) =>
       request<T.PlanWithItems>('PATCH', `/v1/meal-plans/${planId}`, { ops }),
-    publish: (planId: string) =>
-      request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, undefined, {
+    publish: (planId: string, body: T.PublishPlanBody) =>
+      request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, body, {
         idempotent: true,
       }),
     dietPlanPdf: async (planId: string): Promise<Blob> => {

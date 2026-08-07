@@ -421,15 +421,24 @@ describe('solveDay', () => {
 });
 
 describe('solveWeek', () => {
-  it('produces 7 in-tolerance days with variety across the week', () => {
+  it('produces 7 identical daily-template days from one solve', () => {
     const result = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3 }));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value).toHaveLength(7);
     const signatures = result.value.map((d) =>
-      d.meals.flatMap((m) => m.items.map((i) => i.foodId)).join('|'),
+      d.meals.flatMap((m) => m.items.map((i) => `${i.foodId}:${i.portionGrams}`)).join('|'),
     );
-    expect(new Set(signatures).size).toBeGreaterThan(1);
+    expect(new Set(signatures).size).toBe(1);
+    expect(result.value.map((d) => d.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('reproduces the same template for the same seed', () => {
+    const a = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
+    const b = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
+    expect(a.ok && b.ok).toBe(true);
+    if (!a.ok || !b.ok) return;
+    expect(a.value[0]?.meals).toEqual(b.value[0]?.meals);
   });
 
   it('propagates NO_CANDIDATES without recovery retries', () => {

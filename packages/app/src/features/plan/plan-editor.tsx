@@ -8,7 +8,6 @@ import {
   Body,
   Card,
   GhostButton,
-  IconButton,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -21,6 +20,8 @@ import {
 import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
+import { PlanItemCard } from './plan-item-card';
+import { PlanPublishConfirm } from './plan-publish-confirm';
 import { PrepPreferencesBanner } from './prep-preferences-banner';
 
 const DAY_OPTIONS = [
@@ -45,6 +46,13 @@ const dietPlanDownloadName = (clientName: string): string => {
   const titled = safe.length > 0 ? safe.charAt(0).toUpperCase() + safe.slice(1) : 'Client';
   return `${titled}-Diet-Plan.pdf`;
 };
+
+const daySignature = (items: readonly PlanItem[], day: number): string =>
+  items
+    .filter((i) => i.day === day)
+    .map((i) => `${i.mealIndex}:${i.foodId}:${i.portionGrams}:${i.macros.kcal}:${i.macrosSource}`)
+    .sort()
+    .join('|');
 
 export const PlanEditor = ({
   clientId,
@@ -111,14 +119,8 @@ export const PlanEditor = ({
     { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
   );
   const kcalDeltaPct = ((dayTotals.kcal - targets.kcal) / targets.kcal) * 100;
-
-  const step = (item: PlanItem, direction: 1 | -1) => {
-    const next = Math.max(
-      10,
-      item.portionGrams + direction * Math.max(10, item.portionGrams * 0.25),
-    );
-    patch.mutate([{ op: 'set-portion', itemId: item.id, portionGrams: Math.round(next) }]);
-  };
+  const templateSig = daySignature(items, 1);
+  const dayCustomized = day !== 1 && daySignature(items, day) !== templateSig;
 
   const onDownloadPdf = () => {
     setPdfError(null);
@@ -167,6 +169,16 @@ export const PlanEditor = ({
             Dietary profile changed. Do not follow this plan — review and re-publish (or regenerate)
             first.
           </Body>
+        </Card>
+      ) : null}
+
+      {editable ? (
+        <Card tone="accent" gap="$2">
+          <Body fontWeight="800">AI suggestion — review before publish</Body>
+          <Muted>
+            Same meals every day by default. Edit any day, or apply one day to the whole week.
+            Publish only after you have reviewed the plan.
+          </Muted>
         </Card>
       ) : null}
 
@@ -248,12 +260,27 @@ export const PlanEditor = ({
         </Muted>
       </Card>
 
-      <SegmentedControl
-        ariaLabel="Plan day"
-        options={[...DAY_OPTIONS]}
-        value={day}
-        onChange={setDay}
-      />
+      <YStack gap="$2">
+        <SegmentedControl
+          ariaLabel="Plan day"
+          options={[...DAY_OPTIONS]}
+          value={day}
+          onChange={setDay}
+        />
+        {dayCustomized ? (
+          <Badge tone="warning" label="Customized day" />
+        ) : (
+          <Muted fontSize={12}>Matches daily template</Muted>
+        )}
+        {editable ? (
+          <GhostButton
+            disabled={patch.isPending}
+            onPress={() => patch.mutate([{ op: 'apply-day-to-week', day }])}
+          >
+            Apply this day to all days
+          </GhostButton>
+        ) : null}
+      </YStack>
 
       {meals.map(([mealIndex, mealName]) => (
         <YStack key={mealIndex} gap="$2">
@@ -261,35 +288,13 @@ export const PlanEditor = ({
           {dayItems
             .filter((i) => i.mealIndex === mealIndex)
             .map((item) => (
-              <Card key={item.id} gap="$2">
-                <Row>
-                  <YStack flex={1} gap="$1">
-                    <Body fontWeight="700">{item.foodName}</Body>
-                    <Muted>
-                      {item.portionGrams} g · {item.macros.kcal} kcal · P {item.macros.proteinG}g
-                    </Muted>
-                  </YStack>
-                  {editable ? (
-                    <XStack gap="$1.5">
-                      <IconButton
-                        tone="ghost"
-                        onPress={() => step(item, -1)}
-                        aria-label="Smaller portion"
-                      >
-                        −
-                      </IconButton>
-                      <IconButton
-                        tone="ghost"
-                        onPress={() => step(item, 1)}
-                        aria-label="Bigger portion"
-                      >
-                        +
-                      </IconButton>
-                    </XStack>
-                  ) : null}
-                </Row>
-                {item.prepNotes ? <Muted fontSize={12}>{item.prepNotes}</Muted> : null}
-              </Card>
+              <PlanItemCard
+                key={item.id}
+                item={item}
+                editable={editable}
+                busy={patch.isPending}
+                onPatch={(ops) => patch.mutate(ops)}
+              />
             ))}
         </YStack>
       ))}
@@ -301,11 +306,14 @@ export const PlanEditor = ({
       ) : null}
 
       {editable ? (
-        <PrimaryButton disabled={publish.isPending} onPress={() => publish.mutate()}>
-          {publish.isPending ? 'Publishing…' : 'Publish plan'}
-        </PrimaryButton>
+        <PlanPublishConfirm
+          busy={publish.isPending}
+          error={publish.error}
+          onPublish={(body) => publish.mutate(body)}
+        />
       ) : null}
-      {publish.isError ? (
+      {publish.isError &&
+      !(publish.error instanceof ApiError && publish.error.code === 'DRIFT_ACK_REQUIRED') ? (
         <Body color="$danger" role="alert">
           {publish.error.message}
         </Body>

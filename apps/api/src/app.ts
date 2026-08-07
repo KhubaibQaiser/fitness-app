@@ -1087,7 +1087,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       method: 'post',
       path: '/v1/meal-plans/{id}/publish',
       operationId: 'publishPlan',
-      request: { params: dto.idParam },
+      request: { params: dto.idParam, body: json(dto.publishBody) },
       responses: {
         200: { description: 'Published plan', ...json(dto.anyObject) },
         ...problemDocs(404, 422),
@@ -1097,10 +1097,34 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const existing = await getPlanWithItems(db, c.req.valid('param').id);
       if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
       authorize(c, 'plan.publish', { clientId: existing.plan.clientId });
-      const result = await publishPlan(db, c.get('principal'), c.req.valid('param').id);
+      const body = c.req.valid('json');
+      const result = await publishPlan(
+        db,
+        c.get('principal'),
+        c.req.valid('param').id,
+        {
+          reviewed: true,
+          ...(body.acknowledgeDrift === true ? { acknowledgeDrift: true } : {}),
+        },
+        {
+          kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
+          macroTolerancePct: manifest.aiConfig.macroTolerancePct,
+        },
+      );
       if (!result.ok) {
         if (result.error.code === 'PLAN_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
+        }
+        if (result.error.code === 'DRIFT_ACK_REQUIRED') {
+          throw new ProblemError(
+            422,
+            'DRIFT_ACK_REQUIRED',
+            'Day totals are outside tolerance — acknowledge drift to publish',
+            `days=${result.error.days.join(',')}`,
+          );
+        }
+        if (result.error.code === 'REVIEW_REQUIRED') {
+          throw new ProblemError(422, 'REVIEW_REQUIRED', 'Coach review confirmation required');
         }
         throw new ProblemError(422, result.error.code, 'Plan cannot be published');
       }
