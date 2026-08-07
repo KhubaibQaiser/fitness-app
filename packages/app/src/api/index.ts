@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -50,7 +51,11 @@ export const useUpdateMe = () => {
 };
 
 export const useClients = (q?: string) =>
-  useQuery({ queryKey: qk.clients(q), queryFn: () => api.clients.list(q) });
+  useQuery({
+    queryKey: qk.clients(q),
+    queryFn: () => api.clients.list(q),
+    placeholderData: keepPreviousData,
+  });
 
 export const useClientDetail = (clientId: string) =>
   useQuery({ queryKey: qk.clientDetail(clientId), queryFn: () => api.clients.detail(clientId) });
@@ -81,7 +86,12 @@ export const usePlan = (planId: string | null) =>
   });
 
 export const useFoods = (q?: string) =>
-  useQuery({ queryKey: qk.foods(q), queryFn: () => api.foods.list(q), staleTime: 300_000 });
+  useQuery({
+    queryKey: qk.foods(q),
+    queryFn: () => api.foods.list(q),
+    staleTime: 300_000,
+    placeholderData: keepPreviousData,
+  });
 
 export const useNotifications = () =>
   useQuery({ queryKey: qk.notifications, queryFn: api.notifications.list });

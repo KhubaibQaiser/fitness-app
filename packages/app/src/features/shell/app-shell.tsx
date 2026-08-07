@@ -5,6 +5,7 @@ import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
 import { useThemeMode } from '@gymos/platform';
 import {
+  Avatar,
   Bell,
   Body,
   Home,
@@ -15,11 +16,11 @@ import {
   Sun,
   Text,
   Users,
-  Utensils,
+  Wrench,
   XStack,
   YStack,
 } from '@gymos/ui';
-import { useUnreadCount } from '../../api';
+import { useMe, useUnreadCount } from '../../api';
 import { useAppChrome } from './use-app-chrome';
 
 type NavHref = '/' | '/clients' | '/tools' | '/notifications' | '/settings';
@@ -47,7 +48,7 @@ const navIcon = (href: NavHref, size: number, color: string): ReactElement => {
     case '/clients':
       return <Users size={size} color={color} />;
     case '/tools':
-      return <Utensils size={size} color={color} />;
+      return <Wrench size={size} color={color} />;
     case '/notifications':
       return <Bell size={size} color={color} />;
     case '/settings':
@@ -96,13 +97,11 @@ export const MobileTabBar = () => {
 
   return (
     <XStack
-      // fixed to the viewport so the bar stays at the bottom while content scrolls
-      // (absolute was relative to the growing shell and drifted mid-page / scrolled away)
       position="fixed"
       bottom={0}
       left={0}
       right={0}
-      backgroundColor="$cardBg"
+      backgroundColor="$sidebar"
       borderTopWidth={1}
       borderTopColor="$borderColor"
       justifyContent="space-around"
@@ -116,7 +115,7 @@ export const MobileTabBar = () => {
     >
       {NAV.map(({ href, label }) => {
         const active = isActive(pathname, href);
-        const color = active ? '$primary' : '$textMuted';
+        const color = active ? '$primaryFg' : '$textMuted';
         return (
           <Link key={href} href={href} style={{ flex: 1 }}>
             <YStack
@@ -124,7 +123,11 @@ export const MobileTabBar = () => {
               minHeight={48}
               justifyContent="center"
               gap={4}
-              opacity={active ? 1 : 0.55}
+              paddingVertical="$1.5"
+              paddingHorizontal="$1"
+              borderRadius="$radiusControl"
+              backgroundColor={active ? '$primary' : 'transparent'}
+              marginHorizontal={2}
               focusVisibleStyle={{
                 outlineWidth: 2,
                 outlineColor: '$focusRing',
@@ -132,14 +135,14 @@ export const MobileTabBar = () => {
               }}
             >
               <XStack position="relative">
-                {navIcon(href, 22, color)}
+                {navIcon(href, 20, color)}
                 {href === '/notifications' ? <UnreadDot count={count} /> : null}
               </XStack>
               <Text
-                fontSize={11}
+                fontSize={10}
                 fontFamily="$heading"
-                fontWeight={active ? '800' : '600'}
-                color={active ? '$primary' : '$textMuted'}
+                fontWeight={active ? '700' : '500'}
+                color={active ? '$primaryFg' : '$textMuted'}
               >
                 {label}
               </Text>
@@ -155,12 +158,12 @@ export const SideNav = () => {
   const pathname = usePathname() ?? '/';
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
-  const primary = NAV.filter((item) => item.href !== '/settings');
-  const settings = NAV.find((item) => item.href === '/settings');
+  const me = useMe();
+  const coachName = me.data?.name ?? 'Coach';
 
   const link = ({ href, label }: NavItem) => {
     const active = isActive(pathname, href);
-    const color = active ? '$primary' : '$textMuted';
+    const color = active ? '$primaryFg' : '$textMuted';
     return (
       <Link key={href} href={href}>
         <XStack
@@ -169,27 +172,26 @@ export const SideNav = () => {
           minHeight={40}
           paddingHorizontal="$3"
           borderRadius="$radiusControl"
-          backgroundColor={active ? '$elevatedBg' : 'transparent'}
-          borderWidth={active ? 1 : 0}
-          borderColor="$borderColor"
-          hoverStyle={{ backgroundColor: '$elevatedBg' }}
+          backgroundColor={active ? '$primary' : 'transparent'}
+          hoverStyle={{ backgroundColor: active ? '$primary' : '$elevatedBg' }}
           focusVisibleStyle={{
             outlineWidth: 2,
             outlineColor: '$focusRing',
             outlineStyle: 'solid',
           }}
         >
-          {navIcon(href, 20, color)}
+          {navIcon(href, 18, color)}
           <Body
-            fontWeight={active ? '800' : '600'}
-            color={active ? '$color' : '$textMuted'}
+            fontWeight={active ? '700' : '500'}
+            fontSize={13.5}
+            color={active ? '$primaryFg' : '$textMuted'}
             flex={1}
           >
             {label}
           </Body>
           {href === '/notifications' && count > 0 ? (
             <YStack
-              backgroundColor="$danger"
+              backgroundColor={active ? '$primaryFg' : '$danger'}
               borderRadius={999}
               minWidth={22}
               height={22}
@@ -197,7 +199,7 @@ export const SideNav = () => {
               justifyContent="center"
               paddingHorizontal={6}
             >
-              <Text color="$dangerFg" fontSize={11} fontWeight="800">
+              <Text color={active ? '$primary' : '$dangerFg'} fontSize={11} fontWeight="800">
                 {count > 9 ? '9+' : count}
               </Text>
             </YStack>
@@ -209,9 +211,9 @@ export const SideNav = () => {
 
   return (
     <YStack
-      width={240}
-      minWidth={240}
-      backgroundColor="$cardBg"
+      width={236}
+      minWidth={236}
+      backgroundColor="$sidebar"
       borderRightWidth={1}
       borderRightColor="$borderColor"
       paddingVertical="$4"
@@ -224,27 +226,60 @@ export const SideNav = () => {
       role="navigation"
       aria-label="Primary"
     >
-      <XStack alignItems="center" justifyContent="space-between" paddingHorizontal="$2">
-        <YStack>
-          <Text
-            fontFamily="$heading"
-            fontWeight="800"
-            fontSize={20}
-            color="$color"
-            letterSpacing={-0.5}
-          >
-            GymOS
-          </Text>
-          <Muted fontSize={12}>Coach</Muted>
-        </YStack>
-        <ThemeToggle />
-      </XStack>
-
-      <YStack gap="$1" flex={1}>
-        {primary.map(link)}
+      <YStack paddingHorizontal="$2" gap={2}>
+        <Text
+          fontFamily="$heading"
+          fontWeight="800"
+          fontSize={20}
+          color="$color"
+          letterSpacing={-0.5}
+        >
+          GymOS
+        </Text>
+        <Muted fontSize={12}>Coach</Muted>
       </YStack>
 
-      {settings ? link(settings) : null}
+      <YStack gap="$1" flex={1}>
+        <Muted
+          fontSize={10}
+          fontWeight="600"
+          textTransform="uppercase"
+          letterSpacing={1.2}
+          paddingHorizontal="$3"
+          marginBottom="$1"
+        >
+          Workspace
+        </Muted>
+        {NAV.map(link)}
+      </YStack>
+
+      <YStack
+        borderTopWidth={1}
+        borderTopColor="$borderColor"
+        paddingTop="$3"
+        gap="$3"
+        paddingHorizontal="$1"
+      >
+        <XStack alignItems="center" justifyContent="space-between">
+          <Muted fontSize={12}>Theme</Muted>
+          <ThemeToggle />
+        </XStack>
+        <XStack alignItems="center" gap="$2.5">
+          <Avatar name={coachName} size={32} />
+          <YStack flex={1} minWidth={0}>
+            <Text
+              fontFamily="$heading"
+              fontWeight="600"
+              fontSize={13}
+              color="$color"
+              numberOfLines={1}
+            >
+              {coachName}
+            </Text>
+            <Muted fontSize={11}>GymOS · Pilot</Muted>
+          </YStack>
+        </XStack>
+      </YStack>
     </YStack>
   );
 };

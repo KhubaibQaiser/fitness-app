@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { type Restriction } from '@gymos/contracts';
 import {
+  AlertBanner,
   Badge,
   Body,
   Card,
@@ -14,10 +15,12 @@ import {
   PageHeader,
   PrimaryButton,
   SectionTitle,
+  StickyFormFooter,
   XStack,
 } from '@gymos/ui';
 import { useClientDetail, usePutDietary } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { useAppChrome } from '../shell/use-app-chrome';
 
 const ALLERGENS = [
   'peanut',
@@ -38,11 +41,13 @@ type Selection = Map<string, Restriction>;
 /** Dietary profile editor — every save immediately re-validates the live plan. */
 export const DietaryScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const { showMobileTabBar } = useAppChrome();
   const detail = useClientDetail(clientId);
   const put = usePutDietary(clientId);
   const [selection, setSelection] = useState<Selection>(new Map());
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
 
+  const bottomInset = showMobileTabBar ? 72 : 12;
   const profile = detail.data?.dietaryProfile;
 
   useEffect(() => {
@@ -97,13 +102,16 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     tone: 'danger' | 'neutral',
   ) => {
     const active = selection.has(code);
+    const selectedDanger = tone === 'danger' && active;
+    const selectedNeutral = tone === 'neutral' && active;
     return (
       <GhostButton
         key={code}
         onPress={() => toggle(code, type)}
-        backgroundColor={active ? (tone === 'danger' ? '$danger' : '$primary') : 'transparent'}
-        color={active ? (tone === 'danger' ? '$dangerFg' : '$primaryFg') : '$color'}
-        borderColor={active ? (tone === 'danger' ? '$danger' : '$primary') : '$borderColor'}
+        backgroundColor={selectedDanger ? '$dangerMuted' : '$elevatedBg'}
+        color={selectedDanger ? '$danger' : selectedNeutral ? '$primary' : '$color'}
+        borderColor={selectedDanger ? '$danger' : selectedNeutral ? '$primary' : '$borderColor'}
+        opacity={active ? 1 : 0.85}
         aria-pressed={active}
       >
         {label}
@@ -137,16 +145,13 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
       </Card>
 
       {put.data?.planFlagged ? (
-        <Card tone="danger" gap="$2">
-          <Body color="$danger" fontWeight="800">
-            The published plan violates the new restrictions.
-          </Body>
-          <Body>
+        <AlertBanner tone="danger" title="The published plan violates the new restrictions.">
+          <Body fontSize={12.5}>
             It has been blocked (NEEDS_REVIEW) and flagged — regenerate or edit it before the client
             follows it further.
           </Body>
           <Badge tone="danger" label="Plan blocked" />
-        </Card>
+        </AlertBanner>
       ) : null}
 
       {put.isError ? (
@@ -154,10 +159,16 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
           {put.error.message}
         </Body>
       ) : null}
-      <PrimaryButton disabled={put.isPending} onPress={save}>
-        {put.isPending ? 'Saving & re-validating…' : 'Save profile'}
-      </PrimaryButton>
       <Muted fontSize={12}>Severe allergies are hard blocks in the meal engine.</Muted>
+
+      <StickyFormFooter bottomInset={bottomInset}>
+        <GhostButton flex={1} onPress={() => router.back()}>
+          Cancel
+        </GhostButton>
+        <PrimaryButton flex={1} disabled={put.isPending} onPress={save}>
+          {put.isPending ? 'Saving & re-validating…' : 'Save profile'}
+        </PrimaryButton>
+      </StickyFormFooter>
     </AppScreen>
   );
 };

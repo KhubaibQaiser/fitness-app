@@ -3,6 +3,7 @@
 import { Link } from 'solito/link';
 import { Body, Card, ChevronRight, Muted, PageHeader, XStack, YStack } from '@gymos/ui';
 import { AppScreen } from '../shell/app-screen';
+import { ToolsCalculators } from './tools-calculators';
 
 const TOOLS = [
   {
@@ -17,10 +18,10 @@ const TOOLS = [
   },
 ] as const;
 
-/** Coach tools hub — nutrition explainers live here, not in Settings. */
+/** Coach tools hub — calculators plus nutrition explainers. */
 export const ToolsScreen = () => (
   <AppScreen>
-    <PageHeader title="Tools" subtitle="Nutrition engine guides for coaches" />
+    <PageHeader title="Tools" subtitle="Nutrition utility calculators" />
 
     <YStack gap="$3">
       {TOOLS.map((tool) => (
@@ -39,5 +40,7 @@ export const ToolsScreen = () => (
         </Link>
       ))}
     </YStack>
+
+    <ToolsCalculators />
   </AppScreen>
 );

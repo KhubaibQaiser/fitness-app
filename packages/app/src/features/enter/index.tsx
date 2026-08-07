@@ -8,12 +8,12 @@ import { storage } from '@gymos/platform';
 import {
   AppErrorBoundary,
   Card,
-  Dumbbell,
   FormField,
   Muted,
   PrimaryButton,
   Screen,
-  Title,
+  Text,
+  XStack,
   YStack,
 } from '@gymos/ui';
 import { qk } from '../../api';
@@ -59,21 +59,33 @@ const EnterForm = () => {
 
   return (
     <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
-      <YStack gap="$5" maxWidth={440} width="100%" alignSelf="center">
-        <YStack gap="$2" alignItems="center">
-          <YStack
-            width={64}
-            height={64}
-            borderRadius={18}
-            backgroundColor="$primary"
-            alignItems="center"
-            justifyContent="center"
-            marginBottom="$2"
-          >
-            <Dumbbell size={32} color="$primaryFg" />
-          </YStack>
-          <Title textAlign="center">GymOS Coach</Title>
-          <Muted textAlign="center">Enter your access key to open the app on this device</Muted>
+      <YStack gap="$5" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$5">
+        <YStack gap="$3" alignItems="center">
+          <XStack alignItems="center" gap="$3">
+            <YStack
+              width={44}
+              height={44}
+              borderRadius="$radiusControl"
+              backgroundColor="$primary"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Text fontFamily="$heading" fontWeight="800" fontSize={18} color="$primaryFg">
+                G
+              </Text>
+            </YStack>
+            <YStack>
+              <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={1.2}>
+                GymOS
+              </Muted>
+              <Text fontFamily="$heading" fontWeight="700" fontSize={22} color="$color">
+                Coach
+              </Text>
+            </YStack>
+          </XStack>
+          <Muted textAlign="center" fontSize={13}>
+            Coaching workstation · Pilot access
+          </Muted>
         </YStack>
         <Card gap="$4" padding="$5">
           <FormField
@@ -93,12 +105,12 @@ const EnterForm = () => {
             onPress={() => void submit()}
             width="100%"
           >
-            {busy ? 'Checking…' : 'Open the app'}
+            {busy ? 'Checking…' : 'Enter workstation'}
           </PrimaryButton>
-          <Muted fontSize={12} textAlign="center">
-            You only do this once per device. Ask the platform operator if you lost your key.
-          </Muted>
         </Card>
+        <Muted fontSize={11} textAlign="center">
+          Pilot build · Pakistan region
+        </Muted>
       </YStack>
     </Screen>
   );

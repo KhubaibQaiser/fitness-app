@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Roboto } from 'next/font/google';
+import { Roboto, Roboto_Mono } from 'next/font/google';
 import { type ReactNode } from 'react';
 import { AppProviders } from '@gymos/app/provider';
 import { NextTamaguiProvider } from '../components/next-tamagui-provider';
@@ -11,6 +11,14 @@ const sans = Roboto({
   variable: '--font-sans',
   display: 'swap',
   weight: ['400', '500', '700'],
+});
+
+/** Mono for stats / data (kit StatTile, macros). */
+const mono = Roboto_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '500'],
 });
 
 export const metadata: Metadata = {
@@ -31,7 +39,7 @@ export const viewport: Viewport = {
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
-  <html lang="en" suppressHydrationWarning className={sans.variable}>
+  <html lang="en" suppressHydrationWarning className={`${sans.variable} ${mono.variable}`}>
     <body style={{ margin: 0, WebkitFontSmoothing: 'antialiased' }}>
       <NextTamaguiProvider>
         <AppProviders>{children}</AppProviders>

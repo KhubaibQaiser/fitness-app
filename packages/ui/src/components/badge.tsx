@@ -1,40 +1,42 @@
 import { Text, XStack } from 'tamagui';
 
-export type BadgeTone = 'danger' | 'warning' | 'success' | 'neutral' | 'primary';
+export type BadgeTone = 'danger' | 'warning' | 'success' | 'neutral' | 'primary' | 'accent';
 
+/** Soft muted chips (kit): muted surface + status text — not solid fills. */
 const BADGE_BG: Record<BadgeTone, string> = {
-  danger: '$danger',
-  warning: '$warning',
-  success: '$success',
+  danger: '$dangerMuted',
+  warning: '$warningMuted',
+  success: '$successMuted',
   neutral: '$elevatedBg',
-  primary: '$primary',
+  primary: '$elevatedBg',
+  accent: '$elevatedBg',
 };
 
 const BADGE_FG: Record<BadgeTone, string> = {
-  danger: '$dangerFg',
-  warning: '$warningFg',
-  success: '$successFg',
-  neutral: '$color',
-  primary: '$primaryFg',
+  danger: '$danger',
+  warning: '$warning',
+  success: '$success',
+  neutral: '$textMuted',
+  primary: '$primary',
+  accent: '$accent',
 };
 
 export const Badge = ({ tone = 'neutral', label }: { tone?: BadgeTone; label: string }) => (
   <XStack
     backgroundColor={BADGE_BG[tone]}
     borderRadius={999}
-    paddingHorizontal="$2.5"
-    paddingVertical="$1.5"
+    paddingHorizontal="$2"
+    paddingVertical="$1"
     alignSelf="flex-start"
-    borderWidth={tone === 'neutral' ? 1 : 0}
-    borderColor="$borderColor"
+    alignItems="center"
+    gap="$1"
   >
     <Text
       fontFamily="$heading"
       color={BADGE_FG[tone]}
       fontSize={11}
-      fontWeight="700"
-      letterSpacing={0.4}
-      textTransform="uppercase"
+      fontWeight="600"
+      letterSpacing={0.2}
     >
       {label}
     </Text>

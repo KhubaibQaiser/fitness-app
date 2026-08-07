@@ -1,6 +1,7 @@
 'use client';
 
 import { Link } from 'solito/link';
+import type { Notification } from '@gymos/contracts';
 import {
   Badge,
   Body,
@@ -28,6 +29,13 @@ const TYPE_LABEL: Record<string, string> = {
   SYSTEM: 'System',
 };
 
+const byPriorityThenDate = (a: Notification, b: Notification): number => {
+  if (a.priority !== b.priority) {
+    return a.priority === 'HIGH' ? -1 : 1;
+  }
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+};
+
 export const NotificationsScreen = () => {
   const notifications = useNotifications();
   const markAll = useMarkAllRead();
@@ -47,7 +55,7 @@ export const NotificationsScreen = () => {
     );
   }
 
-  const items = notifications.data.items;
+  const items = [...notifications.data.items].sort(byPriorityThenDate);
 
   return (
     <AppScreen>
@@ -65,18 +73,18 @@ export const NotificationsScreen = () => {
       ) : (
         items.map((n) => {
           const clientName = typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
+          const high = n.priority === 'HIGH';
           const body = (
             <Card
               interactive={n.deepLink !== null}
               opacity={n.readAt === null ? 1 : 0.65}
-              borderLeftWidth={4}
-              borderLeftColor={n.priority === 'HIGH' ? '$danger' : '$primary'}
+              tone={high ? 'danger' : 'default'}
             >
               <Row>
                 <Body fontWeight={n.readAt === null ? '800' : '500'} flex={1}>
                   {TYPE_LABEL[n.type] ?? n.type}
                 </Body>
-                {n.priority === 'HIGH' ? <Badge tone="danger" label="HIGH" /> : null}
+                <Badge tone={high ? 'danger' : 'neutral'} label={high ? 'HIGH' : 'NORMAL'} />
               </Row>
               {clientName !== null ? <Muted>{clientName}</Muted> : null}
               <Muted fontSize={12}>{new Date(n.createdAt).toLocaleString()}</Muted>

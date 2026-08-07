@@ -5,6 +5,7 @@ import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { ApiError } from '@gymos/contracts';
 import {
+  AlertBanner,
   Body,
   Card,
   FormField,
@@ -13,10 +14,12 @@ import {
   PageHeader,
   PrimaryButton,
   SegmentedControl,
+  StickyFormFooter,
   YStack,
 } from '@gymos/ui';
 import { useClientDetail, useCreateGoal } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { useAppChrome } from '../shell/use-app-chrome';
 
 const PRESETS = [
   { value: 'LOSE', label: 'Lose fat' },
@@ -34,6 +37,7 @@ const RATES = [
 /** Goal setup — presets in, deterministic Layer-1 targets out. */
 export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const { showMobileTabBar } = useAppChrome();
   const detail = useClientDetail(clientId);
   const create = useCreateGoal(clientId);
   const [preset, setPreset] = useState<(typeof PRESETS)[number]['value']>('LOSE');
@@ -42,9 +46,20 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const [targetWeight, setTargetWeight] = useState('');
   const [errors, setErrors] = useState<{ start?: string; target?: string; form?: string }>({});
 
+  const bottomInset = showMobileTabBar ? 72 : 12;
   const latest = detail.data?.latestWeightKg;
   const effectiveStart =
     startWeight !== '' ? startWeight : latest !== null ? String(latest ?? '') : '';
+
+  const medicalFlags = detail.data?.client.medicalFlags ?? null;
+  const medicalParts: string[] = [];
+  if (medicalFlags?.pregnant === true) medicalParts.push('pregnancy noted');
+  if (medicalFlags?.physicianClearanceRequired === true) {
+    medicalParts.push('physician clearance required');
+  }
+  const conditions = medicalFlags?.conditions ?? [];
+  if (conditions.length > 0) medicalParts.push(conditions.join(', '));
+  const medicalSummary = medicalParts.length > 0 ? medicalParts.join(' · ') : null;
 
   const submit = () => {
     const next: typeof errors = {};
@@ -94,6 +109,11 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           </Link>
         }
       />
+      {medicalSummary !== null ? (
+        <AlertBanner tone="warning" title="Medical flags on file">
+          {medicalSummary}. Use clinical judgment — GymOS is not medical advice.
+        </AlertBanner>
+      ) : null}
       <Card gap="$4">
         <YStack gap="$2">
           <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
@@ -115,7 +135,8 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         </YStack>
 
         <FormField
-          label="Starting weight (kg)"
+          label="Starting weight"
+          unit="kg"
           value={effectiveStart}
           onChangeText={(t) => {
             setStartWeight(t);
@@ -128,7 +149,8 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         />
 
         <FormField
-          label="Target weight (kg)"
+          label="Target weight"
+          unit="kg"
           value={targetWeight}
           onChangeText={(t) => {
             setTargetWeight(t);
@@ -145,14 +167,19 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           </Body>
         ) : null}
 
-        <PrimaryButton disabled={create.isPending} onPress={submit}>
-          {create.isPending ? 'Computing targets…' : 'Create goal'}
-        </PrimaryButton>
-        <GhostButton onPress={() => router.back()}>Cancel</GhostButton>
         <Muted fontSize={12}>
           The AI never invents numbers. Weekly check-ins keep the plan adaptive.
         </Muted>
       </Card>
+
+      <StickyFormFooter bottomInset={bottomInset}>
+        <GhostButton flex={1} onPress={() => router.back()}>
+          Cancel
+        </GhostButton>
+        <PrimaryButton flex={1} disabled={create.isPending} onPress={submit}>
+          {create.isPending ? 'Computing targets…' : 'Create goal'}
+        </PrimaryButton>
+      </StickyFormFooter>
     </AppScreen>
   );
 };

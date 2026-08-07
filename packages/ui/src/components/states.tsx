@@ -24,17 +24,20 @@ export const EmptyState = ({
   title,
   hint,
   action,
+  icon,
 }: {
   title: string;
   hint?: string;
   action?: ReactNode;
+  icon?: ReactNode;
 }) => (
   <Card alignItems="center" paddingVertical="$8" gap="$3">
-    <Title fontSize={20} textAlign="center">
+    {icon}
+    <Title fontSize={16} textAlign="center" fontWeight="600">
       {title}
     </Title>
     {hint ? (
-      <Muted textAlign="center" maxWidth={320}>
+      <Muted textAlign="center" maxWidth={320} fontSize={12}>
         {hint}
       </Muted>
     ) : null}
