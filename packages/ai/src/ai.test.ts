@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { hashNarrativeInput } from './cache';
+import { CIRCUIT, isCircuitOpen, recordCircuitFailure, resetCircuit } from './circuit';
 import { assertDeidentified } from './deidentify';
 import { fallbackNarrative } from './fallback';
+import { isGrounded, runGuardrails } from './guardrails';
 import { narrate } from './narrate';
+import { PROMPT_VERSION } from './prompts/meal-narrative.v1';
 import { containsNumericClaim, type NarrativeInput } from './types';
 
 const input: NarrativeInput = {
@@ -58,11 +62,57 @@ describe('assertDeidentified', () => {
   });
 });
 
+describe('guardrails', () => {
+  it('accepts grounded fallback output', () => {
+    const out = fallbackNarrative(input);
+    const gated = runGuardrails(input, out, 2);
+    expect(gated.ok).toBe(true);
+  });
+
+  it('rejects invented tracked foods', () => {
+    expect(
+      isGrounded(input, {
+        days: [
+          {
+            meals: [
+              { name: 'Salmon bowl', prepNotes: 'Grill the salmon.' },
+              { name: 'Banana', prepNotes: '' },
+            ],
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects shape mismatch', () => {
+    const gated = runGuardrails(
+      input,
+      { days: [{ meals: [{ name: 'Only one', prepNotes: '' }] }] },
+      2,
+    );
+    expect(gated).toEqual({ ok: false, reason: 'shape_mismatch' });
+  });
+});
+
+describe('circuit', () => {
+  beforeEach(() => resetCircuit());
+
+  it('opens after consecutive failures', () => {
+    expect(isCircuitOpen()).toBe(false);
+    for (let i = 0; i < CIRCUIT.failureThreshold; i += 1) recordCircuitFailure();
+    expect(isCircuitOpen()).toBe(true);
+  });
+});
+
 describe('narrate', () => {
+  beforeEach(() => resetCircuit());
+
   it('uses templates in fallback mode with zero external calls', async () => {
     const result = await narrate(input, { mode: 'fallback', verbosity: 'standard' });
     expect(result.modelId).toBe('fallback-templates');
     expect(result.fellBack).toBe(false);
+    expect(result.promptVersion).toBe(PROMPT_VERSION);
+    expect(result.cacheHit).toBe(false);
     expect(result.output.days[0]?.meals).toHaveLength(2);
   });
 
@@ -85,5 +135,48 @@ describe('narrate', () => {
     await expect(narrate(dirty, { mode: 'fallback', verbosity: 'terse' })).rejects.toThrow(
       /de-identification/,
     );
+  });
+
+  it('serves from cache when provided', async () => {
+    const store = new Map<string, unknown>();
+    const cached = fallbackNarrative(input);
+    const result = await narrate(
+      input,
+      { mode: 'local', baseUrl: 'http://127.0.0.1:1', model: 'qwen', verbosity: 'standard' },
+      {
+        expectedMealCount: 2,
+        cache: {
+          get: async (hash) => {
+            const hit = store.get(hash.toString('hex'));
+            return (hit as typeof cached | undefined) ?? null;
+          },
+          set: async (hash, output) => {
+            store.set(hash.toString('hex'), output);
+          },
+        },
+      },
+    );
+    // Unreachable LLM → fallback, but set was not called on failure path before guardrail.
+    expect(result.fellBack).toBe(true);
+
+    const hash = hashNarrativeInput({
+      promptVersion: PROMPT_VERSION,
+      modelId: 'qwen',
+      input,
+    });
+    store.set(hash.toString('hex'), cached);
+    const hit = await narrate(
+      input,
+      { mode: 'local', baseUrl: 'http://127.0.0.1:1', model: 'qwen', verbosity: 'standard' },
+      {
+        expectedMealCount: 2,
+        cache: {
+          get: async (h) => (store.get(h.toString('hex')) as typeof cached | undefined) ?? null,
+          set: async () => undefined,
+        },
+      },
+    );
+    expect(hit.cacheHit).toBe(true);
+    expect(hit.fellBack).toBe(false);
   });
 });
