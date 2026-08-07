@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
-import { narrate, type AiConfig } from '@gymos/ai';
+import { narrate, narrativeOutputSchema, type AiConfig, type NarrativeOutput } from '@gymos/ai';
 import { err, ok, type Result } from '@gymos/core';
 import {
   assertNoRestrictedFoods,
@@ -153,6 +153,8 @@ export const generatePlan = async (
         prepTimeCeilingMin: manifest.aiConfig.prepTimeCeilingMin,
         aiMode: options.ai.mode,
         weekMode: 'daily_template',
+        promptVersion: options.ai.promptVersion ?? null,
+        adapterVersion: options.ai.adapterVersion ?? null,
       },
       ...(options.override
         ? {
@@ -206,6 +208,23 @@ export const generatePlan = async (
       error: { code: 'SOLVER_INFEASIBLE', detail: 'empty template', bestErrorPct: 1 },
     });
   }
+
+  const llmCache = {
+    get: async (inputHash: Buffer): Promise<NarrativeOutput | null> => {
+      const [row] = await db
+        .select()
+        .from(s.llmCache)
+        .where(eq(s.llmCache.inputHash, inputHash))
+        .limit(1);
+      if (!row) return null;
+      const parsed = narrativeOutputSchema.safeParse(row.output);
+      return parsed.success ? parsed.data : null;
+    },
+    set: async (inputHash: Buffer, output: NarrativeOutput, modelId: string): Promise<void> => {
+      await db.insert(s.llmCache).values({ inputHash, output, modelId }).onConflictDoNothing();
+    },
+  };
+
   const narrative = await narrate(
     {
       locale: manifest.locales.default,
@@ -222,6 +241,7 @@ export const generatePlan = async (
       ],
     },
     options.ai,
+    { cache: llmCache, expectedMealCount: templateDay.meals.length },
   );
   const templateMealNames = templateDay.meals.map(
     (meal, mealIdx) => narrative.output.days[0]?.meals[mealIdx]?.name ?? `${meal.slot} — day 1`,
@@ -277,10 +297,17 @@ export const generatePlan = async (
         status: 'SUCCEEDED',
         planId: plan.id,
         modelId: narrative.modelId,
+        adapterVersion: narrative.adapterVersion,
+        rawLlmOutput: narrative.rawLlmOutput,
         latencyMs: Date.now() - started,
         validation: {
           allergenPostCheck: 'passed',
           fellBack: narrative.fellBack,
+          cacheHit: narrative.cacheHit,
+          guardrail: narrative.guardrail,
+          promptVersion: narrative.promptVersion,
+          circuitOpen: narrative.circuitOpen,
+          inputHashHex: narrative.inputHash?.toString('hex') ?? null,
           dayTotals: solved.value.map((d) => d.totals),
         },
       })
@@ -720,7 +747,7 @@ export const publishPlan = async (
   options: PublishOptions,
   tolerances: { kcalTolerancePct: number; macroTolerancePct: number },
 ): Promise<Result<typeof s.mealPlans.$inferSelect, PublishError>> => {
-  if (options.reviewed !== true) {
+  if (!options.reviewed) {
     return err({ code: 'REVIEW_REQUIRED' });
   }
 

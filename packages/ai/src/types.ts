@@ -8,6 +8,10 @@ export type AiConfig = {
   readonly model?: string;
   readonly apiKey?: string;
   readonly verbosity: 'terse' | 'standard';
+  /** Override default prompt version (canary). */
+  readonly promptVersion?: string;
+  /** Optional LoRA / adapter id served by llama.cpp. */
+  readonly adapterVersion?: string;
 };
 
 /** De-identified Layer-3 input — food names and grams only, never PII. */
