@@ -2,6 +2,7 @@ import { and, eq, lt, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { isoDate, nowIso, schema as s, type Db } from '@gymos/db';
 import { notify } from '@gymos/modules/notifications';
+import { purgeStaleAiArtifacts } from '@gymos/modules/nutrition';
 
 /**
  * Nightly roll: every ACTIVE goal must always have exactly one upcoming DUE
@@ -106,10 +107,11 @@ export const refreshAttention = async (db: Db, zone: string): Promise<void> => {
   }
 };
 
-/** Housekeeping: expired idempotency keys + old gate telemetry. */
+/** Housekeeping: expired idempotency keys + old gate telemetry + AI retention. */
 export const cleanupExpired = async (db: Db): Promise<void> => {
   await db.delete(s.idempotencyKeys).where(lt(s.idempotencyKeys.expiresAt, nowIso()));
   await db
     .delete(s.accessGateAttempts)
     .where(lt(s.accessGateAttempts.createdAt, isoDate(DateTime.utc().minus({ days: 30 }))));
+  await purgeStaleAiArtifacts(db, 90);
 };
