@@ -14,6 +14,7 @@ COPY packages/modules/package.json packages/modules/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/ui/package.json packages/ui/
 COPY packages/app/package.json packages/app/
+COPY packages/platform/package.json packages/platform/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --ignore-scripts --filter @gymos/web...
 
@@ -23,6 +24,7 @@ COPY packages/ui packages/ui
 COPY packages/app packages/app
 COPY packages/core packages/core
 COPY packages/contracts packages/contracts
+COPY packages/platform packages/platform
 COPY infra/tenants infra/tenants
 
 ENV CI=1
