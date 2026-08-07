@@ -100,7 +100,6 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     return (
       <GhostButton
         key={code}
-        minHeight={44}
         onPress={() => toggle(code, type)}
         backgroundColor={active ? (tone === 'danger' ? '$danger' : '$primary') : 'transparent'}
         color={active ? (tone === 'danger' ? '$dangerFg' : '$primaryFg') : '$color'}

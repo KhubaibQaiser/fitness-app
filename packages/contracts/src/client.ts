@@ -56,7 +56,10 @@ const request = async <TResponse>(
 export const api = {
   enter: (key: string) => request<{ ok: boolean }>('POST', '/gate/enter', { key }),
   publicConfig: () => request<T.PublicConfig>('GET', '/v1/config/public'),
-  me: () => request<T.Me>('GET', '/v1/me'),
+  me: {
+    get: () => request<T.Me>('GET', '/v1/me'),
+    update: (input: T.UpdateMeInput) => request<T.Me>('PATCH', '/v1/me', input),
+  },
 
   clients: {
     list: (q?: string) =>

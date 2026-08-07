@@ -1,8 +1,10 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
+import { storage } from '@gymos/platform';
 import {
   AppErrorBoundary,
   Card,
@@ -14,6 +16,8 @@ import {
   Title,
   YStack,
 } from '@gymos/ui';
+import { qk } from '../../api';
+import { GATE_HINT_KEY } from '../shell/gate-guard';
 
 /** Access-gate entry — one key, once per device. No accounts in the pilot. */
 export const EnterScreen = () => (
@@ -24,6 +28,7 @@ export const EnterScreen = () => (
 
 const EnterForm = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [key, setKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,10 +40,13 @@ const EnterForm = () => {
     setError(null);
     try {
       await api.enter(key.trim());
+      storage.setItem(GATE_HINT_KEY, '1');
+      await queryClient.prefetchQuery({ queryKey: qk.me, queryFn: api.me.get });
       startTransition(() => {
         router.replace('/');
       });
     } catch (e) {
+      storage.removeItem(GATE_HINT_KEY);
       setError(
         e instanceof ApiError && e.status === 429
           ? 'Too many attempts — wait a minute and try again.'

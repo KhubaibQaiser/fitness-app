@@ -44,7 +44,7 @@ export const HomeScreen = () => {
 
   return (
     <AppScreen>
-      <PageHeader title={`Salaam, ${firstName}`} subtitle="Your coaching day at a glance" />
+      <PageHeader title={`Hello, ${firstName}`} subtitle="Your coaching day at a glance" />
 
       <Card gap="$3" padding="$4">
         <ListRow
