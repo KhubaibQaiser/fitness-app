@@ -100,7 +100,9 @@ export const MobileTabBar = () => {
 
   return (
     <XStack
-      position="absolute"
+      // fixed to the viewport so the bar stays at the bottom while content scrolls
+      // (absolute was relative to the growing shell and drifted mid-page / scrolled away)
+      position="fixed"
       bottom={0}
       left={0}
       right={0}
@@ -261,7 +263,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <YStack flex={1} minHeight="100vh" width="100%" backgroundColor="$screenBg" position="relative">
+    <YStack flex={1} minHeight="100vh" width="100%" backgroundColor="$screenBg">
       {children}
       <MobileTabBar />
     </YStack>

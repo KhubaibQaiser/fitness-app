@@ -3,7 +3,7 @@ import { styled, YStack } from 'tamagui';
 export const Card = styled(YStack, {
   name: 'Card',
   backgroundColor: '$cardBg',
-  borderRadius: 16,
+  borderRadius: '$radiusCard',
   padding: '$4',
   gap: '$2',
   borderWidth: 1,

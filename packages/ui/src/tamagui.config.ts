@@ -10,14 +10,14 @@ import { bodyFont, headingFont } from './fonts';
  * Design system config. Brand colors flow from the tenant manifest at build
  * time (config-not-code; P0 moves this to a runtime loader).
  *
- * Athletic tone: high-contrast surfaces, punchy primary/accent, WCAG-minded
- * muted text. Light + dark ship together and persist via ThemeModeProvider.
+ * MD3-inspired blue/violet brand (TradeBlock palette mapped to Tamagui roles).
+ * Light + dark ship together and persist via ThemeModeProvider.
  */
 const brand = manifest.branding.colors;
 const radius = manifest.branding.radius; // 'soft' | future variants
 
 const radiusScale =
-  radius === 'soft' ? { card: 16, control: 12, pill: 999 } : { card: 8, control: 6, pill: 999 };
+  radius === 'soft' ? { card: 8, control: 4, pill: 999 } : { card: 8, control: 4, pill: 999 };
 
 export const config = createTamagui({
   ...defaultConfig,
@@ -31,27 +31,27 @@ export const config = createTamagui({
       ...defaultConfig.themes.light,
       // Brand
       primary: brand.primary,
-      primaryHover: '#0d9488',
+      primaryHover: '#3376D3',
       primaryFg: '#ffffff',
       accent: brand.accent,
-      accentFg: '#1c1200',
-      // Surfaces — cool athletic gray, not washed cream
-      screenBg: '#e8ece9',
-      cardBg: '#ffffff',
-      elevatedBg: '#f4f6f5',
-      borderColor: '#c5d0cd',
-      borderColorHover: '#9aaba3',
-      // Text — muted tuned for ≥4.5:1 on screenBg/cardBg
-      color: '#0b1412',
-      textMuted: '#3d4f48',
-      placeholderColor: '#5a6e66',
+      accentFg: '#ffffff',
+      // Surfaces — MD3 background / surface / surfaceContainer
+      screenBg: '#FEFBFF',
+      cardBg: '#FAF9FD',
+      elevatedBg: '#EFEDF1',
+      borderColor: '#C4C6D0',
+      borderColorHover: '#74777F',
+      // Text — onSurface / onSurfaceVariant / outline
+      color: '#1B1B1F',
+      textMuted: '#44474E',
+      placeholderColor: '#74777F',
       // Status
-      danger: '#b91c1c',
+      danger: '#C00011',
       dangerFg: '#ffffff',
-      success: '#15803d',
+      success: '#1AC057',
       successFg: '#ffffff',
-      warning: '#b45309',
-      warningFg: '#ffffff',
+      warning: '#E7B008',
+      warningFg: '#1B1B1F',
       focusRing: brand.primary,
       // Radius semantic aliases consumed by primitives
       radiusCard: radiusScale.card,
@@ -59,26 +59,26 @@ export const config = createTamagui({
     },
     dark: {
       ...defaultConfig.themes.dark,
-      primary: '#2dd4bf',
-      primaryHover: '#5eead4',
-      primaryFg: '#042f2e',
-      accent: '#fbbf24',
-      accentFg: '#1c1200',
-      screenBg: '#070b0a',
-      cardBg: '#121a18',
-      elevatedBg: '#1a2421',
-      borderColor: '#2a3834',
-      borderColorHover: '#3d524c',
-      color: '#f0f7f4',
-      textMuted: '#a8bbb4',
-      placeholderColor: '#7d9189',
-      danger: '#f87171',
-      dangerFg: '#1f0505',
-      success: '#4ade80',
-      successFg: '#052e14',
-      warning: '#fbbf24',
-      warningFg: '#1c1200',
-      focusRing: '#2dd4bf',
+      primary: '#AAC7FF',
+      primaryHover: '#7AACFF',
+      primaryFg: '#003064',
+      accent: '#C2C1FF',
+      accentFg: '#20198F',
+      screenBg: '#1B1B1F',
+      cardBg: '#121316',
+      elevatedBg: '#1F1F23',
+      borderColor: '#44474E',
+      borderColorHover: '#8E9099',
+      color: '#E3E2E6',
+      textMuted: '#C4C6D0',
+      placeholderColor: '#8E9099',
+      danger: '#FFB4AB',
+      dangerFg: '#690005',
+      success: '#3BE362',
+      successFg: '#00390F',
+      warning: '#ECC306',
+      warningFg: '#3B2F00',
+      focusRing: '#AAC7FF',
       radiusCard: radiusScale.card,
       radiusControl: radiusScale.control,
     },

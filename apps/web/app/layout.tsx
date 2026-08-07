@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans } from 'next/font/google';
+import { Roboto } from 'next/font/google';
 import { type ReactNode } from 'react';
 import { AppProviders } from '@gymos/app/provider';
 import { NextTamaguiProvider } from '../components/next-tamagui-provider';
 import './globals.css';
 
-/** Single clean sans for UI — compact, not elongated like Syne. */
-const sans = DM_Sans({
+/** MD3-aligned sans (TradeBlock visual brand). */
+const sans = Roboto({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '700'],
 });
 
 export const metadata: Metadata = {
@@ -25,8 +25,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   // WCAG: allow pinch-zoom (do not lock maximumScale)
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0f766e' },
-    { media: '(prefers-color-scheme: dark)', color: '#070b0a' },
+    { media: '(prefers-color-scheme: light)', color: '#005DB8' },
+    { media: '(prefers-color-scheme: dark)', color: '#1B1B1F' },
   ],
 };
 
