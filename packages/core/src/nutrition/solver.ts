@@ -307,7 +307,7 @@ const pickCandidate = (
   return undefined;
 };
 
-const ATTEMPTS_PER_DAY = 5;
+const ATTEMPTS_PER_DAY = 10;
 
 const buildItems = (
   targets: MacroTargets,
@@ -432,7 +432,16 @@ export const solveWeek = (
 ): Result<SolvedDay[], SolverError> => {
   const days: SolvedDay[] = [];
   for (let day = 1; day <= 7; day += 1) {
-    const solved = solveDay(day, targets, candidates, config);
+    let solved = solveDay(day, targets, candidates, config);
+    // A few seeds land just outside macro tolerance after hill-climb. Retry the
+    // day with alternate seeds before failing the whole week (pilot flake).
+    for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
+      if (solved.error.code !== 'SOLVER_INFEASIBLE') return solved;
+      solved = solveDay(day, targets, candidates, {
+        ...config,
+        seed: `${config.seed}:r${recovery}`,
+      });
+    }
     if (!solved.ok) return solved;
     days.push(solved.value);
   }
