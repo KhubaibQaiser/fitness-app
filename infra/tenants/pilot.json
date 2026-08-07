@@ -19,6 +19,7 @@
     "budgetTier": 2,
     "prepTimeCeilingMin": 45,
     "verbosity": "standard",
-    "monthlyGenerationQuota": 500
+    "monthlyGenerationQuota": 500,
+    "promptPackId": "pakistani"
   }
 }
