@@ -2173,6 +2173,38 @@
         }
       }
     },
+    "/v1/meal-plans/{id}/diet-plan.pdf": {
+      "get": {
+        "operationId": "downloadDietPlanPdf",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diet plan PDF (Day-1 template)"
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/meal-plans/{id}/publish": {
       "post": {
         "operationId": "publishPlan",

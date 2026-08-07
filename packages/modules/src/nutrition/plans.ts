@@ -280,6 +280,15 @@ export const generatePlan = async (
       after: { version, targets, generationId: generation.id },
     });
 
+    if (options.kind === 'ADJUSTMENT') {
+      await tx.insert(s.aiFeedbackEvents).values({
+        planId: plan.id,
+        coachId: principal.coachId,
+        kind: 'REGENERATE',
+        payload: { previousVersion: version - 1, generationId: generation.id },
+      });
+    }
+
     return { plan, items, generationId: generation.id };
   });
 
@@ -307,6 +316,104 @@ export const getPlanWithItems = async (db: Db, planId: string) => {
       asc(s.mealPlanItems.position),
     );
   return { plan, items: rows.map(({ item, foodName }) => ({ ...item, foodName })) };
+};
+
+export type DietPlanPdfError = { code: 'PLAN_NOT_FOUND' };
+
+/** One Breakfast/Lunch option block for the locked PDF template. */
+export type DietPlanPdfOption = {
+  /** e.g. "Option 1" — omit/blank to skip the title line. */
+  title: string;
+  /** Item lines without the leading bullet (renderer adds "•  "). */
+  items: string[];
+};
+
+/**
+ * Inputs for the locked diet-plan PDF template.
+ * `clientName` and `coachName` are rendered exactly as provided.
+ */
+export type DietPlanPdfData = {
+  clientName: string;
+  coachName: string;
+  motivation?: string;
+  hydration?: string;
+  breakfast: DietPlanPdfOption[];
+  lunch: DietPlanPdfOption[];
+  dinner: string[];
+  notes?: string[];
+};
+
+type PlanItemRow = NonNullable<Awaited<ReturnType<typeof getPlanWithItems>>>['items'][number];
+
+const formatItemLine = (portionGrams: number, foodName: string): string =>
+  `${Math.round(portionGrams)} g ${foodName}`;
+
+const itemsForDaySlot = (
+  items: readonly PlanItemRow[],
+  day: number,
+  slot: PlanItemRow['mealSlot'],
+): string[] => {
+  const dayItems = items.filter((i) => i.day === day && i.mealSlot === slot);
+  if (dayItems.length === 0) return [];
+  const mealIndex = dayItems.reduce((a, b) => (a.mealIndex <= b.mealIndex ? a : b)).mealIndex;
+  return dayItems
+    .filter((i) => i.mealIndex === mealIndex)
+    .sort((a, b) => a.position - b.position)
+    .map((i) => formatItemLine(i.portionGrams, i.foodName));
+};
+
+const optionsForSlot = (
+  items: readonly PlanItemRow[],
+  slot: 'breakfast' | 'lunch',
+): DietPlanPdfOption[] => {
+  const options: DietPlanPdfOption[] = [];
+  const day1 = itemsForDaySlot(items, 1, slot);
+  if (day1.length > 0) options.push({ title: 'Option 1', items: day1 });
+  const day2 = itemsForDaySlot(items, 2, slot);
+  if (day2.length > 0) options.push({ title: 'Option 2', items: day2 });
+  // Single option: drop the title so the section reads like a flat list.
+  if (options.length === 1) {
+    const only = options[0];
+    if (only) return [{ title: '', items: only.items }];
+  }
+  return options;
+};
+
+/** Aggregate locked-template fields for the diet-plan PDF. */
+export const getDietPlanPdfData = async (
+  db: Db,
+  planId: string,
+): Promise<Result<DietPlanPdfData, DietPlanPdfError>> => {
+  const withItems = await getPlanWithItems(db, planId);
+  if (!withItems) return err({ code: 'PLAN_NOT_FOUND' });
+
+  const [client] = await db
+    .select({ name: s.clients.name })
+    .from(s.clients)
+    .where(eq(s.clients.id, withItems.plan.clientId))
+    .limit(1);
+  if (!client) return err({ code: 'PLAN_NOT_FOUND' });
+
+  const [coach] = await db
+    .select({ name: s.users.name })
+    .from(s.coaches)
+    .innerJoin(s.users, eq(s.users.id, s.coaches.userId))
+    .where(eq(s.coaches.id, withItems.plan.coachId))
+    .limit(1);
+
+  const firstToken = client.name.trim().split(/\s+/)[0];
+  const firstName = firstToken !== undefined && firstToken !== '' ? firstToken : client.name;
+  const coachRaw = coach?.name.trim() ?? '';
+  const coachDisplay = coachRaw !== '' ? `Coach ${coachRaw}` : 'Coach';
+
+  return ok({
+    clientName: firstName,
+    coachName: coachDisplay,
+    breakfast: optionsForSlot(withItems.items, 'breakfast'),
+    lunch: optionsForSlot(withItems.items, 'lunch'),
+    dinner: itemsForDaySlot(withItems.items, 1, 'dinner'),
+    notes: ['You can have green tea or black coffee without sugar anytime.'],
+  });
 };
 
 export type PlanOp =

@@ -221,6 +221,11 @@ export const usePublishPlan = (planId: string, clientId: string) => {
   });
 };
 
+export const useDownloadDietPlanPdf = (planId: string) =>
+  useMutation({
+    mutationFn: () => api.plans.dietPlanPdf(planId),
+  });
+
 export const useMarkAllRead = () => {
   const queryClient = useQueryClient();
   return useMutation({
