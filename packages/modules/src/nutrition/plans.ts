@@ -175,6 +175,8 @@ export const generatePlan = async (
 
   const candidates = await candidatesForRestrictions(db, restrictions, manifest, {
     goalPreset: goal.preset,
+    clientId,
+    varietyLookback: 3,
   });
   const solved = solveWeek(targets, candidates, {
     mealCount,

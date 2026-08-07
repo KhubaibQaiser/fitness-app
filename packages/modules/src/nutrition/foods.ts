@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, eq, ilike, inArray, lte, not, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, desc, eq, ilike, inArray, lte, not, sql } from 'drizzle-orm';
 import { type CandidateFood, type FoodGroup, type MealSlot } from '@gymos/core/nutrition';
 import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { type TenantManifest } from '../tenancy';
@@ -76,7 +76,7 @@ export const candidatesForRestrictions = async (
   db: Db,
   restrictions: readonly RestrictionInput[],
   manifest: TenantManifest,
-  opts?: { goalPreset?: string },
+  opts?: { goalPreset?: string; clientId?: string; varietyLookback?: number },
 ): Promise<CandidateFood[]> => {
   const allergens = restrictedAllergenCodes(restrictions);
   const codes = new Set(restrictions.map((r) => r.code));
@@ -154,10 +154,42 @@ export const candidatesForRestrictions = async (
     }
   }
 
+  const recentFoodIds = new Set<string>();
+  if (opts?.clientId) {
+    const lookback = opts.varietyLookback ?? 3;
+    const recent = await db
+      .select({ id: s.mealPlans.id })
+      .from(s.mealPlans)
+      .where(
+        and(
+          eq(s.mealPlans.clientId, opts.clientId),
+          inArray(s.mealPlans.status, ['PUBLISHED', 'SUPERSEDED']),
+        ),
+      )
+      .orderBy(desc(s.mealPlans.version))
+      .limit(lookback);
+    if (recent.length > 0) {
+      const used = await db
+        .select({ foodId: s.mealPlanItems.foodId })
+        .from(s.mealPlanItems)
+        .where(
+          and(
+            inArray(
+              s.mealPlanItems.planId,
+              recent.map((p) => p.id),
+            ),
+            eq(s.mealPlanItems.day, 1),
+          ),
+        );
+      for (const row of used) recentFoodIds.add(row.foodId);
+    }
+  }
+
   return rows.map((r) => {
     const learned = rankByFood.get(r.id);
     const oliveBoost = r.name === 'Olive oil' ? 3 : 1;
-    const rankScore = Math.max(learned ?? 1, oliveBoost);
+    let rankScore = Math.max(learned ?? 1, oliveBoost);
+    if (recentFoodIds.has(r.id)) rankScore *= 0.55;
     return {
       id: r.id,
       name: r.name,
