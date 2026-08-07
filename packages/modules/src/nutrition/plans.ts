@@ -108,7 +108,7 @@ export const generatePlan = async (
     .where(
       and(eq(s.planGenerations.status, 'SUCCEEDED'), gte(s.planGenerations.createdAt, monthStart)),
     );
-  const used = Number(quotaRow?.used ?? 0);
+  const used = quotaRow?.used ?? 0;
   const limit = manifest.aiConfig.monthlyGenerationQuota;
   if (used >= limit) {
     return err({ code: 'QUOTA_EXCEEDED', limit, used });
