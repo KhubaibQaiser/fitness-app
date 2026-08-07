@@ -175,7 +175,14 @@ describe('the pilot core loop', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       plan: { id: string; status: string; targets: { kcal: number } };
-      items: { foodId: string; mealName: string; macros: { kcal: number }; day: number }[];
+      items: {
+        foodId: string;
+        mealName: string;
+        mealIndex: number;
+        portionGrams: number;
+        macros: { kcal: number };
+        day: number;
+      }[];
     };
     expect(body.plan.status).toBe('DRAFT');
     expect(new Set(body.items.map((i) => i.day)).size).toBe(7);

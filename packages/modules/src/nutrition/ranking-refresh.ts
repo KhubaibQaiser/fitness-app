@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { aggregateRankings, RANKING, type RankingSignal } from '@gymos/core/nutrition';
-import { nowIso, schema as s, type Db } from '@gymos/db';
+import { iso, nowIso, schema as s, type Db } from '@gymos/db';
 
 type FeedbackRow = {
   kind: string;
@@ -11,7 +11,7 @@ type FeedbackRow = {
 
 /** Build ranking signals from recent ai_feedback_events (+ plan foods for publish). */
 export const collectRankingSignals = async (db: Db): Promise<RankingSignal[]> => {
-  const since = DateTime.utc().minus({ days: RANKING.windowDays }).toISO()!;
+  const since = iso(DateTime.utc().minus({ days: RANKING.windowDays }));
 
   const events = await db
     .select({

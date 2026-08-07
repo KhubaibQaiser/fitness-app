@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { narrate, narrativeOutputSchema, type AiConfig, type NarrativeOutput } from '@gymos/ai';
 import { err, ok, type Result } from '@gymos/core';
@@ -11,7 +11,7 @@ import {
   type SolvedDay,
   type SolverError,
 } from '@gymos/core/nutrition';
-import { nowIso, schema as s, type Db } from '@gymos/db';
+import { iso, nowIso, schema as s, type Db } from '@gymos/db';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
 import { type TenantManifest } from '../tenancy';
@@ -25,7 +25,8 @@ export type GenerateError =
   | { code: 'BLOCKED_REQUIRES_OVERRIDE'; reasons: string[] }
   | { code: 'NUTRITION_REFUSAL'; refusal: NutritionRefusal }
   | { code: 'SOLVER_FAILED'; error: SolverError }
-  | { code: 'ALLERGEN_POSTCHECK_FAILED'; foodId: string; allergen: string };
+  | { code: 'ALLERGEN_POSTCHECK_FAILED'; foodId: string; allergen: string }
+  | { code: 'QUOTA_EXCEEDED'; limit: number; used: number };
 
 export type GeneratedPlan = {
   plan: typeof s.mealPlans.$inferSelect;
@@ -39,6 +40,8 @@ export type GenerateOptions = {
   override?: { reason: string };
   mealCount?: 3 | 4 | 5;
   ai: AiConfig;
+  /** Client-supplied key; same key+client SUCCEEDED within 24h returns that plan. */
+  idempotencyKey?: string;
 };
 
 /** Safety gates run in code, before anything else (spec §11). */
@@ -65,6 +68,51 @@ export const generatePlan = async (
 ): Promise<Result<GeneratedPlan, GenerateError>> => {
   const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
   if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
+
+  // Idempotent replay: same key + client with SUCCEEDED generation in 24h.
+  if (options.idempotencyKey !== undefined && options.idempotencyKey.length > 0) {
+    const since = iso(DateTime.utc().minus({ hours: 24 }));
+    const [prior] = await db
+      .select({
+        id: s.planGenerations.id,
+        planId: s.planGenerations.planId,
+      })
+      .from(s.planGenerations)
+      .where(
+        and(
+          eq(s.planGenerations.clientId, clientId),
+          eq(s.planGenerations.status, 'SUCCEEDED'),
+          gte(s.planGenerations.createdAt, since),
+          sql`${s.planGenerations.config}->>'idempotencyKey' = ${options.idempotencyKey}`,
+        ),
+      )
+      .orderBy(desc(s.planGenerations.createdAt))
+      .limit(1);
+    if (prior?.planId) {
+      const withItems = await getPlanWithItems(db, prior.planId);
+      if (withItems) {
+        return ok({
+          plan: withItems.plan,
+          items: withItems.items,
+          generationId: prior.id,
+        });
+      }
+    }
+  }
+
+  // Monthly SUCCEEDED quota (UTC calendar month, tenant-wide).
+  const monthStart = iso(DateTime.utc().startOf('month'));
+  const [quotaRow] = await db
+    .select({ used: count() })
+    .from(s.planGenerations)
+    .where(
+      and(eq(s.planGenerations.status, 'SUCCEEDED'), gte(s.planGenerations.createdAt, monthStart)),
+    );
+  const used = Number(quotaRow?.used ?? 0);
+  const limit = manifest.aiConfig.monthlyGenerationQuota;
+  if (used >= limit) {
+    return err({ code: 'QUOTA_EXCEEDED', limit, used });
+  }
 
   const profile = await getActiveProfile(db, clientId);
   const restrictions = profile?.restrictions ?? [];
@@ -155,6 +203,7 @@ export const generatePlan = async (
         weekMode: 'daily_template',
         promptVersion: options.ai.promptVersion ?? null,
         adapterVersion: options.ai.adapterVersion ?? null,
+        idempotencyKey: options.idempotencyKey ?? null,
       },
       ...(options.override
         ? {
@@ -313,6 +362,9 @@ export const generatePlan = async (
           circuitOpen: narrative.circuitOpen,
           inputHashHex: narrative.inputHash?.toString('hex') ?? null,
           dayTotals: solved.value.map((d) => d.totals),
+          /** Day-1 narrative snapshot for online edit_distance vs published names. */
+          templateMealNames,
+          templatePrepNotes,
         },
       })
       .where(eq(s.planGenerations.id, generation.id));
@@ -478,7 +530,7 @@ export type PlanOp =
       op: 'override-macros';
       itemId: string;
       macros: { kcal: number; proteinG: number; fatG: number; carbsG: number };
-      reason?: string;
+      reason?: string | undefined;
     }
   | { op: 'apply-day-to-week'; day: number };
 

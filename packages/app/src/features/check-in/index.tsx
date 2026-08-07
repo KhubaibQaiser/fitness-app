@@ -84,6 +84,8 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   if (result !== null) {
     const copy = VERDICT_COPY[result.verdict.type];
     const verdict = result.verdict;
+    const narrative = verdict.narrative;
+    const displayTitle = narrative?.title ?? copy.title;
     const iconBg = VERDICT_ICON_BG[copy.tone];
     const iconFg = VERDICT_ICON_FG[copy.tone];
     const VerdictIcon =
@@ -106,10 +108,16 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           <YStack gap="$3" width="100%" alignItems="stretch">
             <Row>
               <Body fontWeight="800" fontSize={17} flex={1}>
-                {copy.title}
+                {displayTitle}
               </Body>
               <Badge tone={copy.tone} label={verdict.type.replaceAll('_', ' ')} />
             </Row>
+            {narrative !== undefined ? (
+              <>
+                <Body fontSize={14}>{narrative.coachSummary}</Body>
+                <Muted>{narrative.clientSummary}</Muted>
+              </>
+            ) : null}
             {verdict.actualWeeklyDeltaKg !== undefined ? (
               <Muted>
                 Actual {verdict.actualWeeklyDeltaKg} kg/wk vs expected{' '}
@@ -117,11 +125,13 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
                 {(verdict.confidence * 100).toFixed(0)}%
               </Muted>
             ) : null}
-            {verdict.reasons.map((reason) => (
-              <Body key={reason} fontSize={14}>
-                • {reason}
-              </Body>
-            ))}
+            {narrative === undefined
+              ? verdict.reasons.map((reason) => (
+                  <Body key={reason} fontSize={14}>
+                    • {reason}
+                  </Body>
+                ))
+              : null}
             {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
               <YStack gap="$2">
                 <SectionTitle>Proposed targets</SectionTitle>

@@ -40,6 +40,20 @@ export const tenantManifestSchema = z
       prepTimeCeilingMin: z.number().int().positive().default(45),
       verbosity: z.enum(['terse', 'standard']).default('standard'),
       monthlyGenerationQuota: z.number().int().positive().default(500),
+      /** Minority prompt canary — applied with promptCanaryPercent probability. */
+      promptVersionCanary: z.string().min(1).optional(),
+      promptCanaryPercent: z.number().min(0).max(100).optional(),
+      /** Optional cuisine / phrasing pack id (packages/ai prompts/packs). */
+      promptPackId: z.string().min(1).optional(),
+      featureFlags: z
+        .object({
+          promptVersion: z.string().min(1).optional(),
+          adapterVersion: z.string().min(1).optional(),
+          /** Override process AI_MODE for this tenant when set. */
+          aiMode: z.enum(['local', 'fallback', 'hosted']).optional(),
+        })
+        .strict()
+        .optional(),
     }),
   })
   .strict();
