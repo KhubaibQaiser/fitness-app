@@ -149,7 +149,7 @@ export const SettingsScreen = () => {
       <SectionTitle>Privacy & safety</SectionTitle>
       <Card gap="$2">
         <Body fontSize={14}>
-          Client health data never leaves this platform. AI meal naming runs on our own
+          Client health data never leaves this platform. Optional AI meal naming runs on our own
           infrastructure; every number is computed by verified formulas, and every AI generation is
           audit-logged.
         </Body>
