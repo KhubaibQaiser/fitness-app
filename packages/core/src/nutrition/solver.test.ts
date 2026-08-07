@@ -432,10 +432,57 @@ describe('solveWeek', () => {
     expect(new Set(signatures).size).toBeGreaterThan(1);
   });
 
-  it('propagates day-level errors', () => {
+  it('propagates NO_CANDIDATES without recovery retries', () => {
     const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
     const result = solveWeek(TARGETS, onlyProtein, config({ mealCount: 3 }));
     expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
+  });
+
+  it('exhausts recovery and returns SOLVER_INFEASIBLE for an impossible pool', () => {
+    // Same low-calorie pool as the solveDay infeasible case — enough groups to
+    // construct meals, but portions can never hit TARGETS even after recovery.
+    const sparse: CandidateFood[] = [
+      food(
+        'lettuce',
+        'protein',
+        { kcal: 15, proteinG: 1.4, fatG: 0.2, carbsG: 2.9, fiberG: 1.3 },
+        { allowedSlots: slots('breakfast', 'lunch', 'dinner') },
+      ),
+      food(
+        'cucumber',
+        'staple',
+        { kcal: 16, proteinG: 0.7, fatG: 0.1, carbsG: 3.6, fiberG: 0.5 },
+        { allowedSlots: slots('breakfast', 'lunch') },
+      ),
+      food(
+        'celery',
+        'vegetable',
+        { kcal: 14, proteinG: 0.7, fatG: 0.2, carbsG: 3, fiberG: 1.6 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      ),
+      food(
+        'radish',
+        'fruit',
+        { kcal: 16, proteinG: 0.7, fatG: 0.1, carbsG: 3.4, fiberG: 1.6 },
+        { allowedSlots: slots('snack') },
+      ),
+      food(
+        'sprouts',
+        'fat',
+        { kcal: 23, proteinG: 3, fatG: 0.2, carbsG: 2.1, fiberG: 1.9 },
+        { allowedSlots: slots('lunch', 'snack') },
+      ),
+      food(
+        'water',
+        'beverage',
+        { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0, fiberG: 0 },
+        { allowedSlots: slots('breakfast') },
+      ),
+    ];
+    const result = solveWeek(TARGETS, sparse, config({ mealCount: 4, seed: 'impossible-week' }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('SOLVER_INFEASIBLE');
   });
 });
 
