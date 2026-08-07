@@ -186,6 +186,10 @@ export const planOpSchema = z.discriminatedUnion('op', [
     op: z.literal('apply-day-to-week'),
     day: z.number().int().min(1).max(7),
   }),
+  z.object({
+    op: z.literal('set-title'),
+    title: z.string().max(50),
+  }),
 ]);
 
 export const patchPlanBody = z.object({ ops: z.array(planOpSchema).min(1).max(50) });
