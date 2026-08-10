@@ -17,8 +17,10 @@ COPY packages/modules/package.json packages/modules/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/ui/package.json packages/ui/
 COPY packages/app/package.json packages/app/
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts \
+# Render (and similar) inject NODE_ENV=production during image build, which would
+# omit devDependencies. tsx is a runtime dependency of this image — force a full
+# filtered install and avoid BuildKit cache mounts (not needed on Render).
+RUN pnpm install --frozen-lockfile --ignore-scripts --prod=false \
       --filter @gymos/api... --filter @gymos/worker...
 
 COPY tsconfig.base.json ./
@@ -35,5 +37,6 @@ ENV NODE_ENV=production
 EXPOSE 8080
 
 # tsx runtime keeps the single-artifact guarantee simple at pilot scale;
-# a compiled dist is a Stage-0 optimization.
-CMD ["sh", "-c", "if [ \"$PROCESS\" = worker ]; then exec ./node_modules/.bin/tsx apps/worker/src/index.ts; else exec ./node_modules/.bin/tsx apps/api/src/index.ts; fi"]
+# a compiled dist is a Stage-0 optimization. Use pnpm exec so the bin resolves
+# under pnpm's layout even when hoisting differs.
+CMD ["sh", "-c", "if [ \"$PROCESS\" = worker ]; then exec pnpm --filter @gymos/worker exec tsx src/index.ts; else exec pnpm --filter @gymos/api exec tsx src/index.ts; fi"]
