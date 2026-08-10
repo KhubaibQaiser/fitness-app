@@ -6,7 +6,10 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Standalone layout is for Docker/VM (`apps/web/Dockerfile`). Vercel sets
+  // VERCEL=1 and expects default Next output + NFT traces; standalone makes
+  // onBuildComplete look for missing `.next/next-server.js.nft.json`.
+  ...(process.env.VERCEL ? {} : { output: 'standalone' }),
   transpilePackages: [
     'react-native',
     'react-native-web',
@@ -25,7 +28,8 @@ const nextConfig = {
       'react-native-svg': '@tamagui/react-native-svg',
     },
   },
-  // Dev-only same-origin proxy to the API; production routing is Caddy's job.
+  // Same-origin API proxy: local/dev → localhost; PaaS → API_ORIGIN (Render);
+  // VM prod still uses Caddy for the public hostname.
   async rewrites() {
     const api = process.env.API_ORIGIN ?? 'http://localhost:8080';
     return [
