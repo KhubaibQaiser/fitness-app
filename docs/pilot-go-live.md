@@ -3,6 +3,11 @@
 Everything below is a one-time, ~1-hour manual setup. Data lives on Neon/R2;
 the VM is disposable.
 
+> **No Oracle VM?** Use the stripped free PaaS path instead:
+> [`pilot-go-live-paas.md`](./pilot-go-live-paas.md) + IaC in [`infra/paas/`](../infra/paas/).
+> That path disables the worker (nightly jobs) and local LLM so web+API can run
+> on Vercel + Render free tiers.
+
 ## 1. Accounts (all free)
 
 - [ ] **Oracle Cloud** — Always Free; home region Singapore or Mumbai. Create one

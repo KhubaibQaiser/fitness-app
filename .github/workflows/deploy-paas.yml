@@ -1,0 +1,37 @@
+name: Deploy PaaS
+
+# Migrations for the free PaaS pilot (Vercel web + Render API + Neon).
+# App deploys are Git-driven (Vercel / Render autoDeploy). Keep the VM Deploy
+# workflow gated off (PILOT_DEPLOY_ENABLED=false) while this path is active.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-paas
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrate Neon (PaaS pilot)
+    runs-on: ubuntu-latest
+    environment: production
+    if: ${{ vars.PILOT_PAAS_DEPLOY_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install db workspace
+        run: pnpm install --frozen-lockfile --filter @gymos/db...
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @gymos/db db:migrate

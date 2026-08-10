@@ -1,0 +1,11 @@
+project_name          = "gymos-pilot"
+github_repo           = "khubaibqaiser/gymos"
+git_production_branch = "main"
+neon_region_id        = "aws-ap-southeast-1"
+neon_pg_version       = 17
+render_api_url        = "https://gymos-api.onrender.com"
+
+# Gate secrets are NOT managed by OpenTofu (Render Blueprint sync:false).
+# Generate and paste into the Render dashboard:
+#   openssl rand -hex 16   → PILOT_ACCESS_KEY
+#   openssl rand -hex 32   → GATE_COOKIE_SECRET
