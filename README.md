@@ -8,7 +8,7 @@ Coaching-first gym platform. Current phase: **Pilot** — a single-coach, mobile
 - **Apps**: `web` (Next.js 16, installable PWA) · `api` (Hono modular monolith) · `worker` (same image, pg-boss) · `mobile` (Expo shell, CI gate only).
 - **Data**: PostgreSQL 17 (Neon free tier), Drizzle ORM. Queue state in an ephemeral VM-local Postgres (pg-boss).
 - **AI**: Hybrid — Layers 1–2 own calories/macros; llama.cpp + Qwen3 (optional) names meals only. Coach must review before publish. No data leaves our infrastructure.
-- **Infra**: Oracle Always Free VM + Caddy (DuckDNS DNS-01 TLS) + Cloudflare R2. Everything free.
+- **Infra**: Oracle Always Free VM + Caddy (DuckDNS DNS-01 TLS) + Cloudflare R2. Everything free. If Oracle capacity is blocked, use the stripped PaaS pilot ([`docs/pilot-go-live-paas.md`](docs/pilot-go-live-paas.md), IaC in [`infra/paas/`](infra/paas/)): Vercel + Render free + Neon (worker/LLM off).
 
 ## Getting started
 

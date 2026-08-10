@@ -2,6 +2,14 @@ packages:
   - apps/*
   - packages/*
 
+# image-size (react-native → metro) GHSA-w3rx / GHSA-5p2g — DoS via crafted
+# ICNS/JXL/HEIF. No patched npm release yet (all versions ≤2.0.2 affected).
+# Remove these ignores when image-size / metro ships a fix.
+auditConfig:
+  ignoreCves:
+    - CVE-2025-71330
+    - CVE-2025-71329
+
 # pnpm 10 blocks postinstall scripts by default; allow only what we vetted.
 onlyBuiltDependencies:
   - lefthook

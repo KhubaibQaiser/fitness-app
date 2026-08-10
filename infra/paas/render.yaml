@@ -1,0 +1,34 @@
+# GymOS PaaS pilot — Render Blueprint (free instance).
+# Worker / queue-db / local LLM are intentionally omitted (see docs/pilot-go-live-paas.md).
+#
+# Apply: Render Dashboard → New → Blueprint → connect this repo.
+# Or: `render blueprints launch` if using the Render CLI.
+#
+# After first deploy, set sync:false secrets in the dashboard (or Render env group):
+#   DATABASE_URL, PILOT_ACCESS_KEY, GATE_COOKIE_SECRET
+
+services:
+  - type: web
+    name: gymos-api
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/live
+    autoDeploy: true
+    envVars:
+      - key: AI_MODE
+        value: fallback
+      - key: TENANT_MANIFEST_PATH
+        value: /repo/infra/tenants/pilot.json
+      - key: PORT
+        value: '8080'
+      # Secrets — create once in the dashboard (Blueprint will not overwrite sync:false).
+      - key: DATABASE_URL
+        sync: false
+      - key: PILOT_ACCESS_KEY
+        sync: false
+      - key: GATE_COOKIE_SECRET
+        sync: false
