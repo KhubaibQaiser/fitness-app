@@ -1,7 +1,7 @@
 project_name          = "gymos-pilot"
 github_repo           = "KhubaibQaiser/fitness-app"
 git_production_branch = "main"
-neon_org_id           = "org-autumn-surf-18629715"
+neon_org_id           = "org-replace-with-your-neon-org-id"
 neon_region_id        = "aws-ap-southeast-1"
 neon_pg_version       = 17
 render_api_url        = "https://gymos-api.onrender.com"
