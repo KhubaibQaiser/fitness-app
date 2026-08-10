@@ -23,9 +23,12 @@ Blueprint). Read that README for apply details.
 
 ```bash
 cd infra/paas
-cp terraform.tfvars.example terraform.tfvars   # fill secrets + github_repo
+cp terraform.tfvars.example terraform.tfvars   # set neon_org_id + github_repo
 tofu init && tofu apply
 ```
+
+Find `neon_org_id` in Neon Console → your org → **Settings** → **General**
+(Organization ID looks like `org-…`). Neon requires this for API project creation.
 
 - [ ] Render Blueprint from `infra/paas/render.yaml` (or root symlink)
 - [ ] Render secrets: `DATABASE_URL` (pooled), `PILOT_ACCESS_KEY`, `GATE_COOKIE_SECRET`

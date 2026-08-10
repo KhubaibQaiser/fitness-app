@@ -16,6 +16,11 @@ variable "git_production_branch" {
   default     = "main"
 }
 
+variable "neon_org_id" {
+  type        = string
+  description = "Neon Organization ID (Console → Settings → General). Required by Neon’s API."
+}
+
 variable "neon_region_id" {
   type        = string
   description = "Neon region id (e.g. aws-ap-southeast-1, aws-us-east-1)."

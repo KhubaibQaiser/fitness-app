@@ -5,6 +5,7 @@ resource "neon_project" "pilot" {
   name       = var.project_name
   region_id  = var.neon_region_id
   pg_version = var.neon_pg_version
+  org_id     = var.neon_org_id
 
   history_retention_seconds = 21600 # 6h free-tier PITR window
 
