@@ -7,7 +7,7 @@ variable "project_name" {
 variable "github_repo" {
   type        = string
   description = "GitHub repo as owner/name (must match the Vercel Git integration)."
-  default     = "khubaibqaiser/gymos"
+  default     = "KhubaibQaiser/fitness-app"
 }
 
 variable "git_production_branch" {
