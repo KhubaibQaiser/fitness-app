@@ -16,12 +16,12 @@
     "drizzle-orm": "^0.45.2",
     "luxon": "^3.7.2",
     "pg-boss": "^12.0.0",
+    "tsx": "^4.21.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.7.1",
     "@types/node": "^24.10.4",
-    "tsx": "^4.21.1",
     "vitest": "^3.2.7"
   }
 }
