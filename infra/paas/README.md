@@ -32,7 +32,8 @@ export VERCEL_API_TOKEN=...
 ```bash
 cd infra/paas
 cp terraform.tfvars.example terraform.tfvars
-# edit: github_repo, neon_region_id, render_api_url
+# edit: neon_org_id (required), github_repo, neon_region_id, render_api_url
+# neon_org_id: Neon Console → org switcher → Settings → General → Organization ID
 
 tofu init
 tofu plan
