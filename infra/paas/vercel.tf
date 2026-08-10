@@ -2,13 +2,13 @@
 # are rewritten to Render via API_ORIGIN (see apps/web/next.config.mjs).
 
 resource "vercel_project" "web" {
-  name             = var.project_name
-  framework        = var.vercel_framework
-  root_directory   = "apps/web"
-  install_command  = "cd ../.. && corepack enable && pnpm install --frozen-lockfile"
-  build_command    = "cd ../.. && pnpm --filter @gymos/web build"
-  output_directory = ".next"
-  node_version     = "22.x"
+  name            = var.project_name
+  framework       = var.vercel_framework
+  root_directory  = "apps/web"
+  install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile"
+  build_command   = "cd ../.. && pnpm --filter @gymos/web build"
+  # Do not set output_directory for Next.js — Vercel owns the .next layout.
+  node_version    = "22.x"
 
   git_repository = var.manage_vercel_git ? {
     type              = "github"
