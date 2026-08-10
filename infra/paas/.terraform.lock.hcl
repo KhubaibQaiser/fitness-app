@@ -5,7 +5,19 @@ provider "registry.opentofu.org/kislerdm/neon" {
   version     = "0.15.0"
   constraints = "~> 0.9"
   hashes = [
+    "h1:2COWYDaH0M2Uece1n8aJsoYB5B85YJxvV/wQJMF1nf8=",
+    "h1:2Y/MZe3z+FBWV/8UXXpnPLAsi5U/RNn2TgD7xAtaOKA=",
+    "h1:5reFF1JC4PPRGW9G2GUFLigmoZHPxbRKuJN44OykSq4=",
     "h1:8L/JzdTWaU8q6F0oC9szjl2kCXg3Vuie6rzvptb6+c0=",
+    "h1:9mkV37HjpYg0TGW/SbQAM2nS6HKclldI+Qbzd+Mw8Nc=",
+    "h1:BXfmlf1QBcXy6RHZ7p9buHn8Xrqj6bGnmfHjeLRZjiw=",
+    "h1:FbZmowAW2DaEsF8RwsATWvAHNeBuLu0LWCHu07ZUkrY=",
+    "h1:JH9eO8CnSz7uiuLu4megseBSyjypoZTjWpK42TG/l64=",
+    "h1:L8vaXAXcxoqJiQmxxO+toFanAI4+Unlxrl+1lPK0dYg=",
+    "h1:QOH5EfIJMWdiyG6LXWLs0IGxh4gJNzf79DplLpj5Vik=",
+    "h1:fWvpRA8InFeUC5/NLBbw14UDxbf+tXRUiKJzJlhv11w=",
+    "h1:itPzcx7JIstmg1dTflWVUJNok6xRI7Cbi1hL1g4aqZc=",
+    "h1:nFJgcL5d4ccR5R3/GwuIPN8boFcCiifscz6YNYpI9kM=",
     "zh:021e5c921309039e96fc51775c5ad11dd53437e2cb529b660e2c5896b3b3d38b",
     "zh:1be4d47afd0ffa5b5e2a61676270870e2b1ae96cbf715c37533cc4f4fb568f82",
     "zh:2fae3908943357e1fba3c0d2f6210f7f06406f69a0af624009f44a151d450e46",
@@ -27,7 +39,20 @@ provider "registry.opentofu.org/vercel/vercel" {
   version     = "2.15.1"
   constraints = "~> 2.0"
   hashes = [
+    "h1:0bBpClHGTm9WYZGUh42Xczf8wufnMfMYYzICmObaYj4=",
+    "h1:2OB9AQq2PtCbhs5YRuW0XHPlvyus6ZvP2G900UppC6I=",
+    "h1:A88wD+UAzplbANZSQ6Nt17nSE8776V+G7z7UNdkCDFM=",
+    "h1:MhQQlQo0pLpP9segP7VwR1vltPKkV2ishFPJhnDk+Vg=",
+    "h1:N1x78RRbvE3ip3RMPWKk27ri8nQoKYoohhzMRhd45Dc=",
+    "h1:NsCJ5wQXd7ceBUMuCy+aeVQF0nm5MOECAp+8ATjxNB8=",
+    "h1:QUtsjn00vZbykbLEUA603e/qAIfV3JLSIeFsg6oeBvs=",
+    "h1:Yso8VdomzEdvEP5XYqgsxN6OnZgPhK2k38EIenYBd8w=",
+    "h1:Z+/NfHuahK3k+V9/NGPHiCb7Q5R0nvDu/7ACG2RRNmA=",
+    "h1:ZwZ05fPSgOAsmLmfqeRavBUNAmuvTnv2iyN7YEYFvQE=",
+    "h1:dd0HeBfGCkoYQTJL6JVcqMT4DzWDoZtf+QIm/FkC7OM=",
     "h1:lXB7voApLLs8TVyxjlvj0bK6hSE12S3BEHYgaAwEEDE=",
+    "h1:ouLTjYCiNon/SiYesjv2XB32eGUumrsY4dirYJuXrSc=",
+    "h1:rYYtfMVdCUBpyt6MedJ4Fr/ZbUp3VL1F5DOZDFLBBvM=",
     "zh:03948804f2458bbdf32a80061597b5d11ccb84527e5839d30c03f737a5b079e1",
     "zh:193306ddf78c1b327d8350903a3f4173dbb7a74aa9a3dd2d1e3acc43eca6c07f",
     "zh:315f8ef973f8adaeb5a94987c2967b38b7d45b2f471187941280a6af6b038b58",
