@@ -35,11 +35,11 @@ tofu init && tofu apply
 
 Repo → Settings → Environments → `production` (or repo Variables):
 
-| Kind | Name | Value |
-| --- | --- | --- |
-| Secret | `DATABASE_URL` | Neon **direct** URL (`tofu output -raw database_url_direct`) |
-| Variable | `PILOT_PAAS_DEPLOY_ENABLED` | `true` |
-| Variable | `PILOT_DEPLOY_ENABLED` | `false` (keep VM deploy off) |
+| Kind     | Name                        | Value                                                        |
+| -------- | --------------------------- | ------------------------------------------------------------ |
+| Secret   | `DATABASE_URL`              | Neon **direct** URL (`tofu output -raw database_url_direct`) |
+| Variable | `PILOT_PAAS_DEPLOY_ENABLED` | `true`                                                       |
+| Variable | `PILOT_DEPLOY_ENABLED`      | `false` (keep VM deploy off)                                 |
 
 ## 4. Data + smoke
 

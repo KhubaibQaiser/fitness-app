@@ -4,13 +4,13 @@ This path runs **web + API only** on free tiers so you can pilot without a VM.
 Nightly worker jobs (check-in roll, attention, ranking refresh, cleanup) and the
 local LLM are off. Product core (gate, clients, plans, check-in complete) stays.
 
-| Piece | Where | Defined in |
-| --- | --- | --- |
-| Postgres | Neon free | OpenTofu (`neon.tf`) |
-| Web (Next.js) | Vercel free | OpenTofu (`vercel.tf`) |
-| API (Hono) | Render free | Blueprint (`render.yaml`) |
-| Media | Cloudflare R2 (optional) | unchanged / manual |
-| Worker / queue-db / LLM | **not deployed** | — |
+| Piece                   | Where                    | Defined in                |
+| ----------------------- | ------------------------ | ------------------------- |
+| Postgres                | Neon free                | OpenTofu (`neon.tf`)      |
+| Web (Next.js)           | Vercel free              | OpenTofu (`vercel.tf`)    |
+| API (Hono)              | Render free              | Blueprint (`render.yaml`) |
+| Media                   | Cloudflare R2 (optional) | unchanged / manual        |
+| Worker / queue-db / LLM | **not deployed**         | —                         |
 
 The Oracle/Hetzner VM stack under `infra/vm/` remains available; flip back when
 you want always-on jobs again.
@@ -71,12 +71,12 @@ keeps the Blueprint next to the OpenTofu stack for cohesion. Either:
 
 ## Day-2 changes (all from git)
 
-| Change | Edit |
-| --- | --- |
-| Neon region / PG version / CU | `neon.tf` / `terraform.tfvars` → `tofu apply` |
-| Vercel build/root/API_ORIGIN | `vercel.tf` / `variables.tf` → `tofu apply` |
-| API env, region, plan, health path | `render.yaml` → push (autoDeploy) |
-| Re-enable worker later | abandon this path; use `infra/vm/` + set `PILOT_DEPLOY_ENABLED` |
+| Change                             | Edit                                                            |
+| ---------------------------------- | --------------------------------------------------------------- |
+| Neon region / PG version / CU      | `neon.tf` / `terraform.tfvars` → `tofu apply`                   |
+| Vercel build/root/API_ORIGIN       | `vercel.tf` / `variables.tf` → `tofu apply`                     |
+| API env, region, plan, health path | `render.yaml` → push (autoDeploy)                               |
+| Re-enable worker later             | abandon this path; use `infra/vm/` + set `PILOT_DEPLOY_ENABLED` |
 
 ## GitHub Actions
 
