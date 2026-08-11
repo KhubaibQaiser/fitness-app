@@ -17,8 +17,16 @@ pnpm --filter @gymos/mobile start
 
 Login: `coach@pilot.local` / `PILOT_COACH_PASSWORD` (default `pilot-coach-change-me`).
 
-## Bundle check
+## Tests
 
 ```bash
-pnpm --filter @gymos/mobile export:check
+pnpm --filter @gymos/mobile test          # Jest + RNTL
+pnpm --filter @gymos/mobile maestro:login # requires device/emulator + Maestro CLI
 ```
+
+## CI / EAS
+
+- `ci.yml` runs `expo export` as a Metro bundle gate
+- Label a PR `mobile-preview` to trigger EAS Update + Android preview build
+- Set `PILOT_MOBILE_DEPLOY_ENABLED=true` (repo variable) to enable production OTA/build on `main`
+- Replace placeholder EAS `projectId` in `app.json` and add `EXPO_TOKEN` to GitHub Environments

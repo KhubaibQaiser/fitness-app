@@ -1,0 +1,17 @@
+# Maestro critical-path: login → home.
+# Requires a running API and a dev client / preview build with EXPO_PUBLIC_API_URL set.
+appId: app.gymos.coach
+---
+- launchApp
+- assertVisible: 'GymOS'
+- tapOn:
+    id: 'email'
+    optional: true
+- tapOn: 'Email'
+- inputText: 'coach@pilot.local'
+- tapOn: 'Password'
+- inputText: 'pilot-coach-change-me'
+- tapOn: 'Sign in'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 20000
