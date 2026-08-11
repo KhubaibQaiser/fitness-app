@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "GymOS Coach",
+    "slug": "gymos-coach",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "gymos",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.gymos.coach"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#005DB8"
+      },
+      "package": "app.gymos.coach"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000"
+    }
+  }
+}

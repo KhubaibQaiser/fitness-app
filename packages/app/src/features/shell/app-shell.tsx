@@ -3,7 +3,7 @@
 import { type ReactElement, type ReactNode } from 'react';
 import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
-import { useThemeMode } from '@gymos/platform';
+import { useSafeAreaInsets, useThemeMode } from '@gymos/platform';
 import {
   Avatar,
   Bell,
@@ -93,20 +93,17 @@ export const MobileTabBar = () => {
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
   const { showMobileTabBar } = useAppChrome();
+  const insets = useSafeAreaInsets();
   if (!showMobileTabBar) return null;
 
   return (
     <XStack
-      position="fixed"
-      bottom={0}
-      left={0}
-      right={0}
       backgroundColor="$sidebar"
       borderTopWidth={1}
       borderTopColor="$borderColor"
       justifyContent="space-around"
       paddingTop="$2"
-      paddingBottom="$3"
+      paddingBottom={Math.max(insets.bottom, 12)}
       paddingHorizontal="$1"
       zIndex={100}
       elevation={8}
@@ -219,10 +216,8 @@ export const SideNav = () => {
       paddingVertical="$4"
       paddingHorizontal="$3"
       gap="$4"
-      height="100vh"
-      maxHeight="100vh"
-      position="sticky"
-      top={0}
+      flex={1}
+      alignSelf="stretch"
       role="navigation"
       aria-label="Primary"
     >
@@ -284,13 +279,16 @@ export const SideNav = () => {
   );
 };
 
-/** Responsive coach chrome: bottom tabs on phone, side nav on desktop. */
+/**
+ * Responsive coach chrome: bottom tabs on phone, side nav on desktop.
+ * Flex column/row — no `100vh` / `position: fixed` (native-safe).
+ */
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { isDesktop } = useAppChrome();
 
   if (isDesktop) {
     return (
-      <XStack flex={1} minHeight="100vh" width="100%" backgroundColor="$screenBg">
+      <XStack flex={1} width="100%" minHeight="100%" backgroundColor="$screenBg">
         <SideNav />
         <YStack flex={1} minWidth={0} position="relative" overflow="hidden">
           {children}
@@ -300,8 +298,10 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <YStack flex={1} minHeight="100vh" width="100%" backgroundColor="$screenBg">
-      {children}
+    <YStack flex={1} width="100%" minHeight="100%" backgroundColor="$screenBg">
+      <YStack flex={1} minHeight={0} width="100%">
+        {children}
+      </YStack>
       <MobileTabBar />
     </YStack>
   );
