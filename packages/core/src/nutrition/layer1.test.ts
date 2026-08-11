@@ -163,9 +163,13 @@ describe('computeTargets', () => {
         (input, preset, rate) => {
           const result = computeTargets(input, preset, rate);
           if (!result.ok) return true; // refusals are the safe outcome
-          const { targets, tdee: t } = result.value;
+          const { targets } = result.value;
+          // Check against the raw (unrounded) TDEE that assertSafeTargetKcal itself
+          // validates against — result.value.tdee is rounded for display and can
+          // tip the ratio a hair past the cap purely from display rounding.
+          const rawTdee = tdee(input);
           expect(targets.kcal).toBeGreaterThanOrEqual(CALORIE_FLOOR_KCAL[input.sex]);
-          expect((t - targets.kcal) / t).toBeLessThanOrEqual(0.2501);
+          expect((rawTdee - targets.kcal) / rawTdee).toBeLessThanOrEqual(0.2501);
           // Macro energy reconciles with the kcal target (rounding tolerance).
           const macroKcal = targets.proteinG * 4 + targets.fatG * 9 + targets.carbsG * 4;
           expect(Math.abs(macroKcal - targets.kcal)).toBeLessThanOrEqual(12);

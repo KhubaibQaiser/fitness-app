@@ -14,6 +14,7 @@ export const rollCheckIns = async (db: Db, coachUserId: string, zone: string): P
     .select({
       id: s.clientGoals.id,
       clientId: s.clientGoals.clientId,
+      outletId: s.clientGoals.outletId,
       weekday: s.clientGoals.checkinWeekday,
     })
     .from(s.clientGoals)
@@ -32,6 +33,7 @@ export const rollCheckIns = async (db: Db, coachUserId: string, zone: string): P
       while (next.weekday % 7 !== goal.weekday) next = next.plus({ days: 1 });
       await db.insert(s.checkIns).values({
         clientId: goal.clientId,
+        outletId: goal.outletId,
         goalId: goal.id,
         scheduledFor: isoDate(next),
         status: 'DUE',

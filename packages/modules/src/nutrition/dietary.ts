@@ -73,7 +73,7 @@ export type PutProfileResult = {
  */
 export const putProfile = async (
   db: Db,
-  principal: { userId: string },
+  principal: { userId: string; outletId: string },
   clientId: string,
   restrictions: RestrictionInput[],
 ): Promise<PutProfileResult> => {
@@ -90,6 +90,7 @@ export const putProfile = async (
       .insert(s.clientDietaryProfiles)
       .values({
         clientId,
+        outletId: principal.outletId,
         version: (previous?.version ?? 0) + 1,
         isActive: true,
         createdBy: principal.userId,

@@ -1,5 +1,6 @@
-import { and, desc, eq, ilike, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { ok, type ClientIntake, type Result, type SignedClientIntake } from '@gymos/core';
+import { type ScopeSet } from '@gymos/core/rbac';
 import { nowIso, schema as s, type Db } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
 import { createGoalTx, type CreateGoalInput, type GoalError } from './goals';
@@ -23,14 +24,31 @@ export type MedicalFlags = {
   physicianClearanceRequired?: boolean | undefined;
 };
 
-export const listClients = async (
-  db: Db,
-  opts: { q?: string; status?: 'active' | 'archived'; limit?: number },
-): Promise<ClientListItem[]> => {
+export type ListClientsOpts = {
+  q?: string;
+  status?: 'active' | 'archived';
+  limit?: number;
+  /** Tenant scope from the authenticated principal — required for isolation. */
+  scope: ScopeSet;
+  orgId: string;
+};
+
+export const listClients = async (db: Db, opts: ListClientsOpts): Promise<ClientListItem[]> => {
   const conditions = [
     opts.status ? eq(s.clients.status, opts.status) : eq(s.clients.status, 'active'),
     ...(opts.q ? [ilike(s.clients.name, `%${opts.q}%`)] : []),
   ];
+
+  if (opts.scope.orgWide) {
+    conditions.push(eq(s.outlets.orgId, opts.orgId));
+  } else if (opts.scope.outletIds.length > 0) {
+    conditions.push(inArray(s.clients.outletId, [...opts.scope.outletIds]));
+  } else if (opts.scope.assignedClientIds.length > 0) {
+    conditions.push(inArray(s.clients.id, [...opts.scope.assignedClientIds]));
+  } else {
+    conditions.push(sql`false`);
+  }
+
   const rows = await db
     .select({
       id: s.clients.id,
@@ -49,6 +67,7 @@ export const listClients = async (
       )`,
     })
     .from(s.clients)
+    .innerJoin(s.outlets, eq(s.outlets.id, s.clients.outletId))
     .leftJoin(s.clientAttention, eq(s.clientAttention.clientId, s.clients.id))
     .where(and(...conditions))
     .orderBy(desc(sql`coalesce(${s.clientAttention.score}, 0)`), s.clients.name)

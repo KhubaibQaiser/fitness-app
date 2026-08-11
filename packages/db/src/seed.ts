@@ -110,7 +110,13 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
   // Dietary profile v1: severe peanut allergy + halal.
   const [profile] = await db
     .insert(s.clientDietaryProfiles)
-    .values({ clientId: demo.id, version: 1, isActive: true, createdBy: coachUser.id })
+    .values({
+      clientId: demo.id,
+      outletId: outlet.id,
+      version: 1,
+      isActive: true,
+      createdBy: coachUser.id,
+    })
     .returning();
   if (!profile) throw new Error('dietary profile insert failed');
   await db.insert(s.dietaryRestrictions).values([
@@ -131,6 +137,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
     .insert(s.clientGoals)
     .values({
       clientId: demo.id,
+      outletId: outlet.id,
       preset: 'LOSE',
       rate: 'STANDARD',
       startDate: isoDate(eightWeeksAgo),
@@ -168,6 +175,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
     const scheduled = eightWeeksAgo.plus({ weeks: week });
     await db.insert(s.checkIns).values({
       clientId: demo.id,
+      outletId: outlet.id,
       goalId: goal.id,
       scheduledFor: isoDate(scheduled),
       completedAt: iso(scheduled.plus({ hours: 10 })),
@@ -179,6 +187,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
   const today = isoDate(DateTime.utc());
   await db.insert(s.checkIns).values({
     clientId: demo.id,
+    outletId: outlet.id,
     goalId: goal.id,
     scheduledFor: today,
     status: 'DUE',

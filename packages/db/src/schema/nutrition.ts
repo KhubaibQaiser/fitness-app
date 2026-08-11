@@ -37,6 +37,9 @@ export const clientDietaryProfiles = pgTable(
     clientId: uuid('client_id')
       .notNull()
       .references(() => clients.id),
+    outletId: uuid('outlet_id')
+      .notNull()
+      .references(() => outlets.id),
     version: integer('version').notNull(),
     isActive: boolean('is_active').notNull().default(true),
     createdBy: uuid('created_by')
@@ -49,6 +52,7 @@ export const clientDietaryProfiles = pgTable(
     uniqueIndex('dietary_profiles_one_active_uq')
       .on(t.clientId)
       .where(sql`${t.isActive} = true`),
+    index('dietary_profiles_outlet_idx').on(t.outletId),
   ],
 );
 
@@ -203,6 +207,9 @@ export const planGenerations = pgTable(
     clientId: uuid('client_id')
       .notNull()
       .references(() => clients.id),
+    outletId: uuid('outlet_id')
+      .notNull()
+      .references(() => outlets.id),
     coachId: uuid('coach_id')
       .notNull()
       .references(() => coaches.id),
@@ -221,7 +228,10 @@ export const planGenerations = pgTable(
     latencyMs: integer('latency_ms'),
     createdAt: createdAt(),
   },
-  (t) => [index('plan_generations_client_idx').on(t.clientId, t.createdAt.desc())],
+  (t) => [
+    index('plan_generations_client_idx').on(t.clientId, t.createdAt.desc()),
+    index('plan_generations_outlet_idx').on(t.outletId),
+  ],
 );
 
 /** Layer-3 narrative cache — identical inputs never re-run inference. */
