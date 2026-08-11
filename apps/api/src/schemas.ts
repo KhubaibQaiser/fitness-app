@@ -202,6 +202,13 @@ export const publishBody = z.object({
 export const noteBody = z.object({ body: z.string().min(1).max(4000) });
 
 export const enterBody = z.object({ key: z.string().min(8).max(200) });
+export const loginBody = z.object({
+  email: z.email().max(320),
+  password: z.string().min(8).max(200),
+});
+export const refreshBody = z.object({
+  refreshToken: z.string().min(16).max(500).optional(),
+});
 
 export const updateMeBody = z
   .object({

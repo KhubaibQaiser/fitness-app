@@ -32,6 +32,15 @@ export type Me = {
   roles: string[];
 };
 
+/** Response from /v1/auth/login and /v1/auth/refresh. */
+export type AuthTokens = {
+  accessToken: string;
+  expiresIn: number;
+  /** Present for mobile clients and also echoed for web (cookie is authoritative on web). */
+  refreshToken?: string;
+  me: Me;
+};
+
 export type UpdateMeInput = {
   locale?: LocaleCode;
   currencyPref?: CurrencyCode;

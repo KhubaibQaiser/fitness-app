@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { sql } from 'drizzle-orm';
 import { type Context } from 'hono';
-import { getCookie, setCookie } from 'hono/cookie';
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { type AiConfig } from '@gymos/ai';
 import { can, type Action } from '@gymos/core/rbac';
 import { schema as s, type Db } from '@gymos/db';
@@ -30,7 +30,16 @@ import {
   updateAndRerunCheckIn,
   updateClient,
 } from '@gymos/modules/coaching';
-import { getPilotPrincipal, updateUserPrefs, type Principal } from '@gymos/modules/identity';
+import {
+  findActiveSession,
+  loginWithPassword,
+  resolvePrincipal,
+  revokeAllSessionsForUser,
+  revokeSessionByRefreshToken,
+  rotateSession,
+  updateUserPrefs,
+  type Principal,
+} from '@gymos/modules/identity';
 import {
   listNotifications,
   markAllRead,
@@ -51,16 +60,12 @@ import {
   putProfile,
 } from '@gymos/modules/nutrition';
 import { CURRENCY_CODES, type TenantManifest } from '@gymos/modules/tenancy';
+import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './auth/constants';
+import { issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
 import { type Env } from './env';
-import {
-  createRateLimiter,
-  GATE_COOKIE_NAME,
-  issueGateCookie,
-  verifyAccessKey,
-  verifyGateCookie,
-} from './gate';
+import { createRateLimiter } from './gate';
 import { ProblemError, problemResponse } from './problems';
 import * as dto from './schemas';
 
@@ -69,8 +74,7 @@ export type AppDeps = {
   manifest: TenantManifest;
   env: Pick<
     Env,
-    | 'PILOT_ACCESS_KEY'
-    | 'GATE_COOKIE_SECRET'
+    | 'JWT_ACCESS_SECRET'
     | 'AI_MODE'
     | 'AI_BASE_URL'
     | 'AI_MODEL'
@@ -91,6 +95,43 @@ const problemDocs = (...statuses: number[]) =>
   Object.fromEntries(
     statuses.map((status) => [status, { description: 'Problem details', ...json(dto.anyObject) }]),
   );
+
+const readRefreshToken = (c: AppContext): string | undefined => {
+  const fromCookie = getCookie(c, REFRESH_COOKIE_NAME);
+  if (fromCookie !== undefined && fromCookie.length > 0) return fromCookie;
+  const fromHeader = c.req.header(REFRESH_HEADER_NAME);
+  if (fromHeader !== undefined && fromHeader.length > 0) return fromHeader;
+  return undefined;
+};
+
+const setRefreshCookie = (c: AppContext, refreshToken: string, maxAgeSec: number): void => {
+  const https =
+    c.req.header('x-forwarded-proto') === 'https' || new URL(c.req.url).protocol === 'https:';
+  setCookie(c, REFRESH_COOKIE_NAME, refreshToken, {
+    httpOnly: true,
+    secure: https,
+    sameSite: 'Strict',
+    path: '/',
+    maxAge: maxAgeSec,
+  });
+};
+
+const clearRefreshCookie = (c: AppContext): void => {
+  deleteCookie(c, REFRESH_COOKIE_NAME, { path: '/' });
+};
+
+const requireCoachId = (principal: Principal): string => {
+  if (principal.coachId === null) {
+    throw new ProblemError(403, 'COACH_REQUIRED', 'This action requires a coach account');
+  }
+  return principal.coachId;
+};
+
+/** Narrow principal for coaching mutations that require a coach profile. */
+const asCoach = (principal: Principal): Principal & { coachId: string } => ({
+  ...principal,
+  coachId: requireCoachId(principal),
+});
 
 export const buildApp = ({ db, manifest, env }: AppDeps) => {
   const flags = manifest.aiConfig.featureFlags;
@@ -117,7 +158,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     };
   };
 
-  const enterLimiter = createRateLimiter(5, 60_000);
+  const loginLimiter = createRateLimiter(10, 60_000);
 
   const app = new OpenAPIHono<{ Variables: Vars }>({
     defaultHook: (result, c) => {
@@ -162,52 +203,6 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     }
   });
 
-  const openGate = async (c: AppContext, key: string): Promise<Response> => {
-    const ip = c.req.header('x-forwarded-for') ?? 'local';
-    const allowed = enterLimiter(ip);
-    const success = allowed && verifyAccessKey(key, env.PILOT_ACCESS_KEY);
-    try {
-      await db.insert(s.accessGateAttempts).values({ ip: null, success });
-    } catch {
-      // telemetry must never block the gate
-    }
-    if (!allowed)
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait a minute');
-    if (!success)
-      return problemResponse(c, 401, 'INVALID_ACCESS_KEY', 'That access key is not valid');
-    // Secure only over HTTPS (prod Caddy sets x-forwarded-proto). Plain
-    // http://localhost must stay non-Secure or the browser drops the cookie.
-    const https =
-      c.req.header('x-forwarded-proto') === 'https' || new URL(c.req.url).protocol === 'https:';
-    setCookie(c, GATE_COOKIE_NAME, issueGateCookie(env.GATE_COOKIE_SECRET), {
-      httpOnly: true,
-      secure: https,
-      sameSite: 'Strict',
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60,
-    });
-    return c.json({ ok: true });
-  };
-
-  app.post('/gate/enter', async (c) => {
-    const parsed = dto.enterBody.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) {
-      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { key }');
-    }
-    return openGate(c, parsed.data.key);
-  });
-
-  // Link flow: the coach bookmarks /enter?key=… once per device.
-  app.get('/gate/enter', async (c) => {
-    const key = c.req.query('key');
-    if (key === undefined) {
-      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Missing ?key');
-    }
-    const result = await openGate(c, key);
-    if (result.status !== 200) return result;
-    return c.redirect('/', 302);
-  });
-
   app.get('/v1/config/public', (c) =>
     c.json({
       appName: manifest.branding.appName,
@@ -221,22 +216,142 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     }),
   );
 
-  // ---- gate + principal for everything else under /v1 -------------------------
+  /** Issue access JWT + set refresh cookie/body for a freshly created/rotated session. */
+  const respondWithTokens = async (
+    c: AppContext,
+    userId: string,
+    session: { sessionId: string; refreshToken: string; expiresAt: string },
+  ) => {
+    const principal = await resolvePrincipal(db, userId);
+    const { token, expiresIn } = await issueAccessToken(
+      {
+        sub: principal.userId,
+        sid: session.sessionId,
+        orgId: principal.orgId,
+        outletId: principal.outletId,
+        roles: [...principal.actor.roles],
+      },
+      env.JWT_ACCESS_SECRET,
+    );
+    const maxAgeSec = Math.max(60, Math.floor((Date.parse(session.expiresAt) - Date.now()) / 1000));
+    setRefreshCookie(c, session.refreshToken, maxAgeSec);
+    return c.json({
+      accessToken: token,
+      expiresIn,
+      refreshToken: session.refreshToken,
+      me: {
+        userId: principal.userId,
+        name: principal.name,
+        email: principal.email,
+        locale: principal.locale,
+        unitPref: principal.unitPref ?? manifest.units,
+        currencyPref: principal.currencyPref ?? manifest.currency,
+        roles: principal.actor.roles,
+      },
+    });
+  };
+
+  app.post('/v1/auth/login', async (c) => {
+    const parsed = dto.loginBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, password }');
+    }
+    const ip = c.req.header('x-forwarded-for') ?? 'local';
+    if (!loginLimiter(ip)) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait a minute');
+    }
+    const result = await loginWithPassword(db, parsed.data.email, parsed.data.password, {
+      userAgent: c.req.header('user-agent'),
+      ip: ip === 'local' ? undefined : ip.split(',')[0]?.trim(),
+    });
+    if (!result.ok) {
+      return problemResponse(c, 401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
+    }
+    return respondWithTokens(c, result.value.userId, result.value.session);
+  });
+
+  app.post('/v1/auth/refresh', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { refreshToken?: string } | null;
+    const refreshToken = body?.refreshToken ?? readRefreshToken(c);
+    if (refreshToken === undefined) {
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Missing refresh token');
+    }
+    const current = await findActiveSession(db, refreshToken);
+    if (current === null) {
+      clearRefreshCookie(c);
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+    }
+    const rotated = await rotateSession(db, current, {
+      userAgent: c.req.header('user-agent'),
+      ip: (() => {
+        const raw = c.req.header('x-forwarded-for');
+        if (raw === undefined) return undefined;
+        return raw.split(',')[0]?.trim();
+      })(),
+    });
+    return respondWithTokens(c, current.userId, rotated);
+  });
+
+  app.post('/v1/auth/logout', async (c) => {
+    const body = (await c.req.json().catch(() => null)) as { refreshToken?: string } | null;
+    const refreshToken = body?.refreshToken ?? readRefreshToken(c);
+    if (refreshToken !== undefined) {
+      await revokeSessionByRefreshToken(db, refreshToken);
+    }
+    clearRefreshCookie(c);
+    return c.json({ ok: true });
+  });
+
+  // ---- JWT principal for everything else under /v1 -------------------------
   app.use('/v1/*', async (c: AppContext, next) => {
     if (c.req.path === '/v1/config/public') return next();
-    if (!verifyGateCookie(getCookie(c, GATE_COOKIE_NAME), env.GATE_COOKIE_SECRET)) {
-      return problemResponse(c, 401, 'GATE_REQUIRED', 'Open your access link to use the app');
+    if (
+      c.req.path === '/v1/auth/login' ||
+      c.req.path === '/v1/auth/refresh' ||
+      c.req.path === '/v1/auth/logout'
+    ) {
+      return next();
     }
+
+    const header = c.req.header('authorization');
+    const bearer = header?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (bearer === undefined) {
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Sign in to use the app');
+    }
+    const claims = await verifyAccessToken(bearer, env.JWT_ACCESS_SECRET);
+    if (claims === null) {
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+    }
+
     if (c.req.method !== 'GET') {
       const site = c.req.header('sec-fetch-site');
       if (site !== undefined && site !== 'same-origin' && site !== 'none') {
         return problemResponse(c, 403, 'CROSS_SITE_BLOCKED', 'Cross-site requests are not allowed');
       }
     }
-    const principal = await getPilotPrincipal(db);
+
+    const principal = await resolvePrincipal(db, claims.sub);
     c.set('principal', principal);
     return next();
   });
+
+  // Deprecated gate endpoints — return 410 so old clients fail loudly.
+  app.post('/gate/enter', (c) =>
+    problemResponse(
+      c,
+      410,
+      'GATE_RETIRED',
+      'Access-key gate retired — POST /v1/auth/login with email and password',
+    ),
+  );
+  app.get('/gate/enter', (c) =>
+    problemResponse(
+      c,
+      410,
+      'GATE_RETIRED',
+      'Access-key gate retired — POST /v1/auth/login with email and password',
+    ),
+  );
 
   // Idempotency replay for unsafe methods carrying Idempotency-Key.
   app.use('/v1/*', async (c: AppContext, next) => {
@@ -338,10 +453,16 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
         ...(body.currencyPref !== undefined ? { currencyPref: body.currencyPref } : {}),
       });
 
-      const refreshed = await getPilotPrincipal(db);
+      const refreshed = await resolvePrincipal(db, p.userId);
       return c.json(meResponse(refreshed));
     },
   );
+
+  app.post('/v1/auth/logout-all', async (c) => {
+    const count = await revokeAllSessionsForUser(db, c.get('principal').userId);
+    clearRefreshCookie(c);
+    return c.json({ ok: true, revoked: count });
+  });
 
   app.openapi(
     createRoute({
@@ -433,7 +554,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     }),
     async (c) => {
       authorize(c, 'client.manage');
-      const client = await createClient(db, c.get('principal'), c.req.valid('json'));
+      const client = await createClient(db, asCoach(c.get('principal')), c.req.valid('json'));
       return c.json(client);
     },
   );
@@ -452,7 +573,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       authorize(c, 'client.manage');
       const body = c.req.valid('json');
-      const result = await onboardClient(db, c.get('principal'), {
+      const result = await onboardClient(db, asCoach(c.get('principal')), {
         client: {
           name: body.client.name,
           sex: body.client.sex,
@@ -583,7 +704,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'client.manage', { clientId });
-      const updated = await updateClient(db, c.get('principal'), clientId, c.req.valid('json'));
+      const updated = await updateClient(
+        db,
+        asCoach(c.get('principal')),
+        clientId,
+        c.req.valid('json'),
+      );
       if (!updated) throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
       return c.json(updated);
     },
@@ -616,7 +742,9 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'notes.write', { clientId });
-      return c.json(await createNote(db, c.get('principal'), clientId, c.req.valid('json').body));
+      return c.json(
+        await createNote(db, asCoach(c.get('principal')), clientId, c.req.valid('json').body),
+      );
     },
   );
 
@@ -650,7 +778,9 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'vitals.write', { clientId });
-      return c.json(await recordVitals(db, c.get('principal'), clientId, c.req.valid('json')));
+      return c.json(
+        await recordVitals(db, asCoach(c.get('principal')), clientId, c.req.valid('json')),
+      );
     },
   );
 
@@ -689,7 +819,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'dietary.write', { clientId });
       const result = await putProfile(
         db,
-        c.get('principal'),
+        asCoach(c.get('principal')),
         clientId,
         c.req.valid('json').restrictions,
       );
@@ -727,7 +857,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'goal.manage', { clientId });
-      const result = await createGoal(db, c.get('principal'), clientId, c.req.valid('json'));
+      const result = await createGoal(
+        db,
+        asCoach(c.get('principal')),
+        clientId,
+        c.req.valid('json'),
+      );
       if (!result.ok) {
         if (result.error.code === 'CLIENT_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
@@ -758,7 +893,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'goal.manage', {});
       const updated = await setGoalStatus(
         db,
-        c.get('principal'),
+        asCoach(c.get('principal')),
         c.req.valid('param').id,
         c.req.valid('json').status,
       );
@@ -812,7 +947,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'checkin.write', { clientId });
-      const result = await completeCheckIn(db, c.get('principal'), clientId, c.req.valid('json'));
+      const result = await completeCheckIn(
+        db,
+        asCoach(c.get('principal')),
+        clientId,
+        c.req.valid('json'),
+      );
       if (!result.ok) {
         if (result.error.code === 'CLIENT_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
@@ -859,7 +999,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Check-in not found');
       authorize(c, 'checkin.write', { clientId: existing.clientId });
 
-      const result = await updateAndRerunCheckIn(db, c.get('principal'), id, c.req.valid('json'));
+      const result = await updateAndRerunCheckIn(
+        db,
+        asCoach(c.get('principal')),
+        id,
+        c.req.valid('json'),
+      );
       if (!result.ok) {
         if (result.error.code === 'NOT_FOUND' || result.error.code === 'CLIENT_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Check-in not found');
@@ -895,11 +1040,17 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const publishedSummary = plans.find((plan) => plan.status === 'PUBLISHED');
       const beforePlan = publishedSummary ? await getPlanWithItems(db, publishedSummary.id) : null;
 
-      const generated = await generatePlan(db, c.get('principal'), manifest, checkIn.clientId, {
-        kind: 'ADJUSTMENT',
-        targetsOverride: verdict.newTargets as dto.MacroTargets,
-        ai: resolveAiConfig(),
-      });
+      const generated = await generatePlan(
+        db,
+        asCoach(c.get('principal')),
+        manifest,
+        checkIn.clientId,
+        {
+          kind: 'ADJUSTMENT',
+          targetsOverride: verdict.newTargets as dto.MacroTargets,
+          ai: resolveAiConfig(),
+        },
+      );
       if (!generated.ok) {
         if (generated.error.code === 'QUOTA_EXCEEDED') {
           throw new ProblemError(
@@ -919,7 +1070,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
 
       await db.insert(s.aiFeedbackEvents).values({
         planId: generated.value.plan.id,
-        coachId: c.get('principal').coachId,
+        coachId: requireCoachId(c.get('principal')),
         kind: 'ADJUSTMENT_ACCEPTED',
         payload: { checkInId: checkIn.id },
       });
@@ -1010,7 +1161,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'plan.generate', { clientId });
       const body = c.req.valid('json');
       const existing = await listPlans(db, clientId);
-      const result = await generatePlan(db, c.get('principal'), manifest, clientId, {
+      const result = await generatePlan(db, asCoach(c.get('principal')), manifest, clientId, {
         kind: existing.length > 0 ? 'ADJUSTMENT' : 'INITIAL',
         ai: resolveAiConfig(),
         mealCount: body.mealCount,
@@ -1098,7 +1249,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'plan.edit', { clientId: planBefore.plan.clientId });
       const result = await patchPlan(
         db,
-        c.get('principal'),
+        asCoach(c.get('principal')),
         c.req.valid('param').id,
         c.req.valid('json').ops,
       );
@@ -1135,7 +1286,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const body = c.req.valid('json');
       const result = await publishPlan(
         db,
-        c.get('principal'),
+        asCoach(c.get('principal')),
         c.req.valid('param').id,
         {
           reviewed: true,

@@ -1,6 +1,6 @@
 import { type Context } from 'hono';
 
-type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
+type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 410 | 422 | 429 | 500;
 
 /**
  * RFC 9457-shaped error. Handlers THROW this; the app-level onError maps it
