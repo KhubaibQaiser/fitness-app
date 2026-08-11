@@ -39,6 +39,8 @@ export const users = pgTable('users', {
   email: text('email').unique(),
   phone: text('phone'),
   name: text('name').notNull(),
+  /** Argon2id/scrypt hash; null until the user sets a password (e.g. clients in Phase 4). */
+  passwordHash: text('password_hash'),
   locale: text('locale').notNull().default('en'),
   /** NULL falls back to the tenant default from the manifest. */
   unitPref: text('unit_pref', { enum: ['metric', 'imperial'] }),

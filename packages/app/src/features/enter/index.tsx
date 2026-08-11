@@ -17,40 +17,41 @@ import {
   YStack,
 } from '@gymos/ui';
 import { qk } from '../../api';
-import { GATE_HINT_KEY } from '../shell/gate-guard';
+import { AUTH_HINT_KEY } from '../shell/gate-guard';
 
-/** Access-gate entry — one key, once per device. No accounts in the pilot. */
+/** Email + password login — replaces the pilot access-key gate. */
 export const EnterScreen = () => (
   <AppErrorBoundary>
-    <EnterForm />
+    <LoginForm />
   </AppErrorBoundary>
 );
 
-const EnterForm = () => {
+const LoginForm = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [key, setKey] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
   const submit = async () => {
-    if (key.trim().length < 8 || busy) return;
+    if (email.trim().length < 3 || password.length < 8 || busy) return;
     setBusy(true);
     setError(null);
     try {
-      await api.enter(key.trim());
-      storage.setItem(GATE_HINT_KEY, '1');
-      await queryClient.prefetchQuery({ queryKey: qk.me, queryFn: api.me.get });
+      const result = await api.login(email.trim(), password);
+      storage.setItem(AUTH_HINT_KEY, '1');
+      queryClient.setQueryData(qk.me, result.me);
       startTransition(() => {
         router.replace('/');
       });
     } catch (e) {
-      storage.removeItem(GATE_HINT_KEY);
+      storage.removeItem(AUTH_HINT_KEY);
       setError(
         e instanceof ApiError && e.status === 429
           ? 'Too many attempts — wait a minute and try again.'
-          : 'That access key is not valid.',
+          : 'Email or password is incorrect.',
       );
     } finally {
       setBusy(false);
@@ -84,15 +85,25 @@ const EnterForm = () => {
             </YStack>
           </XStack>
           <Muted textAlign="center" fontSize={13}>
-            Coaching workstation · Pilot access
+            Sign in to your coaching workstation
           </Muted>
         </YStack>
         <Card gap="$4" padding="$5">
           <FormField
-            label="Access key"
-            value={key}
-            onChangeText={setKey}
-            placeholder="Paste your key"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="coach@example.com"
+            autoCapitalize="none"
+            autoCorrect={false}
+            inputMode="email"
+            required
+          />
+          <FormField
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Your password"
             autoCapitalize="none"
             autoCorrect={false}
             secureTextEntry
@@ -101,11 +112,11 @@ const EnterForm = () => {
             onSubmitEditing={() => void submit()}
           />
           <PrimaryButton
-            disabled={busy || key.trim().length < 8}
+            disabled={busy || email.trim().length < 3 || password.length < 8}
             onPress={() => void submit()}
             width="100%"
           >
-            {busy ? 'Checking…' : 'Enter workstation'}
+            {busy ? 'Signing in…' : 'Sign in'}
           </PrimaryButton>
         </Card>
         <Muted fontSize={11} textAlign="center">

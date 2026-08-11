@@ -6,7 +6,8 @@ import { type CurrencyCode, type LocaleCode } from '../tenancy/manifest';
 export type Principal = {
   readonly actor: Actor;
   readonly userId: string;
-  readonly coachId: string;
+  /** Null for non-coach actors (e.g. CLIENT in Phase 4). */
+  readonly coachId: string | null;
   readonly orgId: string;
   readonly outletId: string;
   readonly name: string;
@@ -16,26 +17,13 @@ export type Principal = {
   readonly currencyPref: CurrencyCode | null;
 };
 
-type Cached = { principal: Principal; at: number };
-let cache: Cached | null = null;
-const CACHE_TTL_MS = 30_000;
-
-/** Test seam. */
-export const resetPrincipalCache = (): void => {
-  cache = null;
-};
-
 /**
- * Pilot principal resolution: the access gate authenticates the device; the
- * seeded coach is the single actor. P0 replaces this with session-based
- * resolution — everything downstream (RBAC, scoping) is unchanged.
+ * Resolve a principal for a specific user — per-request, no process-global cache.
+ * Callers must pass a verified userId from a JWT (or equivalent).
  */
-export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
-  if (cache !== null && Date.now() - cache.at < CACHE_TTL_MS) return cache.principal;
-
-  const [coach] = await db
+export const resolvePrincipal = async (db: Db, userId: string): Promise<Principal> => {
+  const [user] = await db
     .select({
-      coachId: s.coaches.id,
       userId: s.users.id,
       name: s.users.name,
       email: s.users.email,
@@ -43,10 +31,10 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
       locale: s.users.locale,
       currencyPref: s.users.currencyPref,
     })
-    .from(s.coaches)
-    .innerJoin(s.users, eq(s.users.id, s.coaches.userId))
+    .from(s.users)
+    .where(and(eq(s.users.id, userId), isNull(s.users.deletedAt)))
     .limit(1);
-  if (!coach) throw new Error('pilot coach not seeded — run db:seed');
+  if (!user) throw new Error(`user not found: ${userId}`);
 
   const membershipRows = await db
     .select({
@@ -55,16 +43,28 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
       outletId: s.memberships.outletId,
     })
     .from(s.memberships)
-    .where(and(eq(s.memberships.userId, coach.userId), isNull(s.memberships.revokedAt)));
+    .where(and(eq(s.memberships.userId, user.userId), isNull(s.memberships.revokedAt)));
   const first = membershipRows[0];
-  if (!first) throw new Error('pilot memberships missing — run db:seed');
+  if (!first) throw new Error(`memberships missing for user ${userId}`);
 
-  const assignments = await db
-    .select({ clientId: s.coachAssignments.clientId, outletId: s.coachAssignments.outletId })
-    .from(s.coachAssignments)
-    .where(
-      and(eq(s.coachAssignments.coachId, coach.coachId), isNull(s.coachAssignments.unassignedAt)),
-    );
+  const [coach] = await db
+    .select({ coachId: s.coaches.id })
+    .from(s.coaches)
+    .where(and(eq(s.coaches.userId, user.userId), isNull(s.coaches.deletedAt)))
+    .limit(1);
+
+  const assignments =
+    coach === undefined
+      ? []
+      : await db
+          .select({ clientId: s.coachAssignments.clientId, outletId: s.coachAssignments.outletId })
+          .from(s.coachAssignments)
+          .where(
+            and(
+              eq(s.coachAssignments.coachId, coach.coachId),
+              isNull(s.coachAssignments.unassignedAt),
+            ),
+          );
 
   const outletIds = [
     ...new Set(
@@ -73,32 +73,60 @@ export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
         .concat(assignments.map((a) => a.outletId)),
     ),
   ];
-  const outletId = outletIds[0];
-  if (outletId === undefined) throw new Error('pilot outlet missing — run db:seed');
 
-  const principal: Principal = {
-    userId: coach.userId,
-    coachId: coach.coachId,
+  // Prefer an explicit outlet membership; fall back to first assignment outlet;
+  // last resort: any outlet in the org (org-wide admins without outlet membership).
+  let outletId = outletIds[0];
+  if (outletId === undefined) {
+    const [fallback] = await db
+      .select({ id: s.outlets.id })
+      .from(s.outlets)
+      .where(and(eq(s.outlets.orgId, first.orgId), isNull(s.outlets.deletedAt)))
+      .limit(1);
+    if (!fallback) throw new Error(`no outlet for org ${first.orgId}`);
+    outletId = fallback.id;
+  }
+
+  return {
+    userId: user.userId,
+    coachId: coach?.coachId ?? null,
     orgId: first.orgId,
     outletId,
-    name: coach.name,
-    email: coach.email,
-    unitPref: coach.unitPref,
-    locale: coach.locale as LocaleCode,
-    currencyPref: coach.currencyPref,
+    name: user.name,
+    email: user.email,
+    unitPref: user.unitPref,
+    locale: user.locale as LocaleCode,
+    currencyPref: user.currencyPref,
     actor: {
-      userId: coach.userId,
+      userId: user.userId,
       roles: membershipRows.map((m) => m.role),
       scope: {
-        userId: coach.userId,
+        userId: user.userId,
         orgWide: membershipRows.some((m) => m.role === 'ORG_ADMIN' && m.outletId === null),
-        outletIds,
+        outletIds: outletIds.length > 0 ? outletIds : [outletId],
         assignedClientIds: assignments.map((a) => a.clientId),
       },
     },
   };
-  cache = { principal, at: Date.now() };
-  return principal;
+};
+
+/**
+ * Resolve the seeded pilot coach for system jobs (worker) that have no JWT.
+ * Request paths must use `resolvePrincipal(db, userId)` after token verification.
+ */
+export const resolvePilotCoachPrincipal = async (db: Db): Promise<Principal> => {
+  const [coach] = await db
+    .select({ userId: s.coaches.userId })
+    .from(s.coaches)
+    .innerJoin(s.users, eq(s.users.id, s.coaches.userId))
+    .limit(1);
+  if (!coach) throw new Error('pilot coach not seeded — run db:seed');
+  return resolvePrincipal(db, coach.userId);
+};
+
+/** No-op retained so existing test imports keep compiling; cache no longer exists. */
+export const resetPrincipalCache = (): void => {
+  // intentionally empty — principal resolution is per-request
 };
 
 export type UpdateUserPrefsInput = {
@@ -106,7 +134,7 @@ export type UpdateUserPrefsInput = {
   currencyPref?: CurrencyCode;
 };
 
-/** Persist coach prefs on `users` and drop the principal cache. */
+/** Persist user prefs on `users`. */
 export const updateUserPrefs = async (
   db: Db,
   userId: string,
@@ -120,5 +148,4 @@ export const updateUserPrefs = async (
   if (prefs.currencyPref !== undefined) patch.currencyPref = prefs.currencyPref;
 
   await db.update(s.users).set(patch).where(eq(s.users.id, userId));
-  resetPrincipalCache();
 };
