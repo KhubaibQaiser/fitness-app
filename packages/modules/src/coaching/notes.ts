@@ -11,13 +11,13 @@ export const listNotes = async (db: Db, clientId: string, limit = 100) =>
 
 export const createNote = async (
   db: Db,
-  principal: { coachId: string },
+  principal: { coachId: string; outletId: string },
   clientId: string,
   body: string,
 ) => {
   const [note] = await db
     .insert(s.coachNotes)
-    .values({ clientId, coachId: principal.coachId, body })
+    .values({ clientId, outletId: principal.outletId, coachId: principal.coachId, body })
     .returning();
   if (!note) throw new Error('note insert failed');
   return note;
