@@ -150,6 +150,9 @@ export const coachNotes = pgTable(
     clientId: uuid('client_id')
       .notNull()
       .references(() => clients.id),
+    outletId: uuid('outlet_id')
+      .notNull()
+      .references(() => outlets.id),
     coachId: uuid('coach_id')
       .notNull()
       .references(() => coaches.id),
@@ -158,7 +161,10 @@ export const coachNotes = pgTable(
     updatedAt: updatedAt(),
     deletedAt: deletedAt(),
   },
-  (t) => [index('coach_notes_client_idx').on(t.clientId)],
+  (t) => [
+    index('coach_notes_client_idx').on(t.clientId),
+    index('coach_notes_outlet_idx').on(t.outletId),
+  ],
 );
 
 export const isMetricPref = (pref: string | null): boolean => pref !== 'imperial';

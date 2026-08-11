@@ -65,8 +65,8 @@ import { issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
 import { type Env } from './env';
-import { createRateLimiter } from './gate';
 import { ProblemError, problemResponse } from './problems';
+import { createDbRateLimiter } from './rate-limit';
 import * as dto from './schemas';
 
 export type AppDeps = {
@@ -158,7 +158,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     };
   };
 
-  const loginLimiter = createRateLimiter(10, 60_000);
+  const loginLimiter = createDbRateLimiter(db, 10, 60_000);
 
   const app = new OpenAPIHono<{ Variables: Vars }>({
     defaultHook: (result, c) => {
@@ -257,7 +257,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, password }');
     }
     const ip = c.req.header('x-forwarded-for') ?? 'local';
-    if (!loginLimiter(ip)) {
+    if (!(await loginLimiter(ip))) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait a minute');
     }
     const result = await loginWithPassword(db, parsed.data.email, parsed.data.password, {
@@ -533,9 +533,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       authorize(c, 'client.list');
       const { q, status } = c.req.valid('query');
+      const principal = c.get('principal');
       const items = await listClients(db, {
         ...(q !== undefined ? { q } : {}),
         ...(status !== undefined ? { status } : {}),
+        scope: principal.actor.scope,
+        orgId: principal.orgId,
       });
       return c.json({ items });
     },
@@ -914,7 +917,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     }),
     async (c) => {
       authorize(c, 'checkin.read');
-      return c.json({ items: await nextDueCheckIns(db) });
+      return c.json({
+        items: await nextDueCheckIns(db, {
+          scope: c.get('principal').actor.scope,
+          orgId: c.get('principal').orgId,
+        }),
+      });
     },
   );
 

@@ -71,6 +71,13 @@ export const idempotencyKeys = pgTable('idempotency_keys', {
   expiresAt: tstz('expires_at').notNull(),
 });
 
+/** Shared-store fixed-window rate limiter (multi-instance safe). */
+export const rateLimits = pgTable('rate_limits', {
+  key: text('key').primaryKey(),
+  windowStart: tstz('window_start').notNull(),
+  count: integer('count').notNull().default(1),
+});
+
 /** Access-gate telemetry — feeds the gate-bruteforce alert. */
 export const accessGateAttempts = pgTable(
   'access_gate_attempts',

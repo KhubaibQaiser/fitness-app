@@ -89,6 +89,9 @@ export const clientGoals = pgTable(
     clientId: uuid('client_id')
       .notNull()
       .references(() => clients.id),
+    outletId: uuid('outlet_id')
+      .notNull()
+      .references(() => outlets.id),
     preset: goalPresetEnum('preset').notNull(),
     rate: goalRateEnum('rate').notNull(),
     startDate: text('start_date').notNull(), // ISO date
@@ -117,6 +120,7 @@ export const clientGoals = pgTable(
   },
   (t) => [
     index('client_goals_client_idx').on(t.clientId),
+    index('client_goals_outlet_idx').on(t.outletId),
     uniqueIndex('client_goals_one_active_uq')
       .on(t.clientId)
       .where(sql`${t.status} = 'ACTIVE'`),
@@ -130,6 +134,9 @@ export const checkIns = pgTable(
     clientId: uuid('client_id')
       .notNull()
       .references(() => clients.id),
+    outletId: uuid('outlet_id')
+      .notNull()
+      .references(() => outlets.id),
     goalId: uuid('goal_id')
       .notNull()
       .references(() => clientGoals.id),
@@ -146,6 +153,7 @@ export const checkIns = pgTable(
   (t) => [
     index('check_ins_client_idx').on(t.clientId, t.scheduledFor.desc()),
     index('check_ins_status_idx').on(t.status, t.scheduledFor),
+    index('check_ins_outlet_idx').on(t.outletId),
     uniqueIndex('check_ins_one_due_per_goal_uq')
       .on(t.goalId)
       .where(sql`${t.status} = 'DUE'`),
