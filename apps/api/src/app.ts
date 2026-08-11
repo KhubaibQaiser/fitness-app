@@ -59,7 +59,12 @@ import {
   publishPlan,
   putProfile,
 } from '@gymos/modules/nutrition';
-import { CURRENCY_CODES, type TenantManifest } from '@gymos/modules/tenancy';
+import {
+  CURRENCY_CODES,
+  getManifestBySlug,
+  getManifestForOrg,
+  type TenantManifest,
+} from '@gymos/modules/tenancy';
 import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './auth/constants';
 import { issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
@@ -71,6 +76,10 @@ import * as dto from './schemas';
 
 export type AppDeps = {
   db: Db;
+  /**
+   * Bootstrap manifest (file / OpenAPI). Authenticated routes prefer the
+   * per-org registry via `getManifestForOrg`; public config falls back here.
+   */
   manifest: TenantManifest;
   env: Pick<
     Env,
@@ -133,18 +142,26 @@ const asCoach = (principal: Principal): Principal & { coachId: string } => ({
   coachId: requireCoachId(principal),
 });
 
-export const buildApp = ({ db, manifest, env }: AppDeps) => {
-  const flags = manifest.aiConfig.featureFlags;
-  const canaryVersion = manifest.aiConfig.promptVersionCanary;
-  const canaryPct = manifest.aiConfig.promptCanaryPercent ?? 0;
+export const buildApp = ({ db, manifest: bootstrapManifest, env }: AppDeps) => {
+  /** Authenticated path: org registry first, bootstrap file as last-resort fallback. */
+  const resolveTenantManifest = async (principal: Principal): Promise<TenantManifest> => {
+    try {
+      return await getManifestForOrg(db, principal.orgId);
+    } catch {
+      return bootstrapManifest;
+    }
+  };
 
   /** Resolve per generation so prompt canary % applies across requests. */
-  const resolveAiConfig = (): AiConfig => {
+  const resolveAiConfig = (tenant: TenantManifest): AiConfig => {
+    const flags = tenant.aiConfig.featureFlags;
+    const canaryVersion = tenant.aiConfig.promptVersionCanary;
+    const canaryPct = tenant.aiConfig.promptCanaryPercent ?? 0;
     const useCanary =
       canaryVersion !== undefined && canaryPct > 0 && Math.random() * 100 < canaryPct;
     return {
       mode: flags?.aiMode ?? env.AI_MODE,
-      verbosity: manifest.aiConfig.verbosity,
+      verbosity: tenant.aiConfig.verbosity,
       ...(env.AI_BASE_URL !== undefined ? { baseUrl: env.AI_BASE_URL } : {}),
       ...(env.AI_MODEL !== undefined ? { model: env.AI_MODEL } : {}),
       ...(env.AI_API_KEY !== undefined ? { apiKey: env.AI_API_KEY } : {}),
@@ -152,9 +169,9 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       ...(flags?.adapterVersion !== undefined ? { adapterVersion: flags.adapterVersion } : {}),
       ...(flags?.promptVersion !== undefined ? { promptVersion: flags.promptVersion } : {}),
       ...(useCanary ? { promptVersion: canaryVersion } : {}),
-      ...(manifest.aiConfig.promptPackId !== undefined
-        ? { promptPackId: manifest.aiConfig.promptPackId }
-        : { promptPackId: manifest.aiConfig.cuisineContext }),
+      ...(tenant.aiConfig.promptPackId !== undefined
+        ? { promptPackId: tenant.aiConfig.promptPackId }
+        : { promptPackId: tenant.aiConfig.cuisineContext }),
     };
   };
 
@@ -203,8 +220,12 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     }
   });
 
-  app.get('/v1/config/public', (c) =>
-    c.json({
+  app.get('/v1/config/public', async (c) => {
+    const slug = c.req.query('slug');
+    const fromRegistry =
+      slug !== undefined && slug.length > 0 ? await getManifestBySlug(db, slug) : null;
+    const manifest = fromRegistry ?? bootstrapManifest;
+    return c.json({
       appName: manifest.branding.appName,
       colors: manifest.branding.colors,
       radius: manifest.branding.radius,
@@ -213,8 +234,8 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       units: manifest.units,
       currency: manifest.currency,
       currencies: [...CURRENCY_CODES],
-    }),
-  );
+    });
+  });
 
   /** Issue access JWT + set refresh cookie/body for a freshly created/rotated session. */
   const respondWithTokens = async (
@@ -223,6 +244,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     session: { sessionId: string; refreshToken: string; expiresAt: string },
   ) => {
     const principal = await resolvePrincipal(db, userId);
+    const tenant = await resolveTenantManifest(principal);
     const { token, expiresIn } = await issueAccessToken(
       {
         sub: principal.userId,
@@ -244,8 +266,8 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
         name: principal.name,
         email: principal.email,
         locale: principal.locale,
-        unitPref: principal.unitPref ?? manifest.units,
-        currencyPref: principal.currencyPref ?? manifest.currency,
+        unitPref: principal.unitPref ?? tenant.units,
+        currencyPref: principal.currencyPref ?? tenant.currency,
         roles: principal.actor.roles,
       },
     });
@@ -405,13 +427,13 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
   };
 
   // ---- me + notifications ------------------------------------------------------
-  const meResponse = (p: Principal) => ({
+  const meResponse = (p: Principal, tenant: TenantManifest) => ({
     userId: p.userId,
     name: p.name,
     email: p.email,
     locale: p.locale,
-    unitPref: p.unitPref ?? manifest.units,
-    currencyPref: p.currencyPref ?? manifest.currency,
+    unitPref: p.unitPref ?? tenant.units,
+    currencyPref: p.currencyPref ?? tenant.currency,
     roles: [...p.actor.roles],
   });
 
@@ -422,7 +444,11 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       operationId: 'getMe',
       responses: { 200: { description: 'Current principal', ...json(dto.anyObject) } },
     }),
-    (c) => c.json(meResponse(c.get('principal'))),
+    async (c) => {
+      const principal = c.get('principal');
+      const tenant = await resolveTenantManifest(principal);
+      return c.json(meResponse(principal, tenant));
+    },
   );
 
   app.openapi(
@@ -439,8 +465,9 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
     async (c) => {
       const body = c.req.valid('json');
       const p = c.get('principal');
+      const tenant = await resolveTenantManifest(p);
 
-      if (body.locale !== undefined && !manifest.locales.enabled.includes(body.locale)) {
+      if (body.locale !== undefined && !tenant.locales.enabled.includes(body.locale)) {
         throw new ProblemError(
           422,
           'VALIDATION_FAILED',
@@ -454,7 +481,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       });
 
       const refreshed = await resolvePrincipal(db, p.userId);
-      return c.json(meResponse(refreshed));
+      return c.json(meResponse(refreshed, tenant));
     },
   );
 
@@ -1048,15 +1075,16 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       const publishedSummary = plans.find((plan) => plan.status === 'PUBLISHED');
       const beforePlan = publishedSummary ? await getPlanWithItems(db, publishedSummary.id) : null;
 
+      const tenant = await resolveTenantManifest(c.get('principal'));
       const generated = await generatePlan(
         db,
         asCoach(c.get('principal')),
-        manifest,
+        tenant,
         checkIn.clientId,
         {
           kind: 'ADJUSTMENT',
           targetsOverride: verdict.newTargets as dto.MacroTargets,
-          ai: resolveAiConfig(),
+          ai: resolveAiConfig(tenant),
         },
       );
       if (!generated.ok) {
@@ -1169,9 +1197,10 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       authorize(c, 'plan.generate', { clientId });
       const body = c.req.valid('json');
       const existing = await listPlans(db, clientId);
-      const result = await generatePlan(db, asCoach(c.get('principal')), manifest, clientId, {
+      const tenant = await resolveTenantManifest(c.get('principal'));
+      const result = await generatePlan(db, asCoach(c.get('principal')), tenant, clientId, {
         kind: existing.length > 0 ? 'ADJUSTMENT' : 'INITIAL',
-        ai: resolveAiConfig(),
+        ai: resolveAiConfig(tenant),
         mealCount: body.mealCount,
         ...(body.override !== undefined ? { override: body.override } : {}),
         ...(body.idempotencyKey !== undefined ? { idempotencyKey: body.idempotencyKey } : {}),
@@ -1292,6 +1321,7 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
       if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
       authorize(c, 'plan.publish', { clientId: existing.plan.clientId });
       const body = c.req.valid('json');
+      const tenant = await resolveTenantManifest(c.get('principal'));
       const result = await publishPlan(
         db,
         asCoach(c.get('principal')),
@@ -1301,8 +1331,8 @@ export const buildApp = ({ db, manifest, env }: AppDeps) => {
           ...(body.acknowledgeDrift === true ? { acknowledgeDrift: true } : {}),
         },
         {
-          kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
-          macroTolerancePct: manifest.aiConfig.macroTolerancePct,
+          kcalTolerancePct: tenant.aiConfig.kcalTolerancePct,
+          macroTolerancePct: tenant.aiConfig.macroTolerancePct,
         },
       );
       if (!result.ok) {

@@ -8,8 +8,9 @@ export const CURRENCY_CODES = ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'] as cons
 export type CurrencyCode = (typeof CURRENCY_CODES)[number];
 
 /**
- * Tenant manifest — config-not-code. The pilot loads one committed file;
- * P0 swaps the loader for the registry-backed config service (same type).
+ * Tenant manifest — config-not-code. Prefer the DB registry
+ * (`getManifestForOrg` in ./registry.ts). `loadManifest(path)` remains for
+ * bootstrap / tests that have no DB yet.
  */
 export const tenantManifestSchema = z
   .object({
@@ -60,8 +61,13 @@ export const tenantManifestSchema = z
 
 export type TenantManifest = z.infer<typeof tenantManifestSchema>;
 
+/** Process-local cache for the deprecated file loader only. */
 let cached: TenantManifest | null = null;
 
+/**
+ * Bootstrap / test loader from a committed JSON file.
+ * @deprecated Prefer per-org registry (`getManifestForOrg` / `readManifestFile`).
+ */
 export const loadManifest = (path: string): TenantManifest => {
   if (cached !== null) return cached;
   const raw: unknown = JSON.parse(readFileSync(path, 'utf8'));
@@ -69,7 +75,7 @@ export const loadManifest = (path: string): TenantManifest => {
   return cached;
 };
 
-/** Test seam. */
+/** Test seam for the deprecated file loader. */
 export const resetManifestCache = (): void => {
   cached = null;
 };

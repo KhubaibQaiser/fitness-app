@@ -4,7 +4,7 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-11 (Phase 1 kickoff).
+Last updated: 2026-08-11 (Phase 1g–1h in progress; 1a–1f in review).
 
 ---
 
@@ -23,17 +23,17 @@ auth, tenancy, or authorization models.
 
 ## Where we are today (Phase 0 — Pilot)
 
-| Layer    | State                                                                                                                                    |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Product  | Single-coach, coaching-first web app: vitals, goals, check-ins, coach-reviewed meal plans                                                |
-| Monorepo | Turborepo + pnpm: `apps/{web,api,worker}`, `packages/{app,ui,platform,contracts,core,modules,db,ai}`                                     |
-| Frontend | Next.js 16 + Solito + Tamagui + react-native-web; screens live in `packages/app`                                                         |
-| Auth     | Shared access-gate cookie (`gymos_gate`); no per-user login; principal is always the seeded coach                                        |
-| Tenancy  | Schema is multi-tenant shaped (`organizations` → `outlets` → memberships); runtime is single-tenant                                      |
-| RBAC     | Full role matrix in `@gymos/core/rbac` (`ORG_ADMIN`, `COACH`, `CLIENT`, …); wired on routes but list queries are not yet tenant-filtered |
-| Data     | Neon Postgres 17, Drizzle ORM                                                                                                            |
-| Deploy   | PaaS pilot (Vercel web + Render API + Neon) and/or Oracle VM path                                                                        |
-| Mobile   | **Not started** — `apps/mobile` does not exist; ESLint already reserves an `app-mobile` boundary                                         |
+| Layer    | State                                                                                                                |
+| -------- | -------------------------------------------------------------------------------------------------------------------- |
+| Product  | Single-coach, coaching-first web app: vitals, goals, check-ins, coach-reviewed meal plans                            |
+| Monorepo | Turborepo + pnpm: `apps/{web,api,worker}`, `packages/{app,ui,platform,contracts,core,modules,db,ai}`                 |
+| Frontend | Next.js 16 + Solito + Tamagui + react-native-web; screens live in `packages/app`                                     |
+| Auth     | Email + password; JWT access + rotating refresh sessions (ADR-0002) — replaces shared gate cookie                    |
+| Tenancy  | Shared-schema + app scoping + RLS backstop (ADR-0003); per-org config registry (ADR-0004)                            |
+| RBAC     | Full role matrix in `@gymos/core/rbac`; list queries scoped by org / outlet / assignment                             |
+| Data     | Neon Postgres 17, Drizzle ORM                                                                                        |
+| Deploy   | PaaS pilot (Vercel web + Render API + Neon) and/or Oracle VM path                                                    |
+| Mobile   | **Not started** — `apps/mobile` does not exist; ESLint reserves `app-mobile` / `app-client` / `app-admin` boundaries |
 
 Phase markers already in code (`P0`–`P5`) map roughly onto the phases below; this
 document is the authoritative sequencing.

@@ -8,7 +8,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { schema, seed, type Db } from '@gymos/db';
 import { listClients } from '@gymos/modules/coaching';
 import { hashPassword, resetPrincipalCache } from '@gymos/modules/identity';
-import { resetManifestCache, tenantManifestSchema } from '@gymos/modules/tenancy';
+import {
+  getManifestForOrg,
+  resetManifestCache,
+  resetRegistryCache,
+  tenantManifestSchema,
+} from '@gymos/modules/tenancy';
 import { buildApp, type App } from '../src/app';
 
 const JWT_SECRET = 'a-test-jwt-access-secret-that-is-long-enough';
@@ -27,13 +32,18 @@ const manifest = tenantManifestSchema.parse(
 
 beforeAll(async () => {
   resetManifestCache();
+  resetRegistryCache();
   resetPrincipalCache();
   const pglite = drizzle(new PGlite(), { schema });
   await migrate(pglite, {
     migrationsFolder: path.resolve(import.meta.dirname, '../../../packages/db/migrations'),
   });
   db = pglite as unknown as Db;
-  const seeded = await seed(db, { coachPasswordHash: await hashPassword(COACH_PASSWORD) });
+  const seeded = await seed(db, {
+    coachPasswordHash: await hashPassword(COACH_PASSWORD),
+    tenantManifest: manifest as unknown as Record<string, unknown>,
+    tenantSlug: manifest.slug,
+  });
   orgId = seeded.orgId;
 
   // Second org + outlet + client — must never appear in the pilot coach's roster.
@@ -109,5 +119,18 @@ describe('tenant isolation', () => {
     });
     expect(foreign.some((i) => i.name === 'Secret Other Client')).toBe(true);
     expect(foreign.some((i) => i.name === 'Adnan (Demo)')).toBe(false);
+  });
+
+  it('tenant registry returns the seeded org manifest by orgId', async () => {
+    const fromDb = await getManifestForOrg(db, orgId);
+    expect(fromDb.slug).toBe('pilot');
+    expect(fromDb.branding.appName).toBe(manifest.branding.appName);
+  });
+
+  it('public config resolves by slug from the registry', async () => {
+    const res = await app.request('/v1/config/public?slug=pilot');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { appName: string };
+    expect(body.appName).toBe(manifest.branding.appName);
   });
 });
