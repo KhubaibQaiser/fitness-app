@@ -7,35 +7,37 @@ import { storage } from '@gymos/platform';
 import { LoadingState } from '@gymos/ui';
 import { useMe } from '../../api';
 
-/** Companion to the HttpOnly gate cookie — skips the full-screen gate spinner on return visits. */
-export const GATE_HINT_KEY = 'gymos.gateOk';
+/** Companion to the access JWT — skips the full-screen spinner on return visits. */
+export const AUTH_HINT_KEY = 'gymos.authOk';
+
+/** @deprecated Use AUTH_HINT_KEY */
+export const GATE_HINT_KEY = AUTH_HINT_KEY;
 
 const subscribe = () => () => undefined;
-const getGateHint = () => storage.getItem(GATE_HINT_KEY) === '1';
-const getServerGateHint = () => false;
+const getAuthHint = () => storage.getItem(AUTH_HINT_KEY) === '1';
+const getServerAuthHint = () => false;
 
-/** Redirects to /enter when the access-gate cookie is missing or expired. */
+/** Redirects to /enter when the access token is missing or refresh failed. */
 export const GateGuard = ({ children }: { children: ReactNode }) => {
   const me = useMe();
   const router = useRouter();
-  const hasGateHint = useSyncExternalStore(subscribe, getGateHint, getServerGateHint);
+  const hasAuthHint = useSyncExternalStore(subscribe, getAuthHint, getServerAuthHint);
 
-  const gateBlocked = me.error instanceof ApiError && me.error.status === 401;
+  const authBlocked = me.error instanceof ApiError && me.error.status === 401;
 
   useEffect(() => {
-    if (me.isSuccess) storage.setItem(GATE_HINT_KEY, '1');
+    if (me.isSuccess) storage.setItem(AUTH_HINT_KEY, '1');
   }, [me.isSuccess]);
 
   useEffect(() => {
-    if (!gateBlocked) return;
-    storage.removeItem(GATE_HINT_KEY);
+    if (!authBlocked) return;
+    storage.removeItem(AUTH_HINT_KEY);
     router.replace('/enter');
-  }, [gateBlocked, router]);
+  }, [authBlocked, router]);
 
-  // First visit: wait for /v1/me. Returning devices: paint immediately; me loads in background.
-  if (me.isPending && !hasGateHint) {
-    return <LoadingState label="Checking access…" />;
+  if (me.isPending && !hasAuthHint) {
+    return <LoadingState label="Checking session…" />;
   }
-  if (gateBlocked) return <LoadingState label="Redirecting…" />;
+  if (authBlocked) return <LoadingState label="Redirecting…" />;
   return <>{children}</>;
 };

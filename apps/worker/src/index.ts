@@ -1,7 +1,7 @@
 import { PgBoss } from 'pg-boss';
 import { z } from 'zod';
 import { createDb } from '@gymos/db';
-import { getPilotPrincipal } from '@gymos/modules/identity';
+import { resolvePilotCoachPrincipal } from '@gymos/modules/identity';
 import { refreshFoodRankings } from '@gymos/modules/nutrition';
 import { cleanupExpired, refreshAttention, rollCheckIns } from './jobs/checkins-roll';
 
@@ -41,7 +41,7 @@ await boss.schedule(QUEUES.rankingRefresh, '25 21 * * *');
 await boss.schedule(QUEUES.cleanup, '30 22 * * *');
 
 await boss.work(QUEUES.checkinsRoll, async () => {
-  const principal = await getPilotPrincipal(db);
+  const principal = await resolvePilotCoachPrincipal(db);
   await rollCheckIns(db, principal.userId, env.TENANT_TIMEZONE);
   console.log('checkins-roll: done');
 });

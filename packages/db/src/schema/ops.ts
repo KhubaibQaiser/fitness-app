@@ -7,6 +7,7 @@ import {
   pgTable,
   smallint,
   text,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { notificationPriorityEnum, notificationTypeEnum } from './enums';
@@ -80,4 +81,31 @@ export const accessGateAttempts = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('access_gate_attempts_time_idx').on(t.createdAt.desc())],
+);
+
+/**
+ * Refresh-token sessions — one row per device/login.
+ * The raw refresh token is returned once to the client; only a SHA-256 hash is stored.
+ * Rotation: each refresh revokes the old row and inserts a new one.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    refreshTokenHash: text('refresh_token_hash').notNull(),
+    expiresAt: tstz('expires_at').notNull(),
+    revokedAt: tstz('revoked_at'),
+    userAgent: text('user_agent'),
+    ip: inet('ip'),
+    createdAt: createdAt(),
+    lastUsedAt: tstz('last_used_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('sessions_user_idx').on(t.userId),
+    uniqueIndex('sessions_refresh_hash_uq').on(t.refreshTokenHash),
+    index('sessions_expires_idx').on(t.expiresAt),
+  ],
 );

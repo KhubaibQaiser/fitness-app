@@ -13,12 +13,17 @@ export type SeedResult = {
   demoClientId: string;
 };
 
+export type SeedOptions = {
+  /** Pre-hashed password for the pilot coach (from `@gymos/modules/identity` `hashPassword`). */
+  coachPasswordHash?: string | undefined;
+};
+
 /**
  * Idempotent pilot seed: org, outlet (Asia/Karachi), pilot coach
  * (COACH + ORG_ADMIN), starter food set, and a demo client with 8 weeks
  * of realistic history so the app never opens empty.
  */
-export const seed = async (db: Db): Promise<SeedResult> => {
+export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResult> => {
   const existing = await db.select({ id: s.organizations.id }).from(s.organizations).limit(1);
   if (existing.length > 0) {
     throw new Error('database already seeded — refusing to double-seed');
@@ -35,7 +40,14 @@ export const seed = async (db: Db): Promise<SeedResult> => {
 
   const [coachUser] = await db
     .insert(s.users)
-    .values({ email: 'coach@pilot.local', name: 'Pilot Coach', locale: 'en' })
+    .values({
+      email: 'coach@pilot.local',
+      name: 'Pilot Coach',
+      locale: 'en',
+      ...(options.coachPasswordHash !== undefined
+        ? { passwordHash: options.coachPasswordHash }
+        : {}),
+    })
     .returning();
   if (!coachUser) throw new Error('coach user insert failed');
 
