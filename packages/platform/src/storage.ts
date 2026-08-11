@@ -6,6 +6,9 @@
 
 const memory = new Map<string, string>();
 
+/** No-op on web — native hydrates AsyncStorage into the sync mirror. */
+export const hydrateStorage = (): Promise<void> => Promise.resolve();
+
 const webStore = (): Storage | null => {
   try {
     // eslint-disable-next-line no-restricted-globals -- this file IS the platform façade

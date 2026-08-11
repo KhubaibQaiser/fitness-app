@@ -7,7 +7,7 @@ type SignaturePadProps = {
   onChange: (pngBase64: string | null) => void;
 };
 
-/** Web canvas signature pad. RN can swap this later with the same onChange contract. */
+/** Web canvas signature pad. Native: signature-pad.native.tsx. */
 export const SignaturePad = ({ onChange }: SignaturePadProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
