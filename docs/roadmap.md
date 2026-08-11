@@ -4,7 +4,7 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-11 (Phase 1g–1h in progress; 1a–1f in review).
+Last updated: 2026-08-11 (Phase 2 coach mobile in progress; Phase 1 stacked PRs).
 
 ---
 
@@ -23,17 +23,17 @@ auth, tenancy, or authorization models.
 
 ## Where we are today (Phase 0 — Pilot)
 
-| Layer    | State                                                                                                                |
-| -------- | -------------------------------------------------------------------------------------------------------------------- |
-| Product  | Single-coach, coaching-first web app: vitals, goals, check-ins, coach-reviewed meal plans                            |
-| Monorepo | Turborepo + pnpm: `apps/{web,api,worker}`, `packages/{app,ui,platform,contracts,core,modules,db,ai}`                 |
-| Frontend | Next.js 16 + Solito + Tamagui + react-native-web; screens live in `packages/app`                                     |
-| Auth     | Email + password; JWT access + rotating refresh sessions (ADR-0002) — replaces shared gate cookie                    |
-| Tenancy  | Shared-schema + app scoping + RLS backstop (ADR-0003); per-org config registry (ADR-0004)                            |
-| RBAC     | Full role matrix in `@gymos/core/rbac`; list queries scoped by org / outlet / assignment                             |
-| Data     | Neon Postgres 17, Drizzle ORM                                                                                        |
-| Deploy   | PaaS pilot (Vercel web + Render API + Neon) and/or Oracle VM path                                                    |
-| Mobile   | **Not started** — `apps/mobile` does not exist; ESLint reserves `app-mobile` / `app-client` / `app-admin` boundaries |
+| Layer    | State                                                                                                       |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| Product  | Single-coach, coaching-first web app: vitals, goals, check-ins, coach-reviewed meal plans                   |
+| Monorepo | Turborepo + pnpm: `apps/{web,api,worker,mobile}`, `packages/{app,ui,platform,contracts,core,modules,db,ai}` |
+| Frontend | Next.js 16 + Solito + Tamagui + react-native-web; screens in `packages/app`; Expo Router in `apps/mobile`   |
+| Auth     | Email + password; JWT access + rotating refresh sessions (ADR-0002) — replaces shared gate cookie           |
+| Tenancy  | Shared-schema + app scoping + RLS backstop (ADR-0003); per-org config registry (ADR-0004)                   |
+| RBAC     | Full role matrix in `@gymos/core/rbac`; list queries scoped by org / outlet / assignment                    |
+| Data     | Neon Postgres 17, Drizzle ORM                                                                               |
+| Deploy   | PaaS pilot (Vercel web + Render API + Neon) and/or Oracle VM path                                           |
+| Mobile   | **In progress** — `apps/mobile` Expo Router + Solito (ADR-0005); CI/CD is Phase 3                           |
 
 Phase markers already in code (`P0`–`P5`) map roughly onto the phases below; this
 document is the authoritative sequencing.
@@ -117,7 +117,7 @@ notifications; progress-photo upload APIs.
 
 ---
 
-## Phase 2 — Coach mobile app
+## Phase 2 — Coach mobile app (in progress)
 
 **Scope.** `apps/mobile`: Expo + Expo Router, native-only, feature parity with
 the coach web app by reusing `@gymos/app` screens. Platform `.native` / `.web`
@@ -133,6 +133,8 @@ works on device.
 
 **Non-goals.** Client or gym-admin mobile surfaces; Expo web target; store
 submission.
+
+**Working PR.** Stacked after Phase 1 PRs — see `cursor/coach-mobile-app-6eda`.
 
 ---
 

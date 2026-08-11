@@ -1,4 +1,4 @@
-/** Trigger a file download in the browser (web). No-op on native until Sharing is wired. */
+/** Trigger a file download in the browser (web). Native: see download-blob.native.ts. */
 export const downloadBlob = (blob: Blob, filename: string): void => {
   if (typeof document === 'undefined' || typeof URL === 'undefined') return;
   const url = URL.createObjectURL(blob);
