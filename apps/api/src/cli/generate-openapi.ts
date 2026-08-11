@@ -21,8 +21,7 @@ const app = buildApp({
   db,
   manifest,
   env: {
-    PILOT_ACCESS_KEY: 'spec-generation-placeholder',
-    GATE_COOKIE_SECRET: 'spec-generation-placeholder-secret-0000',
+    JWT_ACCESS_SECRET: 'spec-generation-placeholder-secret-0000',
     AI_MODE: 'fallback',
   },
 });

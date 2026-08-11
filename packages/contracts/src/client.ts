@@ -2,8 +2,12 @@ import type * as T from './types';
 
 /**
  * Typed API client — the ONLY http transport feature code may use
- * (raw fetch is lint-banned in packages/app). Same-origin by design:
- * the web app and API share a hostname (Caddy in prod, rewrites in dev).
+ * (raw fetch is lint-banned in packages/app).
+ *
+ * Web (default): relative URLs, same-origin cookies for the refresh token,
+ * in-memory access token after login/refresh.
+ * Mobile: call `configureApiClient` with an absolute `baseUrl` and secure-store
+ * backed token getters/setters.
  */
 
 export class ApiError extends Error {
@@ -22,7 +26,82 @@ const uuid = (): string =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-type RequestOptions = { idempotent?: boolean };
+type ClientConfig = {
+  baseUrl: string;
+  clientPlatform: 'web' | 'mobile';
+  /** Return the current access token (Bearer), or null. */
+  getAccessToken: () => string | null | Promise<string | null>;
+  /** Persist a new access token (or clear with null). */
+  setAccessToken: (token: string | null) => void | Promise<void>;
+  /** Return the raw refresh token for native clients (web uses httpOnly cookie). */
+  getRefreshToken?: () => string | null | Promise<string | null>;
+  /** Persist refresh token on native (web ignores — cookie handles it). */
+  setRefreshToken?: (token: string | null) => void | Promise<void>;
+  /** Called after a hard auth failure (refresh also failed). */
+  onAuthFailure?: () => void;
+};
+
+let memoryAccessToken: string | null = null;
+
+let config: ClientConfig = {
+  baseUrl: '',
+  clientPlatform: 'web',
+  getAccessToken: () => memoryAccessToken,
+  setAccessToken: (token) => {
+    memoryAccessToken = token;
+  },
+};
+
+export const configureApiClient = (next: Partial<ClientConfig>): void => {
+  config = { ...config, ...next };
+};
+
+export const getApiClientConfig = (): Readonly<ClientConfig> => config;
+
+type RequestOptions = { idempotent?: boolean; skipAuth?: boolean; _retried?: boolean };
+
+const parseProblem = async (response: Response): Promise<T.Problem | null> =>
+  (await response.json().catch(() => null)) as T.Problem | null;
+
+const throwApiError = async (response: Response): Promise<never> => {
+  const problem = await parseProblem(response);
+  throw new ApiError(
+    response.status,
+    problem?.code ?? 'UNKNOWN',
+    problem?.title ?? response.statusText,
+    problem?.detail,
+  );
+};
+
+const refreshAccessToken = async (): Promise<boolean> => {
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    'x-client-version': config.clientPlatform === 'mobile' ? 'pilot-mobile' : 'pilot-web',
+    'x-client-platform': config.clientPlatform,
+  };
+  const body: { refreshToken?: string } = {};
+  if (config.getRefreshToken) {
+    const refresh = await config.getRefreshToken();
+    if (refresh) body.refreshToken = refresh;
+  }
+
+  const response = await fetch(`${config.baseUrl}/v1/auth/refresh`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    await config.setAccessToken(null);
+    await config.setRefreshToken?.(null);
+    config.onAuthFailure?.();
+    return false;
+  }
+  const data = (await response.json()) as T.AuthTokens;
+  await config.setAccessToken(data.accessToken);
+  if (data.refreshToken) await config.setRefreshToken?.(data.refreshToken);
+  return true;
+};
 
 const request = async <TResponse>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH',
@@ -30,32 +109,94 @@ const request = async <TResponse>(
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<TResponse> => {
-  const headers: Record<string, string> = { 'x-client-version': 'pilot-web' };
+  const headers: Record<string, string> = {
+    'x-client-version': config.clientPlatform === 'mobile' ? 'pilot-mobile' : 'pilot-web',
+    'x-client-platform': config.clientPlatform,
+  };
   if (body !== undefined) headers['content-type'] = 'application/json';
   if (options.idempotent === true) headers['idempotency-key'] = uuid();
 
-  const response = await fetch(path, {
+  if (options.skipAuth !== true) {
+    const token = await config.getAccessToken();
+    if (token) headers.authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${config.baseUrl}${path}`, {
     method,
     credentials: 'same-origin',
     headers,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 
-  if (!response.ok) {
-    const problem = (await response.json().catch(() => null)) as T.Problem | null;
-    throw new ApiError(
-      response.status,
-      problem?.code ?? 'UNKNOWN',
-      problem?.title ?? response.statusText,
-      problem?.detail,
-    );
+  if (response.status === 401 && options.skipAuth !== true && options._retried !== true) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return request<TResponse>(method, path, body, { ...options, _retried: true });
+    }
   }
+
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as TResponse;
 };
 
+const requestBlob = async (path: string): Promise<Blob> => {
+  const headers: Record<string, string> = {
+    'x-client-version': config.clientPlatform === 'mobile' ? 'pilot-mobile' : 'pilot-web',
+    'x-client-platform': config.clientPlatform,
+  };
+  const token = await config.getAccessToken();
+  if (token) headers.authorization = `Bearer ${token}`;
+
+  let response = await fetch(`${config.baseUrl}${path}`, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers,
+  });
+
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      const retryHeaders = { ...headers };
+      const next = await config.getAccessToken();
+      if (next) retryHeaders.authorization = `Bearer ${next}`;
+      else delete retryHeaders.authorization;
+      response = await fetch(`${config.baseUrl}${path}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: retryHeaders,
+      });
+    }
+  }
+
+  if (!response.ok) await throwApiError(response);
+  return response.blob();
+};
+
 export const api = {
-  enter: (key: string) => request<{ ok: boolean }>('POST', '/gate/enter', { key }),
-  publicConfig: () => request<T.PublicConfig>('GET', '/v1/config/public'),
+  login: async (email: string, password: string): Promise<T.AuthTokens> => {
+    const data = await request<T.AuthTokens>(
+      'POST',
+      '/v1/auth/login',
+      { email, password },
+      { skipAuth: true },
+    );
+    await config.setAccessToken(data.accessToken);
+    if (data.refreshToken) await config.setRefreshToken?.(data.refreshToken);
+    return data;
+  },
+  logout: async (): Promise<void> => {
+    try {
+      await request<{ ok: boolean }>('POST', '/v1/auth/logout', {}, { skipAuth: true });
+    } finally {
+      await config.setAccessToken(null);
+      await config.setRefreshToken?.(null);
+    }
+  },
+  /** @deprecated Gate retired — use `api.login`. */
+  enter: (key: string) =>
+    request<{ ok: boolean }>('POST', '/gate/enter', { key }, { skipAuth: true }),
+  publicConfig: () =>
+    request<T.PublicConfig>('GET', '/v1/config/public', undefined, { skipAuth: true }),
   me: {
     get: () => request<T.Me>('GET', '/v1/me'),
     update: (input: T.UpdateMeInput) => request<T.Me>('PATCH', '/v1/me', input),
@@ -86,23 +227,8 @@ export const api = {
     detail: (clientId: string) => request<T.ClientDetail>('GET', `/v1/clients/${clientId}`),
     update: (clientId: string, input: Record<string, unknown>) =>
       request<T.Client>('PATCH', `/v1/clients/${clientId}`, input),
-    credentialsPdf: async (clientId: string): Promise<Blob> => {
-      const response = await fetch(`/v1/clients/${clientId}/credentials.pdf`, {
-        method: 'GET',
-        credentials: 'same-origin',
-        headers: { 'x-client-version': 'pilot-web' },
-      });
-      if (!response.ok) {
-        const problem = (await response.json().catch(() => null)) as T.Problem | null;
-        throw new ApiError(
-          response.status,
-          problem?.code ?? 'UNKNOWN',
-          problem?.title ?? response.statusText,
-          problem?.detail,
-        );
-      }
-      return response.blob();
-    },
+    credentialsPdf: (clientId: string): Promise<Blob> =>
+      requestBlob(`/v1/clients/${clientId}/credentials.pdf`),
   },
 
   vitals: {
@@ -205,23 +331,8 @@ export const api = {
       request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, body, {
         idempotent: true,
       }),
-    dietPlanPdf: async (planId: string): Promise<Blob> => {
-      const response = await fetch(`/v1/meal-plans/${planId}/diet-plan.pdf`, {
-        method: 'GET',
-        credentials: 'same-origin',
-        headers: { 'x-client-version': 'pilot-web' },
-      });
-      if (!response.ok) {
-        const problem = (await response.json().catch(() => null)) as T.Problem | null;
-        throw new ApiError(
-          response.status,
-          problem?.code ?? 'UNKNOWN',
-          problem?.title ?? response.statusText,
-          problem?.detail,
-        );
-      }
-      return response.blob();
-    },
+    dietPlanPdf: (planId: string): Promise<Blob> =>
+      requestBlob(`/v1/meal-plans/${planId}/diet-plan.pdf`),
   },
 
   notifications: {

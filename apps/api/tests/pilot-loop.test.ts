@@ -5,15 +5,17 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { schema, seed, type Db } from '@gymos/db';
-import { resetPrincipalCache } from '@gymos/modules/identity';
+import { hashPassword, resetPrincipalCache } from '@gymos/modules/identity';
 import { resetManifestCache, tenantManifestSchema } from '@gymos/modules/tenancy';
 import { buildApp, type App } from '../src/app';
 
-const ACCESS_KEY = 'test-access-key-0123456789abcdef';
+const JWT_SECRET = 'a-test-jwt-access-secret-that-is-long-enough';
+const COACH_PASSWORD = 'pilot-coach-test-password';
 
 let app: App;
 let db: Db;
-let cookie = '';
+let accessToken = '';
+let refreshCookie = '';
 let demoClientId = '';
 
 const manifest = tenantManifestSchema.parse(
@@ -27,7 +29,8 @@ const req = async (
   init: RequestInit & { json?: unknown } = {},
 ): Promise<Response> => {
   const headers = new Headers(init.headers);
-  if (cookie) headers.set('cookie', cookie);
+  if (accessToken) headers.set('authorization', `Bearer ${accessToken}`);
+  if (refreshCookie) headers.set('cookie', refreshCookie);
   if (init.json !== undefined) headers.set('content-type', 'application/json');
   return await app.request(pathName, {
     ...init,
@@ -44,41 +47,54 @@ beforeAll(async () => {
     migrationsFolder: path.resolve(import.meta.dirname, '../../../packages/db/migrations'),
   });
   db = pglite as unknown as Db;
-  const seeded = await seed(db);
+  const seeded = await seed(db, { coachPasswordHash: await hashPassword(COACH_PASSWORD) });
   demoClientId = seeded.demoClientId;
   app = buildApp({
     db,
     manifest,
     env: {
-      PILOT_ACCESS_KEY: ACCESS_KEY,
-      GATE_COOKIE_SECRET: 'a-test-cookie-secret-that-is-long-enough-000',
+      JWT_ACCESS_SECRET: JWT_SECRET,
       AI_MODE: 'fallback',
     },
   });
 });
 
-describe('access gate', () => {
-  it('blocks /v1 without the gate cookie', async () => {
+describe('auth (JWT + refresh)', () => {
+  it('blocks /v1 without an access token', async () => {
     const res = await req('/v1/me');
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('GATE_REQUIRED');
+    expect(body.code).toBe('AUTH_REQUIRED');
   });
 
-  it('rejects a wrong key and accepts the right one', async () => {
-    const bad = await req('/gate/enter', { method: 'POST', json: { key: 'wrong-key-000000' } });
+  it('rejects bad credentials and accepts email + password', async () => {
+    const bad = await req('/v1/auth/login', {
+      method: 'POST',
+      json: { email: 'coach@pilot.local', password: 'wrong-password' },
+    });
     expect(bad.status).toBe(401);
 
-    const good = await req('/gate/enter', { method: 'POST', json: { key: ACCESS_KEY } });
+    const good = await req('/v1/auth/login', {
+      method: 'POST',
+      json: { email: 'coach@pilot.local', password: COACH_PASSWORD },
+    });
     expect(good.status).toBe(200);
+    const body = (await good.json()) as {
+      accessToken: string;
+      expiresIn: number;
+      me: { name: string };
+    };
+    expect(body.accessToken.length).toBeGreaterThan(20);
+    expect(body.expiresIn).toBeGreaterThan(60);
+    expect(body.me.name).toBe('Pilot Coach');
+    accessToken = body.accessToken;
     const setCookie = good.headers.get('set-cookie');
-    expect(setCookie).toContain('gymos_gate=');
+    expect(setCookie).toContain('gymos_refresh=');
     expect(setCookie).toContain('HttpOnly');
-    expect(setCookie).toContain('SameSite=Strict');
-    cookie = setCookie?.split(';')[0] ?? '';
+    refreshCookie = setCookie?.split(';')[0] ?? '';
   });
 
-  it('serves /v1/me once gated', async () => {
+  it('serves /v1/me once authenticated', async () => {
     const res = await req('/v1/me');
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -110,7 +126,17 @@ describe('access gate', () => {
     expect(me.currencyPref).toBe('USD');
   });
 
-  it('exposes public config without the gate', async () => {
+  it('rotates refresh tokens', async () => {
+    const res = await req('/v1/auth/refresh', { method: 'POST', json: {} });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { accessToken: string };
+    expect(body.accessToken.length).toBeGreaterThan(20);
+    accessToken = body.accessToken;
+    const setCookie = res.headers.get('set-cookie');
+    if (setCookie) refreshCookie = setCookie.split(';')[0] ?? refreshCookie;
+  });
+
+  it('exposes public config without auth', async () => {
     const res = await app.request('/v1/config/public');
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -121,6 +147,11 @@ describe('access gate', () => {
     expect(body.appName).toBe('GymOS Coach');
     expect(body.currencies).toContain('PKR');
     expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
+  });
+
+  it('returns 410 for the retired gate', async () => {
+    const res = await req('/gate/enter', { method: 'POST', json: { key: 'anything-long-enough' } });
+    expect(res.status).toBe(410);
   });
 });
 

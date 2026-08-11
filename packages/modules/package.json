@@ -20,6 +20,7 @@
     "@gymos/core": "workspace:^",
     "@gymos/db": "workspace:^",
     "drizzle-orm": "^0.45.2",
+    "jose": "^6.1.3",
     "luxon": "^3.7.2",
     "zod": "^4.0.0"
   },
