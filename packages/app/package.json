@@ -39,11 +39,21 @@
     "@tamagui/lucide-icons-2": "2.7.2",
     "@tanstack/react-query": "^5.101.4",
     "react": "^19.2.8",
+    "react-native": "^0.86.2",
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.2",
+    "react-native-webview": "^13.16.0",
     "solito": "^5.0.0",
     "tamagui": "^2.7.2",
     "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "react-native-webview": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native-webview": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

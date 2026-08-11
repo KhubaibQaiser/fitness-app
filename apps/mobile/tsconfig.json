@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["es2023", "dom"],
+    "types": ["react"],
+    "paths": {
+      "@gymos/app/*": ["../../packages/app/src/*"],
+      "@gymos/platform": ["../../packages/platform/src/index.ts"],
+      "@gymos/ui": ["../../packages/ui/src/index.ts"],
+      "@gymos/contracts": ["../../packages/contracts/src/index.ts"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "../../packages/platform/src/**/*.native.ts",
+    "../../packages/platform/src/**/*.native.tsx",
+    "../../packages/app/src/**/*.native.ts",
+    "../../packages/app/src/**/*.native.tsx"
+  ],
+  "exclude": ["node_modules", "maestro"]
+}

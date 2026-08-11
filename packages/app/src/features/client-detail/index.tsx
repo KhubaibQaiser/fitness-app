@@ -15,7 +15,7 @@ import { ScreenBody } from '../shell/screen-body';
 import { useAppChrome } from '../shell/use-app-chrome';
 import { ClientHubHeader } from './client-hub-header';
 import { ClientHubHistory } from './client-hub-history';
-import { CLIENT_HUB_MOBILE_CTA_SCREEN_PAD, ClientHubMobileCtas } from './client-hub-mobile-ctas';
+import { ClientHubMobileCtas } from './client-hub-mobile-ctas';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
 
@@ -121,12 +121,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   };
 
   return (
-    <AppScreen
-      gap="$0"
-      paddingTop={0}
-      paddingHorizontal={0}
-      paddingBottom={showMobileCtas ? CLIENT_HUB_MOBILE_CTA_SCREEN_PAD : undefined}
-    >
+    <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
       <ClientHubHeader
         clientId={clientId}
         name={client.name}
