@@ -126,6 +126,7 @@ export const generatePlan = async (
   if (gateReasons.length > 0 && options.override === undefined) {
     await db.insert(s.planGenerations).values({
       clientId,
+      outletId: client.outletId,
       coachId: principal.coachId,
       kind: options.kind,
       status: 'BLOCKED_REQUIRES_OVERRIDE',
@@ -186,6 +187,7 @@ export const generatePlan = async (
     .insert(s.planGenerations)
     .values({
       clientId,
+      outletId: client.outletId,
       coachId: principal.coachId,
       kind: options.kind,
       status: 'RUNNING',

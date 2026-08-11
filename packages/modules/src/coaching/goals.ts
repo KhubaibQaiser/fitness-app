@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { err, ok, type Result } from '@gymos/core';
 import {
@@ -7,6 +7,7 @@ import {
   type GoalRate,
   type NutritionRefusal,
 } from '@gymos/core/nutrition';
+import { type ScopeSet } from '@gymos/core/rbac';
 import { isoDate, schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
 
@@ -81,6 +82,7 @@ export const createGoalTx = async (
     .insert(s.clientGoals)
     .values({
       clientId: client.id,
+      outletId: client.outletId,
       preset: input.preset,
       rate: input.rate,
       startDate: isoDate(DateTime.utc()),
@@ -103,6 +105,7 @@ export const createGoalTx = async (
   }
   await db.insert(s.checkIns).values({
     clientId: client.id,
+    outletId: client.outletId,
     goalId: created.id,
     scheduledFor: isoDate(next),
     status: 'DUE',
@@ -189,8 +192,22 @@ export const goalProgressPct = (
   return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
 };
 
-export const nextDueCheckIns = async (db: Db, limit = 50) =>
-  db
+export const nextDueCheckIns = async (
+  db: Db,
+  opts: { limit?: number; scope: ScopeSet; orgId: string },
+) => {
+  const conditions = [eq(s.checkIns.status, 'DUE')];
+  if (opts.scope.orgWide) {
+    conditions.push(eq(s.outlets.orgId, opts.orgId));
+  } else if (opts.scope.outletIds.length > 0) {
+    conditions.push(inArray(s.checkIns.outletId, [...opts.scope.outletIds]));
+  } else if (opts.scope.assignedClientIds.length > 0) {
+    conditions.push(inArray(s.checkIns.clientId, [...opts.scope.assignedClientIds]));
+  } else {
+    conditions.push(sql`false`);
+  }
+
+  return db
     .select({
       id: s.checkIns.id,
       clientId: s.checkIns.clientId,
@@ -202,6 +219,8 @@ export const nextDueCheckIns = async (db: Db, limit = 50) =>
     })
     .from(s.checkIns)
     .innerJoin(s.clients, eq(s.clients.id, s.checkIns.clientId))
-    .where(eq(s.checkIns.status, 'DUE'))
+    .innerJoin(s.outlets, eq(s.outlets.id, s.checkIns.outletId))
+    .where(and(...conditions))
     .orderBy(s.checkIns.scheduledFor)
-    .limit(limit);
+    .limit(opts.limit ?? 50);
+};

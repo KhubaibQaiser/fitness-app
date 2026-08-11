@@ -187,6 +187,7 @@ export const completeCheckIn = async (
     const nextDate = DateTime.fromISO(due.scheduledFor).plus({ weeks: 1 });
     await tx.insert(s.checkIns).values({
       clientId,
+      outletId: goal.outletId,
       goalId: goal.id,
       scheduledFor: isoDate(nextDate),
       status: 'DUE',
