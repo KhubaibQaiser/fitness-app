@@ -4,7 +4,8 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-11 (Phase 3 mobile CI/CD in progress; Phases 1–2 stacked PRs).
+Last updated: 2026-08-11 (Phase 3 mobile CI/CD in progress; Phase 4 rescoped to
+self-signup + coach marketplace, not yet started).
 
 ---
 
@@ -48,7 +49,7 @@ flowchart LR
     p1["Phase 1: Backend hardening"]
     p2["Phase 2: Coach mobile app"]
     p3["Phase 3: Mobile CI/CD"]
-    p4["Phase 4: Client app"]
+    p4["Phase 4: Self-signup and coach marketplace"]
     p5["Phase 5: Gym/org-admin app"]
     p6["Phase 6: Multi-region"]
 
@@ -59,10 +60,12 @@ flowchart LR
     p5 --> p6
 ```
 
-Phases 2/3 (coach mobile) and 4/5 (client, gym-admin) all branch off Phase 1.
-They are independent apps on one hardened backend — not a strict chain. After
-Phase 1, sequencing 2/3 vs 4/5 is a product-priority call. This roadmap executes
-2/3 next (coach mobile was the original request).
+Phases 2/3 (coach mobile) and 4/5 (marketplace, gym-admin) all branch off
+Phase 1. They are independent apps/surfaces on one hardened backend — not a
+strict chain. After Phase 1, sequencing 2/3 vs 4/5 is a product-priority call.
+This roadmap executed 2/3 first (coach mobile was the original request);
+Phase 4 was rescoped afterward when the product direction shifted from
+admin/coach-provisioned accounts to self-service signup — see below.
 
 ---
 
@@ -157,20 +160,50 @@ promote; Detox as default E2E (reserved for gray-box hotspots only).
 
 ---
 
-## Phase 4 — Client app
+## Phase 4 — Self-signup and coach marketplace (rescoped, not started)
 
-**Scope.** Mobile-first client experience (`packages/app-client` +
-`apps/mobile-client`, optional light web). Uses existing `CLIENT` role and
-`self` scope. Client sees published plans, check-in prompts, own vitals history.
+**Why rescoped.** The original Phase 4 assumed a _seeded, admin/coach-provisioned_
+client logging in to view a published plan. Product direction has since shifted:
+coaches should be able to self-signup (optionally linking to an existing gym via
+a join code), clients should be able to self-signup, browse a public directory
+of coaches, and hire one directly — with no admin in the loop. Both sides then
+communicate in-app around a shared plan and vitals history. This is a bigger
+change than the original Phase 4 and touches identity, not just a new frontend,
+so it gets its own sub-phased rollout (mirrors the Phase 1a–1h slicing).
 
-**Entry criteria.** Phase 1 complete; product prioritizes client over (or after)
-coach mobile.
+**Key decision — "coach is the tenant".** Independent coaches each get their
+own `organizations`/`outlets`/`tenant_configs` row auto-provisioned at signup
+(or join an existing org via a `joinCode`). Client signup and "hiring" a coach
+are the _same_ atomic call, so a logged-in user always has a real membership —
+this preserves the ADR-0002/0003 invariant that every JWT carries a real
+`orgId`/`outletId`, instead of introducing an "unaffiliated user" auth state.
+The public coach directory is the one deliberately cross-tenant read path
+(opt-in fields only) and needs extra review scrutiny for that reason.
 
-**Exit criteria.** Seeded client can log in, view published plan, complete
-self-reported check-in fields as designed; no coach-only data leaks.
+**Scope.**
 
-**Non-goals.** Guardian / dependent flows (earlier code comments: P5); social
-features.
+| Slice | Outcome                                                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 4a    | ADR-0006 + migration: `coachProfiles`, `conversations`/`messages`, `organizations.joinCode`; `resolvePrincipal` resolves `clientId` |
+| 4b    | Coach self-signup (`POST /v1/auth/signup/coach`): auto-provision org/outlet/tenant-config, or join by code                          |
+| 4c    | Public coach directory (`GET /v1/coaches/directory`) + atomic client signup-and-hire (`POST /v1/auth/signup/client`)                |
+| 4d    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` calls so clients can read own plan/vitals/dietary                  |
+| 4e    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)         |
+| 4f    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                          |
+
+**Entry criteria.** Phase 1 complete.
+
+**Exit criteria.** A coach can self-signup (with or without a join code) and
+land on their own tenant; a client can browse public coach profiles, sign up,
+and hire a coach in one step; the resulting client can log in and read their
+own published plan and vitals history; coach and client can exchange messages
+tied to their active assignment; no cross-tenant data leaks through the
+directory beyond opted-in public fields.
+
+**Non-goals.** Concurrent multi-coach clients; coach switching/rehiring;
+payments/billing for hiring; real-time chat or push notifications (v1 is
+polling); multi-coach practices/teams under one org; ratings/reviews; content
+moderation; guardian/dependent accounts.
 
 ---
 
@@ -217,6 +250,11 @@ noisy-neighbor / compliance triggers).
 - Progress-photo upload API (table exists; no endpoints yet)
 - Store submission without Apple / Google developer accounts
 - Guardian / dependent access
+- Concurrent multi-coach clients / coach switching or rehiring
+- Payments / billing for coach hiring
+- Real-time chat or push-notified messaging (Phase 4 messaging is polling-based)
+- Coach teams / multiple coaches under one self-signup org
+- Ratings, reviews, or content moderation for the coach directory
 
 ---
 
@@ -226,8 +264,14 @@ noisy-neighbor / compliance triggers).
 2. At **phase exit**: mark exit criteria met, link merged PRs and any new ADRs.
 3. Do **not** bury architecture decisions here — open an ADR under `docs/adr/`.
 
-Suggested upcoming ADRs during Phase 1–2:
+ADRs recorded so far:
 
-- Auth: JWT access + rotating refresh tokens
-- Multi-tenant isolation: shared schema + application scoping + RLS backstop
-- Mobile: Expo Router + Solito (native shell over shared screens)
+- [ADR-0002](./adr/0002-jwt-refresh-sessions.md): JWT access + rotating refresh tokens
+- [ADR-0003](./adr/0003-shared-schema-tenant-isolation.md): shared schema + application scoping + RLS backstop
+- [ADR-0004](./adr/0004-tenant-config-registry.md): per-org tenant config registry
+- [ADR-0005](./adr/0005-expo-router-solito-mobile.md): Expo Router + Solito (native shell over shared screens)
+
+Upcoming during Phase 4:
+
+- ADR-0006: self-signup identity model ("coach is the tenant", join codes,
+  atomic client signup-and-hire) and the public coach-directory tradeoff
