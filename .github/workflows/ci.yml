@@ -56,3 +56,21 @@ jobs:
         run: pnpm --filter @gymos/web build
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
+
+  mobile-bundle:
+    name: Mobile Metro bundle check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Expo export (iOS) — fail if Metro cannot bundle
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: http://localhost:8787
+        run: pnpm exec expo export --platform ios --output-dir /tmp/gymos-mobile-export
