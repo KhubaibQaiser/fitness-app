@@ -54,6 +54,20 @@ export const users = pgTable('users', {
   deletedAt: deletedAt(),
 });
 
+/**
+ * Per-org tenant config registry — branding, locales, AI config.
+ * Seeded from infra/tenants/*.json; runtime loads by orgId (not a single process cache).
+ */
+export const tenantConfigs = pgTable('tenant_configs', {
+  orgId: uuid('org_id')
+    .primaryKey()
+    .references(() => organizations.id),
+  slug: text('slug').notNull().unique(),
+  manifest: jsonb('manifest').$type<Record<string, unknown>>().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 /** Role assignments — the authorization source of truth (never a users.role column). */
 export const memberships = pgTable(
   'memberships',

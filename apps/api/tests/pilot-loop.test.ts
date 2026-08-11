@@ -6,7 +6,11 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { schema, seed, type Db } from '@gymos/db';
 import { hashPassword, resetPrincipalCache } from '@gymos/modules/identity';
-import { resetManifestCache, tenantManifestSchema } from '@gymos/modules/tenancy';
+import {
+  resetManifestCache,
+  resetRegistryCache,
+  tenantManifestSchema,
+} from '@gymos/modules/tenancy';
 import { buildApp, type App } from '../src/app';
 
 const JWT_SECRET = 'a-test-jwt-access-secret-that-is-long-enough';
@@ -41,13 +45,18 @@ const req = async (
 
 beforeAll(async () => {
   resetManifestCache();
+  resetRegistryCache();
   resetPrincipalCache();
   const pglite = drizzle(new PGlite(), { schema });
   await migrate(pglite, {
     migrationsFolder: path.resolve(import.meta.dirname, '../../../packages/db/migrations'),
   });
   db = pglite as unknown as Db;
-  const seeded = await seed(db, { coachPasswordHash: await hashPassword(COACH_PASSWORD) });
+  const seeded = await seed(db, {
+    coachPasswordHash: await hashPassword(COACH_PASSWORD),
+    tenantManifest: manifest as unknown as Record<string, unknown>,
+    tenantSlug: manifest.slug,
+  });
   demoClientId = seeded.demoClientId;
   app = buildApp({
     db,

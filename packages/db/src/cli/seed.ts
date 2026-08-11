@@ -1,4 +1,7 @@
 import { randomBytes, scrypt as scryptCb } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createDb } from '../client';
 import { seed } from '../seed';
 
@@ -6,6 +9,9 @@ import { seed } from '../seed';
  * Seed CLI. Hashes `PILOT_COACH_PASSWORD` (default for local DX) with the same
  * scrypt format as `@gymos/modules/identity`, or accepts a precomputed
  * `PILOT_COACH_PASSWORD_HASH`. packages/db must not import modules (boundary).
+ *
+ * Also loads `infra/tenants/pilot.json` into `tenant_configs` so the API registry
+ * has a per-org manifest from day one.
  */
 const scrypt = (
   password: string,
@@ -39,10 +45,23 @@ const coachPasswordHash =
   process.env.PILOT_COACH_PASSWORD_HASH ??
   (await hashPasswordLocal(process.env.PILOT_COACH_PASSWORD ?? 'pilot-coach-change-me'));
 
+const manifestPath =
+  process.env.TENANT_MANIFEST_PATH ??
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../../../infra/tenants/pilot.json',
+  );
+const tenantManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+const tenantSlug =
+  typeof tenantManifest.slug === 'string' && tenantManifest.slug.length > 0
+    ? tenantManifest.slug
+    : 'pilot';
+
 const { db, close } = createDb(url, 1);
 try {
-  const result = await seed(db, { coachPasswordHash });
+  const result = await seed(db, { coachPasswordHash, tenantManifest, tenantSlug });
   console.log('seeded:', result);
+  console.log('tenant registry slug:', tenantSlug);
   console.log('pilot coach login: coach@pilot.local (password from PILOT_COACH_PASSWORD)');
 } finally {
   await close();
