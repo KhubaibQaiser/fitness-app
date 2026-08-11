@@ -4,7 +4,7 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-11 (Phase 2 coach mobile in progress; Phase 1 stacked PRs).
+Last updated: 2026-08-11 (Phase 3 mobile CI/CD in progress; Phases 1–2 stacked PRs).
 
 ---
 
@@ -33,7 +33,7 @@ auth, tenancy, or authorization models.
 | RBAC     | Full role matrix in `@gymos/core/rbac`; list queries scoped by org / outlet / assignment                    |
 | Data     | Neon Postgres 17, Drizzle ORM                                                                               |
 | Deploy   | PaaS pilot (Vercel web + Render API + Neon) and/or Oracle VM path                                           |
-| Mobile   | **In progress** — `apps/mobile` Expo Router + Solito (ADR-0005); CI/CD is Phase 3                           |
+| Mobile   | **In progress** — Expo Router app (ADR-0005) + CI bundle/EAS/Maestro workflows                              |
 
 Phase markers already in code (`P0`–`P5`) map roughly onto the phases below; this
 document is the authoritative sequencing.
@@ -138,7 +138,7 @@ submission.
 
 ---
 
-## Phase 3 — Mobile CI/CD
+## Phase 3 — Mobile CI/CD (in progress)
 
 **Scope.** Bundle-check in `ci.yml`; EAS preview builds + OTA updates on PRs;
 EAS production update / build+submit on `main` (gated until Apple / Google
@@ -152,6 +152,8 @@ fingerprint changes when `PILOT_MOBILE_DEPLOY_ENABLED=true`.
 
 **Non-goals.** Public App Store / Play Store release automation without human
 promote; Detox as default E2E (reserved for gray-box hotspots only).
+
+**Working PR.** Stacked after Phase 2 — see `cursor/mobile-cicd-6eda`.
 
 ---
 
