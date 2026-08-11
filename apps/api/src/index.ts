@@ -1,12 +1,15 @@
 import { serve } from '@hono/node-server';
 import { createDb } from '@gymos/db';
-import { loadManifest } from '@gymos/modules/tenancy';
+import { readManifestFile, syncSingleOrgRegistryFromFile } from '@gymos/modules/tenancy';
 import { buildApp } from './app';
 import { loadEnv } from './env';
 
 const env = loadEnv(process.env);
-const manifest = loadManifest(env.TENANT_MANIFEST_PATH);
 const { db } = createDb(env.DATABASE_URL);
+
+/** Bootstrap file for public config / OpenAPI; registry is source of truth per org. */
+const manifest = readManifestFile(env.TENANT_MANIFEST_PATH);
+await syncSingleOrgRegistryFromFile(db, env.TENANT_MANIFEST_PATH);
 
 const app = buildApp({ db, manifest, env });
 

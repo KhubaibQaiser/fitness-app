@@ -16,6 +16,9 @@ export type SeedResult = {
 export type SeedOptions = {
   /** Pre-hashed password for the pilot coach (from `@gymos/modules/identity` `hashPassword`). */
   coachPasswordHash?: string | undefined;
+  /** Optional tenant manifest JSON to register for the seeded org. */
+  tenantManifest?: Record<string, unknown> | undefined;
+  tenantSlug?: string | undefined;
 };
 
 /**
@@ -31,6 +34,14 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
 
   const [org] = await db.insert(s.organizations).values({ name: 'GymOS Pilot' }).returning();
   if (!org) throw new Error('org insert failed');
+
+  if (options.tenantManifest !== undefined) {
+    await db.insert(s.tenantConfigs).values({
+      orgId: org.id,
+      slug: options.tenantSlug ?? 'pilot',
+      manifest: options.tenantManifest,
+    });
+  }
 
   const [outlet] = await db
     .insert(s.outlets)

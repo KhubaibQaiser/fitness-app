@@ -6,13 +6,14 @@
  *   JWT_ACCESS_SECRET=... PILOT_COACH_PASSWORD=... pnpm --filter @gymos/api dev:pglite
  */
 import { randomBytes, scrypt as scryptCb } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { serve } from '@hono/node-server';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { schema, seed, type Db } from '@gymos/db';
-import { loadManifest } from '@gymos/modules/tenancy';
+import { readManifestFile } from '@gymos/modules/tenancy';
 import { buildApp } from './app';
 import { loadEnv } from './env';
 
@@ -35,9 +36,10 @@ const hashPasswordLocal = async (password: string): Promise<string> => {
   return `scrypt$16384$8$1$${salt.toString('hex')}$${derived.toString('hex')}`;
 };
 
+const manifestPath = path.resolve(import.meta.dirname, '../../../infra/tenants/pilot.json');
 const env = loadEnv({
   DATABASE_URL: 'pglite://in-memory',
-  TENANT_MANIFEST_PATH: path.resolve(import.meta.dirname, '../../../infra/tenants/pilot.json'),
+  TENANT_MANIFEST_PATH: manifestPath,
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET ?? 'dev-jwt-access-secret-at-least-32-chars!!',
   ...process.env,
 });
@@ -48,11 +50,16 @@ await migrate(pglite, {
 });
 const db = pglite as unknown as Db;
 const coachPassword = process.env.PILOT_COACH_PASSWORD ?? 'pilot-coach-change-me';
-const seeded = await seed(db, { coachPasswordHash: await hashPasswordLocal(coachPassword) });
+const tenantManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+const seeded = await seed(db, {
+  coachPasswordHash: await hashPasswordLocal(coachPassword),
+  tenantManifest,
+  tenantSlug: typeof tenantManifest.slug === 'string' ? tenantManifest.slug : 'pilot',
+});
 console.log('seeded demo client:', seeded.demoClientId);
 console.log('login: coach@pilot.local /', coachPassword);
 
-const manifest = loadManifest(env.TENANT_MANIFEST_PATH);
+const manifest = readManifestFile(env.TENANT_MANIFEST_PATH);
 const app = buildApp({ db, manifest, env });
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
