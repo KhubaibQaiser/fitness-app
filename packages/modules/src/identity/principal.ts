@@ -111,10 +111,10 @@ export const resolvePrincipal = async (db: Db, userId: string): Promise<Principa
 };
 
 /**
- * @deprecated Use `resolvePrincipal(db, userId)` after JWT verification.
- * Kept as a thin wrapper so transitional call sites compile during the auth cutover.
+ * Resolve the seeded pilot coach for system jobs (worker) that have no JWT.
+ * Request paths must use `resolvePrincipal(db, userId)` after token verification.
  */
-export const getPilotPrincipal = async (db: Db): Promise<Principal> => {
+export const resolvePilotCoachPrincipal = async (db: Db): Promise<Principal> => {
   const [coach] = await db
     .select({ userId: s.coaches.userId })
     .from(s.coaches)
