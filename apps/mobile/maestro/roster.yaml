@@ -1,0 +1,9 @@
+# Maestro: roster reachable after login (run after login.yaml or with session).
+appId: app.gymos.coach
+---
+- launchApp
+- tapOn: 'Clients'
+- extendedWaitUntil:
+    visible: 'Clients'
+    timeout: 15000
+- assertVisible: 'Clients'

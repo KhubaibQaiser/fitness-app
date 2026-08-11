@@ -1,0 +1,70 @@
+name: Mobile preview
+
+# Installable preview builds / OTA updates for PRs labeled `mobile-preview`.
+# Requires GitHub Environment `mobile-preview` secrets: EXPO_TOKEN
+# and variable EXPO_PUBLIC_API_URL. Replace EAS projectId in apps/mobile/app.json.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: mobile-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: EAS preview (Android)
+    if: contains(github.event.pull_request.labels.*.name, 'mobile-preview')
+    runs-on: ubuntu-latest
+    environment: mobile-preview
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: EAS Update (JS OTA to preview channel)
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          eas update --branch preview --message "PR #${{ github.event.pull_request.number }} @ ${SHORT_SHA}" --non-interactive
+      - name: EAS Build (Android preview APK)
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+        run: |
+          eas build --profile preview --platform android --non-interactive --json --no-wait | tee /tmp/eas-build.json
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              '### Mobile preview',
+              '',
+              '- OTA update published to the **preview** channel for this PR.',
+              '- Android preview build queued (see [EAS dashboard](https://expo.dev)).',
+              `- SHA: \`${context.sha.slice(0, 7)}\``,
+              '',
+              '_Install via Expo dashboard / internal distribution link once the build finishes._',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

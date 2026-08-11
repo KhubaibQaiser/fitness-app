@@ -3,7 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["es2023", "dom"],
-    "types": ["react"],
+    "types": ["react", "jest"],
     "paths": {
       "@gymos/app/*": ["../../packages/app/src/*"],
       "@gymos/platform": ["../../packages/platform/src/index.ts"],

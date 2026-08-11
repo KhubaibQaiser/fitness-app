@@ -1,0 +1,104 @@
+name: Mobile deploy
+
+# Production OTA on main; native rebuild + submit only when the Expo fingerprint
+# changes. Gated by repository variable PILOT_MOBILE_DEPLOY_ENABLED=true so the
+# pilot can merge CI without Apple/Google credentials.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/app/**'
+      - 'packages/platform/**'
+      - 'packages/ui/**'
+      - 'packages/contracts/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mobile-deploy.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: EAS update / build
+    runs-on: ubuntu-latest
+    environment: mobile-production
+    steps:
+      - name: Check deploy gate
+        id: gate
+        run: |
+          if [ "${{ vars.PILOT_MOBILE_DEPLOY_ENABLED }}" != "true" ]; then
+            echo "PILOT_MOBILE_DEPLOY_ENABLED is not true — skipping mobile deploy"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.enabled == 'true'
+
+      - uses: pnpm/action-setup@v6
+        if: steps.gate.outputs.enabled == 'true'
+
+      - uses: actions/setup-node@v5
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        if: steps.gate.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup EAS
+        if: steps.gate.outputs.enabled == 'true'
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Compute Expo fingerprint
+        if: steps.gate.outputs.enabled == 'true'
+        id: fingerprint
+        working-directory: apps/mobile
+        run: |
+          HASH=$(node --input-type=module -e "
+            import { createFingerprintAsync } from '@expo/fingerprint';
+            const fp = await createFingerprintAsync(process.cwd());
+            console.log(fp.hash);
+          ")
+          echo "current=$HASH" >> "$GITHUB_OUTPUT"
+          echo "Fingerprint: $HASH"
+          PREV="${{ vars.MOBILE_IOS_FINGERPRINT }}"
+          if [ -z "$PREV" ] || [ "$PREV" != "$HASH" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: EAS Update (JS-only OTA)
+        if: steps.gate.outputs.enabled == 'true' && steps.fingerprint.outputs.changed != 'true'
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          eas update --branch production --message "main @ ${SHORT_SHA}" --non-interactive
+
+      - name: EAS Build + Submit (native fingerprint changed)
+        if: steps.gate.outputs.enabled == 'true' && steps.fingerprint.outputs.changed == 'true'
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+        run: |
+          echo "Native fingerprint changed — queuing production builds"
+          eas build --profile production --platform all --non-interactive --no-wait
+          # Submit is best-effort; promote in App Store / Play Console manually.
+          eas submit --platform ios --latest --non-interactive --no-wait || true
+          eas submit --platform android --latest --non-interactive --no-wait || true
+          echo "::notice::Update GitHub variable MOBILE_IOS_FINGERPRINT to ${{ steps.fingerprint.outputs.current }} after a successful native build."
