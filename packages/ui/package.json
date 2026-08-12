@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./fonts.css": "./src/fonts.web.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/jetbrains-mono": "^5.2.6",
     "@tamagui/config": "^2.7.2",
     "@tamagui/helpers-icon": "2.7.2",
     "@tamagui/lucide-icons-2": "2.7.2",

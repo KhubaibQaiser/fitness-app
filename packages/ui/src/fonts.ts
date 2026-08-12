@@ -3,7 +3,7 @@ import { createFont, isWeb } from 'tamagui';
 
 /**
  * Cross-platform font faces.
- * Web: CSS vars from next/font (Inter + JetBrains Mono) — see apps/web/app/layout.tsx.
+ * Web: CSS vars from @gymos/ui/fonts.css (Fontsource Inter + JetBrains Mono).
  * Native: load via expo-font / useFonts using `face` names.
  */
 const interFace = {
