@@ -1,6 +1,6 @@
 import { parseLength, parseWeight, type UnitPrefs } from '@gymos/core/units';
+import { ftInToCm, parsePositive } from '../../lib/height-units';
 import { isCountryCode, toE164, type CountryCode } from '../../lib/phone';
-import { ftInToCm, parsePositive } from './height-units';
 import type { OnboardingDraft } from './onboarding-types';
 
 export const resolveHeightCm = (draft: OnboardingDraft): number | null => {

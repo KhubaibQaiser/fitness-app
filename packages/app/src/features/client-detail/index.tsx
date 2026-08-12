@@ -12,10 +12,8 @@ import {
 } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
-import { useAppChrome } from '../shell/use-app-chrome';
 import { ClientHubHeader } from './client-hub-header';
 import { ClientHubHistory } from './client-hub-history';
-import { ClientHubMobileCtas } from './client-hub-mobile-ctas';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
 
@@ -51,10 +49,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   const vitals = useVitals(clientId);
   const checkIns = useClientCheckIns(clientId);
   const downloadPdf = useDownloadCredentialsPdf(clientId);
-  const { isDesktop, showMobileTabBar } = useAppChrome();
   const [tab, setTab] = useState<string>('overview');
-
-  const showMobileCtas = !isDesktop && showMobileTabBar;
 
   if (detail.isPending) {
     return (
@@ -165,8 +160,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
           />
         ) : null}
       </ScreenBody>
-
-      <ClientHubMobileCtas clientId={clientId} visible={showMobileCtas} />
     </AppScreen>
   );
 };

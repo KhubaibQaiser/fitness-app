@@ -9,22 +9,23 @@ type Props = Omit<ComponentProps<typeof UiScreen>, 'chrome'> & {
   footer?: ReactNode;
 };
 
-/** Screen bound to responsive chrome (tab clearance vs desktop padding). */
+/**
+ * Screen bound to responsive chrome (tab clearance vs desktop padding).
+ * Always scrolls internally — AppShell bounds the viewport height and clips
+ * overflow, so every screen (with or without a footer) must own its scroll.
+ */
 export const AppScreen = ({ children, footer, ...rest }: Props) => {
   const { screenChrome } = useAppChrome();
-
-  if (footer === undefined) {
-    return (
-      <UiScreen chrome={screenChrome} {...rest}>
-        {children}
-      </UiScreen>
-    );
-  }
 
   return (
     <YStack flex={1} minHeight={0} width="100%" backgroundColor="$screenBg">
       <ScrollView flex={1} minHeight={0} keyboardShouldPersistTaps="handled">
-        <UiScreen chrome={screenChrome} flex={0} paddingBottom="$4" {...rest}>
+        <UiScreen
+          chrome={screenChrome}
+          flex={0}
+          {...(footer !== undefined ? { paddingBottom: '$4' } : {})}
+          {...rest}
+        >
           {children}
         </UiScreen>
       </ScrollView>

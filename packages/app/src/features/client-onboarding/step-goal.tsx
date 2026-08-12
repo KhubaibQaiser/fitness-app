@@ -3,20 +3,8 @@
 import { useEffect, useRef } from 'react';
 import type { UnitPrefs } from '@gymos/core/units';
 import { Body, FormField, SegmentedControl, YStack } from '@gymos/ui';
-import type { GoalPreset, GoalRate, OnboardingDraft } from './onboarding-types';
-
-const PRESETS: { value: GoalPreset; label: string }[] = [
-  { value: 'LOSE', label: 'Lose fat' },
-  { value: 'RECOMP', label: 'Recomp' },
-  { value: 'MAINTAIN', label: 'Maintain' },
-  { value: 'GAIN', label: 'Gain' },
-];
-
-const RATES: { value: GoalRate; label: string }[] = [
-  { value: 'CONSERVATIVE', label: 'Gentle' },
-  { value: 'STANDARD', label: 'Standard' },
-  { value: 'AGGRESSIVE', label: 'Aggressive' },
-];
+import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
+import type { OnboardingDraft } from './onboarding-types';
 
 export const StepGoal = ({
   draft,
@@ -48,7 +36,7 @@ export const StepGoal = ({
         </Body>
         <SegmentedControl
           ariaLabel="Goal preset"
-          options={PRESETS}
+          options={GOAL_PRESET_OPTIONS}
           value={draft.goalPreset}
           onChange={(goalPreset) => onPatch({ goalPreset })}
         />
@@ -60,7 +48,7 @@ export const StepGoal = ({
         </Body>
         <SegmentedControl
           ariaLabel="Goal rate"
-          options={RATES}
+          options={GOAL_RATE_OPTIONS}
           value={draft.goalRate}
           onChange={(goalRate) => onPatch({ goalRate })}
         />

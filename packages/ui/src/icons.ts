@@ -8,6 +8,7 @@ import {
   Check as CheckRaw,
   ChevronRight as ChevronRightRaw,
   ClipboardList as ClipboardListRaw,
+  Download as DownloadRaw,
   Dumbbell as DumbbellRaw,
   Home as HomeRaw,
   MessageCircle as MessageCircleRaw,
@@ -56,6 +57,7 @@ export const Bell: GymosIcon = fromLucide(BellRaw);
 export const Check: GymosIcon = fromLucide(CheckRaw);
 export const ChevronRight: GymosIcon = fromLucide(ChevronRightRaw);
 export const ClipboardList: GymosIcon = fromLucide(ClipboardListRaw);
+export const Download: GymosIcon = fromLucide(DownloadRaw);
 export const Dumbbell: GymosIcon = fromLucide(DumbbellRaw);
 export const Home: GymosIcon = fromLucide(HomeRaw);
 export const MessageCircle: GymosIcon = fromLucide(MessageCircleRaw);
