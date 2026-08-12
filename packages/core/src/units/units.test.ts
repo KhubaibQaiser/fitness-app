@@ -3,14 +3,21 @@ import { describe, expect, it } from 'vitest';
 import {
   cmToFeetInches,
   cmToIn,
+  DEFAULT_UNIT_PREFS,
   displayLength,
   displayWeight,
   feetInchesToCm,
+  formatLength,
+  formatWeight,
   inToCm,
   kgToLb,
   lbToKg,
+  parseLength,
   parseLengthToCm,
+  parseWeight,
   parseWeightToKg,
+  resolveUnitPrefs,
+  unitPrefsToSystem,
 } from './convert';
 
 describe('conversions', () => {
@@ -66,5 +73,39 @@ describe('height as feet/inches', () => {
 
   it('handles the 12-inch rollover', () => {
     expect(cmToFeetInches(182.88)).toEqual({ feet: 6, inches: 0 });
+  });
+});
+
+describe('granular unit prefs', () => {
+  it('resolves user overrides over tenant defaults', () => {
+    expect(resolveUnitPrefs({ weight: 'lb' }, DEFAULT_UNIT_PREFS)).toEqual({
+      weight: 'lb',
+      height: 'ft_in',
+      length: 'in',
+    });
+  });
+
+  it('formats mixed PK prefs (kg + inches)', () => {
+    expect(formatWeight(80, 'kg')).toEqual({ value: 80, unit: 'kg' });
+    expect(formatLength(96.52, 'in')).toEqual({ value: 38, unit: 'in' });
+  });
+
+  it('formats and parses granular weight and length units', () => {
+    expect(formatWeight(80, 'lb')).toEqual({ value: 176.4, unit: 'lb' });
+    expect(formatLength(96.5, 'cm')).toEqual({ value: 96.5, unit: 'cm' });
+    expect(parseWeight(80, 'kg')).toBe(80);
+    expect(parseWeight(176.4, 'lb')).toBeCloseTo(80.01, 1);
+    expect(parseLength(100, 'cm')).toBe(100);
+    expect(parseLength(39.37, 'in')).toBeCloseTo(100, 1);
+  });
+
+  it('maps coarse system from weight unit (mixed PK prefs stay metric)', () => {
+    expect(unitPrefsToSystem(DEFAULT_UNIT_PREFS)).toBe('metric');
+    expect(unitPrefsToSystem({ ...DEFAULT_UNIT_PREFS, weight: 'lb' })).toBe('imperial');
+  });
+
+  it('falls back to tenant prefs when the user has none', () => {
+    expect(resolveUnitPrefs(null, DEFAULT_UNIT_PREFS)).toEqual(DEFAULT_UNIT_PREFS);
+    expect(resolveUnitPrefs(undefined, DEFAULT_UNIT_PREFS)).toEqual(DEFAULT_UNIT_PREFS);
   });
 });

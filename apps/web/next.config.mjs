@@ -21,6 +21,8 @@ const nextConfig = {
     '@gymos/app',
     '@gymos/contracts',
     'solito',
+    'react-native-ui-datepicker',
+    'dayjs',
   ],
   turbopack: {
     resolveAlias: {

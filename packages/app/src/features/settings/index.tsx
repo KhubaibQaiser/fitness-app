@@ -1,27 +1,22 @@
 'use client';
 
-import type { LocaleCode } from '@gymos/contracts';
+import type { HeightUnit, LengthUnit, WeightUnit } from '@gymos/contracts';
 import { useThemeMode } from '@gymos/platform';
 import {
   Body,
   Card,
   ErrorState,
+  IosSwitch,
   LoadingState,
   Muted,
   PageHeader,
   Row,
   SectionTitle,
   SegmentedControl,
-  Switch,
   YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig, useUpdateMe } from '../../api';
 import { AppScreen } from '../shell/app-screen';
-
-const LOCALE_LABELS: Record<LocaleCode, string> = {
-  en: 'English',
-  ur: 'Urdu',
-};
 
 export const SettingsScreen = () => {
   const me = useMe();
@@ -50,14 +45,13 @@ export const SettingsScreen = () => {
     );
   }
 
-  const locale: LocaleCode = me.data.locale === 'ur' ? 'ur' : 'en';
-  const currency = me.data.currencyPref;
   const saving = updateMe.isPending;
   const dark = mode === 'dark';
+  const prefs = me.data.unitPrefs;
 
   return (
     <AppScreen>
-      <PageHeader title="Settings" subtitle="Workspace, appearance, safety" />
+      <PageHeader title="Settings" subtitle="Workspace, appearance, units" />
 
       <SectionTitle>Appearance</SectionTitle>
       <Card gap="$3">
@@ -66,47 +60,59 @@ export const SettingsScreen = () => {
             <Body fontWeight="700">Dark mode</Body>
             <Muted fontSize={12}>Preference is saved on this device.</Muted>
           </YStack>
-          <Switch
+          <IosSwitch
             checked={dark}
             onCheckedChange={(v) => setMode(v ? 'dark' : 'light')}
-            size="$3"
             aria-label="Dark mode"
-          >
-            <Switch.Thumb />
-          </Switch>
+          />
         </Row>
       </Card>
 
-      <SectionTitle>Preferences</SectionTitle>
+      <SectionTitle>Units</SectionTitle>
       <Card gap="$4">
         <YStack gap="$2" width="100%">
-          <Body fontWeight="700">Language</Body>
+          <Body fontWeight="700">Weight</Body>
           <SegmentedControl
-            ariaLabel="Language"
-            value={locale}
-            onChange={(next) => {
-              if (next === locale || saving) return;
-              updateMe.mutate({ locale: next });
+            ariaLabel="Weight unit"
+            value={prefs.weight}
+            onChange={(weight: WeightUnit) => {
+              if (weight === prefs.weight || saving) return;
+              updateMe.mutate({ unitPrefs: { ...prefs, weight } });
             }}
-            options={config.data.locales.enabled.map((code) => ({
-              value: code,
-              label: LOCALE_LABELS[code],
-            }))}
+            options={[
+              { value: 'kg', label: 'kg' },
+              { value: 'lb', label: 'lb' },
+            ]}
           />
         </YStack>
         <YStack gap="$2" width="100%">
-          <Body fontWeight="700">Currency</Body>
+          <Body fontWeight="700">Height</Body>
           <SegmentedControl
-            ariaLabel="Currency"
-            value={currency}
-            onChange={(next) => {
-              if (next === currency || saving) return;
-              updateMe.mutate({ currencyPref: next });
+            ariaLabel="Height unit"
+            value={prefs.height}
+            onChange={(height: HeightUnit) => {
+              if (height === prefs.height || saving) return;
+              updateMe.mutate({ unitPrefs: { ...prefs, height } });
             }}
-            options={config.data.currencies.map((code) => ({
-              value: code,
-              label: code,
-            }))}
+            options={[
+              { value: 'cm', label: 'cm' },
+              { value: 'ft_in', label: 'ft / in' },
+            ]}
+          />
+        </YStack>
+        <YStack gap="$2" width="100%">
+          <Body fontWeight="700">Measurements</Body>
+          <SegmentedControl
+            ariaLabel="Length unit"
+            value={prefs.length}
+            onChange={(length: LengthUnit) => {
+              if (length === prefs.length || saving) return;
+              updateMe.mutate({ unitPrefs: { ...prefs, length } });
+            }}
+            options={[
+              { value: 'cm', label: 'cm' },
+              { value: 'in', label: 'in' },
+            ]}
           />
         </YStack>
         {updateMe.isError ? (
@@ -114,7 +120,7 @@ export const SettingsScreen = () => {
             {updateMe.error.message}
           </Body>
         ) : (
-          <Muted>Saved to your coach profile and applied on every device.</Muted>
+          <Muted>Saved to your coach profile. Food and vitals stay metric in the database.</Muted>
         )}
       </Card>
 
@@ -127,10 +133,6 @@ export const SettingsScreen = () => {
         <Row>
           <Body>Email</Body>
           <Muted>{me.data.email}</Muted>
-        </Row>
-        <Row>
-          <Body>Units</Body>
-          <Muted>{me.data.unitPref}</Muted>
         </Row>
       </Card>
 

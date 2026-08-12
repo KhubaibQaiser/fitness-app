@@ -17,7 +17,9 @@
     "@tamagui/helpers-icon": "2.7.2",
     "@tamagui/lucide-icons-2": "2.7.2",
     "react": "^19.2.8",
+    "react-native": "^0.86.2",
     "react-native-svg": "15.12.1",
+    "react-native-ui-datepicker": "^3.3.0",
     "react-native-web": "^0.21.2",
     "tamagui": "^2.7.2"
   },

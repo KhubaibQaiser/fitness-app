@@ -19,7 +19,6 @@ import {
 } from '@gymos/ui';
 import { useClientDetail, useCreateGoal } from '../../api';
 import { AppScreen } from '../shell/app-screen';
-import { useAppChrome } from '../shell/use-app-chrome';
 
 const PRESETS = [
   { value: 'LOSE', label: 'Lose fat' },
@@ -37,7 +36,6 @@ const RATES = [
 /** Goal setup — presets in, deterministic Layer-1 targets out. */
 export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
-  const { showMobileTabBar } = useAppChrome();
   const detail = useClientDetail(clientId);
   const create = useCreateGoal(clientId);
   const [preset, setPreset] = useState<(typeof PRESETS)[number]['value']>('LOSE');
@@ -45,8 +43,6 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const [startWeight, setStartWeight] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
   const [errors, setErrors] = useState<{ start?: string; target?: string; form?: string }>({});
-
-  const bottomInset = showMobileTabBar ? 72 : 12;
   const latest = detail.data?.latestWeightKg;
   const effectiveStart =
     startWeight !== '' ? startWeight : latest !== null ? String(latest ?? '') : '';
@@ -99,7 +95,18 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   };
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <StickyFormFooter>
+          <GhostButton flex={1} onPress={() => router.back()}>
+            Cancel
+          </GhostButton>
+          <PrimaryButton flex={1} disabled={create.isPending} onPress={submit}>
+            {create.isPending ? 'Computing targets…' : 'Create goal'}
+          </PrimaryButton>
+        </StickyFormFooter>
+      }
+    >
       <PageHeader
         title="Set goal"
         subtitle="Targets come from Mifflin–St Jeor with hard floors"
@@ -171,15 +178,6 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           The AI never invents numbers. Weekly check-ins keep the plan adaptive.
         </Muted>
       </Card>
-
-      <StickyFormFooter bottomInset={bottomInset}>
-        <GhostButton flex={1} onPress={() => router.back()}>
-          Cancel
-        </GhostButton>
-        <PrimaryButton flex={1} disabled={create.isPending} onPress={submit}>
-          {create.isPending ? 'Computing targets…' : 'Create goal'}
-        </PrimaryButton>
-      </StickyFormFooter>
     </AppScreen>
   );
 };

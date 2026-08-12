@@ -116,6 +116,8 @@ const defaultCoachManifest = (slug: string, name: string): TenantManifest => ({
   locales: { default: 'en', enabled: ['en', 'ur'] },
   currency: 'PKR',
   units: 'metric',
+  defaultCountry: 'PK',
+  unitPrefs: { weight: 'kg', height: 'ft_in', length: 'in' },
   aiConfig: {
     cuisineContext: 'pakistani',
     mealCount: 3,
