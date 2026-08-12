@@ -2,3 +2,8 @@ export * from './principal';
 export * from './password';
 export * from './sessions';
 export * from './login';
+export * from './phone';
+export * from './otp';
+export * from './mail';
+export * from './signup-coach';
+export * from './password-reset';

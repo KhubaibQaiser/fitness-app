@@ -8,6 +8,16 @@ const envSchema = z.object({
    */
   JWT_ACCESS_SECRET: z.string().min(32, 'use at least 256 bits: openssl rand -hex 32'),
   /**
+   * Pepper mixed into OTP code hashes. Generate: `openssl rand -hex 32`
+   * Optional locally (dev uses a fixed fallback); required when NODE_ENV=production.
+   */
+  OTP_PEPPER: z.string().min(32).optional(),
+  /** Resend API key — optional locally (OTP logged to stdout); required in production. */
+  RESEND_API_KEY: z.string().min(1).optional(),
+  /** From address for OTP emails. */
+  EMAIL_FROM: z.string().min(3).default('GymOS <onboarding@resend.dev>'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /**
    * Seed-only password for the pilot coach (`coach@pilot.local`).
    * Required at seed time; not used at runtime after the hash is stored.
    */
@@ -32,4 +42,24 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-export const loadEnv = (source: Record<string, string | undefined>): Env => envSchema.parse(source);
+export const loadEnv = (source: Record<string, string | undefined>): Env => {
+  const parsed = envSchema.parse(source);
+  if (parsed.NODE_ENV === 'production') {
+    if (parsed.OTP_PEPPER === undefined) {
+      throw new Error('OTP_PEPPER is required when NODE_ENV=production');
+    }
+    if (parsed.RESEND_API_KEY === undefined) {
+      throw new Error('RESEND_API_KEY is required when NODE_ENV=production');
+    }
+  }
+  return parsed;
+};
+
+/** Resolve OTP pepper — fixed local fallback so pglite/dev works without .env. */
+export const resolveOtpPepper = (env: Pick<Env, 'OTP_PEPPER' | 'NODE_ENV'>): string => {
+  if (env.OTP_PEPPER !== undefined) return env.OTP_PEPPER;
+  if (env.NODE_ENV === 'production') {
+    throw new Error('OTP_PEPPER is required when NODE_ENV=production');
+  }
+  return 'dev-otp-pepper-not-for-production-use!!';
+};

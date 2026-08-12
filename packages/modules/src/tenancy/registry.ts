@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
-import { schema as s, type Db } from '@gymos/db';
+import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { tenantManifestSchema, type TenantManifest } from './manifest';
 
 /**
@@ -19,7 +19,7 @@ export const resetRegistryCache = (): void => {
 };
 
 export const upsertTenantConfig = async (
-  db: Db,
+  db: DbOrTx,
   input: { orgId: string; slug: string; manifest: TenantManifest },
 ): Promise<void> => {
   const parsed = tenantManifestSchema.parse(input.manifest);

@@ -64,6 +64,13 @@
       "when": 1786800000000,
       "tag": "0008_tenant_configs",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786900000000,
+      "tag": "0009_coach_signup_otp",
+      "breakpoints": true
     }
   ]
 }
