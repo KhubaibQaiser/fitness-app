@@ -1,9 +1,6 @@
 'use client';
 
-import { DonutChart } from 'expo-skia-charts';
-import { useMemo } from 'react';
-import { View } from 'react-native';
-import { useTheme, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
 import { Muted } from '@gymos/ui';
 
 export const MacroDonut = ({
@@ -17,30 +14,11 @@ export const MacroDonut = ({
   fatG: number;
   height?: number;
 }) => {
-  const theme = useTheme();
-
-  const config = useMemo(() => {
-    const primary = String(theme.primary?.val ?? '#00D68F');
-    const accent = String(theme.accent?.val ?? '#479AC2');
-    const warning = String(theme.warning?.val ?? '#FFDE00');
-    const total = proteinG * 4 + carbsG * 4 + fatG * 9;
-
-    return {
-      data: [
-        { label: `P ${proteinG}g`, value: proteinG },
-        { label: `C ${carbsG}g`, value: carbsG },
-        { label: `F ${fatG}g`, value: fatG },
-      ],
-      colors: [primary, accent, warning],
-      strokeWidth: 20,
-      gap: 4,
-      centerValues: {
-        enabled: true as const,
-        value: String(total),
-        label: 'kcal',
-      },
-    };
-  }, [proteinG, carbsG, fatG, theme]);
+  const total = proteinG * 4 + carbsG * 4 + fatG * 9;
+  const sum = Math.max(1, proteinG + carbsG + fatG);
+  const pPct = Math.round((proteinG / sum) * 100);
+  const cPct = Math.round((carbsG / sum) * 100);
+  const fPct = Math.max(0, 100 - pPct - cPct);
 
   if (proteinG === 0 && carbsG === 0 && fatG === 0) {
     return (
@@ -51,8 +29,18 @@ export const MacroDonut = ({
   }
 
   return (
-    <View style={{ height, width: '100%' }}>
-      <DonutChart config={config} />
-    </View>
+    <YStack height={height} justifyContent="center" gap="$3">
+      <XStack height={14} borderRadius={999} overflow="hidden" backgroundColor="$elevatedBg">
+        <YStack width={`${pPct}%`} backgroundColor="$primary" />
+        <YStack width={`${cPct}%`} backgroundColor="$accent" />
+        <YStack width={`${fPct}%`} backgroundColor="$warning" />
+      </XStack>
+      <XStack justifyContent="space-between" flexWrap="wrap" gap="$2">
+        <Muted fontSize={11}>P {proteinG}g</Muted>
+        <Muted fontSize={11}>C {carbsG}g</Muted>
+        <Muted fontSize={11}>F {fatG}g</Muted>
+        <Muted fontSize={11}>{total} kcal</Muted>
+      </XStack>
+    </YStack>
   );
 };
