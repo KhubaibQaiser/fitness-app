@@ -25,7 +25,7 @@ export const NextTamaguiProvider = ({ children }: { children: ReactNode }) => {
   });
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light" disableInjectCSS>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark" disableInjectCSS>
       <ThemeModeProvider>{children}</ThemeModeProvider>
     </TamaguiProvider>
   );

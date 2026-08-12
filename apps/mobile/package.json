@@ -14,8 +14,8 @@
     "maestro:login": "maestro test maestro/login.yaml"
   },
   "dependencies": {
-    "@expo-google-fonts/roboto": "^0.4.3",
-    "@expo-google-fonts/roboto-mono": "^0.4.2",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/metro-runtime": "~57.0.9",
     "@gymos/app": "workspace:^",
     "@gymos/contracts": "workspace:^",

@@ -16,8 +16,6 @@ type ThemeModeContextValue = {
 const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);
 const KEY = 'gymos.themeMode';
 
-const preferDark = (): boolean => Appearance.getColorScheme() === 'dark';
-
 const readStored = (): ThemeMode | null => {
   const value = storage.getItem(KEY);
   return value === 'light' || value === 'dark' ? value : null;
@@ -25,9 +23,7 @@ const readStored = (): ThemeMode | null => {
 
 /** Persisted light/dark mode for native — no `document` / CSS color-scheme. */
 export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setModeState] = useState<ThemeMode>(
-    () => readStored() ?? (preferDark() ? 'dark' : 'light'),
-  );
+  const [mode, setModeState] = useState<ThemeMode>(() => readStored() ?? 'dark');
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
