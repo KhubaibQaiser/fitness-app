@@ -30,13 +30,7 @@ export const HomeQuickActions = ({
     >
       Quick actions
     </Text>
-    <YStack
-      borderWidth={1}
-      borderColor="$borderColor"
-      borderRadius="$radiusCard"
-      backgroundColor="$cardBg"
-      overflow="hidden"
-    >
+    <YStack borderRadius="$radiusCard" backgroundColor="$cardBg" overflow="hidden">
       {actions.map((item, i) => (
         <Link key={item.label} href={item.href}>
           <XStack
@@ -45,9 +39,9 @@ export const HomeQuickActions = ({
             paddingHorizontal="$4"
             paddingVertical="$3"
             borderTopWidth={i > 0 ? 1 : 0}
-            borderTopColor="$borderColor"
+            borderTopColor="$elevatedBg"
             hoverStyle={{ backgroundColor: '$elevatedBg' }}
-            pressStyle={{ opacity: 0.92 }}
+            pressStyle={{ opacity: 0.9, scale: 0.98 }}
           >
             <YStack
               width={32}

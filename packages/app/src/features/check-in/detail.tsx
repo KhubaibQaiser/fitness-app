@@ -20,9 +20,11 @@ import {
   Row,
   SectionTitle,
   StickyFormFooter,
+  XStack,
   YStack,
 } from '@gymos/ui';
 import { useApplyAdjustment, useCheckIn, useUpdateCheckIn } from '../../api';
+import { MacroDonut, ProgressRing } from '../charts';
 import { AppScreen } from '../shell/app-screen';
 import { useAppChrome } from '../shell/use-app-chrome';
 import { adherenceBarTone, adherencePctToRating, adherenceRatingToPct } from './adherence';
@@ -267,7 +269,7 @@ export const CheckInDetailScreen = ({
           disabled={!editable}
         />
 
-        <YStack gap="$2">
+        <YStack gap="$3">
           <FormField
             label="Plan adherence"
             unit="%"
@@ -280,15 +282,47 @@ export const CheckInDetailScreen = ({
             inputMode="numeric"
             disabled={!editable}
           />
-          <YStack
-            height={8}
-            width="100%"
-            backgroundColor="$elevatedBg"
-            borderRadius={999}
-            overflow="hidden"
-          >
-            <YStack height={8} width={`${pctNum}%`} backgroundColor={BAR_COLOR[barTone]} />
-          </YStack>
+          <XStack alignItems="center" gap="$3" justifyContent="space-between">
+            <ProgressRing
+              value={pctNum}
+              size={88}
+              label="adherence"
+              tone={
+                barTone === 'success'
+                  ? 'success'
+                  : barTone === 'warning'
+                    ? 'warning'
+                    : barTone === 'danger'
+                      ? 'danger'
+                      : 'primary'
+              }
+            />
+            {verdict?.newTargets ? (
+              <YStack flex={1} minWidth={0} maxWidth={220}>
+                <MacroDonut
+                  proteinG={verdict.newTargets.proteinG}
+                  carbsG={verdict.newTargets.carbsG}
+                  fatG={verdict.newTargets.fatG}
+                  height={140}
+                />
+              </YStack>
+            ) : (
+              <YStack flex={1} minWidth={0}>
+                <YStack
+                  height={8}
+                  width="100%"
+                  backgroundColor="$elevatedBg"
+                  borderRadius={999}
+                  overflow="hidden"
+                >
+                  <YStack height={8} width={`${pctNum}%`} backgroundColor={BAR_COLOR[barTone]} />
+                </YStack>
+                <Muted fontSize={11} marginTop="$2">
+                  {pctNum}% adherence
+                </Muted>
+              </YStack>
+            )}
+          </XStack>
         </YStack>
 
         <FormField
