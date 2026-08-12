@@ -4,7 +4,7 @@
   "name": "GymOS Pilot",
   "branding": {
     "appName": "GymOS Coach",
-    "colors": { "primary": "#005DB8", "accent": "#5150BE" },
+    "colors": { "primary": "#00D68F", "accent": "#479AC2" },
     "radius": "soft"
   },
   "terminology": {},
