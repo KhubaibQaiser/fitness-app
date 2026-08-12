@@ -36,4 +36,4 @@ Production pilot: `https://gymos-pilot.duckdns.org`.
 
 ## Repository layout
 
-See `docs/` for architecture decision records (`docs/adr/`) and operational runbooks (`docs/runbooks/`). The authoritative build plan lives with the product docs.
+See `docs/` for architecture decision records (`docs/adr/`), operational runbooks (`docs/runbooks/`), and the technical investor pitch (`docs/pitch/`). The authoritative build plan lives with the product docs.
