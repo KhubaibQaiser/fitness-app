@@ -13,13 +13,11 @@ import {
   PrimaryButton,
   Screen,
   Text,
-  XStack,
   YStack,
 } from '@gymos/ui';
 import { qk } from '../../api';
 import { AUTH_HINT_KEY } from '../shell/gate-guard';
 
-/** Email + password login — replaces the pilot access-key gate. */
 export const EnterScreen = () => (
   <AppErrorBoundary>
     <LoginForm />
@@ -60,35 +58,25 @@ const LoginForm = () => {
 
   return (
     <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
-      <YStack gap="$5" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$5">
-        <YStack gap="$3" alignItems="center">
-          <XStack alignItems="center" gap="$3">
-            <YStack
-              width={44}
-              height={44}
-              borderRadius="$radiusControl"
-              backgroundColor="$primary"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text fontFamily="$heading" fontWeight="800" fontSize={18} color="$primaryFg">
-                G
-              </Text>
-            </YStack>
-            <YStack>
-              <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={1.2}>
-                GymOS
-              </Muted>
-              <Text fontFamily="$heading" fontWeight="700" fontSize={22} color="$color">
-                Coach
-              </Text>
-            </YStack>
-          </XStack>
-          <Muted textAlign="center" fontSize={13}>
+      <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
+        <YStack gap="$2" alignItems="center">
+          <Text
+            fontFamily="$heading"
+            fontWeight="800"
+            fontSize={28}
+            color="$color"
+            letterSpacing={-0.5}
+          >
+            GymOS
+          </Text>
+          <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
+            Coach
+          </Muted>
+          <Muted textAlign="center" fontSize={13} marginTop="$2">
             Sign in to your coaching workstation
           </Muted>
         </YStack>
-        <Card gap="$4" padding="$5">
+        <Card padding="$6" gap="$4">
           <FormField
             label="Email"
             value={email}
