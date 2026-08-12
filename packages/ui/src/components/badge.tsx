@@ -2,7 +2,6 @@ import { Text, XStack } from 'tamagui';
 
 export type BadgeTone = 'danger' | 'warning' | 'success' | 'neutral' | 'primary' | 'accent';
 
-/** Soft muted chips (kit): muted surface + status text — not solid fills. */
 const BADGE_BG: Record<BadgeTone, string> = {
   danger: '$dangerMuted',
   warning: '$warningMuted',
@@ -25,8 +24,8 @@ export const Badge = ({ tone = 'neutral', label }: { tone?: BadgeTone; label: st
   <XStack
     backgroundColor={BADGE_BG[tone]}
     borderRadius={999}
-    paddingHorizontal="$2"
-    paddingVertical="$1"
+    paddingHorizontal="$2.5"
+    paddingVertical="$1.5"
     alignSelf="flex-start"
     alignItems="center"
     gap="$1"
