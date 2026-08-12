@@ -9,18 +9,17 @@ const focusRing = {
 
 const baseButton = {
   borderRadius: '$radiusControl',
-  height: 40,
-  minHeight: 40,
-  paddingHorizontal: '$3.5',
+  height: 48,
+  minHeight: 48,
+  paddingHorizontal: '$4',
   fontFamily: '$heading',
   fontWeight: '600',
-  fontSize: 14,
-  pressStyle: { opacity: 0.88, scale: 0.98 },
+  fontSize: 15,
+  pressStyle: { opacity: 0.9, scale: 0.97 },
   focusVisibleStyle: focusRing,
-  disabledStyle: { opacity: 0.45 },
+  disabledStyle: { opacity: 0.4 },
 } as const;
 
-/** Labeled primary action — compact height, not a tall touch slab. */
 export const PrimaryButton = styled(Button, {
   name: 'PrimaryButton',
   ...baseButton,
@@ -39,7 +38,6 @@ export const AccentButton = styled(Button, {
   hoverStyle: { opacity: 0.92 },
 });
 
-/** Outlined labeled secondary — use IconButton for icon-only controls. */
 export const GhostButton = styled(Button, {
   name: 'GhostButton',
   ...baseButton,

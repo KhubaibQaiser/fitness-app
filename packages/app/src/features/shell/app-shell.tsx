@@ -73,16 +73,16 @@ const UnreadDot = ({ count }: { count: number }) =>
     <YStack
       backgroundColor="$danger"
       borderRadius={999}
-      minWidth={18}
-      height={18}
-      paddingHorizontal={4}
+      minWidth={16}
+      height={16}
+      paddingHorizontal={3}
       alignItems="center"
       justifyContent="center"
       position="absolute"
       top={-4}
       right={-8}
     >
-      <Text color="$dangerFg" fontSize={10} fontWeight="800" fontFamily="$heading">
+      <Text color="$dangerFg" fontSize={9} fontWeight="800" fontFamily="$heading">
         {count > 9 ? '9+' : count}
       </Text>
     </YStack>
@@ -98,7 +98,7 @@ export const MobileTabBar = () => {
 
   return (
     <XStack
-      backgroundColor="$sidebar"
+      backgroundColor="$screenBg"
       borderTopWidth={1}
       borderTopColor="$borderColor"
       justifyContent="space-around"
@@ -106,13 +106,12 @@ export const MobileTabBar = () => {
       paddingBottom={Math.max(insets.bottom, 12)}
       paddingHorizontal="$1"
       zIndex={100}
-      elevation={8}
       role="navigation"
       aria-label="Primary"
     >
       {NAV.map(({ href, label }) => {
         const active = isActive(pathname, href);
-        const color = active ? '$primaryFg' : '$textMuted';
+        const iconColor = active ? '$primary' : '$textMuted';
         return (
           <Link key={href} href={href} style={{ flex: 1 }}>
             <YStack
@@ -122,8 +121,6 @@ export const MobileTabBar = () => {
               gap={4}
               paddingVertical="$1.5"
               paddingHorizontal="$1"
-              borderRadius="$radiusControl"
-              backgroundColor={active ? '$primary' : 'transparent'}
               marginHorizontal={2}
               focusVisibleStyle={{
                 outlineWidth: 2,
@@ -132,17 +129,27 @@ export const MobileTabBar = () => {
               }}
             >
               <XStack position="relative">
-                {navIcon(href, 20, color)}
+                {navIcon(href, 22, iconColor)}
                 {href === '/notifications' ? <UnreadDot count={count} /> : null}
               </XStack>
               <Text
                 fontSize={10}
                 fontFamily="$heading"
-                fontWeight={active ? '700' : '500'}
-                color={active ? '$primaryFg' : '$textMuted'}
+                fontWeight={active ? '600' : '400'}
+                color={active ? '$primary' : '$textMuted'}
               >
                 {label}
               </Text>
+              {active ? (
+                <YStack
+                  width={4}
+                  height={4}
+                  borderRadius={999}
+                  backgroundColor="$primary"
+                  position="absolute"
+                  bottom={2}
+                />
+              ) : null}
             </YStack>
           </Link>
         );
@@ -160,7 +167,6 @@ export const SideNav = () => {
 
   const link = ({ href, label }: NavItem) => {
     const active = isActive(pathname, href);
-    const color = active ? '$primaryFg' : '$textMuted';
     return (
       <Link key={href} href={href}>
         <XStack
@@ -169,34 +175,47 @@ export const SideNav = () => {
           minHeight={40}
           paddingHorizontal="$3"
           borderRadius="$radiusControl"
-          backgroundColor={active ? '$primary' : 'transparent'}
-          hoverStyle={{ backgroundColor: active ? '$primary' : '$elevatedBg' }}
+          backgroundColor={active ? '$cardBg' : 'transparent'}
+          hoverStyle={{ backgroundColor: active ? '$cardBg' : '$elevatedBg' }}
           focusVisibleStyle={{
             outlineWidth: 2,
             outlineColor: '$focusRing',
             outlineStyle: 'solid',
           }}
+          overflow="hidden"
         >
-          {navIcon(href, 18, color)}
+          {active ? (
+            <YStack
+              width={3}
+              backgroundColor="$primary"
+              alignSelf="stretch"
+              position="absolute"
+              left={0}
+              top={0}
+              bottom={0}
+              borderRadius={2}
+            />
+          ) : null}
+          {navIcon(href, 18, active ? '$primary' : '$textMuted')}
           <Body
-            fontWeight={active ? '700' : '500'}
+            fontWeight={active ? '600' : '400'}
             fontSize={13.5}
-            color={active ? '$primaryFg' : '$textMuted'}
+            color={active ? '$color' : '$textMuted'}
             flex={1}
           >
             {label}
           </Body>
           {href === '/notifications' && count > 0 ? (
             <YStack
-              backgroundColor={active ? '$primaryFg' : '$danger'}
+              backgroundColor="$danger"
               borderRadius={999}
-              minWidth={22}
-              height={22}
+              minWidth={20}
+              height={20}
               alignItems="center"
               justifyContent="center"
-              paddingHorizontal={6}
+              paddingHorizontal={5}
             >
-              <Text color={active ? '$primary' : '$dangerFg'} fontSize={11} fontWeight="800">
+              <Text color="$dangerFg" fontSize={10} fontWeight="800">
                 {count > 9 ? '9+' : count}
               </Text>
             </YStack>
@@ -210,7 +229,7 @@ export const SideNav = () => {
     <YStack
       width={236}
       minWidth={236}
-      backgroundColor="$sidebar"
+      backgroundColor="$screenBg"
       borderRightWidth={1}
       borderRightColor="$borderColor"
       paddingVertical="$4"
@@ -225,13 +244,15 @@ export const SideNav = () => {
         <Text
           fontFamily="$heading"
           fontWeight="800"
-          fontSize={20}
+          fontSize={18}
           color="$color"
-          letterSpacing={-0.5}
+          letterSpacing={-0.3}
         >
           GymOS
         </Text>
-        <Muted fontSize={12}>Coach</Muted>
+        <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
+          Coach
+        </Muted>
       </YStack>
 
       <YStack gap="$1" flex={1}>
@@ -279,10 +300,6 @@ export const SideNav = () => {
   );
 };
 
-/**
- * Responsive coach chrome: bottom tabs on phone, side nav on desktop.
- * Flex column/row — no `100vh` / `position: fixed` (native-safe).
- */
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { isDesktop } = useAppChrome();
 
