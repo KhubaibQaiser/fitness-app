@@ -11,10 +11,10 @@ import {
   ShieldAlert,
   Stat,
   Text,
-  WeightChart,
   XStack,
   YStack,
 } from '@gymos/ui';
+import { ProgressRing, WeightTrendChart } from '../charts';
 
 type WeightPoint = { t: number; weightKg: number };
 
@@ -243,7 +243,7 @@ export const ClientHubOverview = ({
             ) : null}
           </XStack>
           {weighIns.length >= 2 ? (
-            <WeightChart
+            <WeightTrendChart
               points={weighIns}
               goalWeightKg={goal?.targetWeightKg ?? null}
               height={200}
@@ -266,11 +266,14 @@ export const ClientHubOverview = ({
               <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
                 Goal progress
               </Muted>
-              <XStack alignItems="flex-end" justifyContent="space-between">
-                <Muted fontSize={11}>{goal.startWeightKg} kg</Muted>
-                <Text fontFamily="$mono" fontWeight="700" fontSize={22} color="$color">
-                  {goalProgressPct}%
-                </Text>
+              <XStack alignItems="center" justifyContent="space-between" gap="$3">
+                <YStack gap={2}>
+                  <Muted fontSize={11}>{goal.startWeightKg} kg</Muted>
+                  {kgToGoal !== null ? (
+                    <Muted fontSize={11}>{kgToGoal.toFixed(1)} kg to goal</Muted>
+                  ) : null}
+                </YStack>
+                <ProgressRing value={goalProgressPct} size={84} label="progress" tone="primary" />
                 <Muted fontSize={11}>{goal.targetWeightKg ?? '—'} kg</Muted>
               </XStack>
               <YStack
@@ -291,9 +294,6 @@ export const ClientHubOverview = ({
                   borderRadius={999}
                 />
               </YStack>
-              {kgToGoal !== null ? (
-                <Muted fontSize={11}>{kgToGoal.toFixed(1)} kg to goal</Muted>
-              ) : null}
             </Card>
           ) : null}
 
