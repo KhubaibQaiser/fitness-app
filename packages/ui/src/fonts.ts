@@ -3,32 +3,30 @@ import { createFont, isWeb } from 'tamagui';
 
 /**
  * Cross-platform font faces.
- * Web: CSS vars from next/font (Roboto + Roboto Mono) — see apps/web/app/layout.tsx.
- * Native (P3): load the same families via expo-font / useFonts using `face` names.
- *
- * Roboto matches the TradeBlock MD3 typeface; Roboto Mono for stats / data.
+ * Web: CSS vars from next/font (Inter + JetBrains Mono) — see apps/web/app/layout.tsx.
+ * Native: load via expo-font / useFonts using `face` names.
  */
-const robotoFace = {
-  400: { normal: 'Roboto' },
-  500: { normal: 'Roboto-Medium' },
-  600: { normal: 'Roboto-Medium' },
-  700: { normal: 'Roboto-Bold' },
-  800: { normal: 'Roboto-Bold' },
-  bold: { normal: 'Roboto-Bold' },
+const interFace = {
+  400: { normal: 'Inter' },
+  500: { normal: 'Inter-Medium' },
+  600: { normal: 'Inter-SemiBold' },
+  700: { normal: 'Inter-Bold' },
+  800: { normal: 'Inter-ExtraBold' },
+  bold: { normal: 'Inter-Bold' },
 } as const;
 
 const monoFace = {
-  400: { normal: 'RobotoMono' },
-  500: { normal: 'RobotoMono-Medium' },
-  600: { normal: 'RobotoMono-Medium' },
-  700: { normal: 'RobotoMono-Medium' },
-  bold: { normal: 'RobotoMono-Medium' },
+  400: { normal: 'JetBrainsMono' },
+  500: { normal: 'JetBrainsMono-Medium' },
+  600: { normal: 'JetBrainsMono-Medium' },
+  700: { normal: 'JetBrainsMono-Bold' },
+  bold: { normal: 'JetBrainsMono-Bold' },
 } as const;
 
-const familyWeb = 'var(--font-sans), Roboto, ui-sans-serif, system-ui, sans-serif';
-const familyNative = 'Roboto';
-const monoWeb = 'var(--font-mono), "Roboto Mono", ui-monospace, monospace';
-const monoNative = 'RobotoMono';
+const familyWeb = 'var(--font-sans), Inter, ui-sans-serif, system-ui, sans-serif';
+const familyNative = 'Inter';
+const monoWeb = 'var(--font-mono), "JetBrains Mono", ui-monospace, monospace';
+const monoNative = 'JetBrainsMono';
 
 export const headingFont = createFont({
   family: isWeb ? familyWeb : familyNative,
@@ -36,7 +34,7 @@ export const headingFont = createFont({
   lineHeight: defaultConfig.fonts.heading.lineHeight,
   weight: defaultConfig.fonts.heading.weight,
   letterSpacing: defaultConfig.fonts.heading.letterSpacing,
-  face: robotoFace,
+  face: interFace,
 });
 
 export const bodyFont = createFont({
@@ -45,7 +43,7 @@ export const bodyFont = createFont({
   lineHeight: defaultConfig.fonts.body.lineHeight,
   weight: defaultConfig.fonts.body.weight,
   letterSpacing: defaultConfig.fonts.body.letterSpacing,
-  face: robotoFace,
+  face: interFace,
 });
 
 export const monoFont = createFont({
