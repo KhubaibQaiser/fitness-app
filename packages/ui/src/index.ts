@@ -20,6 +20,7 @@ export { FormField, FormSection } from './components/form-field';
 export { PageHeader } from './components/page-header';
 export { StickyFormFooter } from './components/sticky-form-footer';
 export { Stat, DeltaChip, Avatar, ListRow } from './components/stat';
+export { MetricHero } from './components/metric-hero';
 export { SegmentedControl, Tabs } from './components/segmented-control';
 export type { SegmentOption, TabItem } from './components/segmented-control';
 export { AppErrorBoundary } from './components/error-boundary';

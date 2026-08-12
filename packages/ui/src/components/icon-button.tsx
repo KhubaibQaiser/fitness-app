@@ -7,17 +7,6 @@ const focusRing = {
   outlineOffset: 2,
 } as const;
 
-/**
- * Compact icon-only control.
- *
- * Must stay `unstyled` — styled Button + `circular` injects `size: "$true"` and
- * overrides fixed hit targets. Do not name a variant `scale` (transform style).
- *
- * density:
- * - md  40×40 (default)
- * - xs  28×28
- * - xxs 20×20
- */
 export const IconButton = styled(Button, {
   name: 'IconButton',
   unstyled: true,
@@ -45,7 +34,7 @@ export const IconButton = styled(Button, {
   fontWeight: '700',
   fontSize: 20,
   hoverStyle: { backgroundColor: '$elevatedBg', opacity: 1 },
-  pressStyle: { opacity: 0.85 },
+  pressStyle: { opacity: 0.85, scale: 0.97 },
   focusVisibleStyle: focusRing,
   disabledStyle: { opacity: 0.4 },
 
