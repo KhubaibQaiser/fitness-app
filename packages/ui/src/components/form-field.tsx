@@ -116,6 +116,11 @@ export const FormField = ({
             fontFamily="$body"
             fontSize={15}
             secureTextEntry={secureTextEntry}
+            {...(secureTextEntry
+              ? { type: 'password' as const, autoComplete: 'current-password' as const }
+              : inputMode === 'email'
+                ? { type: 'email' as const, autoComplete: 'email' as const }
+                : {})}
             {...(autoCapitalize !== undefined ? { autoCapitalize } : {})}
             {...(autoCorrect !== undefined ? { autoCorrect } : {})}
             {...(inputMode !== undefined ? { inputMode } : {})}
