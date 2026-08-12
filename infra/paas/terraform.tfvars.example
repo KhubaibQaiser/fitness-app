@@ -6,7 +6,7 @@ neon_region_id        = "aws-ap-southeast-1"
 neon_pg_version       = 17
 render_api_url        = "https://gymos-api.onrender.com"
 
-# Gate secrets are NOT managed by OpenTofu (Render Blueprint sync:false).
+# Auth secrets are NOT managed by OpenTofu (Render Blueprint sync:false).
 # Generate and paste into the Render dashboard:
-#   openssl rand -hex 16   → PILOT_ACCESS_KEY
-#   openssl rand -hex 32   → GATE_COOKIE_SECRET
+#   openssl rand -hex 32   → JWT_ACCESS_SECRET
+# Seed (laptop / CI) also needs PILOT_COACH_PASSWORD (≥12 chars) for coach@pilot.local.

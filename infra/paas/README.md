@@ -49,18 +49,18 @@ Then wire Render (Blueprint lives beside this stack):
 
 ```bash
 tofu output -raw database_url_pooled   # → Render DATABASE_URL
-openssl rand -hex 16                   # → PILOT_ACCESS_KEY
-openssl rand -hex 32                   # → GATE_COOKIE_SECRET
+openssl rand -hex 32                   # → JWT_ACCESS_SECRET (≥32 chars)
 ```
 
-3. Migrate + seed (direct URL, from repo root):
+3. Migrate + seed (direct URL, from repo root). Seed needs `PILOT_COACH_PASSWORD`
+   (≥12 chars) in the env you run seed with:
 
 ```bash
 export DATABASE_URL="$(cd infra/paas && tofu output -raw database_url_direct)"
 pnpm db:migrate && pnpm db:seed
 ```
 
-4. Open the Vercel deployment → `/gate/enter?key=<PILOT_ACCESS_KEY>`.
+4. Open the Vercel deployment → sign in as `coach@pilot.local` with the seed password.
 
 ### Blueprint path note
 

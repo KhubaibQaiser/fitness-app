@@ -5,7 +5,7 @@
 # Or: `render blueprints launch` if using the Render CLI.
 #
 # After first deploy, set sync:false secrets in the dashboard (or Render env group):
-#   DATABASE_URL, PILOT_ACCESS_KEY, GATE_COOKIE_SECRET
+#   DATABASE_URL, JWT_ACCESS_SECRET
 
 services:
   - type: web
@@ -28,7 +28,5 @@ services:
       # Secrets — create once in the dashboard (Blueprint will not overwrite sync:false).
       - key: DATABASE_URL
         sync: false
-      - key: PILOT_ACCESS_KEY
-        sync: false
-      - key: GATE_COOKIE_SECRET
+      - key: JWT_ACCESS_SECRET
         sync: false
