@@ -3,7 +3,7 @@
 import { type ReactElement, type ReactNode } from 'react';
 import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
-import { useSafeAreaInsets, useThemeMode } from '@gymos/platform';
+import { isWeb, useSafeAreaInsets, useThemeMode } from '@gymos/platform';
 import {
   Avatar,
   Bell,
@@ -302,12 +302,16 @@ export const SideNav = () => {
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { isDesktop } = useAppChrome();
+  // Web needs an explicit viewport-bound height so flex children can compute a
+  // determinate size and scroll internally (native screens are already bounded
+  // by the OS window, so flex={1} alone is enough there).
+  const webHeight = isWeb ? { height: '100dvh' as const } : {};
 
   if (isDesktop) {
     return (
-      <XStack flex={1} width="100%" minHeight="100%" backgroundColor="$screenBg">
+      <XStack flex={1} width="100%" {...webHeight} backgroundColor="$screenBg">
         <SideNav />
-        <YStack flex={1} minWidth={0} position="relative" overflow="hidden">
+        <YStack flex={1} minWidth={0} minHeight={0} position="relative" overflow="hidden">
           {children}
         </YStack>
       </XStack>
@@ -315,8 +319,8 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <YStack flex={1} width="100%" minHeight="100%" backgroundColor="$screenBg">
-      <YStack flex={1} minHeight={0} width="100%">
+    <YStack flex={1} width="100%" {...webHeight} backgroundColor="$screenBg">
+      <YStack flex={1} minHeight={0} width="100%" overflow="hidden">
         {children}
       </YStack>
       <MobileTabBar />

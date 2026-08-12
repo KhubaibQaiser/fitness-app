@@ -122,12 +122,15 @@ export const otpChallenges = pgTable(
 /**
  * Refresh-token sessions — one row per device/login.
  * The raw refresh token is returned once to the client; only a SHA-256 hash is stored.
- * Rotation: each refresh revokes the old row and inserts a new one.
+ * Rotation: each refresh revokes the old row and inserts a new one, sharing the same
+ * `familyId` so reuse of an already-rotated token can be traced back to its chain
+ * (grace-window tolerance for benign races vs. full-family revoke on real reuse).
  */
 export const sessions = pgTable(
   'sessions',
   {
     id: id(),
+    familyId: uuid('family_id').notNull(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id),
@@ -143,5 +146,6 @@ export const sessions = pgTable(
     index('sessions_user_idx').on(t.userId),
     uniqueIndex('sessions_refresh_hash_uq').on(t.refreshTokenHash),
     index('sessions_expires_idx').on(t.expiresAt),
+    index('sessions_family_idx').on(t.familyId),
   ],
 );

@@ -42,15 +42,20 @@ export const RosterRow = ({ client, desktop }: Props) => {
           <XStack alignItems="center" gap="$3">
             <Avatar name={client.name} size={32} tone={attention ? 'primary' : 'accent'} />
             <YStack flex={1} minWidth={0} gap={2}>
-              <Text
-                fontFamily="$heading"
-                fontWeight="600"
-                fontSize={13.5}
-                color="$color"
-                numberOfLines={1}
-              >
-                {client.name}
-              </Text>
+              <XStack alignItems="center" gap="$2" flexWrap="wrap">
+                <Text
+                  fontFamily="$heading"
+                  fontWeight="600"
+                  fontSize={13.5}
+                  color="$color"
+                  numberOfLines={1}
+                >
+                  {client.name}
+                </Text>
+                {attention ? <Badge tone="danger" label="Needs attention" /> : null}
+                {neu ? <Badge tone="warning" label="New" /> : null}
+                {!attention && !neu ? <Badge tone="success" label="On track" /> : null}
+              </XStack>
               <Muted fontSize={11}>
                 {client.latestWeightKg !== null ? `${client.latestWeightKg} kg` : 'No weigh-in'}
                 {client.goalPreset ? ` · ${goalText}` : ''}
@@ -58,20 +63,21 @@ export const RosterRow = ({ client, desktop }: Props) => {
             </YStack>
             <ChevronRight size={14} color="$textMuted" />
           </XStack>
-          <XStack gap="$1" flexWrap="wrap">
-            {attention ? <Badge tone="danger" label="Needs attention" /> : null}
-            {neu ? <Badge tone="warning" label="New" /> : null}
-            {!attention && !neu ? <Badge tone="success" label="On track" /> : null}
-            {client.attentionReasons
-              .slice(0, 2)
-              .map((r) =>
-                r.code === 'OFF_TRACK' ||
-                r.code === 'RED_FLAG' ||
-                r.code === 'NEW_CLIENT' ? null : (
-                  <Badge key={r.code} tone="danger" label={r.code.replaceAll('_', ' ')} />
-                ),
-              )}
-          </XStack>
+          {client.attentionReasons.some(
+            (r) => r.code !== 'OFF_TRACK' && r.code !== 'RED_FLAG' && r.code !== 'NEW_CLIENT',
+          ) ? (
+            <XStack gap="$1" flexWrap="wrap">
+              {client.attentionReasons
+                .slice(0, 2)
+                .map((r) =>
+                  r.code === 'OFF_TRACK' ||
+                  r.code === 'RED_FLAG' ||
+                  r.code === 'NEW_CLIENT' ? null : (
+                    <Badge key={r.code} tone="danger" label={r.code.replaceAll('_', ' ')} />
+                  ),
+                )}
+            </XStack>
+          ) : null}
         </Card>
       </Link>
     );

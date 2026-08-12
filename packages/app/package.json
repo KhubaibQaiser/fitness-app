@@ -31,7 +31,8 @@
     "./features/meal-composition": "./src/features/meal-composition/index.tsx"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gymos/contracts": "workspace:^",

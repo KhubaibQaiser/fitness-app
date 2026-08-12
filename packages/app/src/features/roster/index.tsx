@@ -120,14 +120,13 @@ export const RosterScreen = () => {
           focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
         />
         <XStack
+          width="100%"
           borderWidth={1}
           borderColor="$borderColor"
           borderRadius="$radiusControl"
           backgroundColor="$elevatedBg"
           overflow="hidden"
-          flexShrink={0}
-          alignSelf="stretch"
-          $sm={{ alignSelf: 'center' }}
+          $sm={{ width: 'auto', flexShrink: 0, alignSelf: 'center' }}
         >
           {FILTERS.map((f) => {
             const selected = filter === f.id;
@@ -136,6 +135,7 @@ export const RosterScreen = () => {
                 key={f.id}
                 role="tab"
                 aria-selected={selected}
+                flex={1}
                 height={36}
                 paddingHorizontal="$3"
                 justifyContent="center"
@@ -146,8 +146,9 @@ export const RosterScreen = () => {
                 onPress={() => {
                   startTransition(() => setFilter(f.id));
                 }}
+                $sm={{ flex: 0 }}
               >
-                <XStack alignItems="center" gap={6}>
+                <XStack alignItems="center" justifyContent="center" gap={6}>
                   <Text
                     fontSize={12}
                     fontWeight="500"

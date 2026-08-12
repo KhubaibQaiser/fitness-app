@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { parseWeight } from '@gymos/core/units';
 import { AlertBanner, Card, FormField, Stat, XStack, YStack } from '@gymos/ui';
+import { useMe, usePublicConfig } from '../../api';
+import { ftInToCm, parsePositive } from '../../lib/height-units';
+import { unitPrefsFrom } from '../../lib/unit-prefs';
 
 type BmiCategory = {
   label: string;
@@ -15,20 +19,33 @@ const categorize = (bmi: number): BmiCategory => {
   return { label: 'Obese', tone: 'danger' };
 };
 
-const parsePositive = (raw: string): number | null => {
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
-
-/** WHO BMI calculator — client-side only. */
+/** WHO BMI calculator, unit-aware — reads weight/height in the user's unit prefs. */
 export const ToolsBmi = () => {
-  const [weightKg, setWeightKg] = useState('75');
-  const [heightCm, setHeightCm] = useState('175');
+  const me = useMe();
+  const config = usePublicConfig();
+  const prefs = unitPrefsFrom(me.data, config.data);
 
-  const w = parsePositive(weightKg);
-  const hCm = parsePositive(heightCm);
-  const hM = hCm !== null ? hCm / 100 : null;
-  const bmi = w !== null && hM !== null && hM > 0 ? w / (hM * hM) : null;
+  const [weight, setWeight] = useState(() => (prefs.weight === 'kg' ? '75' : '165'));
+  const [heightCmInput, setHeightCmInput] = useState('175');
+  const [heightFt, setHeightFt] = useState('5');
+  const [heightIn, setHeightIn] = useState('9');
+
+  const w = parsePositive(weight);
+  const weightKg = w !== null ? parseWeight(w, prefs.weight) : null;
+
+  const heightCm =
+    prefs.height === 'cm'
+      ? parsePositive(heightCmInput)
+      : (() => {
+          const ft = parsePositive(heightFt);
+          if (ft === null) return null;
+          const inches = heightIn.trim() === '' ? 0 : Number(heightIn);
+          return Number.isFinite(inches) && inches >= 0 ? ftInToCm(ft, inches) : null;
+        })();
+
+  const heightM = heightCm !== null ? heightCm / 100 : null;
+  const bmi =
+    weightKg !== null && heightM !== null && heightM > 0 ? weightKg / (heightM * heightM) : null;
   const category = bmi !== null ? categorize(bmi) : null;
 
   return (
@@ -37,21 +54,44 @@ export const ToolsBmi = () => {
         <YStack flex={1} minWidth={140}>
           <FormField
             label="Weight"
-            value={weightKg}
-            onChangeText={setWeightKg}
+            value={weight}
+            onChangeText={setWeight}
             inputMode="decimal"
-            unit="kg"
+            unit={prefs.weight}
           />
         </YStack>
-        <YStack flex={1} minWidth={140}>
-          <FormField
-            label="Height"
-            value={heightCm}
-            onChangeText={setHeightCm}
-            inputMode="decimal"
-            unit="cm"
-          />
-        </YStack>
+        {prefs.height === 'cm' ? (
+          <YStack flex={1} minWidth={140}>
+            <FormField
+              label="Height"
+              value={heightCmInput}
+              onChangeText={setHeightCmInput}
+              inputMode="decimal"
+              unit="cm"
+            />
+          </YStack>
+        ) : (
+          <>
+            <YStack flex={1} minWidth={100}>
+              <FormField
+                label="Height"
+                value={heightFt}
+                onChangeText={setHeightFt}
+                inputMode="numeric"
+                unit="ft"
+              />
+            </YStack>
+            <YStack flex={1} minWidth={100}>
+              <FormField
+                label={'\u00A0'}
+                value={heightIn}
+                onChangeText={setHeightIn}
+                inputMode="decimal"
+                unit="in"
+              />
+            </YStack>
+          </>
+        )}
       </XStack>
 
       <Card>

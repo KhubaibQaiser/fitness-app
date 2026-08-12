@@ -1,7 +1,7 @@
 'use client';
 
 import { Body, FormField, SegmentedControl, XStack, YStack } from '@gymos/ui';
-import { cmToFtIn, ftInToCm } from './height-units';
+import { cmToFtIn, ftInToCm } from '../../lib/height-units';
 import type { HeightUnit, OnboardingDraft } from './onboarding-types';
 
 export const StepHeight = ({

@@ -60,19 +60,23 @@ export const ClientHubHeader = ({
     >
       <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$2.5">
         <Avatar name={name} size={36} tone={status === 'attention' ? 'primary' : 'accent'} />
-        <ClientHubStatusDot status={status} />
 
         <YStack flex={1} minWidth={0} gap={2}>
-          <Text
-            fontFamily="$heading"
-            fontWeight="700"
-            fontSize={16}
-            color="$color"
-            letterSpacing={-0.3}
-            numberOfLines={1}
-          >
-            {name}
-          </Text>
+          <XStack alignItems="center" gap="$2" minWidth={0}>
+            <ClientHubStatusDot status={status} />
+            <Text
+              flex={1}
+              minWidth={0}
+              fontFamily="$heading"
+              fontWeight="700"
+              fontSize={16}
+              color="$color"
+              letterSpacing={-0.3}
+              numberOfLines={1}
+            >
+              {name}
+            </Text>
+          </XStack>
           <XStack flexWrap="wrap" gap="$2" alignItems="center">
             {phoneLabel ? (
               <XStack alignItems="center" gap="$1">
