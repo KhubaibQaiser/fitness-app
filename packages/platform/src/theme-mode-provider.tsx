@@ -30,11 +30,11 @@ const readStored = (): ThemeMode | null => {
  * Lives in platform so storage never leaks into packages/ui.
  */
 export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setModeState] = useState<ThemeMode>('light');
+  const [mode, setModeState] = useState<ThemeMode>('dark');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setModeState(readStored() ?? (preferDark() ? 'dark' : 'light'));
+    setModeState(readStored() ?? (preferDark() ? 'dark' : 'dark'));
     setReady(true);
   }, []);
 

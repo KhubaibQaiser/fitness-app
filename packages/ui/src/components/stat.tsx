@@ -4,10 +4,6 @@ import type { ReactNode } from 'react';
 import { Text, XStack, YStack } from 'tamagui';
 import { Muted } from './typography';
 
-/**
- * Kit StatTile — label, mono value (+ optional unit / inline delta), hint.
- * Delta is baseline text beside the value (not a full-width chip).
- */
 export const Stat = ({
   label,
   value,
@@ -16,15 +12,16 @@ export const Stat = ({
   delta,
   deltaTone,
   tone,
+  size = 'default',
 }: {
   label: string;
   value: string;
   hint?: string;
   unit?: string;
-  /** Inline change text, e.g. "1.2 kg ↓" */
   delta?: string;
   deltaTone?: 'danger' | 'success' | 'muted';
   tone?: 'danger' | 'success' | 'warning';
+  size?: 'default' | 'hero';
 }) => {
   const valueColor =
     tone === 'danger'
@@ -36,20 +33,22 @@ export const Stat = ({
           : '$color';
   const deltaColor =
     deltaTone === 'danger' ? '$danger' : deltaTone === 'success' ? '$success' : '$textMuted';
+  const valueFontSize = size === 'hero' ? 38 : 28;
+  const valueLineHeight = size === 'hero' ? 44 : 34;
 
   return (
     <YStack gap="$1" width="100%">
-      <Muted fontSize={11} textTransform="uppercase" letterSpacing={1} fontWeight="500">
+      <Muted fontSize={11} textTransform="uppercase" letterSpacing={1.2} fontWeight="500">
         {label}
       </Muted>
       <XStack alignItems="baseline" gap="$1.5" flexWrap="wrap">
         <Text
           fontFamily="$mono"
-          fontSize={24}
+          fontSize={valueFontSize}
           fontWeight="700"
           color={valueColor}
-          letterSpacing={-0.4}
-          lineHeight={28}
+          letterSpacing={-0.5}
+          lineHeight={valueLineHeight}
         >
           {value}
         </Text>
@@ -101,7 +100,6 @@ export const DeltaChip = ({
   );
 };
 
-/** Initials from letters only — "Adnan (Demo)" → "AD", not "A(". */
 export const avatarInitials = (name: string): string =>
   name
     .split(/\s+/)
@@ -155,7 +153,7 @@ export const ListRow = ({
   <XStack alignItems="center" gap="$3" minHeight={56} width="100%">
     {leading}
     <YStack flex={1} gap={2} minWidth={0}>
-      <Text fontFamily="$heading" fontWeight="700" fontSize={13.5} color="$color" numberOfLines={1}>
+      <Text fontFamily="$heading" fontWeight="600" fontSize={14} color="$color" numberOfLines={1}>
         {title}
       </Text>
       {subtitle ? (
