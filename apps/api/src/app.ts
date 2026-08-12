@@ -31,13 +31,20 @@ import {
   updateClient,
 } from '@gymos/modules/coaching';
 import {
+  confirmCoachSignup,
+  createEmailSender,
   findActiveSession,
   loginWithPassword,
+  requestPasswordReset,
+  resendCoachSignupOtp,
+  resetPasswordWithOtp,
   resolvePrincipal,
   revokeAllSessionsForUser,
   revokeSessionByRefreshToken,
   rotateSession,
+  startCoachSignup,
   updateUserPrefs,
+  type EmailSender,
   type Principal,
 } from '@gymos/modules/identity';
 import {
@@ -69,7 +76,7 @@ import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './auth/constants';
 import { issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
-import { type Env } from './env';
+import { resolveOtpPepper, type Env } from './env';
 import { ProblemError, problemResponse } from './problems';
 import { createDbRateLimiter } from './rate-limit';
 import * as dto from './schemas';
@@ -81,15 +88,22 @@ export type AppDeps = {
    * per-org registry via `getManifestForOrg`; public config falls back here.
    */
   manifest: TenantManifest;
-  env: Pick<
-    Env,
-    | 'JWT_ACCESS_SECRET'
-    | 'AI_MODE'
-    | 'AI_BASE_URL'
-    | 'AI_MODEL'
-    | 'AI_API_KEY'
-    | 'AI_ADAPTER_VERSION'
-  >;
+  env: Pick<Env, 'JWT_ACCESS_SECRET' | 'AI_MODE'> &
+    Partial<
+      Pick<
+        Env,
+        | 'AI_BASE_URL'
+        | 'AI_MODEL'
+        | 'AI_API_KEY'
+        | 'AI_ADAPTER_VERSION'
+        | 'OTP_PEPPER'
+        | 'RESEND_API_KEY'
+        | 'EMAIL_FROM'
+        | 'NODE_ENV'
+      >
+    >;
+  /** Test seam — inject a memory mailer. */
+  mail?: EmailSender | undefined;
 };
 
 type Vars = { requestId: string; principal: Principal };
@@ -142,7 +156,7 @@ const asCoach = (principal: Principal): Principal & { coachId: string } => ({
   coachId: requireCoachId(principal),
 });
 
-export const buildApp = ({ db, manifest: bootstrapManifest, env }: AppDeps) => {
+export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverride }: AppDeps) => {
   /** Authenticated path: org registry first, bootstrap file as last-resort fallback. */
   const resolveTenantManifest = async (principal: Principal): Promise<TenantManifest> => {
     try {
@@ -176,6 +190,32 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env }: AppDeps) => {
   };
 
   const loginLimiter = createDbRateLimiter(db, 10, 60_000);
+  const signupIpLimiter = createDbRateLimiter(db, 5, 15 * 60_000);
+  const signupEmailLimiter = createDbRateLimiter(db, 3, 15 * 60_000);
+  const forgotIpLimiter = createDbRateLimiter(db, 5, 15 * 60_000);
+  const forgotEmailLimiter = createDbRateLimiter(db, 3, 60 * 60_000);
+  const confirmIpLimiter = createDbRateLimiter(db, 10, 15 * 60_000);
+
+  const otpPepper = resolveOtpPepper({
+    OTP_PEPPER: env.OTP_PEPPER,
+    NODE_ENV: env.NODE_ENV ?? 'development',
+  });
+  const mail =
+    mailOverride ??
+    createEmailSender({
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM ?? 'GymOS <onboarding@resend.dev>',
+      requireDelivery: (env.NODE_ENV ?? 'development') === 'production',
+    });
+  const otpDeps = { pepper: otpPepper };
+  const signupDeps = { ...otpDeps, mail };
+  const resetDeps = { ...otpDeps, mail };
+
+  const clientIp = (c: AppContext): string => {
+    const raw = c.req.header('x-forwarded-for');
+    if (raw === undefined) return 'local';
+    return raw.split(',')[0]?.trim() ?? 'local';
+  };
 
   const app = new OpenAPIHono<{ Variables: Vars }>({
     defaultHook: (result, c) => {
@@ -324,13 +364,149 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env }: AppDeps) => {
     return c.json({ ok: true });
   });
 
+  app.post('/v1/auth/signup/coach/start', async (c) => {
+    const parsed = dto.signupCoachStartBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(
+        c,
+        422,
+        'VALIDATION_FAILED',
+        'Provide { name, email, phone, password }',
+      );
+    }
+    const ip = clientIp(c);
+    const emailKey = parsed.data.email.trim().toLowerCase();
+    if (
+      !(await signupIpLimiter(`signup:ip:${ip}`)) ||
+      !(await signupEmailLimiter(`signup:email:${emailKey}`))
+    ) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+    }
+    const result = await startCoachSignup(db, signupDeps, parsed.data);
+    if (!result.ok) {
+      const map: Record<string, { status: 400 | 409; title: string }> = {
+        EMAIL_TAKEN: { status: 409, title: 'An account with this email already exists' },
+        PHONE_TAKEN: { status: 409, title: 'An account with this phone already exists' },
+        INVALID_PHONE: { status: 400, title: 'Enter a valid phone number' },
+        INVALID_JOIN_CODE: { status: 400, title: 'Join code is invalid' },
+      };
+      const mapped = map[result.error.reason] ?? { status: 400 as const, title: 'Signup failed' };
+      return problemResponse(c, mapped.status, result.error.reason, mapped.title);
+    }
+    return c.json({ ok: true });
+  });
+
+  app.post('/v1/auth/signup/coach/confirm', async (c) => {
+    const parsed = dto.signupCoachConfirmBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, code }');
+    }
+    const ip = clientIp(c);
+    if (!(await confirmIpLimiter(`confirm:ip:${ip}`))) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+    }
+    const result = await confirmCoachSignup(db, otpDeps, parsed.data, {
+      userAgent: c.req.header('user-agent'),
+      ip: ip === 'local' ? undefined : ip,
+    });
+    if (!result.ok) {
+      const map: Record<string, { status: 400 | 401 | 409; title: string }> = {
+        OTP_INVALID: { status: 401, title: 'Invalid verification code' },
+        OTP_EXPIRED: { status: 401, title: 'Verification code expired' },
+        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes — request a new one' },
+        OTP_NOT_FOUND: { status: 401, title: 'No pending verification — start signup again' },
+        EMAIL_TAKEN: { status: 409, title: 'An account with this email already exists' },
+        PHONE_TAKEN: { status: 409, title: 'An account with this phone already exists' },
+        INVALID_JOIN_CODE: { status: 400, title: 'Join code is invalid' },
+        INVALID_PAYLOAD: { status: 400, title: 'Signup data is invalid — start again' },
+      };
+      const mapped = map[result.error.reason] ?? {
+        status: 401 as const,
+        title: 'Verification failed',
+      };
+      return problemResponse(c, mapped.status, result.error.reason, mapped.title);
+    }
+    return respondWithTokens(c, result.value.userId, result.value.session);
+  });
+
+  app.post('/v1/auth/signup/coach/resend', async (c) => {
+    const parsed = dto.signupCoachResendBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email }');
+    }
+    const ip = clientIp(c);
+    const emailKey = parsed.data.email.trim().toLowerCase();
+    if (
+      !(await signupIpLimiter(`resend:ip:${ip}`)) ||
+      !(await signupEmailLimiter(`resend:email:${emailKey}`))
+    ) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+    }
+    const result = await resendCoachSignupOtp(db, signupDeps, parsed.data.email);
+    if (!result.ok) {
+      return problemResponse(
+        c,
+        401,
+        'OTP_NOT_FOUND',
+        'No pending verification — start signup again',
+      );
+    }
+    return c.json({ ok: true });
+  });
+
+  app.post('/v1/auth/password/forgot', async (c) => {
+    const parsed = dto.forgotPasswordBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email }');
+    }
+    const ip = clientIp(c);
+    const emailKey = parsed.data.email.trim().toLowerCase();
+    if (
+      !(await forgotIpLimiter(`forgot:ip:${ip}`)) ||
+      !(await forgotEmailLimiter(`forgot:email:${emailKey}`))
+    ) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+    }
+    await requestPasswordReset(db, resetDeps, parsed.data.email);
+    return c.json({ ok: true });
+  });
+
+  app.post('/v1/auth/password/reset', async (c) => {
+    const parsed = dto.resetPasswordBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, code, newPassword }');
+    }
+    const ip = clientIp(c);
+    if (!(await confirmIpLimiter(`reset:ip:${ip}`))) {
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+    }
+    const result = await resetPasswordWithOtp(db, otpDeps, parsed.data);
+    if (!result.ok) {
+      const map: Record<string, { status: 401 | 404; title: string }> = {
+        OTP_INVALID: { status: 401, title: 'Invalid verification code' },
+        OTP_EXPIRED: { status: 401, title: 'Verification code expired' },
+        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes — request a new one' },
+        OTP_NOT_FOUND: { status: 401, title: 'No pending reset — request a new code' },
+        USER_NOT_FOUND: { status: 404, title: 'Account not found' },
+      };
+      const mapped = map[result.error.reason] ?? { status: 401 as const, title: 'Reset failed' };
+      return problemResponse(c, mapped.status, result.error.reason, mapped.title);
+    }
+    return c.json({ ok: true });
+  });
+
   // ---- JWT principal for everything else under /v1 -------------------------
   app.use('/v1/*', async (c: AppContext, next) => {
     if (c.req.path === '/v1/config/public') return next();
     if (
       c.req.path === '/v1/auth/login' ||
       c.req.path === '/v1/auth/refresh' ||
-      c.req.path === '/v1/auth/logout'
+      c.req.path === '/v1/auth/logout' ||
+      c.req.path === '/v1/auth/signup/coach/start' ||
+      c.req.path === '/v1/auth/signup/coach/confirm' ||
+      c.req.path === '/v1/auth/signup/coach/resend' ||
+      c.req.path === '/v1/auth/password/forgot' ||
+      c.req.path === '/v1/auth/password/reset'
     ) {
       return next();
     }

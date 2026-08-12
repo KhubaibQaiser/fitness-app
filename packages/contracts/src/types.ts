@@ -41,6 +41,15 @@ export type AuthTokens = {
   me: Me;
 };
 
+export type SignupCoachStartInput = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  joinCode?: string;
+  timezone?: string;
+};
+
 export type UpdateMeInput = {
   locale?: LocaleCode;
   currencyPref?: CurrencyCode;

@@ -210,6 +210,34 @@ export const refreshBody = z.object({
   refreshToken: z.string().min(16).max(500).optional(),
 });
 
+export const signupCoachStartBody = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.email().max(320),
+  phone: z.string().trim().min(7).max(32),
+  password: z.string().min(8).max(200),
+  joinCode: z.string().trim().min(4).max(16).optional(),
+  timezone: z.string().trim().min(1).max(64).optional(),
+});
+
+export const signupCoachConfirmBody = z.object({
+  email: z.email().max(320),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+export const signupCoachResendBody = z.object({
+  email: z.email().max(320),
+});
+
+export const forgotPasswordBody = z.object({
+  email: z.email().max(320),
+});
+
+export const resetPasswordBody = z.object({
+  email: z.email().max(320),
+  code: z.string().regex(/^\d{6}$/),
+  newPassword: z.string().min(8).max(200),
+});
+
 export const updateMeBody = z
   .object({
     locale: z.enum(['en', 'ur']).optional(),

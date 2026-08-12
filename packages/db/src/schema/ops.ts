@@ -1,3 +1,4 @@
+import { isNull } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -10,7 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { notificationPriorityEnum, notificationTypeEnum } from './enums';
+import { notificationPriorityEnum, notificationTypeEnum, otpPurposeEnum } from './enums';
 import { createdAt, id, tstz } from './helpers';
 import { clients, users } from './tenancy';
 
@@ -88,6 +89,34 @@ export const accessGateAttempts = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('access_gate_attempts_time_idx').on(t.createdAt.desc())],
+);
+
+/**
+ * Email OTP challenges for coach signup and password reset.
+ * Raw codes are never stored — only SHA-256(code + pepper).
+ */
+export const otpChallenges = pgTable(
+  'otp_challenges',
+  {
+    id: id(),
+    purpose: otpPurposeEnum('purpose').notNull(),
+    email: text('email').notNull(),
+    phone: text('phone'),
+    codeHash: text('code_hash').notNull(),
+    /** Signup stashes `{ name, passwordHash, joinCode?, timezone? }` after hashing the password. */
+    payload: jsonb('payload').$type<Record<string, unknown>>(),
+    attempts: integer('attempts').notNull().default(0),
+    maxAttempts: integer('max_attempts').notNull().default(5),
+    expiresAt: tstz('expires_at').notNull(),
+    consumedAt: tstz('consumed_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('otp_challenges_email_purpose_idx').on(t.email, t.purpose),
+    index('otp_challenges_active_idx')
+      .on(t.email, t.purpose, t.expiresAt)
+      .where(isNull(t.consumedAt)),
+  ],
 );
 
 /**

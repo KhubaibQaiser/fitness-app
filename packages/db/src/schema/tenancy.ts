@@ -13,13 +13,19 @@ import { type ClientIntake } from '@gymos/core';
 import { clientStatusEnum, coachTierEnum, roleEnum, sexEnum } from './enums';
 import { createdAt, deletedAt, id, tstz, updatedAt } from './helpers';
 
-export const organizations = pgTable('organizations', {
-  id: id(),
-  name: text('name').notNull(),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-  deletedAt: deletedAt(),
-});
+export const organizations = pgTable(
+  'organizations',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    /** Uppercase join code for coach self-signup into an existing gym. */
+    joinCode: text('join_code'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    deletedAt: deletedAt(),
+  },
+  (t) => [uniqueIndex('organizations_join_code_uq').on(t.joinCode)],
+);
 
 export const outlets = pgTable('outlets', {
   id: id(),
@@ -34,25 +40,32 @@ export const outlets = pgTable('outlets', {
   deletedAt: deletedAt(),
 });
 
-export const users = pgTable('users', {
-  id: id(),
-  email: text('email').unique(),
-  phone: text('phone'),
-  name: text('name').notNull(),
-  /** Argon2id/scrypt hash; null until the user sets a password (e.g. clients in Phase 4). */
-  passwordHash: text('password_hash'),
-  locale: text('locale').notNull().default('en'),
-  /** NULL falls back to the tenant default from the manifest. */
-  unitPref: text('unit_pref', { enum: ['metric', 'imperial'] }),
-  /** NULL falls back to the tenant default from the manifest. */
-  currencyPref: text('currency_pref', {
-    enum: ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'],
-  }),
-  avatarKey: text('avatar_key'),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-  deletedAt: deletedAt(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: id(),
+    email: text('email').unique(),
+    /** E.164 — unique among active users when set. */
+    phone: text('phone'),
+    name: text('name').notNull(),
+    /** Argon2id/scrypt hash; null until the user sets a password (e.g. clients in Phase 4). */
+    passwordHash: text('password_hash'),
+    emailVerifiedAt: tstz('email_verified_at'),
+    phoneVerifiedAt: tstz('phone_verified_at'),
+    locale: text('locale').notNull().default('en'),
+    /** NULL falls back to the tenant default from the manifest. */
+    unitPref: text('unit_pref', { enum: ['metric', 'imperial'] }),
+    /** NULL falls back to the tenant default from the manifest. */
+    currencyPref: text('currency_pref', {
+      enum: ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'],
+    }),
+    avatarKey: text('avatar_key'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    deletedAt: deletedAt(),
+  },
+  (t) => [uniqueIndex('users_phone_active_uq').on(t.phone).where(isNull(t.deletedAt))],
+);
 
 /**
  * Per-org tenant config registry — branding, locales, AI config.

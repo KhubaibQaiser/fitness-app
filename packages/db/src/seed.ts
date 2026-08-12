@@ -32,7 +32,10 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
     throw new Error('database already seeded — refusing to double-seed');
   }
 
-  const [org] = await db.insert(s.organizations).values({ name: 'GymOS Pilot' }).returning();
+  const [org] = await db
+    .insert(s.organizations)
+    .values({ name: 'GymOS Pilot', joinCode: 'PILOT001' })
+    .returning();
   if (!org) throw new Error('org insert failed');
 
   if (options.tenantManifest !== undefined) {
@@ -55,6 +58,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
       email: 'coach@pilot.local',
       name: 'Pilot Coach',
       locale: 'en',
+      emailVerifiedAt: nowIso(),
       ...(options.coachPasswordHash !== undefined
         ? { passwordHash: options.coachPasswordHash }
         : {}),

@@ -184,6 +184,30 @@ export const api = {
     if (data.refreshToken) await config.setRefreshToken?.(data.refreshToken);
     return data;
   },
+  signupCoachStart: (input: T.SignupCoachStartInput) =>
+    request<{ ok: boolean }>('POST', '/v1/auth/signup/coach/start', input, { skipAuth: true }),
+  signupCoachConfirm: async (email: string, code: string): Promise<T.AuthTokens> => {
+    const data = await request<T.AuthTokens>(
+      'POST',
+      '/v1/auth/signup/coach/confirm',
+      { email, code },
+      { skipAuth: true },
+    );
+    await config.setAccessToken(data.accessToken);
+    if (data.refreshToken) await config.setRefreshToken?.(data.refreshToken);
+    return data;
+  },
+  signupCoachResend: (email: string) =>
+    request<{ ok: boolean }>('POST', '/v1/auth/signup/coach/resend', { email }, { skipAuth: true }),
+  forgotPassword: (email: string) =>
+    request<{ ok: boolean }>('POST', '/v1/auth/password/forgot', { email }, { skipAuth: true }),
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    request<{ ok: boolean }>(
+      'POST',
+      '/v1/auth/password/reset',
+      { email, code, newPassword },
+      { skipAuth: true },
+    ),
   logout: async (): Promise<void> => {
     try {
       await request<{ ok: boolean }>('POST', '/v1/auth/logout', {}, { skipAuth: true });

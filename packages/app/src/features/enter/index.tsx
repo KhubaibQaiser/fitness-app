@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useTransition } from 'react';
+import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
 import { storage } from '@gymos/platform';
@@ -106,6 +107,18 @@ const LoginForm = () => {
           >
             {busy ? 'Signing in…' : 'Sign in'}
           </PrimaryButton>
+          <YStack gap="$2" alignItems="center" marginTop="$2">
+            <Link href="/signup">
+              <Muted fontSize={13} color="$accent">
+                Create coach account
+              </Muted>
+            </Link>
+            <Link href="/forgot-password">
+              <Muted fontSize={13} color="$accent">
+                Forgot password?
+              </Muted>
+            </Link>
+          </YStack>
         </Card>
         <Muted fontSize={11} textAlign="center">
           Pilot build · Pakistan region
