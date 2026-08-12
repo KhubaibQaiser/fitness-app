@@ -31,7 +31,7 @@ Find `neon_org_id` in Neon Console → your org → **Settings** → **General**
 (Organization ID looks like `org-…`). Neon requires this for API project creation.
 
 - [ ] Render Blueprint from `infra/paas/render.yaml` (or root symlink)
-- [ ] Render secrets: `DATABASE_URL` (pooled), `PILOT_ACCESS_KEY`, `GATE_COOKIE_SECRET`
+- [ ] Render secrets: `DATABASE_URL` (pooled), `JWT_ACCESS_SECRET` (`openssl rand -hex 32`)
 - [ ] Confirm `API_ORIGIN` on Vercel matches the Render URL
 
 ## 3. GitHub
@@ -51,7 +51,7 @@ DATABASE_URL=<direct> pnpm db:migrate
 DATABASE_URL=<direct> pnpm db:seed
 ```
 
-- [ ] Open `https://<vercel>/gate/enter?key=<PILOT_ACCESS_KEY>` on the coach phone
+- [ ] Open the Vercel URL → sign in as `coach@pilot.local` (seed password)
 - [ ] Create client → generate draft plan → publish → complete a check-in
 - [ ] First API call after idle may take 30–60s (Render spin-up)
 
