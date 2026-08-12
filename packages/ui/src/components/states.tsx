@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Spinner, YStack } from 'tamagui';
 import { GhostButton } from './buttons';
-import { Card } from './card';
 import { Body, Muted, Title } from './typography';
 
 export const LoadingState = ({ label = 'Loading…' }: { label?: string }) => (
@@ -31,7 +30,7 @@ export const EmptyState = ({
   action?: ReactNode;
   icon?: ReactNode;
 }) => (
-  <Card alignItems="center" paddingVertical="$8" gap="$3">
+  <YStack alignItems="center" paddingVertical="$8" gap="$3">
     {icon}
     <Title fontSize={16} textAlign="center" fontWeight="600">
       {title}
@@ -42,11 +41,19 @@ export const EmptyState = ({
       </Muted>
     ) : null}
     {action}
-  </Card>
+  </YStack>
 );
 
 export const ErrorState = ({ message, retry }: { message: string; retry?: () => void }) => (
-  <Card tone="danger" alignItems="center" paddingVertical="$6" gap="$3" role="alert">
+  <YStack
+    backgroundColor="$dangerMuted"
+    borderRadius="$radiusCard"
+    alignItems="center"
+    paddingVertical="$6"
+    paddingHorizontal="$4"
+    gap="$3"
+    role="alert"
+  >
     <Body color="$danger" textAlign="center" fontWeight="700">
       {message}
     </Body>
@@ -55,5 +62,5 @@ export const ErrorState = ({ message, retry }: { message: string; retry?: () => 
         Try again
       </GhostButton>
     ) : null}
-  </Card>
+  </YStack>
 );

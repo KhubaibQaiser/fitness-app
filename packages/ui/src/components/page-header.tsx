@@ -4,11 +4,6 @@ import type { ReactNode } from 'react';
 import { Text, XStack, YStack } from 'tamagui';
 import { Muted } from './typography';
 
-/**
- * Kit page header. `strip` = full-bleed card band (parent Screen must be
- * horizontally flush — paddingHorizontal={0} — so strip width matches body).
- * Strip and body both use $5 / $8 inset for perfect edge alignment.
- */
 export const PageHeader = ({
   title,
   subtitle,
@@ -22,7 +17,6 @@ export const PageHeader = ({
   action?: ReactNode;
   leading?: ReactNode;
   eyebrow?: string;
-  /** Full-bleed card strip; pair with flush Screen horizontal padding. */
   strip?: boolean;
 }) => {
   const inner = (
@@ -31,7 +25,7 @@ export const PageHeader = ({
         {leading}
         <YStack flex={1} gap={2} minWidth={0}>
           {eyebrow ? (
-            <Muted fontSize={12} fontWeight="500">
+            <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
               {eyebrow}
             </Muted>
           ) : null}
@@ -60,10 +54,7 @@ export const PageHeader = ({
 
   return (
     <YStack
-      backgroundColor="$cardBg"
-      borderBottomWidth={1}
-      borderBottomColor="$borderColor"
-      paddingHorizontal="$5"
+      paddingHorizontal="$4"
       paddingTop="$6"
       paddingBottom="$5"
       width="100%"

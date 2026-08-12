@@ -20,14 +20,9 @@ type FormFieldProps = {
   numberOfLines?: number;
   onSubmitEditing?: () => void;
   disabled?: boolean;
-  /** Mono unit suffix (kg, cm, %, bpm) — kit Input pattern. */
   unit?: string;
 };
 
-/**
- * Accessible field: label + control + hint/error. Errors use aria-invalid /
- * aria-describedby so screen readers announce them with the input.
- */
 export const FormField = ({
   label,
   value,
@@ -58,7 +53,15 @@ export const FormField = ({
 
   return (
     <YStack gap="$1.5" width="100%">
-      <Label htmlFor={id} fontFamily="$heading" fontWeight="500" fontSize={14} color="$color">
+      <Label
+        htmlFor={id}
+        fontFamily="$heading"
+        fontWeight="500"
+        fontSize={12}
+        color="$textMuted"
+        textTransform="uppercase"
+        letterSpacing={0.8}
+      >
         {label}
         {required ? ' *' : ''}
       </Label>
@@ -98,8 +101,8 @@ export const FormField = ({
             placeholder={placeholder}
             disabled={disabled}
             size="$4"
-            minHeight={40}
-            height={40}
+            minHeight={48}
+            height={48}
             flex={1}
             width="100%"
             borderWidth={1}
@@ -109,9 +112,9 @@ export const FormField = ({
             placeholderTextColor="$placeholderColor"
             borderRadius="$radiusControl"
             paddingHorizontal="$3"
-            paddingRight={unit ? 40 : undefined}
+            paddingRight={unit ? 44 : undefined}
             fontFamily="$body"
-            fontSize={14}
+            fontSize={15}
             secureTextEntry={secureTextEntry}
             {...(autoCapitalize !== undefined ? { autoCapitalize } : {})}
             {...(autoCorrect !== undefined ? { autoCorrect } : {})}
@@ -156,9 +159,16 @@ export const FormField = ({
 
 export const FormSection = ({ title, children }: { title: string; children: ReactNode }) => (
   <YStack gap="$3" width="100%" aria-label={title}>
-    <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Text
+      fontFamily="$heading"
+      fontWeight="600"
+      fontSize={11}
+      textTransform="uppercase"
+      letterSpacing={1.4}
+      color="$textMuted"
+    >
       {title}
-    </Body>
+    </Text>
     {children}
   </YStack>
 );
