@@ -1,24 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { Roboto, Roboto_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { type ReactNode } from 'react';
 import { AppProviders } from '@gymos/app/provider';
 import { NextTamaguiProvider } from '../components/next-tamagui-provider';
 import './globals.css';
 
-/** MD3-aligned sans (TradeBlock visual brand). */
-const sans = Roboto({
+const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
-/** Mono for stats / data (kit StatTile, macros). */
-const mono = Roboto_Mono({
+const mono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
-  weight: ['400', '500'],
+  weight: ['400', '500', '700'],
 });
 
 export const metadata: Metadata = {
@@ -32,10 +30,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  // WCAG: allow pinch-zoom (do not lock maximumScale)
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#005DB8' },
-    { media: '(prefers-color-scheme: dark)', color: '#1B1B1F' },
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A0A0A' },
   ],
 };
 

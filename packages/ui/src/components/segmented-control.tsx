@@ -24,13 +24,11 @@ export const SegmentedControl = <T extends string | number>({
     <XStack
       role="tablist"
       aria-label={ariaLabel}
-      gap="$1.5"
+      gap="$1"
       flexWrap="wrap"
-      backgroundColor="$elevatedBg"
+      backgroundColor="$cardBg"
       borderRadius="$radiusCard"
-      padding="$1.5"
-      borderWidth={1}
-      borderColor="$borderColor"
+      padding="$1"
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -47,9 +45,9 @@ export const SegmentedControl = <T extends string | number>({
             justifyContent="center"
             borderRadius="$radiusControl"
             paddingHorizontal="$2"
-            backgroundColor={selected ? '$primary' : 'transparent'}
+            backgroundColor={selected ? '$elevatedBg' : 'transparent'}
             cursor="pointer"
-            hoverStyle={{ backgroundColor: selected ? '$primary' : '$cardBg' }}
+            hoverStyle={{ backgroundColor: selected ? '$elevatedBg' : '$cardBg' }}
             pressStyle={{ opacity: 0.9 }}
             focusVisibleStyle={{
               outlineWidth: 2,
@@ -63,9 +61,9 @@ export const SegmentedControl = <T extends string | number>({
           >
             <Text
               fontFamily="$heading"
-              fontWeight="700"
+              fontWeight={selected ? '700' : '500'}
               fontSize={13}
-              color={selected ? '$primaryFg' : '$color'}
+              color={selected ? '$color' : '$textMuted'}
             >
               {option.label}
             </Text>
@@ -111,7 +109,7 @@ export const Tabs = ({
           minHeight={48}
           alignItems="center"
           justifyContent="center"
-          borderBottomWidth={3}
+          borderBottomWidth={2}
           borderBottomColor={selected ? '$primary' : 'transparent'}
           marginBottom={-1}
           cursor="pointer"
@@ -129,9 +127,9 @@ export const Tabs = ({
         >
           <Text
             fontFamily="$heading"
-            fontWeight={selected ? '800' : '600'}
+            fontWeight={selected ? '800' : '500'}
             fontSize={14}
-            color={selected ? '$primary' : '$textMuted'}
+            color={selected ? '$color' : '$textMuted'}
           >
             {item.label}
           </Text>

@@ -10,9 +10,13 @@ import {
   ChevronRight,
   EmptyState,
   ErrorState,
+  FadeIn,
   LoadingState,
+  MetricHero,
   Muted,
   PageHeader,
+  StaggerItem,
+  Stat,
   Text,
   UserPlus,
   Users,
@@ -25,7 +29,6 @@ import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
 import { HomeQuickActions } from './home-quick-actions';
 import { HomeRecentAlerts } from './home-recent-alerts';
-import { HomeStatStrip } from './home-stat-strip';
 
 /** Coach home: kit richer dashboard — stats, queues, quick actions, alerts. */
 export const HomeScreen = () => {
@@ -84,14 +87,37 @@ export const HomeScreen = () => {
         }
       />
 
-      <HomeStatStrip
-        totalClients={allClients.length}
-        needAttention={atRisk.length}
-        onTrack={onTrack}
-        highAlerts={highAlerts}
-      />
+      <ScreenBody gap="$4">
+        <Card padding="$5">
+          <MetricHero
+            label="Needs attention"
+            value={String(atRisk.length)}
+            tone={atRisk.length > 0 ? 'warning' : 'success'}
+            delta={
+              <Muted fontSize={12}>
+                {atRisk.length > 0
+                  ? `${atRisk.length} client${atRisk.length > 1 ? 's' : ''} need intervention today`
+                  : 'All clients are on track today'}
+              </Muted>
+            }
+          />
+          <XStack gap="$4" flexWrap="wrap" marginTop="$3">
+            <YStack minWidth={110} flex={1}>
+              <Stat label="Total clients" value={String(allClients.length)} />
+            </YStack>
+            <YStack minWidth={110} flex={1}>
+              <Stat label="On track" value={String(onTrack)} tone="success" />
+            </YStack>
+            <YStack minWidth={110} flex={1}>
+              <Stat
+                label="High alerts"
+                value={String(highAlerts)}
+                {...(highAlerts > 0 ? { tone: 'warning' as const } : {})}
+              />
+            </YStack>
+          </XStack>
+        </Card>
 
-      <ScreenBody gap="$5">
         <YStack
           gap="$5"
           $md={{
@@ -135,32 +161,34 @@ export const HomeScreen = () => {
                   }
                 />
               ) : (
-                dueItems.map((item) => (
-                  <Link key={item.id} href={`/clients/${item.clientId}/check-in`}>
-                    <Card interactive padding="$3.5">
-                      <XStack alignItems="center" gap="$3">
-                        <Avatar name={item.clientName} size={40} />
-                        <YStack flex={1} minWidth={0} gap={2}>
-                          <Text
-                            fontFamily="$heading"
-                            fontWeight="600"
-                            fontSize={13.5}
-                            color="$color"
-                            numberOfLines={1}
-                          >
-                            {item.clientName}
-                          </Text>
-                          <Muted fontSize={12}>Weekly check-in · {item.scheduledFor}</Muted>
-                        </YStack>
-                        {item.overdueDays > 0 ? (
-                          <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
-                        ) : (
-                          <Badge tone="warning" label="Due today" />
-                        )}
-                        <ChevronRight size={14} color="$textMuted" />
-                      </XStack>
-                    </Card>
-                  </Link>
+                dueItems.map((item, i) => (
+                  <StaggerItem key={item.id} index={i}>
+                    <Link href={`/clients/${item.clientId}/check-in`}>
+                      <Card interactive padding="$3.5">
+                        <XStack alignItems="center" gap="$3">
+                          <Avatar name={item.clientName} size={40} />
+                          <YStack flex={1} minWidth={0} gap={2}>
+                            <Text
+                              fontFamily="$heading"
+                              fontWeight="600"
+                              fontSize={13.5}
+                              color="$color"
+                              numberOfLines={1}
+                            >
+                              {item.clientName}
+                            </Text>
+                            <Muted fontSize={12}>Weekly check-in · {item.scheduledFor}</Muted>
+                          </YStack>
+                          {item.overdueDays > 0 ? (
+                            <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
+                          ) : (
+                            <Badge tone="warning" label="Due today" />
+                          )}
+                          <ChevronRight size={14} color="$textMuted" />
+                        </XStack>
+                      </Card>
+                    </Link>
+                  </StaggerItem>
                 ))
               )}
             </YStack>
@@ -190,35 +218,37 @@ export const HomeScreen = () => {
                   </Muted>
                 </Card>
               ) : (
-                atRisk.map((client) => (
-                  <Link key={client.id} href={`/clients/${client.id}`}>
-                    <Card interactive padding="$3.5">
-                      <XStack alignItems="flex-start" gap="$3">
-                        <Avatar name={client.name} size={40} />
-                        <YStack flex={1} minWidth={0} gap="$1.5">
-                          <Text
-                            fontFamily="$heading"
-                            fontWeight="600"
-                            fontSize={13.5}
-                            color="$color"
-                            numberOfLines={1}
-                          >
-                            {client.name}
-                          </Text>
-                          <XStack gap="$1" flexWrap="wrap">
-                            {client.attentionReasons.map((r) => (
-                              <Badge
-                                key={r.code}
-                                tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
-                                label={r.code.replaceAll('_', ' ')}
-                              />
-                            ))}
-                          </XStack>
-                        </YStack>
-                        <ChevronRight size={14} color="$textMuted" />
-                      </XStack>
-                    </Card>
-                  </Link>
+                atRisk.map((client, i) => (
+                  <FadeIn key={client.id} delay={i * 35}>
+                    <Link href={`/clients/${client.id}`}>
+                      <Card interactive padding="$3.5">
+                        <XStack alignItems="flex-start" gap="$3">
+                          <Avatar name={client.name} size={40} />
+                          <YStack flex={1} minWidth={0} gap="$1.5">
+                            <Text
+                              fontFamily="$heading"
+                              fontWeight="600"
+                              fontSize={13.5}
+                              color="$color"
+                              numberOfLines={1}
+                            >
+                              {client.name}
+                            </Text>
+                            <XStack gap="$1" flexWrap="wrap">
+                              {client.attentionReasons.map((r) => (
+                                <Badge
+                                  key={r.code}
+                                  tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
+                                  label={r.code.replaceAll('_', ' ')}
+                                />
+                              ))}
+                            </XStack>
+                          </YStack>
+                          <ChevronRight size={14} color="$textMuted" />
+                        </XStack>
+                      </Card>
+                    </Link>
+                  </FadeIn>
                 ))
               )}
             </YStack>

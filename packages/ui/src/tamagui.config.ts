@@ -6,19 +6,11 @@ import { createTamagui } from 'tamagui';
 import manifest from '../../../infra/tenants/pilot.json';
 import { bodyFont, headingFont, monoFont } from './fonts';
 
-/**
- * Design system config. Brand colors flow from the tenant manifest at build
- * time (config-not-code; P0 moves this to a runtime loader).
- *
- * MD3-inspired blue/violet brand (TradeBlock palette mapped to Tamagui roles).
- * Light + dark ship together and persist via ThemeModeProvider.
- * Tokens aligned to GymOS Coach UI Kit (Figma Make).
- */
 const brand = manifest.branding.colors;
-const radius = manifest.branding.radius; // 'soft' | future variants
+const radius = manifest.branding.radius;
 
 const radiusScale =
-  radius === 'soft' ? { card: 8, control: 4, pill: 999 } : { card: 8, control: 4, pill: 999 };
+  radius === 'soft' ? { card: 16, control: 8, pill: 999 } : { card: 16, control: 8, pill: 999 };
 
 export const config = createTamagui({
   ...defaultConfig,
@@ -31,64 +23,63 @@ export const config = createTamagui({
     ...defaultConfig.themes,
     light: {
       ...defaultConfig.themes.light,
-      // Brand
-      primary: brand.primary,
-      primaryHover: '#3376D3',
+      primary: '#00A872',
+      primaryHover: '#00D68F',
       primaryFg: '#ffffff',
-      accent: brand.accent,
+      accent: '#2E7DA8',
       accentFg: '#ffffff',
-      // Surfaces — MD3 background / surface / surfaceContainer
-      screenBg: '#FEFBFF',
-      cardBg: '#FAF9FD',
-      elevatedBg: '#EFEDF1',
-      sidebar: '#F3F1F7',
-      borderColor: '#C4C6D0',
-      borderColorHover: '#74777F',
-      // Text — onSurface / onSurfaceVariant / outline
-      color: '#1B1B1F',
-      textMuted: '#44474E',
-      placeholderColor: '#74777F',
-      // Status
-      danger: '#C00011',
+      screenBg: '#FFFFFF',
+      cardBg: '#F3F5F9',
+      elevatedBg: '#E8EBF0',
+      sidebar: '#F3F5F9',
+      borderColor: '#E0E0E0',
+      borderColorHover: '#CCCCCC',
+      color: '#111111',
+      textMuted: '#666666',
+      placeholderColor: '#999999',
+      danger: '#E00020',
       dangerFg: '#ffffff',
-      dangerMuted: '#FFDAD6',
-      success: '#1AC057',
+      dangerMuted: '#FFE5E9',
+      success: '#0EA600',
       successFg: '#ffffff',
-      successMuted: '#CCFFD9',
-      warning: '#E7B008',
-      warningFg: '#1B1B1F',
-      warningMuted: '#FFF2C2',
-      focusRing: brand.primary,
-      // Radius semantic aliases consumed by primitives
+      successMuted: '#E6F9E5',
+      warning: '#D4A800',
+      warningFg: '#111111',
+      warningMuted: '#FFF8DB',
+      info: '#5A8BA3',
+      infoMuted: '#E5F0F6',
+      focusRing: '#00A872',
       radiusCard: radiusScale.card,
       radiusControl: radiusScale.control,
     },
     dark: {
       ...defaultConfig.themes.dark,
-      primary: '#AAC7FF',
-      primaryHover: '#7AACFF',
-      primaryFg: '#003064',
-      accent: '#C2C1FF',
-      accentFg: '#20198F',
-      screenBg: '#1B1B1F',
-      cardBg: '#121316',
-      elevatedBg: '#1F1F23',
-      sidebar: '#17181C',
-      borderColor: '#2E3038',
-      borderColorHover: '#8E9099',
-      color: '#E3E2E6',
-      textMuted: '#C4C6D0',
-      placeholderColor: '#8E9099',
-      danger: '#FFB4AB',
-      dangerFg: '#690005',
-      dangerMuted: '#3A0009',
-      success: '#3BE362',
-      successFg: '#00390F',
-      successMuted: '#002E0A',
-      warning: '#ECC306',
-      warningFg: '#3B2F00',
-      warningMuted: '#2A1F00',
-      focusRing: '#AAC7FF',
+      primary: brand.primary,
+      primaryHover: '#00F19F',
+      primaryFg: '#000000',
+      accent: brand.accent,
+      accentFg: '#ffffff',
+      screenBg: '#0A0A0A',
+      cardBg: '#111111',
+      elevatedBg: '#1A1A1A',
+      sidebar: '#0A0A0A',
+      borderColor: '#222222',
+      borderColorHover: '#444444',
+      color: '#FFFFFF',
+      textMuted: '#808080',
+      placeholderColor: '#555555',
+      danger: '#FF0026',
+      dangerFg: '#ffffff',
+      dangerMuted: '#2A0008',
+      success: '#16EC06',
+      successFg: '#000000',
+      successMuted: '#0A2A08',
+      warning: '#FFDE00',
+      warningFg: '#000000',
+      warningMuted: '#2A2500',
+      info: '#7BA1BB',
+      infoMuted: '#0F1E26',
+      focusRing: '#00D68F',
       radiusCard: radiusScale.card,
       radiusControl: radiusScale.control,
     },
