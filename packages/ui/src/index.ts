@@ -42,6 +42,7 @@ export {
   Button,
   Input,
   Label,
+  Popover,
   ScrollView,
   Separator,
   Sheet,

@@ -73,7 +73,16 @@ const throwApiError = async (response: Response): Promise<never> => {
   );
 };
 
-const refreshAccessToken = async (): Promise<boolean> => {
+/**
+ * In-flight refresh promise, shared by every caller that hits a 401 at the
+ * same time. Without this, N concurrent requests each losing their access
+ * token would fire N `/v1/auth/refresh` calls — wasting a refresh-token
+ * rotation per extra call and racing the server's reuse detection. Only the
+ * first caller performs the network call; everyone else awaits its result.
+ */
+let inFlightRefresh: Promise<boolean> | null = null;
+
+const performRefresh = async (): Promise<boolean> => {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     'x-client-version': config.clientPlatform === 'mobile' ? 'pilot-mobile' : 'pilot-web',
@@ -92,6 +101,11 @@ const refreshAccessToken = async (): Promise<boolean> => {
     body: JSON.stringify(body),
   });
   if (!response.ok) {
+    // A benign race with another refresh (REFRESH_RACE) must NOT clear
+    // tokens or trigger onAuthFailure — the sibling call that won the race
+    // already installed a fresh, valid token pair.
+    const problem = await parseProblem(response);
+    if (problem?.code === 'REFRESH_RACE') return false;
     await config.setAccessToken(null);
     await config.setRefreshToken?.(null);
     config.onAuthFailure?.();
@@ -101,6 +115,13 @@ const refreshAccessToken = async (): Promise<boolean> => {
   await config.setAccessToken(data.accessToken);
   if (data.refreshToken) await config.setRefreshToken?.(data.refreshToken);
   return true;
+};
+
+const refreshAccessToken = (): Promise<boolean> => {
+  inFlightRefresh ??= performRefresh().finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
 };
 
 const request = async <TResponse>(

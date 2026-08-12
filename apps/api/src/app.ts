@@ -34,7 +34,6 @@ import {
 import {
   confirmCoachSignup,
   createEmailSender,
-  findActiveSession,
   loginWithPassword,
   requestPasswordReset,
   resendCoachSignupOtp,
@@ -42,7 +41,7 @@ import {
   resolvePrincipal,
   revokeAllSessionsForUser,
   revokeSessionByRefreshToken,
-  rotateSession,
+  rotateSessionByToken,
   startCoachSignup,
   updateUserPrefs,
   type EmailSender,
@@ -344,12 +343,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     if (refreshToken === undefined) {
       return problemResponse(c, 401, 'AUTH_REQUIRED', 'Missing refresh token');
     }
-    const current = await findActiveSession(db, refreshToken);
-    if (current === null) {
-      clearRefreshCookie(c);
-      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
-    }
-    const rotated = await rotateSession(db, current, {
+    const outcome = await rotateSessionByToken(db, refreshToken, {
       userAgent: c.req.header('user-agent'),
       ip: (() => {
         const raw = c.req.header('x-forwarded-for');
@@ -357,7 +351,26 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
         return raw.split(',')[0]?.trim();
       })(),
     });
-    return respondWithTokens(c, current.userId, rotated);
+
+    switch (outcome.kind) {
+      case 'rotated':
+        return respondWithTokens(c, outcome.userId, outcome.session);
+      case 'reuse-grace':
+        // Benign race (concurrent request already rotated this token) —
+        // fail this one call without tearing down the session.
+        return problemResponse(c, 401, 'REFRESH_RACE', 'Token already rotated — retry');
+      case 'reuse-detected':
+        clearRefreshCookie(c);
+        return problemResponse(
+          c,
+          401,
+          'REUSE_DETECTED',
+          'Refresh token reused — all sessions revoked for safety',
+        );
+      case 'invalid':
+        clearRefreshCookie(c);
+        return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+    }
   });
 
   app.post('/v1/auth/logout', async (c) => {

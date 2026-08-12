@@ -2,11 +2,11 @@ import { timestamp, uuid } from 'drizzle-orm/pg-core';
 import { uuidv7 } from 'uuidv7';
 import { nowIso } from '../time';
 
+/** UUIDv7, generated app-side (PG17 has no native uuidv7). Exported for callers that need an id before insert. */
+export const newId = (): string => uuidv7();
+
 /** UUIDv7 primary key, generated app-side (PG17 has no native uuidv7). */
-export const id = () =>
-  uuid('id')
-    .primaryKey()
-    .$defaultFn(() => uuidv7());
+export const id = () => uuid('id').primaryKey().$defaultFn(newId);
 
 /** timestamptz stored/read as ISO strings — Luxon handles all date math. */
 export const createdAt = () =>
