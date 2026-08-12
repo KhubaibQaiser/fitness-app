@@ -18,7 +18,6 @@ import {
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
 import { AppScreen } from '../shell/app-screen';
-import { useAppChrome } from '../shell/use-app-chrome';
 
 type FieldKey =
   | 'weightKg'
@@ -56,14 +55,11 @@ const VITALS: Field[] = [
 /** Fast vitals capture — sectioned, prior values as hints, field-level errors. */
 export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
-  const { showMobileTabBar } = useAppChrome();
   const vitals = useVitals(clientId);
   const record = useRecordVitals(clientId);
   const [values, setValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
-
-  const bottomInset = showMobileTabBar ? 72 : 12;
 
   if (vitals.isPending) {
     return (
@@ -153,7 +149,24 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     });
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <StickyFormFooter>
+          <GhostButton flex={1} onPress={() => router.back()}>
+            Cancel
+          </GhostButton>
+          <PrimaryButton
+            flex={1}
+            disabled={filled.length === 0 || record.isPending}
+            onPress={submit}
+          >
+            {record.isPending
+              ? 'Saving…'
+              : `Save ${filled.length || ''} measurement${filled.length === 1 ? '' : 's'}`}
+          </PrimaryButton>
+        </StickyFormFooter>
+      }
+    >
       <PageHeader
         title="Record vitals"
         subtitle="Fill only what you measured — history is never overwritten."
@@ -173,17 +186,6 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         </Body>
       ) : null}
       <Muted fontSize={12}>Empty fields are skipped. Prior values are never overwritten.</Muted>
-
-      <StickyFormFooter bottomInset={bottomInset}>
-        <GhostButton flex={1} onPress={() => router.back()}>
-          Cancel
-        </GhostButton>
-        <PrimaryButton flex={1} disabled={filled.length === 0 || record.isPending} onPress={submit}>
-          {record.isPending
-            ? 'Saving…'
-            : `Save ${filled.length || ''} measurement${filled.length === 1 ? '' : 's'}`}
-        </PrimaryButton>
-      </StickyFormFooter>
     </AppScreen>
   );
 };

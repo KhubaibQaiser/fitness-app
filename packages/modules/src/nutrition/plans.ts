@@ -304,9 +304,6 @@ export const generatePlan = async (
   const templateMealNames = templateDay.meals.map(
     (meal, mealIdx) => narrative.output.days[0]?.meals[mealIdx]?.name ?? `${meal.slot} — day 1`,
   );
-  const templatePrepNotes = templateDay.meals.map(
-    (_meal, mealIdx) => narrative.output.days[0]?.meals[mealIdx]?.prepNotes ?? null,
-  );
 
   // 6. Persist plan + items + audit trail atomically.
   const result = await db.transaction(async (tx) => {
@@ -342,7 +339,7 @@ export const generatePlan = async (
           portionGrams: item.portionGrams,
           macros: item.macros,
           macrosSource: 'food_db' as const,
-          prepNotes: templatePrepNotes[mealIdx] ?? null,
+          prepNotes: null,
           position,
         })),
       ),
@@ -369,7 +366,7 @@ export const generatePlan = async (
           dayTotals: solved.value.map((d) => d.totals),
           /** Day-1 narrative snapshot for online edit_distance vs published names. */
           templateMealNames,
-          templatePrepNotes,
+          templatePrepNotes: templateDay.meals.map(() => ''),
         },
       })
       .where(eq(s.planGenerations.id, generation.id));

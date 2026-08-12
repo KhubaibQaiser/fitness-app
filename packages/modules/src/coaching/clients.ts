@@ -2,6 +2,7 @@ import { and, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { ok, type ClientIntake, type Result, type SignedClientIntake } from '@gymos/core';
 import { type ScopeSet } from '@gymos/core/rbac';
 import { nowIso, schema as s, type Db } from '@gymos/db';
+import { writeDietaryProfileTx, type RestrictionInput } from '../nutrition/dietary';
 import { writeAudit } from '../shared/audit';
 import { createGoalTx, type CreateGoalInput, type GoalError } from './goals';
 import { recordVitals, type RecordVitalsInput } from './vitals';
@@ -146,6 +147,7 @@ export type OnboardClientInput = {
   };
   vitals: OnboardVitalsInput;
   goal: CreateGoalInput;
+  dietary?: RestrictionInput[];
 };
 
 export type OnboardClientResult = {
@@ -231,6 +233,8 @@ export const onboardClient = async (
       if (!goalResult.ok) {
         throw new OnboardAbortError(goalResult);
       }
+
+      await writeDietaryProfileTx(tx, principal, client.id, input.dietary ?? []);
 
       return ok({ client, vitals, goal: goalResult.value });
     });

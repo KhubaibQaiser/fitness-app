@@ -39,6 +39,52 @@ export const parseWeightToKg = (value: number, system: UnitSystem): number =>
 export const parseLengthToCm = (value: number, system: UnitSystem): number =>
   system === 'metric' ? value : inToCm(value);
 
+export type WeightUnit = 'kg' | 'lb';
+export type HeightUnit = 'cm' | 'ft_in';
+export type LengthUnit = 'cm' | 'in';
+
+export type UnitPrefs = {
+  readonly weight: WeightUnit;
+  readonly height: HeightUnit;
+  readonly length: LengthUnit;
+};
+
+/** Pilot (PK) default: metric weight, imperial height and circumferences. */
+export const DEFAULT_UNIT_PREFS: UnitPrefs = {
+  weight: 'kg',
+  height: 'ft_in',
+  length: 'in',
+};
+
+export const resolveUnitPrefs = (
+  user: Partial<UnitPrefs> | null | undefined,
+  tenant: UnitPrefs,
+): UnitPrefs => ({
+  weight: user?.weight ?? tenant.weight,
+  height: user?.height ?? tenant.height,
+  length: user?.length ?? tenant.length,
+});
+
+/** Coarse system for older callers — mixed prefs (PK) count as metric. */
+export const unitPrefsToSystem = (prefs: UnitPrefs): UnitSystem =>
+  prefs.weight === 'lb' ? 'imperial' : 'metric';
+
+export const formatWeight = (kg: number, unit: WeightUnit, decimals = 1): DisplayValue =>
+  unit === 'kg'
+    ? { value: roundTo(kg, decimals), unit: 'kg' }
+    : { value: roundTo(kgToLb(kg), decimals), unit: 'lb' };
+
+export const parseWeight = (value: number, unit: WeightUnit): number =>
+  unit === 'kg' ? value : lbToKg(value);
+
+export const formatLength = (cm: number, unit: LengthUnit, decimals = 1): DisplayValue =>
+  unit === 'cm'
+    ? { value: roundTo(cm, decimals), unit: 'cm' }
+    : { value: roundTo(cmToIn(cm), decimals), unit: 'in' };
+
+export const parseLength = (value: number, unit: LengthUnit): number =>
+  unit === 'cm' ? value : inToCm(value);
+
 export type FeetInches = { readonly feet: number; readonly inches: number };
 
 /** Height as feet + inches for imperial display (canonical input: cm). */

@@ -1,3 +1,5 @@
+import type { Restriction } from '@gymos/contracts';
+
 export type HeightUnit = 'cm' | 'ft_in';
 
 export type ActivityLevel = '1.2' | '1.375' | '1.55' | '1.725' | '1.9';
@@ -30,13 +32,14 @@ export type OnboardingDraft = {
   physicianClearanceRequired: boolean;
   pregnant: boolean;
   signaturePngBase64: string | null;
+  dietary: Restriction[];
 };
 
 export const INITIAL_DRAFT: OnboardingDraft = {
   name: '',
   sex: 'M',
   dob: '',
-  heightUnit: 'cm',
+  heightUnit: 'ft_in',
   heightCm: '',
   heightFt: '',
   heightIn: '',
@@ -57,6 +60,7 @@ export const INITIAL_DRAFT: OnboardingDraft = {
   physicianClearanceRequired: false,
   pregnant: false,
   signaturePngBase64: null,
+  dietary: [],
 };
 
 export const STEP_META = [
@@ -67,6 +71,7 @@ export const STEP_META = [
   { id: 'body', title: 'Body', subtitle: 'Weight and measurements' },
   { id: 'goal', title: 'Goal', subtitle: 'Direction and pace' },
   { id: 'medical', title: 'Medical', subtitle: 'Safety gates' },
+  { id: 'diet', title: 'Diet', subtitle: 'Allergies and preferences' },
   { id: 'sign', title: 'Sign', subtitle: 'Review and e-sign' },
 ] as const;
 

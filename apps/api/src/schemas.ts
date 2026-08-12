@@ -57,6 +57,20 @@ export const activityLevelSchema = z.union([
   z.literal(1.9),
 ]);
 
+export const restrictionSchema = z.object({
+  type: z.enum([
+    'ALLERGY_SEVERE',
+    'ALLERGY_MILD',
+    'INTOLERANCE',
+    'DISLIKE',
+    'RELIGIOUS',
+    'ETHICAL',
+    'MEDICAL',
+  ]),
+  code: z.string().min(1).max(80),
+  note: z.string().max(500).nullish(),
+});
+
 export const onboardClientBody = z.object({
   client: z.object({
     name: z.string().min(1).max(120),
@@ -88,11 +102,12 @@ export const onboardClientBody = z.object({
     preset: z.enum(['LOSE', 'GAIN', 'MAINTAIN', 'RECOMP']),
     rate: z.enum(['CONSERVATIVE', 'STANDARD', 'AGGRESSIVE']),
     startWeightKg: z.number().min(20).max(400),
-    targetWeightKg: z.number().min(20).max(400).optional(),
+    targetWeightKg: z.number().min(20).max(400),
     targetDate: z.iso.date().optional(),
     checkinWeekday: z.number().int().min(0).max(6).optional(),
     bodyFatPct: z.number().min(2).max(70).optional(),
   }),
+  dietary: z.array(restrictionSchema).max(50).optional(),
 });
 
 export const recordVitalsBody = z.object({
@@ -109,20 +124,6 @@ export const recordVitalsBody = z.object({
   bpSystolic: z.number().int().min(60).max(260).optional(),
   bpDiastolic: z.number().int().min(30).max(180).optional(),
   notes: z.string().max(2000).optional(),
-});
-
-export const restrictionSchema = z.object({
-  type: z.enum([
-    'ALLERGY_SEVERE',
-    'ALLERGY_MILD',
-    'INTOLERANCE',
-    'DISLIKE',
-    'RELIGIOUS',
-    'ETHICAL',
-    'MEDICAL',
-  ]),
-  code: z.string().min(1).max(80),
-  note: z.string().max(500).nullish(),
 });
 
 export const putDietaryBody = z.object({
@@ -238,14 +239,31 @@ export const resetPasswordBody = z.object({
   newPassword: z.string().min(8).max(200),
 });
 
+const unitPrefsSchema = z.object({
+  weight: z.enum(['kg', 'lb']),
+  height: z.enum(['cm', 'ft_in']),
+  length: z.enum(['cm', 'in']),
+});
+
 export const updateMeBody = z
   .object({
     locale: z.enum(['en', 'ur']).optional(),
     currencyPref: z.enum(['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR']).optional(),
+    unitPrefs: unitPrefsSchema.optional(),
+    defaultCountry: z
+      .string()
+      .length(2)
+      .regex(/^[A-Z]{2}$/)
+      .optional(),
   })
-  .refine((body) => body.locale !== undefined || body.currencyPref !== undefined, {
-    message: 'Provide locale and/or currencyPref',
-  });
+  .refine(
+    (body) =>
+      body.locale !== undefined ||
+      body.currencyPref !== undefined ||
+      body.unitPrefs !== undefined ||
+      body.defaultCountry !== undefined,
+    { message: 'Provide at least one preference to update' },
+  );
 
 /** Loose-but-typed response envelopes (tightened in the contracts milestone). */
 export const anyObject = z.record(z.string(), z.unknown());

@@ -53,7 +53,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   const downloadPdf = useDownloadCredentialsPdf(clientId);
   const { isDesktop, showMobileTabBar } = useAppChrome();
   const [tab, setTab] = useState<string>('overview');
-  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const showMobileCtas = !isDesktop && showMobileTabBar;
 
@@ -87,8 +86,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
     plans.find((p) => p.status === 'NEEDS_REVIEW') ??
     plans.find((p) => p.status === 'DRAFT') ??
     plans.find((p) => p.status === 'PUBLISHED');
-  const weeklyDelta =
-    weighIns.length >= 2 ? (weighIns[0]?.weightKg ?? 0) - (weighIns[1]?.weightKg ?? 0) : 0;
 
   const medicalParts = [
     client.medicalFlags?.pregnant === true ? 'Pregnant' : null,
@@ -105,7 +102,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   });
 
   const onDownloadPdf = () => {
-    setPdfError(null);
     downloadPdf.mutate(undefined, {
       onSuccess: (blob) => {
         const safe = client.name
@@ -116,7 +112,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
           .slice(0, 40);
         downloadBlob(blob, `client-${safe || 'credentials'}-credentials.pdf`);
       },
-      onError: (e) => setPdfError(e.message),
     });
   };
 
@@ -128,9 +123,11 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
         phone={client.phone}
         email={client.email}
         status={status}
-        isDesktop={isDesktop}
         tab={tab}
         onTabChange={setTab}
+        signed={signed}
+        pdfPending={downloadPdf.isPending}
+        onDownloadPdf={onDownloadPdf}
       />
 
       <ScreenBody gap="$4">
@@ -143,11 +140,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
             goalProgressPct={goalProgressPct}
             dietaryProfile={dietaryProfile}
             weighIns={weighIns}
-            weeklyDelta={weeklyDelta}
             signed={signed}
-            pdfError={pdfError}
-            pdfPending={downloadPdf.isPending}
-            onDownloadPdf={onDownloadPdf}
           />
         ) : null}
 

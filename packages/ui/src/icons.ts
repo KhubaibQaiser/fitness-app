@@ -12,6 +12,7 @@ import {
   Home as HomeRaw,
   MessageCircle as MessageCircleRaw,
   Moon as MoonRaw,
+  MoreHorizontal as MoreHorizontalRaw,
   Pencil as PencilRaw,
   Plus as PlusRaw,
   Scale as ScaleRaw,
@@ -59,6 +60,7 @@ export const Dumbbell: GymosIcon = fromLucide(DumbbellRaw);
 export const Home: GymosIcon = fromLucide(HomeRaw);
 export const MessageCircle: GymosIcon = fromLucide(MessageCircleRaw);
 export const Moon: GymosIcon = fromLucide(MoonRaw);
+export const MoreHorizontal: GymosIcon = fromLucide(MoreHorizontalRaw);
 export const Plus: GymosIcon = fromLucide(PlusRaw);
 export const Pencil: GymosIcon = fromLucide(PencilRaw);
 export const Scale: GymosIcon = fromLucide(ScaleRaw);

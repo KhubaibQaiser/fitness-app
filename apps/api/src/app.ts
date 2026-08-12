@@ -5,6 +5,7 @@ import { type Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { type AiConfig } from '@gymos/ai';
 import { can, type Action } from '@gymos/core/rbac';
+import { resolveUnitPrefs, unitPrefsToSystem } from '@gymos/core/units';
 import { schema as s, type Db } from '@gymos/db';
 import {
   completeCheckIn,
@@ -272,6 +273,8 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       terminology: manifest.terminology,
       locales: manifest.locales,
       units: manifest.units,
+      unitPrefs: manifest.unitPrefs,
+      defaultCountry: manifest.defaultCountry,
       currency: manifest.currency,
       currencies: [...CURRENCY_CODES],
     });
@@ -285,6 +288,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   ) => {
     const principal = await resolvePrincipal(db, userId);
     const tenant = await resolveTenantManifest(principal);
+    const unitPrefs = resolveUnitPrefs(principal.unitPrefs, tenant.unitPrefs);
     const { token, expiresIn } = await issueAccessToken(
       {
         sub: principal.userId,
@@ -306,7 +310,9 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
         name: principal.name,
         email: principal.email,
         locale: principal.locale,
-        unitPref: principal.unitPref ?? tenant.units,
+        unitPref: unitPrefsToSystem(unitPrefs),
+        unitPrefs,
+        defaultCountry: principal.defaultCountry ?? tenant.defaultCountry,
         currencyPref: principal.currencyPref ?? tenant.currency,
         roles: principal.actor.roles,
       },
@@ -603,15 +609,20 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   };
 
   // ---- me + notifications ------------------------------------------------------
-  const meResponse = (p: Principal, tenant: TenantManifest) => ({
-    userId: p.userId,
-    name: p.name,
-    email: p.email,
-    locale: p.locale,
-    unitPref: p.unitPref ?? tenant.units,
-    currencyPref: p.currencyPref ?? tenant.currency,
-    roles: [...p.actor.roles],
-  });
+  const meResponse = (p: Principal, tenant: TenantManifest) => {
+    const unitPrefs = resolveUnitPrefs(p.unitPrefs, tenant.unitPrefs);
+    return {
+      userId: p.userId,
+      name: p.name,
+      email: p.email,
+      locale: p.locale,
+      unitPref: unitPrefsToSystem(unitPrefs),
+      unitPrefs,
+      defaultCountry: p.defaultCountry ?? tenant.defaultCountry,
+      currencyPref: p.currencyPref ?? tenant.currency,
+      roles: [...p.actor.roles],
+    };
+  };
 
   app.openapi(
     createRoute({
@@ -654,6 +665,8 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       await updateUserPrefs(db, p.userId, {
         ...(body.locale !== undefined ? { locale: body.locale } : {}),
         ...(body.currencyPref !== undefined ? { currencyPref: body.currencyPref } : {}),
+        ...(body.unitPrefs !== undefined ? { unitPrefs: body.unitPrefs } : {}),
+        ...(body.defaultCountry !== undefined ? { defaultCountry: body.defaultCountry } : {}),
       });
 
       const refreshed = await resolvePrincipal(db, p.userId);
@@ -801,6 +814,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
         },
         vitals: body.vitals,
         goal: body.goal,
+        ...(body.dietary !== undefined ? { dietary: body.dietary } : {}),
       });
       if (!result.ok) {
         throw new ProblemError(

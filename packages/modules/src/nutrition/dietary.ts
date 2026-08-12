@@ -1,6 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { assertNoRestrictedFoods } from '@gymos/core/nutrition';
-import { schema as s, type Db } from '@gymos/db';
+import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
 
@@ -24,7 +24,7 @@ export type DietaryProfile = {
 };
 
 export const getActiveProfile = async (
-  db: Db,
+  db: DbOrTx,
   clientId: string,
 ): Promise<DietaryProfile | null> => {
   const [profile] = await db
@@ -67,6 +67,60 @@ export type PutProfileResult = {
 };
 
 /**
+ * Insert a new active dietary profile (and deactivate the previous one).
+ * Callers that need plan re-validation should use `putProfile`.
+ */
+export const writeDietaryProfileTx = async (
+  tx: DbOrTx,
+  principal: { userId: string; outletId: string },
+  clientId: string,
+  restrictions: RestrictionInput[],
+): Promise<DietaryProfile> => {
+  const previous = await getActiveProfile(tx, clientId);
+  if (previous) {
+    await tx
+      .update(s.clientDietaryProfiles)
+      .set({ isActive: false })
+      .where(eq(s.clientDietaryProfiles.id, previous.id));
+  }
+  const [created] = await tx
+    .insert(s.clientDietaryProfiles)
+    .values({
+      clientId,
+      outletId: principal.outletId,
+      version: (previous?.version ?? 0) + 1,
+      isActive: true,
+      createdBy: principal.userId,
+    })
+    .returning();
+  if (!created) throw new Error('profile insert failed');
+  if (restrictions.length > 0) {
+    await tx.insert(s.dietaryRestrictions).values(
+      restrictions.map((r) => ({
+        profileId: created.id,
+        type: r.type,
+        code: r.code,
+        note: r.note ?? null,
+      })),
+    );
+  }
+  await writeAudit(tx, {
+    actorUserId: principal.userId,
+    actorRole: 'COACH',
+    action: 'dietary.update',
+    resourceType: 'client_dietary_profile',
+    resourceId: created.id,
+    before: { codes: previous?.restrictions.map((r) => r.code) ?? [] },
+    after: { codes: restrictions.map((r) => r.code) },
+  });
+  return {
+    id: created.id,
+    version: created.version,
+    restrictions: restrictions.map((r) => ({ type: r.type, code: r.code, note: r.note ?? null })),
+  };
+};
+
+/**
  * Safety-critical write path (spec FR-M4, coach-authored in the pilot):
  * new version → immediate re-validation of the PUBLISHED plan → violation
  * blocks the plan (NEEDS_REVIEW) and raises a HIGH-priority notification.
@@ -77,47 +131,9 @@ export const putProfile = async (
   clientId: string,
   restrictions: RestrictionInput[],
 ): Promise<PutProfileResult> => {
-  const previous = await getActiveProfile(db, clientId);
-
-  const profile = await db.transaction(async (tx) => {
-    if (previous) {
-      await tx
-        .update(s.clientDietaryProfiles)
-        .set({ isActive: false })
-        .where(eq(s.clientDietaryProfiles.id, previous.id));
-    }
-    const [created] = await tx
-      .insert(s.clientDietaryProfiles)
-      .values({
-        clientId,
-        outletId: principal.outletId,
-        version: (previous?.version ?? 0) + 1,
-        isActive: true,
-        createdBy: principal.userId,
-      })
-      .returning();
-    if (!created) throw new Error('profile insert failed');
-    if (restrictions.length > 0) {
-      await tx.insert(s.dietaryRestrictions).values(
-        restrictions.map((r) => ({
-          profileId: created.id,
-          type: r.type,
-          code: r.code,
-          note: r.note ?? null,
-        })),
-      );
-    }
-    await writeAudit(tx, {
-      actorUserId: principal.userId,
-      actorRole: 'COACH',
-      action: 'dietary.update',
-      resourceType: 'client_dietary_profile',
-      resourceId: created.id,
-      before: { codes: previous?.restrictions.map((r) => r.code) ?? [] },
-      after: { codes: restrictions.map((r) => r.code) },
-    });
-    return created;
-  });
+  const profile = await db.transaction(async (tx) =>
+    writeDietaryProfileTx(tx, principal, clientId, restrictions),
+  );
 
   // Immediate re-validation of the published plan against the NEW restrictions.
   let planFlagged = false;
@@ -162,11 +178,7 @@ export const putProfile = async (
   }
 
   return {
-    profile: {
-      id: profile.id,
-      version: profile.version,
-      restrictions: restrictions.map((r) => ({ type: r.type, code: r.code, note: r.note ?? null })),
-    },
+    profile,
     planFlagged,
   };
 };

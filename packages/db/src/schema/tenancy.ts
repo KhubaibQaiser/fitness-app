@@ -10,6 +10,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { type ClientIntake } from '@gymos/core';
+import { type UnitPrefs } from '@gymos/core/units';
 import { clientStatusEnum, coachTierEnum, roleEnum, sexEnum } from './enums';
 import { createdAt, deletedAt, id, tstz, updatedAt } from './helpers';
 
@@ -55,6 +56,10 @@ export const users = pgTable(
     locale: text('locale').notNull().default('en'),
     /** NULL falls back to the tenant default from the manifest. */
     unitPref: text('unit_pref', { enum: ['metric', 'imperial'] }),
+    /** Granular display prefs; NULL falls back to the tenant manifest. */
+    unitPrefs: jsonb('unit_prefs').$type<UnitPrefs>(),
+    /** ISO 3166-1 alpha-2; NULL falls back to the tenant defaultCountry. */
+    defaultCountry: text('default_country'),
     /** NULL falls back to the tenant default from the manifest. */
     currencyPref: text('currency_pref', {
       enum: ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR'],

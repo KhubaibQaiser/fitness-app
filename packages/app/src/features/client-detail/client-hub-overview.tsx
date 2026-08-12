@@ -2,18 +2,11 @@
 
 import { Link } from 'solito/link';
 import type { Client, DietaryProfile, Goal } from '@gymos/contracts';
-import {
-  AlertBanner,
-  Body,
-  Card,
-  GhostButton,
-  Muted,
-  ShieldAlert,
-  Stat,
-  Text,
-  XStack,
-  YStack,
-} from '@gymos/ui';
+import { formatRestrictionLabel } from '@gymos/core/nutrition';
+import { formatWeight } from '@gymos/core/units';
+import { AlertBanner, Card, Muted, ShieldAlert, Stat, Text, XStack, YStack } from '@gymos/ui';
+import { useMe, usePublicConfig } from '../../api';
+import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { ProgressRing, WeightTrendChart } from '../charts';
 
 type WeightPoint = { t: number; weightKg: number };
@@ -26,11 +19,7 @@ type Props = {
   goalProgressPct: number | null;
   dietaryProfile: DietaryProfile;
   weighIns: WeightPoint[];
-  weeklyDelta: number;
   signed: boolean;
-  pdfError: string | null;
-  pdfPending: boolean;
-  onDownloadPdf: () => void;
 };
 
 const computeBmi = (heightCm: number | null, weightKg: number | null): number | null => {
@@ -39,17 +28,21 @@ const computeBmi = (heightCm: number | null, weightKg: number | null): number | 
   return weightKg / (meters * meters);
 };
 
-const paceDisplay = (goal: Goal | null): { value: string; unit?: string; hint: string } => {
+const paceDisplay = (
+  goal: Goal | null,
+  weightUnit: string,
+): { value: string; unit?: string; hint: string } => {
   if (goal === null) return { value: '—', hint: 'No goal' };
   const abs = Math.abs(goal.expectedWeeklyDeltaKg);
   if (abs > 0) {
-    return { value: String(Number(abs.toFixed(2))), unit: 'kg/wk', hint: goal.preset };
+    const shown = formatWeight(abs, weightUnit === 'lb' ? 'lb' : 'kg', 2);
+    return { value: String(shown.value), unit: `${shown.unit}/wk`, hint: goal.preset };
   }
   const rate = goal.rate === 'CONSERVATIVE' ? '0.25' : goal.rate === 'AGGRESSIVE' ? '0.75' : '0.5';
-  return { value: rate, unit: 'kg/wk', hint: goal.preset };
+  return { value: rate, unit: `${weightUnit}/wk`, hint: goal.preset };
 };
 
-/** Overview tab — kit metrics grid + chart∥sidebar. */
+/** Overview tab — alerts, stats, large goal ring, weight trend last. */
 export const ClientHubOverview = ({
   clientId,
   client,
@@ -59,10 +52,12 @@ export const ClientHubOverview = ({
   dietaryProfile,
   weighIns,
   signed,
-  pdfError,
-  pdfPending,
-  onDownloadPdf,
 }: Props) => {
+  const me = useMe();
+  const config = usePublicConfig();
+  const prefs = unitPrefsFrom(me.data, config.data);
+  const weightUnit = prefs.weight;
+
   const severeAllergies = (dietaryProfile?.restrictions ?? []).filter(
     (r) => r.type === 'ALLERGY_SEVERE',
   );
@@ -75,9 +70,8 @@ export const ClientHubOverview = ({
   ].filter((p): p is string => typeof p === 'string' && p.length > 0);
 
   const bmi = computeBmi(client.heightCm, latestWeightKg);
-  const pace = paceDisplay(goal);
+  const pace = paceDisplay(goal, weightUnit);
 
-  // Kit: delta vs start weight (not last two weigh-ins)
   const startKg = goal?.startWeightKg ?? null;
   const weightDelta = startKg !== null && latestWeightKg !== null ? startKg - latestWeightKg : null;
   const loseGoal = goal?.preset === 'LOSE' || goal?.preset === 'RECOMP';
@@ -97,15 +91,16 @@ export const ClientHubOverview = ({
               ? 'danger'
               : 'muted'
           : 'muted';
+  const deltaShown = weightDelta !== null ? formatWeight(Math.abs(weightDelta), weightUnit) : null;
   const deltaText =
-    weightDelta !== null
-      ? `${Math.abs(weightDelta).toFixed(1)} kg ${weightDelta >= 0 ? '↓' : '↑'}`
+    deltaShown !== null
+      ? `${deltaShown.value} ${deltaShown.unit} ${weightDelta !== null && weightDelta >= 0 ? '↓' : '↑'}`
       : undefined;
 
-  const kgToGoal =
-    goal?.targetWeightKg != null && latestWeightKg !== null
-      ? Math.abs(latestWeightKg - goal.targetWeightKg)
-      : null;
+  const currentShown = latestWeightKg !== null ? formatWeight(latestWeightKg, weightUnit) : null;
+  const startShown = startKg !== null ? formatWeight(startKg, weightUnit) : null;
+  const targetShown =
+    goal?.targetWeightKg != null ? formatWeight(goal.targetWeightKg, weightUnit) : null;
 
   return (
     <YStack gap="$5" width="100%">
@@ -131,11 +126,10 @@ export const ClientHubOverview = ({
           title="Severe allergies"
           icon={<ShieldAlert size={18} color="$danger" />}
         >
-          {severeAllergies.map((r) => r.code.replace('allergen:', '')).join(', ')}
+          {severeAllergies.map((r) => formatRestrictionLabel(r.code)).join(', ')}
         </AlertBanner>
       ) : null}
 
-      {/* Kit: grid-cols-2 md:grid-cols-4 gap-3 — equal cards */}
       <XStack flexWrap="wrap" gap="$3" width="100%">
         <Card
           flexBasis="47%"
@@ -147,12 +141,14 @@ export const ClientHubOverview = ({
         >
           <Stat
             label="Current weight"
-            value={latestWeightKg !== null ? String(latestWeightKg) : '—'}
-            unit="kg"
+            value={currentShown !== null ? String(currentShown.value) : '—'}
+            unit={currentShown?.unit ?? weightUnit}
             {...(deltaText !== undefined
               ? { delta: deltaText, deltaTone: deltaGood ?? 'muted' }
               : {})}
-            {...(startKg !== null ? { hint: `Start: ${startKg} kg` } : {})}
+            {...(startShown !== null
+              ? { hint: `Start: ${startShown.value} ${startShown.unit}` }
+              : {})}
           />
         </Card>
         <Card
@@ -168,8 +164,8 @@ export const ClientHubOverview = ({
             value={goalProgressPct !== null ? String(goalProgressPct) : '—'}
             unit="%"
             hint={
-              goal?.targetWeightKg != null
-                ? `Target: ${goal.targetWeightKg} kg`
+              targetShown !== null
+                ? `Target: ${targetShown.value} ${targetShown.unit}`
                 : (goal?.preset ?? 'No goal')
             }
           />
@@ -205,151 +201,60 @@ export const ClientHubOverview = ({
         </Card>
       </XStack>
 
-      {/* Kit: md:grid-cols-[1fr_280px] — stretch so columns share height */}
-      <YStack
-        gap="$4"
-        width="100%"
-        $md={{ flexDirection: 'row', alignItems: 'stretch', gap: '$4' }}
-      >
-        <Card flex={1} minWidth={0} padding="$5" gap="$4" $md={{ flexGrow: 1 }}>
-          <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-            <YStack gap={2}>
-              <Text fontFamily="$heading" fontWeight="600" fontSize={13} color="$color">
-                Weight trend
+      {goalProgressPct !== null && goal !== null ? (
+        <Card gap="$3" padding="$5" alignItems="center">
+          <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
+            Goal progress
+          </Muted>
+          <ProgressRing value={goalProgressPct} size={180} strokeWidth={12} label="progress" />
+          <XStack gap="$6">
+            <YStack alignItems="center">
+              <Muted fontSize={11}>Start</Muted>
+              <Text fontFamily="$mono" fontWeight="700">
+                {startShown !== null ? `${startShown.value} ${startShown.unit}` : '—'}
               </Text>
-              <Muted fontSize={11}>
-                {weighIns.length > 0 ? `${weighIns.length} data points` : 'No weigh-ins yet'}
-              </Muted>
             </YStack>
-            {weighIns.length >= 2 ? (
-              <XStack gap="$3" alignItems="center" flexShrink={0}>
-                <XStack alignItems="center" gap="$1.5">
-                  <YStack width={16} height={2} backgroundColor="$primary" borderRadius={999} />
-                  <Muted fontSize={11}>Actual</Muted>
-                </XStack>
-                {goal?.targetWeightKg != null ? (
-                  <XStack alignItems="center" gap="$1.5">
-                    <YStack
-                      width={16}
-                      height={2}
-                      backgroundColor="$success"
-                      opacity={0.8}
-                      borderRadius={999}
-                    />
-                    <Muted fontSize={11}>Goal</Muted>
-                  </XStack>
-                ) : null}
-              </XStack>
-            ) : null}
+            <YStack alignItems="center">
+              <Muted fontSize={11}>Target</Muted>
+              <Text fontFamily="$mono" fontWeight="700">
+                {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '—'}
+              </Text>
+            </YStack>
           </XStack>
-          {weighIns.length >= 2 ? (
-            <WeightTrendChart
-              points={weighIns}
-              goalWeightKg={goal?.targetWeightKg ?? null}
-              height={200}
-            />
-          ) : (
-            <YStack flex={1} minHeight={200} alignItems="center" justifyContent="center">
-              <Muted fontSize={13}>No weight data recorded yet.</Muted>
-            </YStack>
-          )}
         </Card>
+      ) : null}
 
-        <YStack
-          gap="$3"
-          width="100%"
-          $md={{ width: 280, flexShrink: 0 }}
-          justifyContent="flex-start"
-        >
-          {goalProgressPct !== null && goal !== null ? (
-            <Card gap="$3" padding="$4">
-              <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
-                Goal progress
-              </Muted>
-              <XStack alignItems="center" justifyContent="space-between" gap="$3">
-                <YStack gap={2}>
-                  <Muted fontSize={11}>{goal.startWeightKg} kg</Muted>
-                  {kgToGoal !== null ? (
-                    <Muted fontSize={11}>{kgToGoal.toFixed(1)} kg to goal</Muted>
-                  ) : null}
-                </YStack>
-                <ProgressRing value={goalProgressPct} size={84} label="progress" tone="primary" />
-                <Muted fontSize={11}>{goal.targetWeightKg ?? '—'} kg</Muted>
-              </XStack>
-              <YStack
-                height={10}
-                backgroundColor="$elevatedBg"
-                borderRadius={999}
-                overflow="hidden"
-                accessibilityRole="progressbar"
-                aria-valuenow={goalProgressPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Goal progress"
-              >
-                <YStack
-                  height="100%"
-                  width={`${Math.min(100, Math.max(0, goalProgressPct))}%`}
-                  backgroundColor="$primary"
-                  borderRadius={999}
-                />
-              </YStack>
-            </Card>
-          ) : null}
+      {severeAllergies.length > 0 ? (
+        <Link href={`/clients/${clientId}/dietary`}>
+          <Muted fontSize={12} textDecorationLine="underline" color="$danger">
+            Edit dietary profile
+          </Muted>
+        </Link>
+      ) : null}
 
-          {severeAllergies.length > 0 ? (
-            <YStack
-              borderWidth={1}
-              borderColor="$danger"
-              backgroundColor="$dangerMuted"
-              borderRadius="$radiusControl"
-              paddingHorizontal="$3"
-              paddingVertical="$2.5"
-              gap="$1"
-            >
-              <Text fontFamily="$heading" fontSize={11} fontWeight="600" color="$danger">
-                Allergens on file
-              </Text>
-              <Text fontSize={12} color="$danger">
-                {severeAllergies.map((r) => r.code.replace('allergen:', '')).join(', ')}
-              </Text>
-              <Link href={`/clients/${clientId}/dietary`}>
-                <Muted fontSize={11} textDecorationLine="underline" color="$danger">
-                  Edit dietary profile
-                </Muted>
-              </Link>
-            </YStack>
-          ) : null}
-
-          {signed ? (
-            <Card gap="$3" padding="$4">
-              <YStack gap={2}>
-                <Body fontWeight="600" fontSize={13}>
-                  Credentials PDF
-                </Body>
-                <Muted fontSize={11}>
-                  Signed {client.intake?.signedAt ? client.intake.signedAt.slice(0, 10) : '—'}
-                </Muted>
-              </YStack>
-              <GhostButton width="100%" onPress={onDownloadPdf} disabled={pdfPending}>
-                {pdfPending ? 'Preparing…' : 'Download PDF'}
-              </GhostButton>
-              {pdfError ? (
-                <Body color="$danger" role="alert" fontSize={12}>
-                  {pdfError}
-                </Body>
-              ) : null}
-            </Card>
-          ) : (
-            <Card gap="$2" padding="$4">
-              <Muted fontSize={12}>Credentials PDF unlocks after e-signed intake.</Muted>
-              <GhostButton width="100%" disabled>
-                Download PDF
-              </GhostButton>
-            </Card>
-          )}
-        </YStack>
-      </YStack>
+      <Card flex={1} minWidth={0} padding="$5" gap="$4">
+        <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
+          <YStack gap={2}>
+            <Text fontFamily="$heading" fontWeight="600" fontSize={13} color="$color">
+              Weight trend
+            </Text>
+            <Muted fontSize={11}>
+              {weighIns.length > 0 ? `${weighIns.length} data points` : 'No weigh-ins yet'}
+            </Muted>
+          </YStack>
+        </XStack>
+        {weighIns.length >= 2 ? (
+          <WeightTrendChart
+            points={weighIns}
+            goalWeightKg={goal?.targetWeightKg ?? null}
+            height={200}
+          />
+        ) : (
+          <YStack minHeight={160} alignItems="center" justifyContent="center">
+            <Muted fontSize={13}>No weight data recorded yet.</Muted>
+          </YStack>
+        )}
+      </Card>
     </YStack>
   );
 };

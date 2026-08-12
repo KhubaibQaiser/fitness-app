@@ -3,35 +3,47 @@
 import { useRouter } from 'solito/navigation';
 import type { OnboardClientInput } from '@gymos/contracts';
 import { Body, Card, PageHeader } from '@gymos/ui';
-import { useOnboardClient } from '../../api';
+import { useMe, useOnboardClient, usePublicConfig } from '../../api';
+import { defaultCountryFrom, unitPrefsFrom } from '../../lib/unit-prefs';
 import { AppScreen } from '../shell/app-screen';
-import { parsePositive } from './height-units';
 import { OnboardingFooter } from './onboarding-footer';
 import { OnboardingProgress } from './onboarding-progress';
 import { STEP_META } from './onboarding-types';
 import { StepActivity } from './step-activity';
 import { StepBody } from './step-body';
 import { StepContact } from './step-contact';
+import { StepDiet } from './step-diet';
 import { StepGoal } from './step-goal';
 import { StepHeight } from './step-height';
 import { StepIdentity } from './step-identity';
 import { StepMedical } from './step-medical';
 import { StepSign } from './step-sign';
 import { useOnboardingDraft } from './use-onboarding-draft';
-import { parseConditions, resolveHeightCm, validateStep } from './validate-step';
+import {
+  parseConditions,
+  resolveHeightCm,
+  resolveLengthCm,
+  resolvePhoneE164,
+  resolveWeightKg,
+  validateStep,
+} from './validate-step';
 
 /** Full-screen multi-step client onboarding wizard. */
 export const ClientOnboardingScreen = () => {
   const router = useRouter();
   const onboard = useOnboardClient();
+  const me = useMe();
+  const config = usePublicConfig();
   const { draft, patch, stepIndex, setStepIndex, errors, setErrors, clearError } =
     useOnboardingDraft();
 
+  const prefs = unitPrefsFrom(me.data, config.data);
+  const defaultCountry = defaultCountryFrom(me.data, config.data);
   const isLast = stepIndex === STEP_META.length - 1;
   const meta = STEP_META[stepIndex];
 
   const goNext = () => {
-    const nextErrors = validateStep(stepIndex, draft);
+    const nextErrors = validateStep(stepIndex, draft, prefs, defaultCountry);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -42,14 +54,24 @@ export const ClientOnboardingScreen = () => {
 
     if (onboard.isPending) return;
     const heightCm = resolveHeightCm(draft);
-    const weightKg = parsePositive(draft.weightKg);
-    const startWeightKg = parsePositive(draft.startWeightKg) ?? weightKg;
-    if (heightCm === null || weightKg === null || startWeightKg === null) return;
+    const weightKg = resolveWeightKg(draft.weightKg, prefs);
+    const startWeightKg = resolveWeightKg(draft.startWeightKg, prefs) ?? weightKg;
+    const targetWeightKg = resolveWeightKg(draft.targetWeightKg, prefs);
+    const phone = resolvePhoneE164(draft.phone, defaultCountry);
+    if (
+      heightCm === null ||
+      weightKg === null ||
+      startWeightKg === null ||
+      targetWeightKg === null
+    ) {
+      return;
+    }
+    if (phone === null) return;
     if (draft.signaturePngBase64 === null) return;
 
     const conditions = parseConditions(draft.medicalConditions);
     const optionalCm = (raw: string): number | undefined => {
-      const n = parsePositive(raw);
+      const n = resolveLengthCm(raw, prefs);
       return n ?? undefined;
     };
 
@@ -58,7 +80,7 @@ export const ClientOnboardingScreen = () => {
         name: draft.name.trim(),
         sex: draft.sex,
         ...(draft.dob.trim() !== '' ? { dob: draft.dob.trim() } : {}),
-        phone: draft.phone.trim(),
+        phone,
         ...(draft.email.trim() !== '' ? { email: draft.email.trim() } : {}),
         heightCm,
         activityLevel: Number(draft.activityLevel) as OnboardClientInput['client']['activityLevel'],
@@ -100,11 +122,9 @@ export const ClientOnboardingScreen = () => {
         preset: draft.goalPreset,
         rate: draft.goalRate,
         startWeightKg,
-        ...(() => {
-          const target = parsePositive(draft.targetWeightKg);
-          return target !== null ? { targetWeightKg: target } : {};
-        })(),
+        targetWeightKg,
       },
+      ...(draft.dietary.length > 0 ? { dietary: draft.dietary } : {}),
     };
 
     onboard.mutate(payload, {
@@ -113,7 +133,20 @@ export const ClientOnboardingScreen = () => {
   };
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <OnboardingFooter
+          canGoBack={stepIndex > 0}
+          isLast={isLast}
+          pending={onboard.isPending}
+          onBack={() => {
+            setErrors({});
+            setStepIndex((i) => Math.max(0, i - 1));
+          }}
+          onNext={goNext}
+        />
+      }
+    >
       <PageHeader title={meta?.title ?? 'Onboarding'} subtitle="New client" />
       <OnboardingProgress stepIndex={stepIndex} />
 
@@ -125,17 +158,36 @@ export const ClientOnboardingScreen = () => {
           <StepHeight draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
         ) : null}
         {stepIndex === 2 ? (
-          <StepContact draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          <StepContact
+            draft={draft}
+            errors={errors}
+            defaultCountry={defaultCountry}
+            onPatch={patch}
+            onClearError={clearError}
+          />
         ) : null}
         {stepIndex === 3 ? <StepActivity draft={draft} onPatch={patch} /> : null}
         {stepIndex === 4 ? (
-          <StepBody draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          <StepBody
+            draft={draft}
+            errors={errors}
+            prefs={prefs}
+            onPatch={patch}
+            onClearError={clearError}
+          />
         ) : null}
         {stepIndex === 5 ? (
-          <StepGoal draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          <StepGoal
+            draft={draft}
+            errors={errors}
+            prefs={prefs}
+            onPatch={patch}
+            onClearError={clearError}
+          />
         ) : null}
         {stepIndex === 6 ? <StepMedical draft={draft} onPatch={patch} /> : null}
-        {stepIndex === 7 ? (
+        {stepIndex === 7 ? <StepDiet draft={draft} onPatch={patch} /> : null}
+        {stepIndex === 8 ? (
           <StepSign draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
         ) : null}
 
@@ -145,17 +197,6 @@ export const ClientOnboardingScreen = () => {
           </Body>
         ) : null}
       </Card>
-
-      <OnboardingFooter
-        canGoBack={stepIndex > 0}
-        isLast={isLast}
-        pending={onboard.isPending}
-        onBack={() => {
-          setErrors({});
-          setStepIndex((i) => Math.max(0, i - 1));
-        }}
-        onNext={goNext}
-      />
     </AppScreen>
   );
 };

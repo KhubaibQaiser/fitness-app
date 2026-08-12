@@ -26,7 +26,6 @@ import {
 import { useApplyAdjustment, useCheckIn, useUpdateCheckIn } from '../../api';
 import { MacroDonut, ProgressRing } from '../charts';
 import { AppScreen } from '../shell/app-screen';
-import { useAppChrome } from '../shell/use-app-chrome';
 import { adherenceBarTone, adherencePctToRating, adherenceRatingToPct } from './adherence';
 import { VERDICT_COPY } from './verdict-copy';
 
@@ -79,7 +78,6 @@ export const CheckInDetailScreen = ({
   checkInId: string;
 }) => {
   const router = useRouter();
-  const { showMobileTabBar } = useAppChrome();
   const detail = useCheckIn(checkInId);
   const update = useUpdateCheckIn(clientId);
   const apply = useApplyAdjustment(clientId);
@@ -90,8 +88,6 @@ export const CheckInDetailScreen = ({
   const [weightError, setWeightError] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [hydrated, setHydrated] = useState(false);
-
-  const bottomInset = showMobileTabBar ? 72 : 12;
   const pctNum = Math.max(0, Math.min(100, Number(adherencePct) || 0));
   const barTone = adherenceBarTone(pctNum);
 
@@ -154,7 +150,20 @@ export const CheckInDetailScreen = ({
   };
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <StickyFormFooter>
+          <GhostButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
+            {editable ? 'Cancel' : 'Back'}
+          </GhostButton>
+          {editable ? (
+            <PrimaryButton flex={1} disabled={update.isPending} onPress={submit}>
+              {update.isPending ? 'Re-running…' : 'Save & re-run'}
+            </PrimaryButton>
+          ) : null}
+        </StickyFormFooter>
+      }
+    >
       <PageHeader
         title={`Check-in · ${checkIn.scheduledFor}`}
         subtitle={editable ? 'Edit inputs and re-run the engine' : `${checkIn.status} — view only`}
@@ -344,17 +353,6 @@ export const CheckInDetailScreen = ({
           </Body>
         ) : null}
       </Card>
-
-      <StickyFormFooter bottomInset={bottomInset}>
-        <GhostButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
-          {editable ? 'Cancel' : 'Back'}
-        </GhostButton>
-        {editable ? (
-          <PrimaryButton flex={1} disabled={update.isPending} onPress={submit}>
-            {update.isPending ? 'Re-running…' : 'Save & re-run'}
-          </PrimaryButton>
-        ) : null}
-      </StickyFormFooter>
     </AppScreen>
   );
 };

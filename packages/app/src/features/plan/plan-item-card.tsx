@@ -91,7 +91,9 @@ export const PlanItemCard = ({
           </XStack>
         ) : null}
       </Row>
-      {item.prepNotes ? <Muted fontSize={12}>{item.prepNotes}</Muted> : null}
+      {item.prepNotes && !/^Portion as listed|^Prepare .+ fresh/i.test(item.prepNotes) ? (
+        <Muted fontSize={12}>{item.prepNotes}</Muted>
+      ) : null}
       {editable ? (
         <XStack gap="$2" flexWrap="wrap">
           <GhostButton

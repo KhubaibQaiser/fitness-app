@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Link } from 'solito/link';
 import { ApiError, type PlanItem, type PlanSummary } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
 import {
+  ArrowLeft,
   Badge,
   Body,
   Card,
   GhostButton,
+  IconButton,
   Muted,
   PrimaryButton,
   Row,
@@ -23,7 +26,6 @@ import { PlanFoodPicker } from './plan-food-picker';
 import { PlanItemCard } from './plan-item-card';
 import { PlanPublishConfirm } from './plan-publish-confirm';
 import { PlanTitleHeader } from './plan-title-header';
-import { PrepPreferencesBanner } from './prep-preferences-banner';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Mon' },
@@ -152,14 +154,21 @@ export const PlanEditor = ({
 
   return (
     <AppScreen>
-      <PlanTitleHeader
-        title={title}
-        version={version}
-        status={status}
-        editable={editable}
-        busy={patch.isPending}
-        onSave={(nextTitle) => patch.mutate([{ op: 'set-title', title: nextTitle }])}
-      />
+      <XStack alignItems="flex-start" gap="$2" width="100%">
+        <Link href={`/clients/${clientId}`}>
+          <IconButton aria-label="Back to client" icon={<ArrowLeft size={20} color="$color" />} />
+        </Link>
+        <YStack flex={1} minWidth={0}>
+          <PlanTitleHeader
+            title={title}
+            version={version}
+            status={status}
+            editable={editable}
+            busy={patch.isPending}
+            onSave={(nextTitle) => patch.mutate([{ op: 'set-title', title: nextTitle }])}
+          />
+        </YStack>
+      </XStack>
 
       {plans.length > 1 ? (
         <YStack gap="$2">
@@ -199,8 +208,6 @@ export const PlanEditor = ({
           </Muted>
         </Card>
       ) : null}
-
-      <PrepPreferencesBanner />
 
       {status !== 'DRAFT' ? (
         <>

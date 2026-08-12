@@ -1,6 +1,6 @@
 'use client';
 
-import { Body, FormField, SegmentedControl, YStack } from '@gymos/ui';
+import { DateField, FormField, SegmentedControl, todayCalendarDate, YStack } from '@gymos/ui';
 import type { OnboardingDraft } from './onboarding-types';
 
 export const StepIdentity = ({
@@ -28,9 +28,6 @@ export const StepIdentity = ({
     />
 
     <YStack gap="$2">
-      <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
-        Gender
-      </Body>
       <SegmentedControl
         ariaLabel="Gender"
         options={[
@@ -42,14 +39,14 @@ export const StepIdentity = ({
       />
     </YStack>
 
-    <FormField
+    <DateField
       label="Date of birth"
       value={draft.dob}
-      onChangeText={(t) => {
-        onPatch({ dob: t });
+      onChange={(dob) => {
+        onPatch({ dob });
         onClearError('dob');
       }}
-      placeholder="YYYY-MM-DD"
+      maxDate={todayCalendarDate()}
       error={errors.dob ?? null}
       hint="Optional — age 30 assumed for targets until set"
     />

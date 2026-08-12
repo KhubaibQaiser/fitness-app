@@ -1,16 +1,19 @@
 'use client';
 
+import type { UnitPrefs } from '@gymos/core/units';
 import { FormField, FormSection, YStack } from '@gymos/ui';
 import type { OnboardingDraft } from './onboarding-types';
 
 export const StepBody = ({
   draft,
   errors,
+  prefs,
   onPatch,
   onClearError,
 }: {
   draft: OnboardingDraft;
   errors: Record<string, string>;
+  prefs: UnitPrefs;
   onPatch: (partial: Partial<OnboardingDraft>) => void;
   onClearError: (key: string) => void;
 }) => (
@@ -19,20 +22,18 @@ export const StepBody = ({
       label="Weight"
       value={draft.weightKg}
       onChangeText={(t) => {
-        onPatch({
-          weightKg: t,
-          startWeightKg: draft.startWeightKg === '' ? t : draft.startWeightKg,
-        });
+        onPatch({ weightKg: t });
         onClearError('weightKg');
       }}
-      placeholder="80"
+      placeholder={prefs.weight === 'kg' ? '80' : '176'}
       inputMode="decimal"
       required
       error={errors.weightKg ?? null}
-      hint="Kilograms"
+      hint={prefs.weight === 'kg' ? 'Kilograms' : 'Pounds'}
+      unit={prefs.weight}
     />
 
-    <FormSection title="Measurements (cm, optional)">
+    <FormSection title={`Measurements (${prefs.length}, optional)`}>
       {(
         [
           ['waistCm', 'Waist'],
@@ -53,6 +54,7 @@ export const StepBody = ({
           placeholder="—"
           inputMode="decimal"
           error={errors[key] ?? null}
+          unit={prefs.length}
         />
       ))}
     </FormSection>

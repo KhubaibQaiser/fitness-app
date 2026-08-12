@@ -3,16 +3,16 @@
 import type { ReactNode } from 'react';
 import { XStack, YStack } from 'tamagui';
 
+/** Footer sibling of a scrolling form body — not position:sticky. */
 export const StickyFormFooter = ({
   children,
-  bottomInset = 0,
+  bottomInset = 12,
 }: {
   children: ReactNode;
   bottomInset?: number;
 }) => (
   <YStack
-    position="sticky"
-    bottom={0}
+    flexShrink={0}
     zIndex={20}
     backgroundColor="$elevatedBg"
     borderTopWidth={1}

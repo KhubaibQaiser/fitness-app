@@ -1,6 +1,6 @@
 'use client';
 
-import { Body, FormField, Switch, XStack, YStack } from '@gymos/ui';
+import { Body, FormField, IosSwitch, XStack, YStack } from '@gymos/ui';
 import type { OnboardingDraft } from './onboarding-types';
 
 export const StepMedical = ({
@@ -23,27 +23,21 @@ export const StepMedical = ({
 
     <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="$3">
       <Body flex={1}>Physician clearance required?</Body>
-      <Switch
+      <IosSwitch
         checked={draft.physicianClearanceRequired}
         onCheckedChange={(v) => onPatch({ physicianClearanceRequired: v })}
-        size="$3"
         aria-label="Physician clearance required"
-      >
-        <Switch.Thumb />
-      </Switch>
+      />
     </XStack>
 
     {draft.sex === 'F' ? (
       <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="$3">
         <Body flex={1}>Currently pregnant</Body>
-        <Switch
+        <IosSwitch
           checked={draft.pregnant}
           onCheckedChange={(v) => onPatch({ pregnant: v })}
-          size="$3"
           aria-label="Currently pregnant"
-        >
-          <Switch.Thumb />
-        </Switch>
+        />
       </XStack>
     ) : null}
   </YStack>

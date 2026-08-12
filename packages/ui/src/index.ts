@@ -17,6 +17,8 @@ export { AlertBanner } from './components/alert-banner';
 export type { AlertBannerTone } from './components/alert-banner';
 export { LoadingState, EmptyState, ErrorState } from './components/states';
 export { FormField, FormSection } from './components/form-field';
+export { DateField, todayCalendarDate, toCalendarDate } from './components/date-field';
+export { IosSwitch } from './components/ios-switch';
 export { PageHeader } from './components/page-header';
 export { StickyFormFooter } from './components/sticky-form-footer';
 export { Stat, DeltaChip, Avatar, ListRow } from './components/stat';
