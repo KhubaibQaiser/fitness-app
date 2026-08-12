@@ -29,11 +29,11 @@ output "next_steps" {
   description = "Human checklist after apply."
   value       = <<-EOT
     1. tofu output -raw database_url_pooled  → paste into Render as DATABASE_URL
-    2. Set Render secrets: PILOT_ACCESS_KEY, GATE_COOKIE_SECRET (openssl rand)
+    2. Set Render secret JWT_ACCESS_SECRET (openssl rand -hex 32)
     3. Connect this repo's render.yaml Blueprint in the Render dashboard (plan: free)
-    4. tofu output -raw database_url_direct → migrate+seed:
+    4. tofu output -raw database_url_direct → migrate+seed (needs PILOT_COACH_PASSWORD):
          DATABASE_URL=… pnpm db:migrate && DATABASE_URL=… pnpm db:seed
-    5. Open https://<vercel-domain>/gate/enter?key=<PILOT_ACCESS_KEY>
+    5. Open https://<vercel-domain> → sign in as coach@pilot.local
     6. Expect a cold start on first API hit (Render free spins down after idle)
   EOT
 }
