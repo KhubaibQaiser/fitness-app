@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import { DateTime } from 'luxon';
-import { nowIso, schema as s, type Db } from '@gymos/db';
+import { nowIso, schema as s, type Db, type DbOrTx } from '@gymos/db';
 
 /** Refresh token TTL — 30 days, aligned with the old gate cookie. */
 export const REFRESH_TTL_DAYS = 30;
@@ -24,7 +24,7 @@ const hashRefreshToken = (raw: string): string =>
 const newRawRefreshToken = (): string => randomBytes(32).toString('base64url');
 
 export const createSession = async (
-  db: Db,
+  db: DbOrTx,
   userId: string,
   meta: SessionMeta = {},
 ): Promise<CreatedSession> => {

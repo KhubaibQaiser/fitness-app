@@ -4,8 +4,8 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-11 (Phase 3 mobile CI/CD in progress; Phase 4 rescoped to
-self-signup + coach marketplace, not yet started).
+Last updated: 2026-08-12 (Phase 4 slice: coach self-signup + email OTP +
+forgot-password in progress; client marketplace deferred).
 
 ---
 
@@ -160,7 +160,7 @@ promote; Detox as default E2E (reserved for gray-box hotspots only).
 
 ---
 
-## Phase 4 — Self-signup and coach marketplace (rescoped, not started)
+## Phase 4 — Self-signup and coach marketplace (rescoped; coach OTP signup in progress)
 
 **Why rescoped.** The original Phase 4 assumed a _seeded, admin/coach-provisioned_
 client logging in to view a published plan. Product direction has since shifted:
@@ -180,16 +180,19 @@ this preserves the ADR-0002/0003 invariant that every JWT carries a real
 The public coach directory is the one deliberately cross-tenant read path
 (opt-in fields only) and needs extra review scrutiny for that reason.
 
+**Active now (Scope B):** email OTP + forgot-password + coach self-signup
+(ADR-0006). Phone uniqueness without SMS. Client marketplace slices deferred.
+
 **Scope.**
 
-| Slice | Outcome                                                                                                                             |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 4a    | ADR-0006 + migration: `coachProfiles`, `conversations`/`messages`, `organizations.joinCode`; `resolvePrincipal` resolves `clientId` |
-| 4b    | Coach self-signup (`POST /v1/auth/signup/coach`): auto-provision org/outlet/tenant-config, or join by code                          |
-| 4c    | Public coach directory (`GET /v1/coaches/directory`) + atomic client signup-and-hire (`POST /v1/auth/signup/client`)                |
-| 4d    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` calls so clients can read own plan/vitals/dietary                  |
-| 4e    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)         |
-| 4f    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                          |
+| Slice | Outcome                                                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 4a    | ADR-0006 + migration: `organizations.joinCode`, `otp_challenges`, user email/phone verified columns (messaging tables deferred) |
+| 4b    | Coach self-signup (`POST /v1/auth/signup/coach/*`) + password forgot/reset via email OTP — **in progress**                      |
+| 4c    | Public coach directory (`GET /v1/coaches/directory`) + atomic client signup-and-hire (`POST /v1/auth/signup/client`)            |
+| 4d    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` calls so clients can read own plan/vitals/dietary              |
+| 4e    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)     |
+| 4f    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                      |
 
 **Entry criteria.** Phase 1 complete.
 
@@ -271,7 +274,8 @@ ADRs recorded so far:
 - [ADR-0004](./adr/0004-tenant-config-registry.md): per-org tenant config registry
 - [ADR-0005](./adr/0005-expo-router-solito-mobile.md): Expo Router + Solito (native shell over shared screens)
 
-Upcoming during Phase 4:
+ADRs for Phase 4:
 
-- ADR-0006: self-signup identity model ("coach is the tenant", join codes,
-  atomic client signup-and-hire) and the public coach-directory tradeoff
+- [ADR-0006](./adr/0006-coach-self-signup-otp.md): coach self-signup + email OTP
+  ("coach is the tenant", join codes). Client hire / directory ADR follow-up
+  when 4c starts.

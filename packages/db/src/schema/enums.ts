@@ -83,3 +83,5 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'SYSTEM',
 ]);
 export const notificationPriorityEnum = pgEnum('notification_priority', ['HIGH', 'NORMAL']);
+
+export const otpPurposeEnum = pgEnum('otp_purpose', ['signup_coach', 'password_reset']);
