@@ -10,6 +10,14 @@ export type { ClientIntake, SignedClientIntake };
 
 export type CurrencyCode = 'PKR' | 'USD' | 'EUR' | 'GBP' | 'AED' | 'SAR';
 export type LocaleCode = 'en' | 'ur';
+export type WeightUnit = 'kg' | 'lb';
+export type HeightUnit = 'cm' | 'ft_in';
+export type LengthUnit = 'cm' | 'in';
+export type UnitPrefs = {
+  weight: WeightUnit;
+  height: HeightUnit;
+  length: LengthUnit;
+};
 
 export type PublicConfig = {
   appName: string;
@@ -18,6 +26,8 @@ export type PublicConfig = {
   terminology: Record<string, string>;
   locales: { default: LocaleCode; enabled: LocaleCode[] };
   units: 'metric' | 'imperial';
+  unitPrefs: UnitPrefs;
+  defaultCountry: string;
   currency: CurrencyCode;
   currencies: CurrencyCode[];
 };
@@ -28,6 +38,8 @@ export type Me = {
   email: string | null;
   locale: LocaleCode;
   unitPref: 'metric' | 'imperial';
+  unitPrefs: UnitPrefs;
+  defaultCountry: string;
   currencyPref: CurrencyCode;
   roles: string[];
 };
@@ -53,6 +65,8 @@ export type SignupCoachStartInput = {
 export type UpdateMeInput = {
   locale?: LocaleCode;
   currencyPref?: CurrencyCode;
+  unitPrefs?: UnitPrefs;
+  defaultCountry?: string;
 };
 
 export type AttentionReason = { code: string; weight: number; since: string };
@@ -160,6 +174,7 @@ export type OnboardClientInput = {
     checkinWeekday?: number;
     bodyFatPct?: number;
   };
+  dietary?: Restriction[];
 };
 
 export type OnboardClientResult = {

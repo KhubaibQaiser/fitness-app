@@ -44,3 +44,19 @@ export const isAllergenCode = (value: string): value is AllergenCode =>
 
 export const isReligiousCode = (value: string): value is ReligiousCode =>
   (RELIGIOUS_CODES as readonly string[]).includes(value);
+
+const titleCaseWords = (raw: string): string =>
+  raw
+    .split(/\s+/)
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+
+/** Display label for a restriction code (`allergen:tree_nut` → `Tree Nut`). */
+export const formatRestrictionLabel = (code: string): string => {
+  const stripped = code
+    .replace(/^(allergen|religious):/i, '')
+    .replaceAll('_', ' ')
+    .trim();
+  return titleCaseWords(stripped.length > 0 ? stripped : code);
+};

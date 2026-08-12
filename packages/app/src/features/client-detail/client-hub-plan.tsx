@@ -2,6 +2,7 @@
 
 import { Link } from 'solito/link';
 import type { Client, DietaryProfile, Goal, PlanSummary } from '@gymos/contracts';
+import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import {
   AlertBanner,
   Badge,
@@ -39,10 +40,10 @@ const PACE_LABEL: Record<Goal['rate'], string> = {
 
 const ACTIVITY_LABEL: Record<number, string> = {
   1.2: 'Sedentary',
-  1.375: 'Lightly active',
-  1.55: 'Moderately active',
-  1.725: 'Active',
-  1.9: 'Very active',
+  1.375: 'Light',
+  1.55: 'Moderate',
+  1.725: 'Very',
+  1.9: 'Athlete',
 };
 
 type Props = {
@@ -150,7 +151,7 @@ export const ClientHubPlan = ({
                 <Badge
                   key={`${r.type}:${r.code}`}
                   tone="danger"
-                  label={r.code.split(':')[1] ?? r.code}
+                  label={formatRestrictionLabel(r.code)}
                 />
               ))}
             </XStack>
@@ -167,7 +168,7 @@ export const ClientHubPlan = ({
                 <Badge
                   key={`${r.type}:${r.code}`}
                   tone="neutral"
-                  label={r.code.split(':')[1] ?? r.code}
+                  label={formatRestrictionLabel(r.code)}
                 />
               ))}
             </XStack>

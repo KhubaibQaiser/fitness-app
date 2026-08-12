@@ -111,11 +111,15 @@ describe('auth (JWT + refresh)', () => {
       roles: string[];
       locale: string;
       currencyPref: string;
+      unitPrefs: { weight: string; height: string; length: string };
+      defaultCountry: string;
     };
     expect(body.name).toBe('Pilot Coach');
     expect(body.roles).toContain('COACH');
     expect(body.locale).toBe('en');
     expect(body.currencyPref).toBe('PKR');
+    expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
+    expect(body.defaultCountry).toBe('PK');
   });
 
   it('patches locale and currency prefs on /v1/me', async () => {
@@ -135,6 +139,20 @@ describe('auth (JWT + refresh)', () => {
     expect(me.currencyPref).toBe('USD');
   });
 
+  it('patches granular unit prefs on /v1/me', async () => {
+    const patched = await req('/v1/me', {
+      method: 'PATCH',
+      json: { unitPrefs: { weight: 'lb', height: 'ft_in', length: 'in' } },
+    });
+    expect(patched.status).toBe(200);
+    const body = (await patched.json()) as {
+      unitPrefs: { weight: string; height: string; length: string };
+      unitPref: string;
+    };
+    expect(body.unitPrefs.weight).toBe('lb');
+    expect(body.unitPref).toBe('imperial');
+  });
+
   it('rotates refresh tokens', async () => {
     const res = await req('/v1/auth/refresh', { method: 'POST', json: {} });
     expect(res.status).toBe(200);
@@ -152,10 +170,14 @@ describe('auth (JWT + refresh)', () => {
       appName: string;
       currencies: string[];
       locales: { enabled: string[] };
+      defaultCountry: string;
+      unitPrefs: { weight: string; height: string; length: string };
     };
     expect(body.appName).toBe('GymOS Coach');
     expect(body.currencies).toContain('PKR');
     expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
+    expect(body.defaultCountry).toBe('PK');
+    expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
   });
 
   it('returns 410 for the retired gate', async () => {
@@ -490,6 +512,7 @@ describe('the pilot core loop', () => {
         },
         vitals: { weightKg: 82, waistCm: 90 },
         goal: { preset: 'LOSE', rate: 'STANDARD', startWeightKg: 82, targetWeightKg: 75 },
+        dietary: [{ type: 'ALLERGY_SEVERE', code: 'allergen:peanut' }],
       },
     });
     expect(onboard.status).toBe(200);
@@ -502,6 +525,13 @@ describe('the pilot core loop', () => {
     expect(body.client.intake?.signedAt).toBe('2026-08-06T12:00:00.000Z');
     expect(body.vitals.weightKg).toBe(82);
     expect(body.goal.preset).toBe('LOSE');
+
+    const dietary = await req(`/v1/clients/${body.client.id}/dietary-profile`);
+    expect(dietary.status).toBe(200);
+    const dietBody = (await dietary.json()) as {
+      profile: { restrictions: { code: string }[] } | null;
+    };
+    expect(dietBody.profile?.restrictions.map((r) => r.code)).toContain('allergen:peanut');
 
     const pdf = await req(`/v1/clients/${body.client.id}/credentials.pdf`);
     expect(pdf.status).toBe(200);

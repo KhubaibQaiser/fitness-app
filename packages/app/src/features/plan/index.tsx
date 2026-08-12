@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { Link } from 'solito/link';
 import { ApiError, type PlanSummary } from '@gymos/contracts';
 import {
+  ArrowLeft,
   Body,
   Card,
   ErrorState,
+  IconButton,
   LoadingState,
   Muted,
   PageHeader,
@@ -18,7 +20,6 @@ import { useClientDetail, useGeneratePlan, usePlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanEditor } from './plan-editor';
-import { PrepPreferencesBanner } from './prep-preferences-banner';
 
 const MEAL_COUNT_OPTIONS = [
   { value: 3, label: '3 meals' },
@@ -83,7 +84,18 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
   if (activePlanId === null || plan.data === undefined) {
     return (
       <AppScreen>
-        <PageHeader title="Meal plan" subtitle="7-day generation from goal targets" />
+        <PageHeader
+          title="Meal plan"
+          subtitle="7-day generation from goal targets"
+          leading={
+            <Link href={`/clients/${clientId}`}>
+              <IconButton
+                aria-label="Back to client"
+                icon={<ArrowLeft size={20} color="$color" />}
+              />
+            </Link>
+          }
+        />
         {detail.data.goal === null ? (
           <Card gap="$3">
             <Body>Set a goal first — the plan is generated from its targets.</Body>
@@ -93,7 +105,6 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
           </Card>
         ) : (
           <YStack gap="$3">
-            <PrepPreferencesBanner />
             <Card gap="$3">
               <Body>
                 Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '—'} kcal

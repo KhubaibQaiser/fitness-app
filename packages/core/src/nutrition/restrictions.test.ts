@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALLERGENS,
+  formatRestrictionLabel,
   isAllergenCode,
   isReligiousCode,
   RELIGIOUS_CODES,
@@ -35,5 +36,19 @@ describe('restriction registries', () => {
     expect(RELIGIOUS_CODES).toContain('halal');
     expect(isReligiousCode('halal')).toBe(true);
     expect(isReligiousCode('unknown')).toBe(false);
+  });
+});
+
+describe('formatRestrictionLabel', () => {
+  it('title-cases allergen and religious codes', () => {
+    expect(formatRestrictionLabel('allergen:tree_nut')).toBe('Tree Nut');
+    expect(formatRestrictionLabel('allergen:wheat_gluten')).toBe('Wheat Gluten');
+    expect(formatRestrictionLabel('religious:halal')).toBe('Halal');
+    expect(formatRestrictionLabel('no_beef')).toBe('No Beef');
+  });
+
+  it('falls back to the raw code when the prefix strips to empty', () => {
+    expect(formatRestrictionLabel('allergen:')).toBe('Allergen:');
+    expect(formatRestrictionLabel('   ')).toBe('');
   });
 });

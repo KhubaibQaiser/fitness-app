@@ -22,7 +22,6 @@ import {
 } from '@gymos/ui';
 import { useApplyAdjustment, useCompleteCheckIn } from '../../api';
 import { AppScreen } from '../shell/app-screen';
-import { useAppChrome } from '../shell/use-app-chrome';
 import { adherenceBarTone, adherencePctToRating } from './adherence';
 import { VERDICT_COPY } from './verdict-copy';
 
@@ -50,7 +49,6 @@ const BAR_COLOR = {
 /** Weekly check-in: capture → deterministic verdict → one-tap apply. */
 export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
-  const { showMobileTabBar } = useAppChrome();
   const complete = useCompleteCheckIn(clientId);
   const apply = useApplyAdjustment(clientId);
   const [weight, setWeight] = useState('');
@@ -59,7 +57,6 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   const [weightError, setWeightError] = useState<string | null>(null);
   const [result, setResult] = useState<{ checkInId: string; verdict: Verdict } | null>(null);
 
-  const bottomInset = showMobileTabBar ? 72 : 12;
   const pctNum = Math.max(0, Math.min(100, Number(adherencePct) || 0));
   const barTone = adherenceBarTone(pctNum);
 
@@ -175,7 +172,18 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   }
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <StickyFormFooter>
+          <GhostButton flex={1} onPress={() => router.back()}>
+            Cancel
+          </GhostButton>
+          <PrimaryButton flex={1} disabled={complete.isPending} onPress={submit}>
+            {complete.isPending ? 'Analyzing…' : 'Submit'}
+          </PrimaryButton>
+        </StickyFormFooter>
+      }
+    >
       <PageHeader title="Weekly check-in" subtitle="Capture → verdict → optional apply" />
       <Card gap="$4">
         <FormField
@@ -231,15 +239,6 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           </Body>
         ) : null}
       </Card>
-
-      <StickyFormFooter bottomInset={bottomInset}>
-        <GhostButton flex={1} onPress={() => router.back()}>
-          Cancel
-        </GhostButton>
-        <PrimaryButton flex={1} disabled={complete.isPending} onPress={submit}>
-          {complete.isPending ? 'Analyzing…' : 'Submit'}
-        </PrimaryButton>
-      </StickyFormFooter>
     </AppScreen>
   );
 };

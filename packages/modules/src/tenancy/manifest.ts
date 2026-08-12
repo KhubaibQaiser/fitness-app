@@ -32,6 +32,18 @@ export const tenantManifestSchema = z
     }),
     currency: z.enum(CURRENCY_CODES),
     units: z.enum(['metric', 'imperial']),
+    defaultCountry: z
+      .string()
+      .length(2)
+      .regex(/^[A-Z]{2}$/)
+      .default('PK'),
+    unitPrefs: z
+      .object({
+        weight: z.enum(['kg', 'lb']),
+        height: z.enum(['cm', 'ft_in']),
+        length: z.enum(['cm', 'in']),
+      })
+      .default({ weight: 'kg', height: 'ft_in', length: 'in' }),
     aiConfig: z.object({
       cuisineContext: z.string().default('pakistani'),
       mealCount: z.union([z.literal(3), z.literal(4), z.literal(5)]).default(3),

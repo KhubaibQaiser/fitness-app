@@ -4,7 +4,6 @@ import { Link } from 'solito/link';
 import {
   Avatar,
   Badge,
-  Bell,
   Card,
   Check,
   ChevronRight,
@@ -18,19 +17,15 @@ import {
   StaggerItem,
   Stat,
   Text,
-  UserPlus,
-  Users,
-  Wrench,
   XStack,
   YStack,
 } from '@gymos/ui';
 import { useClients, useDueCheckIns, useMe, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
-import { HomeQuickActions } from './home-quick-actions';
 import { HomeRecentAlerts } from './home-recent-alerts';
 
-/** Coach home: kit richer dashboard — stats, queues, quick actions, alerts. */
+/** Coach home: due today, needs attention, recent alerts. */
 export const HomeScreen = () => {
   const me = useMe();
   const due = useDueCheckIns();
@@ -255,37 +250,6 @@ export const HomeScreen = () => {
           </YStack>
 
           <YStack width="100%" gap="$5" $md={{ width: 340, flexShrink: 0 }}>
-            <HomeQuickActions
-              clientCount={allClients.length}
-              highAlerts={highAlerts}
-              actions={[
-                {
-                  label: 'New client intake',
-                  desc: 'Start 8-step onboarding',
-                  href: '/clients/new',
-                  primary: true,
-                  icon: <UserPlus size={15} color="$primaryFg" />,
-                },
-                {
-                  label: 'View all clients',
-                  desc: `${allClients.length} active in caseload`,
-                  href: '/clients',
-                  icon: <Users size={15} color="$textMuted" />,
-                },
-                {
-                  label: 'Nutrition tools',
-                  desc: 'TDEE, BMI, macro calc',
-                  href: '/tools',
-                  icon: <Wrench size={15} color="$textMuted" />,
-                },
-                {
-                  label: 'View alerts',
-                  desc: `${highAlerts} high priority`,
-                  href: '/notifications',
-                  icon: <Bell size={15} color="$textMuted" />,
-                },
-              ]}
-            />
             <HomeRecentAlerts />
           </YStack>
         </YStack>

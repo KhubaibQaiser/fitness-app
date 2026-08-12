@@ -39,14 +39,13 @@ describe('fallbackNarrative', () => {
     expect(fallbackNarrative(input)).toEqual(out);
   });
 
-  it('emits empty prep notes in terse mode', () => {
-    const out = fallbackNarrative({ ...input, verbosity: 'terse' });
+  it('emits empty prep notes so they are not copied onto every food item', () => {
+    const out = fallbackNarrative(input);
     expect(out.days[0]?.meals[0]?.prepNotes).toBe('');
   });
 
-  it('uses Urdu-oriented prep notes when locale starts with ur', () => {
+  it('uses Urdu-oriented meal names when locale starts with ur', () => {
     const out = fallbackNarrative({ ...input, locale: 'ur' });
-    expect(out.days[0]?.meals[0]?.prepNotes).toContain('tayyar');
     expect(out.days[0]?.meals[0]?.name).toContain('Dopahar');
   });
 

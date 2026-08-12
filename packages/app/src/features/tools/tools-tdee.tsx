@@ -11,18 +11,11 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
+import { ACTIVITY_OPTIONS } from '../../lib/activity-levels';
 
 type Gender = 'M' | 'F';
 type Goal = 'maintain' | 'cut' | 'bulk';
 type Activity = 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
-
-const ACTIVITY_OPTIONS: { value: Activity; label: string }[] = [
-  { value: 1.2, label: '1.2' },
-  { value: 1.375, label: '1.375' },
-  { value: 1.55, label: '1.55' },
-  { value: 1.725, label: '1.725' },
-  { value: 1.9, label: '1.9' },
-];
 
 const GOAL_OPTIONS: { value: Goal; label: string }[] = [
   { value: 'maintain', label: 'Maintain' },
@@ -102,7 +95,7 @@ export const ToolsTdee = () => {
 
         <YStack gap="$2" width="100%">
           <Muted fontSize={12} fontWeight="600">
-            Activity multiplier
+            Activity
           </Muted>
           <SegmentedControl
             ariaLabel="Activity"

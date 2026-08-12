@@ -1,5 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { type Actor } from '@gymos/core/rbac';
+import { type UnitPrefs } from '@gymos/core/units';
 import { schema as s, type Db } from '@gymos/db';
 import { type CurrencyCode, type LocaleCode } from '../tenancy/manifest';
 
@@ -13,6 +14,8 @@ export type Principal = {
   readonly name: string;
   readonly email: string | null;
   readonly unitPref: 'metric' | 'imperial' | null;
+  readonly unitPrefs: UnitPrefs | null;
+  readonly defaultCountry: string | null;
   readonly locale: LocaleCode;
   readonly currencyPref: CurrencyCode | null;
 };
@@ -28,6 +31,8 @@ export const resolvePrincipal = async (db: Db, userId: string): Promise<Principa
       name: s.users.name,
       email: s.users.email,
       unitPref: s.users.unitPref,
+      unitPrefs: s.users.unitPrefs,
+      defaultCountry: s.users.defaultCountry,
       locale: s.users.locale,
       currencyPref: s.users.currencyPref,
     })
@@ -95,6 +100,8 @@ export const resolvePrincipal = async (db: Db, userId: string): Promise<Principa
     name: user.name,
     email: user.email,
     unitPref: user.unitPref,
+    unitPrefs: user.unitPrefs,
+    defaultCountry: user.defaultCountry,
     locale: user.locale as LocaleCode,
     currencyPref: user.currencyPref,
     actor: {
@@ -132,6 +139,8 @@ export const resetPrincipalCache = (): void => {
 export type UpdateUserPrefsInput = {
   locale?: LocaleCode;
   currencyPref?: CurrencyCode;
+  unitPrefs?: UnitPrefs;
+  defaultCountry?: string;
 };
 
 /** Persist user prefs on `users`. */
@@ -143,9 +152,17 @@ export const updateUserPrefs = async (
   const patch: {
     locale?: LocaleCode;
     currencyPref?: CurrencyCode;
+    unitPrefs?: UnitPrefs;
+    defaultCountry?: string;
+    unitPref?: 'metric' | 'imperial';
   } = {};
   if (prefs.locale !== undefined) patch.locale = prefs.locale;
   if (prefs.currencyPref !== undefined) patch.currencyPref = prefs.currencyPref;
+  if (prefs.unitPrefs !== undefined) {
+    patch.unitPrefs = prefs.unitPrefs;
+    patch.unitPref = prefs.unitPrefs.weight === 'lb' ? 'imperial' : 'metric';
+  }
+  if (prefs.defaultCountry !== undefined) patch.defaultCountry = prefs.defaultCountry;
 
   await db.update(s.users).set(patch).where(eq(s.users.id, userId));
 };
