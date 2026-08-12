@@ -26,6 +26,8 @@ export type { SegmentOption, TabItem } from './components/segmented-control';
 export { AppErrorBoundary } from './components/error-boundary';
 export { WeightChart } from './components/weight-chart';
 export type { WeightPoint, WeightChartProps } from './components/weight-chart';
+export { FadeIn } from './components/fade-in';
+export { StaggerItem } from './components/stagger-item';
 export * from './icons';
 export type { GymosIcon } from './icons';
 
