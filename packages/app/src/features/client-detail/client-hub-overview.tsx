@@ -1,6 +1,5 @@
 'use client';
 
-import { Link } from 'solito/link';
 import type { Client, DietaryProfile, Goal } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import { formatWeight } from '@gymos/core/units';
@@ -12,7 +11,6 @@ import { ProgressRing, WeightTrendChart } from '../charts';
 type WeightPoint = { t: number; weightKg: number };
 
 type Props = {
-  clientId: string;
   client: Client;
   goal: Goal | null;
   latestWeightKg: number | null;
@@ -44,7 +42,6 @@ const paceDisplay = (
 
 /** Overview tab — alerts, stats, large goal ring, weight trend last. */
 export const ClientHubOverview = ({
-  clientId,
   client,
   goal,
   latestWeightKg,
@@ -222,14 +219,6 @@ export const ClientHubOverview = ({
             </YStack>
           </XStack>
         </Card>
-      ) : null}
-
-      {severeAllergies.length > 0 ? (
-        <Link href={`/clients/${clientId}/dietary`}>
-          <Muted fontSize={12} textDecorationLine="underline" color="$danger">
-            Edit dietary profile
-          </Muted>
-        </Link>
       ) : null}
 
       <Card flex={1} minWidth={0} padding="$5" gap="$4">
