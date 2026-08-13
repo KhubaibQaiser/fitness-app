@@ -24,8 +24,9 @@ import {
 import { useMe, usePublicConfig } from '../../api';
 import { ACTIVITY_OPTIONS } from '../../lib/activity-levels';
 import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
-import { ftInToCm, parsePositive } from '../../lib/height-units';
+import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
+import { HeightFields } from '../height-fields';
 
 type Activity = 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
 
@@ -48,15 +49,11 @@ export const ToolsTdee = () => {
   const w = parsePositive(weight);
   const weightKg = w !== null ? parseWeight(w, prefs.weight) : null;
 
-  const heightCm =
-    prefs.height === 'cm'
-      ? parsePositive(heightCmInput)
-      : (() => {
-          const ft = parsePositive(heightFt);
-          if (ft === null) return null;
-          const inches = heightIn.trim() === '' ? 0 : Number(heightIn);
-          return Number.isFinite(inches) && inches >= 0 ? ftInToCm(ft, inches) : null;
-        })();
+  const heightCm = resolveHeightCmInput(prefs.height, {
+    cm: heightCmInput,
+    ft: heightFt,
+    inches: heightIn,
+  });
 
   const ageYears = parsePositive(age);
 
@@ -90,40 +87,17 @@ export const ToolsTdee = () => {
               unit={prefs.weight}
             />
           </YStack>
-          {prefs.height === 'cm' ? (
-            <YStack flex={1} minWidth={120}>
-              <FormField
-                label="Height"
-                value={heightCmInput}
-                onChangeText={setHeightCmInput}
-                inputMode="decimal"
-                unit="cm"
-              />
-            </YStack>
-          ) : (
-            <YStack flex={1} minWidth={200}>
-              <XStack gap="$3">
-                <YStack flex={1}>
-                  <FormField
-                    label="Height"
-                    value={heightFt}
-                    onChangeText={setHeightFt}
-                    inputMode="numeric"
-                    unit="ft"
-                  />
-                </YStack>
-                <YStack flex={1}>
-                  <FormField
-                    label={'\u00A0'}
-                    value={heightIn}
-                    onChangeText={setHeightIn}
-                    inputMode="decimal"
-                    unit="in"
-                  />
-                </YStack>
-              </XStack>
-            </YStack>
-          )}
+          <YStack flex={1} minWidth={prefs.height === 'cm' ? 120 : 200}>
+            <HeightFields
+              unit={prefs.height}
+              valueCm={heightCmInput}
+              valueFt={heightFt}
+              valueIn={heightIn}
+              onChangeCm={setHeightCmInput}
+              onChangeFt={setHeightFt}
+              onChangeIn={setHeightIn}
+            />
+          </YStack>
           <YStack flex={1} minWidth={120}>
             <FormField label="Age" value={age} onChangeText={setAge} inputMode="numeric" />
           </YStack>

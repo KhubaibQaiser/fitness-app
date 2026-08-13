@@ -53,7 +53,7 @@ export const ClientOnboardingScreen = () => {
     }
 
     if (onboard.isPending) return;
-    const heightCm = resolveHeightCm(draft);
+    const heightCm = resolveHeightCm(draft, prefs);
     const weightKg = resolveWeightKg(draft.weightKg, prefs);
     const startWeightKg = resolveWeightKg(draft.startWeightKg, prefs) ?? weightKg;
     const targetWeightKg = resolveWeightKg(draft.targetWeightKg, prefs);
@@ -92,7 +92,7 @@ export const ClientOnboardingScreen = () => {
         intake: {
           signaturePngBase64: draft.signaturePngBase64,
           signedAt: new Date().toISOString(),
-          heightDisplayUnit: draft.heightUnit,
+          heightDisplayUnit: prefs.height,
         },
       },
       vitals: {
@@ -155,7 +155,13 @@ export const ClientOnboardingScreen = () => {
           <StepIdentity draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
         ) : null}
         {stepIndex === 1 ? (
-          <StepHeight draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          <StepHeight
+            draft={draft}
+            errors={errors}
+            prefs={prefs}
+            onPatch={patch}
+            onClearError={clearError}
+          />
         ) : null}
         {stepIndex === 2 ? (
           <StepContact
@@ -188,7 +194,13 @@ export const ClientOnboardingScreen = () => {
         {stepIndex === 6 ? <StepMedical draft={draft} onPatch={patch} /> : null}
         {stepIndex === 7 ? <StepDiet draft={draft} onPatch={patch} /> : null}
         {stepIndex === 8 ? (
-          <StepSign draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          <StepSign
+            draft={draft}
+            errors={errors}
+            prefs={prefs}
+            onPatch={patch}
+            onClearError={clearError}
+          />
         ) : null}
 
         {onboard.isError ? (

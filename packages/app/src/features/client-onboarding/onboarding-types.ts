@@ -1,7 +1,5 @@
 import type { Restriction } from '@gymos/contracts';
 
-export type HeightUnit = 'cm' | 'ft_in';
-
 export type ActivityLevel = '1.2' | '1.375' | '1.55' | '1.725' | '1.9';
 
 export type GoalPreset = 'LOSE' | 'GAIN' | 'MAINTAIN' | 'RECOMP';
@@ -11,7 +9,6 @@ export type OnboardingDraft = {
   name: string;
   sex: 'F' | 'M';
   dob: string;
-  heightUnit: HeightUnit;
   heightCm: string;
   heightFt: string;
   heightIn: string;
@@ -39,7 +36,6 @@ export const INITIAL_DRAFT: OnboardingDraft = {
   name: '',
   sex: 'M',
   dob: '',
-  heightUnit: 'ft_in',
   heightCm: '',
   heightFt: '',
   heightIn: '',
