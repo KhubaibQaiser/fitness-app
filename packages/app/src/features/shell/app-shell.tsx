@@ -227,15 +227,17 @@ export const SideNav = () => {
 
   return (
     <YStack
-      width={236}
-      minWidth={236}
+      width={200}
+      minWidth={200}
+      maxWidth={200}
+      flexGrow={0}
+      flexShrink={0}
       backgroundColor="$screenBg"
       borderRightWidth={1}
       borderRightColor="$borderColor"
       paddingVertical="$4"
       paddingHorizontal="$3"
       gap="$4"
-      flex={1}
       alignSelf="stretch"
       role="navigation"
       aria-label="Primary"
