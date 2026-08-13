@@ -4,8 +4,9 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-12 (Phase 4 slice: coach self-signup + email OTP +
-forgot-password in progress; client marketplace deferred).
+Last updated: 2026-08-13 (Phase 4 product vision expanded: coach portfolio +
+sellable plans; Phase 7 payments/subscriptions and Phase 5 gym→coach invites
+scoped as follow-ons).
 
 ---
 
@@ -52,12 +53,15 @@ flowchart LR
     p4["Phase 4: Self-signup and coach marketplace"]
     p5["Phase 5: Gym/org-admin app"]
     p6["Phase 6: Multi-region"]
+    p7["Phase 7: Payments and subscriptions"]
 
     p0 --> p1 --> p2 --> p3
     p1 --> p4
     p1 --> p5
+    p4 --> p7
     p4 --> p6
     p5 --> p6
+    p7 --> p6
 ```
 
 Phases 2/3 (coach mobile) and 4/5 (marketplace, gym-admin) all branch off
@@ -66,6 +70,8 @@ strict chain. After Phase 1, sequencing 2/3 vs 4/5 is a product-priority call.
 This roadmap executed 2/3 first (coach mobile was the original request);
 Phase 4 was rescoped afterward when the product direction shifted from
 admin/coach-provisioned accounts to self-service signup — see below.
+Phase 7 (payments) depends on Phase 4’s portfolio + listed plans being
+discoverable before money moves.
 
 ---
 
@@ -164,12 +170,33 @@ promote; Detox as default E2E (reserved for gray-box hotspots only).
 
 **Why rescoped.** The original Phase 4 assumed a _seeded, admin/coach-provisioned_
 client logging in to view a published plan. Product direction has since shifted:
-coaches should be able to self-signup (optionally linking to an existing gym via
-a join code), clients should be able to self-signup, browse a public directory
-of coaches, and hire one directly — with no admin in the loop. Both sides then
-communicate in-app around a shared plan and vitals history. This is a bigger
-change than the original Phase 4 and touches identity, not just a new frontend,
-so it gets its own sub-phased rollout (mirrors the Phase 1a–1h slicing).
+the coach surface is a **standalone product**. Coaches self-signup, build a
+public portfolio, and list sellable coaching plans. Clients (future client app)
+browse that marketplace, pick a coach and a plan, and hire without an admin in
+the loop. Both sides then communicate in-app around a shared plan and vitals
+history. This is a bigger change than the original Phase 4 and touches identity,
+catalog, and (later) payments — so it gets its own sub-phased rollout (mirrors
+the Phase 1a–1h slicing).
+
+**Product vision — coach as a standalone app.**
+
+- **Self-signup + portfolio.** Coach creates an account and a public profile:
+  bio, **experience level**, **expertise** areas (e.g. weight loss, strength,
+  rehab), optional media later. Portfolio is the unit clients and gyms discover.
+- **Sellable plans (catalog).** A coach lists one or more plans with a price.
+  Each plan **must** include an **exercise plan**; a **diet / meal plan is
+  optional**. Plans are goal-oriented (e.g. “lose weight”: textual exercise
+  progression + optional meal guidance). v1 content is **textual only** —
+  structured descriptions of exercises, sets/reps/notes, meal outlines. Image
+  or video demos of how to perform an exercise are an explicit later slice.
+- **Client discovery (client app, later in this phase).** Clients explore
+  coaches by experience, expertise, listed plans + prices, and (once Phase 7 /
+  ratings land) reviews. They choose a plan — and optionally **live coaching**
+  on top, priced from the coach’s hourly / monthly rates (billing executes in
+  Phase 7).
+- **Gym discovery (Phase 5).** Gym chains browse the same public coach catalog
+  (ratings, client load, reviews, rates) and can **invite a coach to join** with
+  an offer — see Phase 5.
 
 **Key decision — "coach is the tenant".** Independent coaches each get their
 own `organizations`/`outlets`/`tenant_configs` row auto-provisioned at signup
@@ -181,7 +208,8 @@ The public coach directory is the one deliberately cross-tenant read path
 (opt-in fields only) and needs extra review scrutiny for that reason.
 
 **Active now (Scope B):** email OTP + forgot-password + coach self-signup
-(ADR-0006). Phone uniqueness without SMS. Client marketplace slices deferred.
+(ADR-0006). Phone uniqueness without SMS. Client marketplace + portfolio/
+catalog slices deferred until after 4b.
 
 **Scope.**
 
@@ -189,24 +217,31 @@ The public coach directory is the one deliberately cross-tenant read path
 | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 4a    | ADR-0006 + migration: `organizations.joinCode`, `otp_challenges`, user email/phone verified columns (messaging tables deferred) |
 | 4b    | Coach self-signup (`POST /v1/auth/signup/coach/*`) + password forgot/reset via email OTP — **in progress**                      |
-| 4c    | Public coach directory (`GET /v1/coaches/directory`) + atomic client signup-and-hire (`POST /v1/auth/signup/client`)            |
-| 4d    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` calls so clients can read own plan/vitals/dietary              |
-| 4e    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)     |
-| 4f    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                      |
+| 4c    | Coach portfolio fields: experience level, expertise tags, public bio; public directory exposes opted-in profile                 |
+| 4d    | Coach plan catalog: priced plans; **exercise plan required**, **diet plan optional**; textual content only                      |
+| 4e    | Public coach directory (`GET /v1/coaches/directory`) lists profile + plans/prices; atomic client signup-and-hire                 |
+| 4f    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` so clients can read own plan/vitals/dietary                    |
+| 4g    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)     |
+| 4h    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                      |
+| 4i    | _(later)_ Exercise media: coach-uploaded images/videos demonstrating how to perform catalog exercises                           |
 
 **Entry criteria.** Phase 1 complete.
 
-**Exit criteria.** A coach can self-signup (with or without a join code) and
-land on their own tenant; a client can browse public coach profiles, sign up,
-and hire a coach in one step; the resulting client can log in and read their
-own published plan and vitals history; coach and client can exchange messages
-tied to their active assignment; no cross-tenant data leaks through the
-directory beyond opted-in public fields.
+**Exit criteria.** A coach can self-signup (with or without a join code), land
+on their own tenant, and publish a portfolio with experience/expertise plus at
+least one priced plan (exercise required, diet optional, textual); a client can
+browse public coach profiles and plans, sign up, and hire a coach in one step;
+the resulting client can log in and read their own published plan and vitals
+history; coach and client can exchange messages tied to their active
+assignment; no cross-tenant data leaks through the directory beyond opted-in
+public fields.
 
 **Non-goals.** Concurrent multi-coach clients; coach switching/rehiring;
-payments/billing for hiring; real-time chat or push notifications (v1 is
-polling); multi-coach practices/teams under one org; ratings/reviews; content
-moderation; guardian/dependent accounts.
+**payment capture / subscription billing** (Phase 7 — catalog prices are
+display-only until then); live-coaching fee collection; real-time chat or push
+notifications (v1 is polling); multi-coach practices/teams under one org;
+ratings/reviews (target with Phase 5/7 marketplace maturity); content
+moderation; guardian/dependent accounts; exercise image/video upload (slice 4i).
 
 ---
 
@@ -216,13 +251,31 @@ moderation; guardian/dependent accounts.
 (`ORG_ADMIN` with `outlet_id = NULL` already means “all branches in this org”).
 Web-first dashboards (`packages/app-admin` + `apps/web-admin`).
 
-**Entry criteria.** Phase 1 complete; at least one multi-outlet org in staging.
+**Marketplace follow-on — gym invites coaches.** Once the public coach directory
+exists (Phase 4), a gym/org admin can:
+
+- Browse available coaches: experience, expertise, ratings/reviews (when
+  shipped), active client load, listed plan prices, and live-coaching rates.
+- **Send an invite** to a coach with a concrete offer (compensation / role /
+  outlet assignment — exact offer schema TBD; capture intent in an ADR when
+  this slice starts).
+- Coach accepts or declines; acceptance links the coach into the gym org
+  (likely via the existing join-code / membership path, or a dedicated invite
+  token — decide in ADR).
+
+Invite mechanics are deliberately high-level here; implementation details land
+in an ADR at slice kickoff.
+
+**Entry criteria.** Phase 1 complete; at least one multi-outlet org in staging;
+Phase 4 directory + portfolio readable for the invite browse path.
 
 **Exit criteria.** Org admin can list outlets, see aggregated roster / attention
-across branches, manage memberships; cannot see other organizations.
+across branches, manage memberships; can discover marketplace coaches and send
+an invite-with-offer; cannot see other organizations’ private data.
 
 **Non-goals.** Platform-operator cross-org console (distinct from chain
-`ORG_ADMIN`); billing / invoicing.
+`ORG_ADMIN`); billing / invoicing of gym↔coach contracts (may reuse Phase 7
+rails later); automated matching / ranking of coaches for gyms.
 
 ---
 
@@ -233,7 +286,7 @@ region) when a paying customer requires a distant geography or hard data
 residency. Route new orgs to the nearest region at signup.
 
 **Entry criteria.** Real customer / compliance need; Phases 1 and at least one
-of 4/5 in production.
+of 4/5/7 in production.
 
 **Exit criteria.** Second region serves its orgs with local read/write latency;
 no silent cross-region data mixing.
@@ -241,6 +294,37 @@ no silent cross-region data mixing.
 **Non-goals.** Active-active synchronous multi-region Postgres; premature
 schema-per-tenant or DB-per-tenant (revisit only for enterprise isolation /
 noisy-neighbor / compliance triggers).
+
+---
+
+## Phase 7 — Payments and subscriptions
+
+**Why after Phase 4.** Catalog prices and live-coaching rates are meaningless
+without a payment rail — but the rail is useless until coaches have portfolios
+and listed plans clients can choose. Phase 7 turns “hire” from a free
+assignment into a paid subscription.
+
+**Scope (high level; ADR at kickoff).**
+
+| Slice | Outcome                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------ |
+| 7a    | Payment gateway integration (provider TBD in ADR); coach payout / platform fee model sketched                |
+| 7b    | Client subscribes to a specific coach **plan** with **upfront payment**; can **unsubscribe** later           |
+| 7c    | Optional **live coaching** add-on: coach configures **hourly** and/or **monthly (full-time)** rates; client picks plan-only vs plan + live coaching at higher price |
+| 7d    | Subscription lifecycle: active / past-due / canceled; access to plan content gated on status                 |
+| 7e    | Client-app UX: checkout, manage subscription, cancel; coach-app UX: rates, plan prices, payout status        |
+
+**Entry criteria.** Phase 4 exit for portfolio + plan catalog (prices displayable);
+legal / tax posture for collecting funds decided at kickoff.
+
+**Exit criteria.** A client can pay in-app to subscribe to a coach plan (with or
+without live coaching), receive access immediately after successful upfront
+payment, and cancel later; coaches can set plan prices plus hourly/monthly live
+rates; no access to paid plan content without an active (or grace) subscription.
+
+**Non-goals.** Gym↔coach employment payroll; multi-currency complexity beyond
+what the chosen gateway requires for the first market; crypto; offline cash
+reconciliation as a first-class path.
 
 ---
 
@@ -254,10 +338,12 @@ noisy-neighbor / compliance triggers).
 - Store submission without Apple / Google developer accounts
 - Guardian / dependent access
 - Concurrent multi-coach clients / coach switching or rehiring
-- Payments / billing for coach hiring
 - Real-time chat or push-notified messaging (Phase 4 messaging is polling-based)
 - Coach teams / multiple coaches under one self-signup org
-- Ratings, reviews, or content moderation for the coach directory
+- Content moderation tooling for the coach directory
+- Exercise image/video upload for plan demos (Phase 4 slice 4i — not v1)
+- Ratings / reviews as a prerequisite for first hire (ship when marketplace
+  volume justifies; useful for both client browse and gym invites)
 
 ---
 
@@ -277,5 +363,13 @@ ADRs recorded so far:
 ADRs for Phase 4:
 
 - [ADR-0006](./adr/0006-coach-self-signup-otp.md): coach self-signup + email OTP
-  ("coach is the tenant", join codes). Client hire / directory ADR follow-up
-  when 4c starts.
+  ("coach is the tenant", join codes). Client hire / directory / portfolio +
+  plan-catalog ADR follow-up when 4c–4d start.
+
+ADRs still needed (open at slice kickoff, not before):
+
+- Coach portfolio + plan catalog shape (experience, expertise, exercise-required /
+  diet-optional plans, textual content)
+- Client hire / public directory fields
+- Gym→coach invite-with-offer protocol (Phase 5)
+- Payment gateway + subscription lifecycle (Phase 7)
