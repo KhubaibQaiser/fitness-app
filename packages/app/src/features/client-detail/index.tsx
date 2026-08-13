@@ -128,7 +128,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
       <ScreenBody gap="$4">
         {tab === 'overview' ? (
           <ClientHubOverview
-            clientId={clientId}
             client={client}
             goal={goal}
             latestWeightKg={latestWeightKg}
