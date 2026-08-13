@@ -72,8 +72,8 @@ import {
   getManifestForOrg,
   type TenantManifest,
 } from '@gymos/modules/tenancy';
-import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './auth/constants';
-import { issueAccessToken, verifyAccessToken } from './auth/jwt';
+import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './auth/constants';
+import { ACCESS_TOKEN_TTL_SECONDS, issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
 import { resolveOtpPepper, type Env } from './env';
@@ -139,8 +139,30 @@ const setRefreshCookie = (c: AppContext, refreshToken: string, maxAgeSec: number
   });
 };
 
+const setAccessCookie = (c: AppContext, accessToken: string): void => {
+  const https =
+    c.req.header('x-forwarded-proto') === 'https' || new URL(c.req.url).protocol === 'https:';
+  setCookie(c, ACCESS_COOKIE_NAME, accessToken, {
+    httpOnly: true,
+    secure: https,
+    sameSite: 'Strict',
+    path: '/',
+    maxAge: ACCESS_TOKEN_TTL_SECONDS,
+  });
+};
+
 const clearRefreshCookie = (c: AppContext): void => {
   deleteCookie(c, REFRESH_COOKIE_NAME, { path: '/' });
+};
+
+const clearAccessCookie = (c: AppContext): void => {
+  deleteCookie(c, ACCESS_COOKIE_NAME, { path: '/' });
+};
+
+/** Clear both web session cookies (login out / hard auth failure). */
+const clearAuthCookies = (c: AppContext): void => {
+  clearRefreshCookie(c);
+  clearAccessCookie(c);
 };
 
 const requireCoachId = (principal: Principal): string => {
@@ -300,6 +322,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     );
     const maxAgeSec = Math.max(60, Math.floor((Date.parse(session.expiresAt) - Date.now()) / 1000));
     setRefreshCookie(c, session.refreshToken, maxAgeSec);
+    setAccessCookie(c, token);
     return c.json({
       accessToken: token,
       expiresIn,
@@ -360,7 +383,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
         // fail this one call without tearing down the session.
         return problemResponse(c, 401, 'REFRESH_RACE', 'Token already rotated — retry');
       case 'reuse-detected':
-        clearRefreshCookie(c);
+        clearAuthCookies(c);
         return problemResponse(
           c,
           401,
@@ -368,7 +391,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
           'Refresh token reused — all sessions revoked for safety',
         );
       case 'invalid':
-        clearRefreshCookie(c);
+        clearAuthCookies(c);
         return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
     }
   });
@@ -379,7 +402,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     if (refreshToken !== undefined) {
       await revokeSessionByRefreshToken(db, refreshToken);
     }
-    clearRefreshCookie(c);
+    clearAuthCookies(c);
     return c.json({ ok: true });
   });
 
@@ -532,10 +555,17 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
 
     const header = c.req.header('authorization');
     const bearer = header?.match(/^Bearer\s+(.+)$/i)?.[1];
-    if (bearer === undefined) {
+    const fromCookie = getCookie(c, ACCESS_COOKIE_NAME);
+    const accessToken =
+      bearer !== undefined && bearer.length > 0
+        ? bearer
+        : fromCookie !== undefined && fromCookie.length > 0
+          ? fromCookie
+          : undefined;
+    if (accessToken === undefined) {
       return problemResponse(c, 401, 'AUTH_REQUIRED', 'Sign in to use the app');
     }
-    const claims = await verifyAccessToken(bearer, env.JWT_ACCESS_SECRET);
+    const claims = await verifyAccessToken(accessToken, env.JWT_ACCESS_SECRET);
     if (claims === null) {
       return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
     }
@@ -689,7 +719,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
 
   app.post('/v1/auth/logout-all', async (c) => {
     const count = await revokeAllSessionsForUser(db, c.get('principal').userId);
-    clearRefreshCookie(c);
+    clearAuthCookies(c);
     return c.json({ ok: true, revoked: count });
   });
 
