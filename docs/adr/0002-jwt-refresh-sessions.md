@@ -23,9 +23,11 @@ Replace the shared gate with:
 3. **Opaque refresh tokens** stored as SHA-256 hashes in a `sessions` table —
    one row per device/login, with rotation on every refresh and revocation for
    logout / logout-all.
-4. **Transport**: web uses an HttpOnly `gymos_refresh` cookie + in-memory access
-   token; mobile will store the refresh token in SecureStore and send
-   `Authorization: Bearer` for the access token (same API contract).
+4. **Transport**: web uses HttpOnly `gymos_refresh` + HttpOnly `gymos_access`
+   cookies (same-origin via the Next rewrite); the API accepts the access JWT
+   from `Authorization: Bearer` or, when absent, from `gymos_access`. Mobile
+   stores both tokens in SecureStore and sends Bearer for access (refresh in
+   the JSON body).
 5. **Per-request principal resolution** via `resolvePrincipal(db, userId)` —
    no process-global cache.
 

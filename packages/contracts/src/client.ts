@@ -4,8 +4,10 @@ import type * as T from './types';
  * Typed API client — the ONLY http transport feature code may use
  * (raw fetch is lint-banned in packages/app).
  *
- * Web (default): relative URLs, same-origin cookies for the refresh token,
- * in-memory access token after login/refresh.
+ * Web (default): relative URLs, same-origin cookies for refresh (`gymos_refresh`)
+ * and access (`gymos_access`) JWTs; in-memory access token is still set after
+ * login/refresh for Bearer when present. On reload the HttpOnly access cookie
+ * authenticates without a prior refresh.
  * Mobile: call `configureApiClient` with an absolute `baseUrl` and secure-store
  * backed token getters/setters.
  */
