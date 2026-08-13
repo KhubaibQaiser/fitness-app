@@ -25,7 +25,10 @@ jobs:
           fetch-depth: 0
       - name: Install gitleaks
         run: |
-          curl -sSfL -o /tmp/gitleaks.tgz \
+          # GitHub Releases occasionally returns transient 5xx (e.g. 503).
+          # curl --retry covers 408/429/500/502/503/504; keep a small delay between attempts.
+          curl -sSfL --retry 5 --retry-delay 5 --retry-max-time 120 \
+            -o /tmp/gitleaks.tgz \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
       - name: Scan full git history
