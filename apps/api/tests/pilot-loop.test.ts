@@ -19,7 +19,8 @@ const COACH_PASSWORD = 'pilot-coach-test-password';
 let app: App;
 let db: Db;
 let accessToken = '';
-let refreshCookie = '';
+/** Cookie header value: `gymos_refresh=…; gymos_access=…` (web session). */
+let authCookies = '';
 let demoClientId = '';
 
 const manifest = tenantManifestSchema.parse(
@@ -28,13 +29,29 @@ const manifest = tenantManifestSchema.parse(
   ),
 );
 
+/** Collect `name=value` pairs from Set-Cookie (supports multiple cookies). */
+const cookieHeaderFromResponse = (res: Response): string => {
+  const headers = res.headers as Headers & { getSetCookie?: () => string[] };
+  const lines =
+    typeof headers.getSetCookie === 'function'
+      ? headers.getSetCookie()
+      : (() => {
+          const single = res.headers.get('set-cookie');
+          return single === null ? [] : [single];
+        })();
+  return lines
+    .map((line) => line.split(';')[0]?.trim() ?? '')
+    .filter((pair) => pair.includes('='))
+    .join('; ');
+};
+
 const req = async (
   pathName: string,
   init: RequestInit & { json?: unknown } = {},
 ): Promise<Response> => {
   const headers = new Headers(init.headers);
   if (accessToken) headers.set('authorization', `Bearer ${accessToken}`);
-  if (refreshCookie) headers.set('cookie', refreshCookie);
+  if (authCookies) headers.set('cookie', authCookies);
   if (init.json !== undefined) headers.set('content-type', 'application/json');
   return await app.request(pathName, {
     ...init,
@@ -97,10 +114,26 @@ describe('auth (JWT + refresh)', () => {
     expect(body.expiresIn).toBeGreaterThan(60);
     expect(body.me.name).toBe('Pilot Coach');
     accessToken = body.accessToken;
-    const setCookie = good.headers.get('set-cookie');
+    const setCookie = cookieHeaderFromResponse(good);
     expect(setCookie).toContain('gymos_refresh=');
-    expect(setCookie).toContain('HttpOnly');
-    refreshCookie = setCookie?.split(';')[0] ?? '';
+    expect(setCookie).toContain('gymos_access=');
+    const rawCookies =
+      typeof (good.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie ===
+      'function'
+        ? (good.headers as Headers & { getSetCookie: () => string[] }).getSetCookie()
+        : [good.headers.get('set-cookie') ?? ''];
+    expect(rawCookies.some((c) => c.includes('HttpOnly'))).toBe(true);
+    authCookies = setCookie;
+  });
+
+  it('authenticates /v1/me with gymos_access cookie alone (no Bearer)', async () => {
+    const savedBearer = accessToken;
+    accessToken = '';
+    const res = await req('/v1/me');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { name: string };
+    expect(body.name).toBe('Pilot Coach');
+    accessToken = savedBearer;
   });
 
   it('serves /v1/me once authenticated', async () => {
@@ -159,8 +192,34 @@ describe('auth (JWT + refresh)', () => {
     const body = (await res.json()) as { accessToken: string };
     expect(body.accessToken.length).toBeGreaterThan(20);
     accessToken = body.accessToken;
-    const setCookie = res.headers.get('set-cookie');
-    if (setCookie) refreshCookie = setCookie.split(';')[0] ?? refreshCookie;
+    const setCookie = cookieHeaderFromResponse(res);
+    expect(setCookie).toContain('gymos_refresh=');
+    expect(setCookie).toContain('gymos_access=');
+    if (setCookie) authCookies = setCookie;
+  });
+
+  it('clears access and refresh cookies on logout', async () => {
+    const res = await req('/v1/auth/logout', { method: 'POST', json: {} });
+    expect(res.status).toBe(200);
+    const cleared = cookieHeaderFromResponse(res);
+    // deleteCookie typically sets Max-Age=0 / empty value
+    expect(cleared.toLowerCase()).toMatch(/gymos_access=/);
+    expect(cleared.toLowerCase()).toMatch(/gymos_refresh=/);
+
+    accessToken = '';
+    authCookies = '';
+    const blocked = await req('/v1/me');
+    expect(blocked.status).toBe(401);
+
+    // Re-login so the rest of the suite keeps a live session.
+    const login = await req('/v1/auth/login', {
+      method: 'POST',
+      json: { email: 'coach@pilot.local', password: COACH_PASSWORD },
+    });
+    expect(login.status).toBe(200);
+    const tokens = (await login.json()) as { accessToken: string };
+    accessToken = tokens.accessToken;
+    authCookies = cookieHeaderFromResponse(login);
   });
 
   it('exposes public config without auth', async () => {
