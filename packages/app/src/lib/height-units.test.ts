@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cmToFtIn, ftInToCm, parsePositive } from './height-units';
+import { cmToFtIn, ftInToCm, parsePositive, resolveHeightCmInput } from './height-units';
 
 describe('ftInToCm', () => {
   it('converts feet + inches to centimeters', () => {
@@ -42,5 +42,24 @@ describe('parsePositive', () => {
     expect(parsePositive('0')).toBeNull();
     expect(parsePositive('-5')).toBeNull();
     expect(parsePositive('abc')).toBeNull();
+  });
+});
+
+describe('resolveHeightCmInput', () => {
+  it('reads centimeters when unit is cm', () => {
+    expect(resolveHeightCmInput('cm', { cm: '175', ft: '', inches: '' })).toBe(175);
+  });
+
+  it('converts feet + inches when unit is ft_in', () => {
+    expect(resolveHeightCmInput('ft_in', { cm: '', ft: '5', inches: '9' })).toBeCloseTo(175.3, 1);
+  });
+
+  it('treats blank inches as zero', () => {
+    expect(resolveHeightCmInput('ft_in', { cm: '', ft: '6', inches: '' })).toBeCloseTo(182.9, 1);
+  });
+
+  it('rejects invalid input', () => {
+    expect(resolveHeightCmInput('cm', { cm: '', ft: '5', inches: '9' })).toBeNull();
+    expect(resolveHeightCmInput('ft_in', { cm: '175', ft: '', inches: '9' })).toBeNull();
   });
 });

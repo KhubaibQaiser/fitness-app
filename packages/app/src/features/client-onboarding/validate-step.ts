@@ -1,16 +1,14 @@
 import { parseLength, parseWeight, type UnitPrefs } from '@gymos/core/units';
-import { ftInToCm, parsePositive } from '../../lib/height-units';
+import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { isCountryCode, toE164, type CountryCode } from '../../lib/phone';
 import type { OnboardingDraft } from './onboarding-types';
 
-export const resolveHeightCm = (draft: OnboardingDraft): number | null => {
-  if (draft.heightUnit === 'cm') return parsePositive(draft.heightCm);
-  const ft = parsePositive(draft.heightFt);
-  if (ft === null) return null;
-  const inches = draft.heightIn.trim() === '' ? 0 : Number(draft.heightIn);
-  if (!Number.isFinite(inches) || inches < 0) return null;
-  return ftInToCm(ft, inches);
-};
+export const resolveHeightCm = (draft: OnboardingDraft, prefs: UnitPrefs): number | null =>
+  resolveHeightCmInput(prefs.height, {
+    cm: draft.heightCm,
+    ft: draft.heightFt,
+    inches: draft.heightIn,
+  });
 
 export const parseConditions = (raw: string): string[] =>
   raw
@@ -52,7 +50,7 @@ export const validateStep = (
   }
 
   if (stepIndex === 1) {
-    const cm = resolveHeightCm(draft);
+    const cm = resolveHeightCm(draft, prefs);
     if (cm === null || cm < 100 || cm > 230) {
       errors.height = 'Enter a height between 100 and 230 cm';
     }
