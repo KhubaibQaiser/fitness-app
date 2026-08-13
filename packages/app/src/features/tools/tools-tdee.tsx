@@ -101,26 +101,28 @@ export const ToolsTdee = () => {
               />
             </YStack>
           ) : (
-            <>
-              <YStack flex={1} minWidth={90}>
-                <FormField
-                  label="Height"
-                  value={heightFt}
-                  onChangeText={setHeightFt}
-                  inputMode="numeric"
-                  unit="ft"
-                />
-              </YStack>
-              <YStack flex={1} minWidth={90}>
-                <FormField
-                  label={'\u00A0'}
-                  value={heightIn}
-                  onChangeText={setHeightIn}
-                  inputMode="decimal"
-                  unit="in"
-                />
-              </YStack>
-            </>
+            <YStack flex={1} minWidth={200}>
+              <XStack gap="$3">
+                <YStack flex={1}>
+                  <FormField
+                    label="Height"
+                    value={heightFt}
+                    onChangeText={setHeightFt}
+                    inputMode="numeric"
+                    unit="ft"
+                  />
+                </YStack>
+                <YStack flex={1}>
+                  <FormField
+                    label={'\u00A0'}
+                    value={heightIn}
+                    onChangeText={setHeightIn}
+                    inputMode="decimal"
+                    unit="in"
+                  />
+                </YStack>
+              </XStack>
+            </YStack>
           )}
           <YStack flex={1} minWidth={120}>
             <FormField label="Age" value={age} onChangeText={setAge} inputMode="numeric" />
