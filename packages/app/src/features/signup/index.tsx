@@ -8,7 +8,11 @@ import { api, ApiError } from '@gymos/contracts';
 import { AppErrorBoundary, Card, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
 import { setSessionPresence } from '../shell/session-presence';
-import { SignupDetailsForm, type SignupDetailsValues } from './signup-details-form';
+import {
+  SignupDetailsForm,
+  type SignupDetailsError,
+  type SignupDetailsValues,
+} from './signup-details-form';
 import { SignupOtpStep } from './signup-otp-step';
 
 export const SignupScreen = () => {
@@ -18,18 +22,28 @@ export const SignupScreen = () => {
   const [step, setStep] = useState<'details' | 'otp'>('details');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SignupDetailsError>(null);
   const [busy, setBusy] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
 
-  const mapStartError = (e: unknown): string => {
-    if (!(e instanceof ApiError)) return 'Could not start signup. Try again.';
-    if (e.status === 429) return 'Too many attempts — wait a few minutes and try again.';
-    if (e.code === 'EMAIL_TAKEN') return 'An account with this email already exists.';
-    if (e.code === 'PHONE_TAKEN') return 'An account with this phone already exists.';
-    if (e.code === 'INVALID_PHONE') return 'Enter a valid phone number (E.164 or local PK).';
-    if (e.code === 'INVALID_JOIN_CODE') return 'That join code is invalid.';
-    return e.message;
+  const mapStartError = (e: unknown): NonNullable<SignupDetailsError> => {
+    if (!(e instanceof ApiError)) return { message: 'Could not start signup. Try again.' };
+    if (e.status === 429) {
+      return { message: 'Too many attempts — wait a few minutes and try again.' };
+    }
+    if (e.code === 'EMAIL_TAKEN') {
+      return { field: 'email', message: 'An account with this email already exists.' };
+    }
+    if (e.code === 'PHONE_TAKEN') {
+      return { field: 'phone', message: 'An account with this phone already exists.' };
+    }
+    if (e.code === 'INVALID_PHONE') {
+      return { field: 'phone', message: 'Enter a valid phone number (E.164 or local PK).' };
+    }
+    if (e.code === 'INVALID_JOIN_CODE') {
+      return { field: 'joinCode', message: 'That join code is invalid.' };
+    }
+    return { message: e.message };
   };
 
   const start = async (values: SignupDetailsValues) => {
@@ -65,13 +79,14 @@ export const SignupScreen = () => {
         router.replace('/');
       });
     } catch (e) {
-      setError(
-        e instanceof ApiError && e.status === 429
-          ? 'Too many attempts — wait and try again.'
-          : e instanceof ApiError
-            ? 'Invalid or expired code. Try again or resend.'
-            : 'Could not verify. Try again.',
-      );
+      setError({
+        message:
+          e instanceof ApiError && e.status === 429
+            ? 'Too many attempts — wait and try again.'
+            : e instanceof ApiError
+              ? 'Invalid or expired code. Try again or resend.'
+              : 'Could not verify. Try again.',
+      });
     } finally {
       setBusy(false);
     }
@@ -84,11 +99,12 @@ export const SignupScreen = () => {
     try {
       await api.signupCoachResend(email);
     } catch (e) {
-      setError(
-        e instanceof ApiError && e.status === 429
-          ? 'Too many attempts — wait and try again.'
-          : 'Could not resend code. Start signup again.',
-      );
+      setError({
+        message:
+          e instanceof ApiError && e.status === 429
+            ? 'Too many attempts — wait and try again.'
+            : 'Could not resend code. Start signup again.',
+      });
     } finally {
       setResendBusy(false);
     }
@@ -125,7 +141,7 @@ export const SignupScreen = () => {
                 code={code}
                 onChangeCode={setCode}
                 busy={busy}
-                error={error}
+                error={error?.message ?? null}
                 onConfirm={() => void confirm()}
                 onResend={() => void resend()}
                 resendBusy={resendBusy}
