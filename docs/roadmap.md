@@ -219,7 +219,7 @@ catalog slices deferred until after 4b.
 | 4b    | Coach self-signup (`POST /v1/auth/signup/coach/*`) + password forgot/reset via email OTP — **in progress**                      |
 | 4c    | Coach portfolio fields: experience level, expertise tags, public bio; public directory exposes opted-in profile                 |
 | 4d    | Coach plan catalog: priced plans; **exercise plan required**, **diet plan optional**; textual content only                      |
-| 4e    | Public coach directory (`GET /v1/coaches/directory`) lists profile + plans/prices; atomic client signup-and-hire                 |
+| 4e    | Public coach directory (`GET /v1/coaches/directory`) lists profile + plans/prices; atomic client signup-and-hire                |
 | 4f    | RBAC/API glue: wire `ownerUserId` into self-scoped `authorize()` so clients can read own plan/vitals/dietary                    |
 | 4g    | In-app messaging: `conversations`/`messages` scoped to the active `coachAssignment`, polling-based (no push/websockets yet)     |
 | 4h    | `packages/app-client` UI: directory browse, hire CTA, client home (plan/progress), messages — web + mobile                      |
@@ -306,13 +306,13 @@ assignment into a paid subscription.
 
 **Scope (high level; ADR at kickoff).**
 
-| Slice | Outcome                                                                                                      |
-| ----- | ------------------------------------------------------------------------------------------------------------ |
-| 7a    | Payment gateway integration (provider TBD in ADR); coach payout / platform fee model sketched                |
-| 7b    | Client subscribes to a specific coach **plan** with **upfront payment**; can **unsubscribe** later           |
+| Slice | Outcome                                                                                                                                                             |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7a    | Payment gateway integration (provider TBD in ADR); coach payout / platform fee model sketched                                                                       |
+| 7b    | Client subscribes to a specific coach **plan** with **upfront payment**; can **unsubscribe** later                                                                  |
 | 7c    | Optional **live coaching** add-on: coach configures **hourly** and/or **monthly (full-time)** rates; client picks plan-only vs plan + live coaching at higher price |
-| 7d    | Subscription lifecycle: active / past-due / canceled; access to plan content gated on status                 |
-| 7e    | Client-app UX: checkout, manage subscription, cancel; coach-app UX: rates, plan prices, payout status        |
+| 7d    | Subscription lifecycle: active / past-due / canceled; access to plan content gated on status                                                                        |
+| 7e    | Client-app UX: checkout, manage subscription, cancel; coach-app UX: rates, plan prices, payout status                                                               |
 
 **Entry criteria.** Phase 4 exit for portfolio + plan catalog (prices displayable);
 legal / tax posture for collecting funds decided at kickoff.
