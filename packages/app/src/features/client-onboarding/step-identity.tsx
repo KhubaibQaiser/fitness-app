@@ -1,6 +1,13 @@
 'use client';
 
-import { DateField, FormField, SegmentedControl, todayCalendarDate, YStack } from '@gymos/ui';
+import {
+  calendarDateYearsAgo,
+  DateField,
+  FormField,
+  SegmentedControl,
+  todayCalendarDate,
+  YStack,
+} from '@gymos/ui';
 import type { OnboardingDraft } from './onboarding-types';
 
 export const StepIdentity = ({
@@ -47,6 +54,7 @@ export const StepIdentity = ({
         onClearError('dob');
       }}
       maxDate={todayCalendarDate()}
+      minDate={calendarDateYearsAgo(120)}
       error={errors.dob ?? null}
       hint="Optional — age 30 assumed for targets until set"
     />

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import DateTimePicker, { useDefaultStyles, type DateType } from 'react-native-ui-datepicker';
 import { Label, Text, useTheme, YStack } from 'tamagui';
+import { ChevronLeft, ChevronRight } from '../icons';
 import { Body, Muted } from './typography';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
@@ -12,6 +13,12 @@ export const toCalendarDate = (value: Date): string =>
   `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`;
 
 export const todayCalendarDate = (): string => toCalendarDate(new Date());
+
+export const calendarDateYearsAgo = (years: number): string => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return toCalendarDate(date);
+};
 
 const fromPickerDate = (value: DateType): string | null => {
   if (value === null || value === undefined) return null;
@@ -113,6 +120,10 @@ export const DateField = ({
               if (next === null) return;
               onChange(next);
               setOpen(false);
+            }}
+            components={{
+              IconPrev: <ChevronLeft size={18} color={color} />,
+              IconNext: <ChevronRight size={18} color={color} />,
             }}
             styles={{
               ...defaultStyles,
