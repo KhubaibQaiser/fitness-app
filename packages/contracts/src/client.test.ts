@@ -144,3 +144,127 @@ describe('contracts client — refresh mutex', () => {
     expect(onAuthFailure).not.toHaveBeenCalled();
   });
 });
+
+const requestBody = (init?: RequestInit): unknown => {
+  if (typeof init?.body !== 'string') {
+    throw new Error('expected JSON string body');
+  }
+  return JSON.parse(init.body);
+};
+
+describe('contracts client — logout', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('includes refreshToken in the body when getRefreshToken returns a value', async () => {
+    let accessToken: string | null = 'access';
+    let refreshToken: string | null = 'refresh-abc';
+
+    configureApiClient({
+      baseUrl: '',
+      clientPlatform: 'mobile',
+      getAccessToken: () => accessToken,
+      setAccessToken: (token) => {
+        accessToken = token;
+      },
+      getRefreshToken: () => refreshToken,
+      setRefreshToken: (token) => {
+        refreshToken = token;
+      },
+    });
+
+    global.fetch = vi.fn((url: string | URL, init?: RequestInit) => {
+      expect(String(url)).toMatch(/\/v1\/auth\/logout$/);
+      expect(requestBody(init)).toEqual({ refreshToken: 'refresh-abc' });
+      return Promise.resolve(jsonResponse({ ok: true }, 200));
+    }) as unknown as typeof fetch;
+
+    await api.logout();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(accessToken).toBeNull();
+    expect(refreshToken).toBeNull();
+  });
+
+  it('omits refreshToken when getRefreshToken returns nothing (web cookie path)', async () => {
+    let accessToken: string | null = 'access';
+
+    configureApiClient({
+      baseUrl: '',
+      clientPlatform: 'web',
+      getAccessToken: () => accessToken,
+      setAccessToken: (token) => {
+        accessToken = token;
+      },
+      getRefreshToken: () => null,
+    });
+
+    global.fetch = vi.fn((url: string | URL, init?: RequestInit) => {
+      expect(String(url)).toMatch(/\/v1\/auth\/logout$/);
+      expect(requestBody(init)).toEqual({});
+      return Promise.resolve(jsonResponse({ ok: true }, 200));
+    }) as unknown as typeof fetch;
+
+    await api.logout();
+
+    expect(accessToken).toBeNull();
+  });
+
+  it('clears local tokens even when the logout request fails', async () => {
+    let accessToken: string | null = 'access';
+    let refreshToken: string | null = 'refresh-abc';
+
+    configureApiClient({
+      baseUrl: '',
+      clientPlatform: 'mobile',
+      getAccessToken: () => accessToken,
+      setAccessToken: (token) => {
+        accessToken = token;
+      },
+      getRefreshToken: () => refreshToken,
+      setRefreshToken: (token) => {
+        refreshToken = token;
+      },
+    });
+
+    global.fetch = vi.fn((url: string | URL) => {
+      expect(String(url)).toMatch(/\/v1\/auth\/logout$/);
+      return Promise.resolve(jsonResponse({ code: 'UPSTREAM', title: 'Try again' }, 503));
+    }) as unknown as typeof fetch;
+
+    await expect(api.logout()).rejects.toMatchObject({ status: 503 });
+    expect(accessToken).toBeNull();
+    expect(refreshToken).toBeNull();
+  });
+
+  it('posts logout-all with the access token and then clears local tokens', async () => {
+    let accessToken: string | null = 'access';
+    let refreshToken: string | null = 'refresh-abc';
+
+    configureApiClient({
+      baseUrl: '',
+      clientPlatform: 'mobile',
+      getAccessToken: () => accessToken,
+      setAccessToken: (token) => {
+        accessToken = token;
+      },
+      getRefreshToken: () => refreshToken,
+      setRefreshToken: (token) => {
+        refreshToken = token;
+      },
+    });
+
+    global.fetch = vi.fn((url: string | URL, init?: RequestInit) => {
+      expect(String(url)).toMatch(/\/v1\/auth\/logout-all$/);
+      const headers = init?.headers as Record<string, string> | undefined;
+      expect(headers?.authorization).toBe('Bearer access');
+      return Promise.resolve(jsonResponse({ ok: true, revoked: 2 }, 200));
+    }) as unknown as typeof fetch;
+
+    await api.logoutAll();
+
+    expect(accessToken).toBeNull();
+    expect(refreshToken).toBeNull();
+  });
+});

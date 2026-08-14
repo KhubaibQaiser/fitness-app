@@ -240,8 +240,21 @@ export const api = {
       { skipAuth: true },
     ),
   logout: async (): Promise<void> => {
+    const body: { refreshToken?: string } = {};
+    if (config.getRefreshToken) {
+      const refresh = await config.getRefreshToken();
+      if (refresh) body.refreshToken = refresh;
+    }
     try {
-      await request<{ ok: boolean }>('POST', '/v1/auth/logout', {}, { skipAuth: true });
+      await request<{ ok: boolean }>('POST', '/v1/auth/logout', body, { skipAuth: true });
+    } finally {
+      await config.setAccessToken(null);
+      await config.setRefreshToken?.(null);
+    }
+  },
+  logoutAll: async (): Promise<void> => {
+    try {
+      await request<{ ok: boolean; revoked: number }>('POST', '/v1/auth/logout-all', {});
     } finally {
       await config.setAccessToken(null);
       await config.setRefreshToken?.(null);

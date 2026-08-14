@@ -39,5 +39,14 @@ before treating the session as dead.
 - Login is `POST /v1/auth/login`. There is no shared access-key cookie or `/gate/enter` route.
 - Seed must set a password for `coach@pilot.local` (`PILOT_COACH_PASSWORD`).
 - SSO / SAML / OIDC remain out of scope until a customer contract requires them.
-- Access JWTs are self-verifying (supports horizontal API scale); refresh still
-  hits the DB (intentional — enables revocation).
+- Access JWTs are still HS256-signed and short-lived (~15m) so horizontal API
+  scale does not require a session store for _signature_ checks. They are **not**
+  accepted after logout: every protected `/v1/*` request verifies the JWT then
+  confirms `sid` is an active `sessions` row (`userId` matches `sub`,
+  `revokedAt` is null, `expiresAt` is in the future). Revoking a family
+  (current-device logout) or all user sessions (logout-all / password reset)
+  therefore rejects residual access tokens on the next request.
+- Refresh still hits the DB (rotation, reuse detection, revocation).
+- A Redis (or similar) cache in front of the `sid` lookup is a later scale
+  path — see [docs/roadmap.md](../roadmap.md) deferred items. Postgres remains
+  the source of truth.

@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import type { HeightUnit, LengthUnit, WeightUnit } from '@gymos/contracts';
 import { useThemeMode } from '@gymos/platform';
 import {
   Body,
   Card,
+  DangerButton,
   ErrorState,
+  GhostButton,
   IosSwitch,
   Muted,
   PageHeader,
@@ -16,13 +19,16 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig, useUpdateMe } from '../../api';
+import { useLogout } from '../auth/use-logout';
 import { AppScreen } from '../shell/app-screen';
 
 export const SettingsScreen = () => {
   const me = useMe();
   const config = usePublicConfig();
   const updateMe = useUpdateMe();
+  const { logout, logoutAll, isPending: signingOut } = useLogout();
   const { mode, setMode } = useThemeMode();
+  const [confirmAll, setConfirmAll] = useState(false);
 
   if (me.isError || config.isError) {
     return (
@@ -127,6 +133,42 @@ export const SettingsScreen = () => {
           <Body>Email</Body>
           {me.data ? <Muted>{me.data.email}</Muted> : <Skeleton width={168} height={18} />}
         </Row>
+      </Card>
+
+      <SectionTitle>Account</SectionTitle>
+      <Card gap="$3">
+        <GhostButton
+          disabled={signingOut}
+          onPress={() => {
+            setConfirmAll(false);
+            void logout();
+          }}
+          width="100%"
+          aria-label="Sign out"
+        >
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </GhostButton>
+        <DangerButton
+          disabled={signingOut}
+          onPress={() => {
+            if (!confirmAll) {
+              setConfirmAll(true);
+              return;
+            }
+            void logoutAll();
+          }}
+          width="100%"
+          aria-label="Sign out of all devices"
+        >
+          {signingOut
+            ? 'Signing out…'
+            : confirmAll
+              ? 'Tap again to confirm'
+              : 'Sign out of all devices'}
+        </DangerButton>
+        <Muted fontSize={12}>
+          Sign out ends this device. Sign out of all devices ends every session immediately.
+        </Muted>
       </Card>
 
       <SectionTitle>About</SectionTitle>

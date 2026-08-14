@@ -199,6 +199,7 @@ describe('auth (JWT + refresh)', () => {
   });
 
   it('clears access and refresh cookies on logout', async () => {
+    const leftoverAccess = accessToken;
     const res = await req('/v1/auth/logout', { method: 'POST', json: {} });
     expect(res.status).toBe(200);
     const cleared = cookieHeaderFromResponse(res);
@@ -206,12 +207,32 @@ describe('auth (JWT + refresh)', () => {
     expect(cleared.toLowerCase()).toMatch(/gymos_access=/);
     expect(cleared.toLowerCase()).toMatch(/gymos_refresh=/);
 
-    accessToken = '';
     authCookies = '';
+    accessToken = leftoverAccess;
     const blocked = await req('/v1/me');
     expect(blocked.status).toBe(401);
 
     // Re-login so the rest of the suite keeps a live session.
+    const login = await req('/v1/auth/login', {
+      method: 'POST',
+      json: { email: 'coach@pilot.local', password: COACH_PASSWORD },
+    });
+    expect(login.status).toBe(200);
+    const tokens = (await login.json()) as { accessToken: string };
+    accessToken = tokens.accessToken;
+    authCookies = cookieHeaderFromResponse(login);
+  });
+
+  it('logout-all immediately rejects the access JWT', async () => {
+    const leftoverAccess = accessToken;
+    const res = await req('/v1/auth/logout-all', { method: 'POST', json: {} });
+    expect(res.status).toBe(200);
+
+    authCookies = '';
+    accessToken = leftoverAccess;
+    const blocked = await req('/v1/me');
+    expect(blocked.status).toBe(401);
+
     const login = await req('/v1/auth/login', {
       method: 'POST',
       json: { email: 'coach@pilot.local', password: COACH_PASSWORD },
