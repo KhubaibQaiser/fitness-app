@@ -76,7 +76,7 @@ import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from './
 import { ACCESS_TOKEN_TTL_SECONDS, issueAccessToken, verifyAccessToken } from './auth/jwt';
 import { credentialsFilename, renderCredentialsPdf } from './credentials-pdf';
 import { dietPlanFilename, renderDietPlanPdf } from './diet-plan-pdf';
-import { resolveOtpPepper, type Env } from './env';
+import { resolveEmailFrom, resolveOtpPepper, type Env } from './env';
 import { ProblemError, problemResponse } from './problems';
 import { createDbRateLimiter } from './rate-limit';
 import * as dto from './schemas';
@@ -226,7 +226,11 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     mailOverride ??
     createEmailSender({
       apiKey: env.RESEND_API_KEY,
-      from: env.EMAIL_FROM ?? 'GymOS <onboarding@resend.dev>',
+      from: resolveEmailFrom({
+        EMAIL_FROM: env.EMAIL_FROM,
+        RESEND_API_KEY: env.RESEND_API_KEY,
+        NODE_ENV: env.NODE_ENV ?? 'development',
+      }),
       requireDelivery: (env.NODE_ENV ?? 'development') === 'production',
     });
   const otpDeps = { pepper: otpPepper };
@@ -581,24 +585,6 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     c.set('principal', principal);
     return next();
   });
-
-  // Deprecated gate endpoints — return 410 so old clients fail loudly.
-  app.post('/gate/enter', (c) =>
-    problemResponse(
-      c,
-      410,
-      'GATE_RETIRED',
-      'Access-key gate retired — POST /v1/auth/login with email and password',
-    ),
-  );
-  app.get('/gate/enter', (c) =>
-    problemResponse(
-      c,
-      410,
-      'GATE_RETIRED',
-      'Access-key gate retired — POST /v1/auth/login with email and password',
-    ),
-  );
 
   // Idempotency replay for unsafe methods carrying Idempotency-Key.
   app.use('/v1/*', async (c: AppContext, next) => {

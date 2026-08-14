@@ -1,6 +1,5 @@
 import { isNull } from 'drizzle-orm';
 import {
-  boolean,
   index,
   inet,
   integer,
@@ -78,18 +77,6 @@ export const rateLimits = pgTable('rate_limits', {
   windowStart: tstz('window_start').notNull(),
   count: integer('count').notNull().default(1),
 });
-
-/** Access-gate telemetry — feeds the gate-bruteforce alert. */
-export const accessGateAttempts = pgTable(
-  'access_gate_attempts',
-  {
-    id: id(),
-    ip: inet('ip'),
-    success: boolean('success').notNull(),
-    createdAt: createdAt(),
-  },
-  (t) => [index('access_gate_attempts_time_idx').on(t.createdAt.desc())],
-);
 
 /**
  * Email OTP challenges for coach signup and password reset.

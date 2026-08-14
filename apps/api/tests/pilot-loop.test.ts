@@ -238,11 +238,6 @@ describe('auth (JWT + refresh)', () => {
     expect(body.defaultCountry).toBe('PK');
     expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
   });
-
-  it('returns 410 for the retired gate', async () => {
-    const res = await req('/gate/enter', { method: 'POST', json: { key: 'anything-long-enough' } });
-    expect(res.status).toBe(410);
-  });
 });
 
 describe('roster & clients', () => {

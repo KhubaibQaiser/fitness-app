@@ -31,7 +31,7 @@ Find `neon_org_id` in Neon Console → your org → **Settings** → **General**
 (Organization ID looks like `org-…`). Neon requires this for API project creation.
 
 - [ ] Render Blueprint from `infra/paas/render.yaml` (or root symlink)
-- [ ] Render secrets: `DATABASE_URL` (pooled), `JWT_ACCESS_SECRET` (`openssl rand -hex 32`)
+- [ ] Render secrets: `DATABASE_URL` (pooled), `JWT_ACCESS_SECRET` (`openssl rand -hex 32`), `OTP_PEPPER` (`openssl rand -hex 32`), `RESEND_API_KEY`, `EMAIL_FROM` (`GymOS <onboarding@khubaibqaiesr.com>` — verified domain, never `resend.dev`)
 - [ ] Confirm `API_ORIGIN` on Vercel matches the Render URL
 
 ## 3. GitHub
