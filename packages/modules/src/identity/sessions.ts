@@ -3,7 +3,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { dbTimestampToMillis, newId, nowIso, schema as s, type Db, type DbOrTx } from '@gymos/db';
 
-/** Refresh token TTL — 30 days, aligned with the old gate cookie. */
+/** Refresh token TTL — 30 days. */
 export const REFRESH_TTL_DAYS = 30;
 
 /**

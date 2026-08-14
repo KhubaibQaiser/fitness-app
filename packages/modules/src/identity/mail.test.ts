@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  createEmailSender,
-  fromAddressUsesResendTestingDomain,
-  productionEmailFromError,
-} from './mail';
+import { createEmailSender, emailFromError, fromAddressUsesResendTestingDomain } from './mail';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -23,23 +19,21 @@ describe('fromAddressUsesResendTestingDomain', () => {
   });
 });
 
-describe('productionEmailFromError', () => {
-  it('requires a non-testing From in production', () => {
-    expect(productionEmailFromError(undefined)).toMatch(/EMAIL_FROM is required/);
-    expect(productionEmailFromError('GymOS <onboarding@resend.dev>')).toMatch(
-      /verified custom domain/,
-    );
-    expect(productionEmailFromError('GymOS <onboarding@khubaibqaiesr.com>')).toBeUndefined();
+describe('emailFromError', () => {
+  it('requires a non-testing From when sending via Resend', () => {
+    expect(emailFromError(undefined)).toMatch(/EMAIL_FROM is required/);
+    expect(emailFromError('GymOS <onboarding@resend.dev>')).toMatch(/verified custom domain/);
+    expect(emailFromError('GymOS <onboarding@khubaibqaiesr.com>')).toBeUndefined();
   });
 });
 
 describe('createEmailSender', () => {
-  it('refuses to construct a production sender on resend.dev', () => {
+  it('refuses resend.dev whenever an API key is set', () => {
     expect(() =>
       createEmailSender({
         apiKey: 're_test',
         from: 'GymOS <onboarding@resend.dev>',
-        requireDelivery: true,
+        requireDelivery: false,
       }),
     ).toThrow(/verified custom domain/);
   });
@@ -58,19 +52,5 @@ describe('createEmailSender', () => {
     const body = fetchMock.mock.calls[0]?.[1]?.body;
     expect(typeof body).toBe('string');
     expect(body).toContain('onboarding@khubaibqaiesr.com');
-  });
-
-  it('explains Resend 403 when still on resend.dev', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('only send to your own email', { status: 403 }),
-    );
-    const mail = createEmailSender({
-      apiKey: 're_test',
-      from: 'GymOS <onboarding@resend.dev>',
-      requireDelivery: false,
-    });
-    await expect(
-      mail.sendOtp({ to: 'other@example.com', code: '123456', purpose: 'signup_coach' }),
-    ).rejects.toThrow(/testing domain resend\.dev/);
   });
 });

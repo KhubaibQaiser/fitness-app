@@ -2,7 +2,7 @@
 
 This path runs **web + API only** on free tiers so you can pilot without a VM.
 Nightly worker jobs (check-in roll, attention, ranking refresh, cleanup) and the
-local LLM are off. Product core (gate, clients, plans, check-in complete) stays.
+local LLM are off. Product core (login, clients, plans, check-in complete) stays.
 
 | Piece                   | Where                    | Defined in                |
 | ----------------------- | ------------------------ | ------------------------- |
@@ -53,7 +53,7 @@ openssl rand -hex 32                   # → JWT_ACCESS_SECRET (≥32 chars)
 openssl rand -hex 32                   # → OTP_PEPPER
 # RESEND_API_KEY from resend.com; EMAIL_FROM must be a verified domain, e.g.
 #   GymOS <onboarding@khubaibqaiesr.com>
-# Never use resend.dev in production.
+# Never use resend.dev.
 ```
 
 3. Migrate + seed (direct URL, from repo root). Seed needs `PILOT_COACH_PASSWORD`

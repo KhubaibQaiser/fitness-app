@@ -10,9 +10,6 @@ import { useMe } from '../../api';
 /** Companion to the access JWT — skips the full-screen spinner on return visits. */
 export const AUTH_HINT_KEY = 'gymos.authOk';
 
-/** @deprecated Use AUTH_HINT_KEY */
-export const GATE_HINT_KEY = AUTH_HINT_KEY;
-
 const subscribe = () => () => undefined;
 const getAuthHint = () => storage.getItem(AUTH_HINT_KEY) === '1';
 const getServerAuthHint = () => false;

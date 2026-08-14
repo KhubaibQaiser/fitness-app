@@ -3,8 +3,8 @@
  * Resend when configured; console fallback for local/dev (never in production).
  *
  * `resend.dev` is Resend's testing domain and can only deliver to the account
- * owner. Production must send from a verified custom domain (the mailbox
- * itself need not exist).
+ * owner. Any live send must use a verified custom domain (the mailbox itself
+ * need not exist).
  */
 
 export type SendOtpEmailInput = {
@@ -26,9 +26,6 @@ export type ResendMailConfig = {
 
 const RESEND_TESTING_DOMAIN = 'resend.dev';
 
-/** Local/dev default. Production must override with a verified custom domain. */
-export const DEFAULT_DEV_EMAIL_FROM = `GymOS <onboarding@${RESEND_TESTING_DOMAIN}>`;
-
 /**
  * True when `from` uses Resend's testing domain (`resend.dev`), which cannot
  * deliver to anyone except the Resend account owner.
@@ -42,12 +39,13 @@ export const fromAddressUsesResendTestingDomain = (from: string): boolean => {
   return domain === RESEND_TESTING_DOMAIN || domain.endsWith(`.${RESEND_TESTING_DOMAIN}`);
 };
 
-export const productionEmailFromError = (from: string | undefined): string | undefined => {
+/** Error if From is missing or still on Resend's testing domain. */
+export const emailFromError = (from: string | undefined): string | undefined => {
   if (from === undefined || from.trim().length === 0) {
-    return 'EMAIL_FROM is required when NODE_ENV=production; use a verified custom domain (never resend.dev)';
+    return 'EMAIL_FROM is required when sending mail via Resend; use a verified custom domain (never resend.dev)';
   }
   if (fromAddressUsesResendTestingDomain(from)) {
-    return 'EMAIL_FROM must use a verified custom domain in production; resend.dev can only send to the account owner';
+    return 'EMAIL_FROM must use a verified custom domain; resend.dev can only send to the account owner';
   }
   return undefined;
 };
@@ -60,13 +58,16 @@ const bodyFor = (code: string, purpose: SendOtpEmailInput['purpose']): string =>
   return `Your GymOS verification code is ${code}.\n\nUse it to ${action}. It expires in 10 minutes.\n\nIf you did not request this, you can ignore this email.`;
 };
 
+const willCallResend = (config: ResendMailConfig): boolean =>
+  config.requireDelivery || (config.apiKey !== undefined && config.apiKey.length > 0);
+
 /**
  * Create an email sender. Without RESEND_API_KEY and when `requireDelivery` is
  * false, logs the OTP to stdout (local only).
  */
 export const createEmailSender = (config: ResendMailConfig): EmailSender => {
-  if (config.requireDelivery) {
-    const fromError = productionEmailFromError(config.from);
+  if (willCallResend(config)) {
+    const fromError = emailFromError(config.from);
     if (fromError !== undefined) {
       throw new Error(fromError);
     }
@@ -93,11 +94,6 @@ export const createEmailSender = (config: ResendMailConfig): EmailSender => {
         });
         if (!response.ok) {
           const detail = await response.text().catch(() => '');
-          if (response.status === 403 && fromAddressUsesResendTestingDomain(config.from)) {
-            throw new Error(
-              `Resend rejected the recipient because EMAIL_FROM uses the testing domain resend.dev (only the account owner can receive mail). Verify a domain at resend.com/domains and set EMAIL_FROM to an address on it (e.g. GymOS <onboarding@khubaibqaiesr.com>). Resend: ${detail}`,
-            );
-          }
           throw new Error(`Resend send failed (${response.status}): ${detail}`);
         }
         return;

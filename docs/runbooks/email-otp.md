@@ -10,16 +10,14 @@ Leave `RESEND_API_KEY` unset. The API logs codes to stdout:
 [gymos-mail] OTP to=coach@example.com purpose=signup_coach code=123456
 ```
 
-`OTP_PEPPER` and `EMAIL_FROM` may also be omitted locally (fixed non-production
-fallbacks are used). The local From default is `GymOS <onboarding@resend.dev>`.
-
-`resend.dev` is Resend's **testing domain**. If you set a `RESEND_API_KEY` while
-still using that From address, Resend will only deliver to the account owner's
-inbox. Any other recipient returns 403.
+`OTP_PEPPER` and `EMAIL_FROM` may also be omitted locally (OTP hashing uses a
+fixed non-production pepper; no email is sent).
 
 ## Staging / production
 
-Never send from `resend.dev` in production. Boot fails closed if you try.
+Never send from `resend.dev`. That testing domain can only deliver to the
+Resend account owner. Boot fails closed if you try — including locally, as
+soon as `RESEND_API_KEY` is set.
 
 1. Create a free [Resend](https://resend.com) account.
 2. Verify a sending domain at [resend.com/domains](https://resend.com/domains)
@@ -36,7 +34,11 @@ NODE_ENV=production
 ```
 
 Production boot fails closed if `RESEND_API_KEY`, `OTP_PEPPER`, or `EMAIL_FROM`
-is missing, or if `EMAIL_FROM` still uses `resend.dev`.
+is missing, or if `EMAIL_FROM` uses `resend.dev`.
+
+`OTP_PEPPER` is a server-only secret mixed into `SHA-256(code + ":" + pepper)`
+before the hash is stored. It is not emailed. Generate once and keep it stable
+— rotating it invalidates outstanding codes.
 
 ## Limits
 

@@ -239,9 +239,6 @@ export const api = {
       await config.setRefreshToken?.(null);
     }
   },
-  /** @deprecated Gate retired — use `api.login`. */
-  enter: (key: string) =>
-    request<{ ok: boolean }>('POST', '/gate/enter', { key }, { skipAuth: true }),
   publicConfig: () =>
     request<T.PublicConfig>('GET', '/v1/config/public', undefined, { skipAuth: true }),
   me: {

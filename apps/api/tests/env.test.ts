@@ -41,9 +41,19 @@ describe('loadEnv production mail config', () => {
   });
 });
 
-describe('resolveEmailFrom local default', () => {
-  it('falls back to resend.dev outside production', () => {
+describe('resolveEmailFrom', () => {
+  it('does not require EMAIL_FROM when Resend is unused', () => {
     const env = loadEnv(base);
-    expect(resolveEmailFrom(env)).toBe('GymOS <onboarding@resend.dev>');
+    expect(resolveEmailFrom(env)).toBe('GymOS <dev@localhost>');
+  });
+
+  it('refuses resend.dev as soon as an API key is set', () => {
+    expect(() =>
+      loadEnv({
+        ...base,
+        RESEND_API_KEY: 're_test',
+        EMAIL_FROM: 'GymOS <onboarding@resend.dev>',
+      }),
+    ).toThrow(/verified custom domain/);
   });
 });

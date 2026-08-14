@@ -38,9 +38,6 @@ export { StaggerItem } from './components/stagger-item';
 export * from './icons';
 export type { GymosIcon } from './icons';
 
-/** @deprecated Prefer Stat */
-export { Stat as StatPill } from './components/stat';
-
 export {
   Adapt,
   AnimatePresence,
