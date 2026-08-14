@@ -14,6 +14,7 @@
     "./features/shell/app-screen": "./src/features/shell/app-screen.tsx",
     "./features/shell/use-app-chrome": "./src/features/shell/use-app-chrome.ts",
     "./features/login": "./src/features/login/index.tsx",
+    "./features/not-found": "./src/features/not-found/index.tsx",
     "./features/signup": "./src/features/signup/index.tsx",
     "./features/forgot-password": "./src/features/forgot-password/index.tsx",
     "./features/home": "./src/features/home/index.tsx",
