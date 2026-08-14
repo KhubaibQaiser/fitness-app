@@ -30,7 +30,7 @@ auth, tenancy, or authorization models.
 | Product  | Single-coach, coaching-first web app: vitals, goals, check-ins, coach-reviewed meal plans                   |
 | Monorepo | Turborepo + pnpm: `apps/{web,api,worker,mobile}`, `packages/{app,ui,platform,contracts,core,modules,db,ai}` |
 | Frontend | Next.js 16 + Solito + Tamagui + react-native-web; screens in `packages/app`; Expo Router in `apps/mobile`   |
-| Auth     | Email + password; JWT access + rotating refresh sessions (ADR-0002) — replaces shared gate cookie           |
+| Auth     | Email + password; JWT access + rotating refresh sessions (ADR-0002); email OTP for signup/reset (ADR-0006)  |
 | Tenancy  | Shared-schema + app scoping + RLS backstop (ADR-0003); per-org config registry (ADR-0004)                   |
 | RBAC     | Full role matrix in `@gymos/core/rbac`; list queries scoped by org / outlet / assignment                    |
 | Data     | Neon Postgres 17, Drizzle ORM                                                                               |

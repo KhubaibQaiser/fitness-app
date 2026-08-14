@@ -46,11 +46,16 @@ Create `/srv/gymos/.env` (root-only, `chmod 600`):
 PILOT_HOSTNAME=gymos-pilot.duckdns.org
 DUCKDNS_TOKEN=<duckdns token>
 DATABASE_URL=<neon POOLED url>
-PILOT_ACCESS_KEY=<openssl rand -hex 16>
-GATE_COOKIE_SECRET=<openssl rand -hex 32>
+JWT_ACCESS_SECRET=<openssl rand -hex 32>
+OTP_PEPPER=<openssl rand -hex 32>
+RESEND_API_KEY=re_...
+EMAIL_FROM="GymOS <onboarding@khubaibqaiesr.com>"
 QUEUE_DB_PASSWORD=<openssl rand -hex 16>
 AI_MODE=fallback
 ```
+
+`EMAIL_FROM` must use a **verified custom domain** (never `resend.dev`). The
+mailbox does not need to exist. See [`runbooks/email-otp.md`](./runbooks/email-otp.md).
 
 ## 4. First deploy
 
@@ -59,8 +64,8 @@ AI_MODE=fallback
       auto-rollback.
 - [ ] Seed once: from your machine
       `DATABASE_URL=<neon direct url> pnpm --filter @gymos/db db:seed`
-- [ ] Open `https://<host>/gate/enter?key=<PILOT_ACCESS_KEY>` on the coach's phone,
-      add to home screen (PWA).
+- [ ] Open `https://<host>/enter` and sign in as `coach@pilot.local` (seed password),
+      or create an account at `/signup`. Add to home screen (PWA).
 
 ## 5. Enabling the local LLM later (optional, still $0)
 
@@ -80,4 +85,6 @@ working if the model misbehaves — generation can never fail on the LLM.
 
 - Runbooks: [`docs/runbooks/`](./runbooks/) — every alert has one.
 - Rollback: `ssh ubuntu@<vm> '/srv/gymos/deploy.sh --rollback'`.
-- Key rotation: update GitHub env + `/srv/gymos/.env`, redeploy, reshare the link.
+- Key rotation: update GitHub env + `/srv/gymos/.env`, redeploy. Rotating
+  `JWT_ACCESS_SECRET` signs out everyone; rotating `OTP_PEPPER` invalidates
+  outstanding signup/reset codes.

@@ -109,11 +109,8 @@ export const refreshAttention = async (db: Db, zone: string): Promise<void> => {
   }
 };
 
-/** Housekeeping: expired idempotency keys + old gate telemetry + AI retention. */
+/** Housekeeping: expired idempotency keys + AI retention. */
 export const cleanupExpired = async (db: Db): Promise<void> => {
   await db.delete(s.idempotencyKeys).where(lt(s.idempotencyKeys.expiresAt, nowIso()));
-  await db
-    .delete(s.accessGateAttempts)
-    .where(lt(s.accessGateAttempts.createdAt, isoDate(DateTime.utc().minus({ days: 30 }))));
   await purgeStaleAiArtifacts(db, 90);
 };

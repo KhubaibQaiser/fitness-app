@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Hono modular-monolith API. Access-gate secured; OpenAPI generated from Zod.",
+  "description": "Hono modular-monolith API. JWT + refresh sessions; OpenAPI generated from Zod.",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",

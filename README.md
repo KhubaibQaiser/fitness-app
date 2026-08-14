@@ -31,7 +31,7 @@ Production pilot: `https://gymos-pilot.duckdns.org`.
 
 - **No secrets in this repo, ever.** `.env.example` holds placeholders only. Secret scanning (gitleaks) runs pre-commit (staged), pre-push (history), and in CI on every PR — a finding fails the pipeline.
 - gitleaks is expected on `PATH` (`~/.tools/bin` works): <https://github.com/gitleaks/gitleaks/releases>
-- All external communication is HTTPS (Caddy auto-TLS, HSTS); the API is never exposed without the access gate; the LLM container has no network egress.
+- All external communication is HTTPS (Caddy auto-TLS, HSTS); `/v1` requires a JWT except public auth routes; the LLM container has no network egress.
 - Report anything suspicious via a private GitHub security advisory, not a public issue.
 
 ## Repository layout
