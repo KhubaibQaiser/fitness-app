@@ -136,7 +136,17 @@ export const createClient = async (
 
 export type OnboardVitalsInput = Pick<
   RecordVitalsInput,
-  'weightKg' | 'chestCm' | 'waistCm' | 'hipCm' | 'armCm' | 'thighCm' | 'bodyFatPct'
+  | 'weightKg'
+  | 'chestCm'
+  | 'waistCm'
+  | 'hipCm'
+  | 'armCm'
+  | 'armLeftCm'
+  | 'armRightCm'
+  | 'thighCm'
+  | 'thighLeftCm'
+  | 'thighRightCm'
+  | 'bodyFatPct'
 > & { weightKg: number };
 
 export type OnboardClientInput = {
@@ -225,7 +235,15 @@ export const onboardClient = async (
         ...(input.vitals.waistCm !== undefined ? { waistCm: input.vitals.waistCm } : {}),
         ...(input.vitals.hipCm !== undefined ? { hipCm: input.vitals.hipCm } : {}),
         ...(input.vitals.armCm !== undefined ? { armCm: input.vitals.armCm } : {}),
+        ...(input.vitals.armLeftCm !== undefined ? { armLeftCm: input.vitals.armLeftCm } : {}),
+        ...(input.vitals.armRightCm !== undefined ? { armRightCm: input.vitals.armRightCm } : {}),
         ...(input.vitals.thighCm !== undefined ? { thighCm: input.vitals.thighCm } : {}),
+        ...(input.vitals.thighLeftCm !== undefined
+          ? { thighLeftCm: input.vitals.thighLeftCm }
+          : {}),
+        ...(input.vitals.thighRightCm !== undefined
+          ? { thighRightCm: input.vitals.thighRightCm }
+          : {}),
         ...(input.vitals.bodyFatPct !== undefined ? { bodyFatPct: input.vitals.bodyFatPct } : {}),
       });
 

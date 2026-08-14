@@ -495,7 +495,27 @@
                         "minimum": 10,
                         "maximum": 90
                       },
+                      "armLeftCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
+                      "armRightCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
                       "thighCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighLeftCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighRightCm": {
                         "type": "number",
                         "minimum": 20,
                         "maximum": 120
@@ -968,7 +988,27 @@
                     "minimum": 10,
                     "maximum": 90
                   },
+                  "armLeftCm": {
+                    "type": "number",
+                    "minimum": 10,
+                    "maximum": 90
+                  },
+                  "armRightCm": {
+                    "type": "number",
+                    "minimum": 10,
+                    "maximum": 90
+                  },
                   "thighCm": {
+                    "type": "number",
+                    "minimum": 20,
+                    "maximum": 120
+                  },
+                  "thighLeftCm": {
+                    "type": "number",
+                    "minimum": 20,
+                    "maximum": 120
+                  },
+                  "thighRightCm": {
                     "type": "number",
                     "minimum": 20,
                     "maximum": 120
@@ -1445,7 +1485,27 @@
                         "minimum": 10,
                         "maximum": 90
                       },
+                      "armLeftCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
+                      "armRightCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
                       "thighCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighLeftCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighRightCm": {
                         "type": "number",
                         "minimum": 20,
                         "maximum": 120
@@ -1641,7 +1701,27 @@
                         "minimum": 10,
                         "maximum": 90
                       },
+                      "armLeftCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
+                      "armRightCm": {
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 90
+                      },
                       "thighCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighLeftCm": {
+                        "type": "number",
+                        "minimum": 20,
+                        "maximum": 120
+                      },
+                      "thighRightCm": {
                         "type": "number",
                         "minimum": 20,
                         "maximum": 120

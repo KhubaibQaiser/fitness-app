@@ -102,19 +102,25 @@ export const ClientOnboardingScreen = () => {
             waistCm?: number;
             chestCm?: number;
             hipCm?: number;
-            armCm?: number;
-            thighCm?: number;
+            armLeftCm?: number;
+            armRightCm?: number;
+            thighLeftCm?: number;
+            thighRightCm?: number;
           } = {};
           const waistCm = optionalCm(draft.waistCm);
           const chestCm = optionalCm(draft.chestCm);
           const hipCm = optionalCm(draft.hipCm);
-          const armCm = optionalCm(draft.armCm);
-          const thighCm = optionalCm(draft.thighCm);
+          const armLeftCm = optionalCm(draft.armLeftCm);
+          const armRightCm = optionalCm(draft.armRightCm);
+          const thighLeftCm = optionalCm(draft.thighLeftCm);
+          const thighRightCm = optionalCm(draft.thighRightCm);
           if (waistCm !== undefined) measures.waistCm = waistCm;
           if (chestCm !== undefined) measures.chestCm = chestCm;
           if (hipCm !== undefined) measures.hipCm = hipCm;
-          if (armCm !== undefined) measures.armCm = armCm;
-          if (thighCm !== undefined) measures.thighCm = thighCm;
+          if (armLeftCm !== undefined) measures.armLeftCm = armLeftCm;
+          if (armRightCm !== undefined) measures.armRightCm = armRightCm;
+          if (thighLeftCm !== undefined) measures.thighLeftCm = thighLeftCm;
+          if (thighRightCm !== undefined) measures.thighRightCm = thighRightCm;
           return measures;
         })(),
       },

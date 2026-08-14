@@ -299,9 +299,26 @@ describe('the pilot core loop', () => {
   it('records vitals', async () => {
     const res = await req(`/v1/clients/${demoClientId}/vitals`, {
       method: 'POST',
-      json: { weightKg: 84.1, waistCm: 95.5 },
+      json: {
+        weightKg: 84.1,
+        waistCm: 95.5,
+        armLeftCm: 31,
+        armRightCm: 32,
+        thighLeftCm: 52,
+        thighRightCm: 53,
+      },
     });
     expect(res.status).toBe(200);
+    const recorded = (await res.json()) as {
+      armLeftCm: number | null;
+      armRightCm: number | null;
+      thighLeftCm: number | null;
+      thighRightCm: number | null;
+    };
+    expect(recorded.armLeftCm).toBe(31);
+    expect(recorded.armRightCm).toBe(32);
+    expect(recorded.thighLeftCm).toBe(52);
+    expect(recorded.thighRightCm).toBe(53);
   });
 
   it('generates a 7-day plan honoring the peanut allergy + halal profile', async () => {
@@ -585,7 +602,14 @@ describe('the pilot core loop', () => {
             heightDisplayUnit: 'cm',
           },
         },
-        vitals: { weightKg: 82, waistCm: 90 },
+        vitals: {
+          weightKg: 82,
+          waistCm: 90,
+          armLeftCm: 32.5,
+          armRightCm: 33,
+          thighLeftCm: 54,
+          thighRightCm: 55.5,
+        },
         goal: { preset: 'LOSE', rate: 'STANDARD', startWeightKg: 82, targetWeightKg: 75 },
         dietary: [{ type: 'ALLERGY_SEVERE', code: 'allergen:peanut' }],
       },
@@ -593,12 +617,24 @@ describe('the pilot core loop', () => {
     expect(onboard.status).toBe(200);
     const body = (await onboard.json()) as {
       client: { id: string; email: string | null; intake: { signedAt?: string } | null };
-      vitals: { weightKg: number | null };
+      vitals: {
+        weightKg: number | null;
+        waistCm: number | null;
+        armLeftCm: number | null;
+        armRightCm: number | null;
+        thighLeftCm: number | null;
+        thighRightCm: number | null;
+      };
       goal: { preset: string };
     };
     expect(body.client.email).toBe('onboard@example.com');
     expect(body.client.intake?.signedAt).toBe('2026-08-06T12:00:00.000Z');
     expect(body.vitals.weightKg).toBe(82);
+    expect(body.vitals.waistCm).toBe(90);
+    expect(body.vitals.armLeftCm).toBe(32.5);
+    expect(body.vitals.armRightCm).toBe(33);
+    expect(body.vitals.thighLeftCm).toBe(54);
+    expect(body.vitals.thighRightCm).toBe(55.5);
     expect(body.goal.preset).toBe('LOSE');
 
     const dietary = await req(`/v1/clients/${body.client.id}/dietary-profile`);

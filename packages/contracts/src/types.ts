@@ -133,7 +133,11 @@ export type Vitals = {
   waistCm: number | null;
   hipCm: number | null;
   armCm: number | null;
+  armLeftCm: number | null;
+  armRightCm: number | null;
   thighCm: number | null;
+  thighLeftCm: number | null;
+  thighRightCm: number | null;
   restingHr: number | null;
   bpSystolic: number | null;
   bpDiastolic: number | null;
@@ -163,7 +167,11 @@ export type OnboardClientInput = {
     waistCm?: number;
     hipCm?: number;
     armCm?: number;
+    armLeftCm?: number;
+    armRightCm?: number;
     thighCm?: number;
+    thighLeftCm?: number;
+    thighRightCm?: number;
   };
   goal: {
     preset: Goal['preset'];
