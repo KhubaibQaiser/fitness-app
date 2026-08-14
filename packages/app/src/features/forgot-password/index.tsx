@@ -5,10 +5,9 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { storage } from '@gymos/platform';
 import { AppErrorBoundary, Card, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
-import { AUTH_HINT_KEY } from '../shell/gate-guard';
+import { setSessionPresence } from '../shell/session-presence';
 import { ForgotRequestForm } from './forgot-request-form';
 import { ForgotResetForm } from './forgot-reset-form';
 
@@ -52,7 +51,7 @@ export const ForgotPasswordScreen = () => {
     try {
       await api.resetPassword(email, code, newPassword);
       const result = await api.login(email, newPassword);
-      storage.setItem(AUTH_HINT_KEY, '1');
+      setSessionPresence(true);
       queryClient.setQueryData(qk.me, result.me);
       startTransition(() => {
         router.replace('/');
@@ -107,7 +106,7 @@ export const ForgotPasswordScreen = () => {
               />
             )}
           </Card>
-          <Link href="/enter">
+          <Link href="/login">
             <Muted fontSize={13} textAlign="center" color="$accent">
               Back to sign in
             </Muted>

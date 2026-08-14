@@ -5,10 +5,9 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { storage } from '@gymos/platform';
 import { AppErrorBoundary, Card, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
-import { AUTH_HINT_KEY } from '../shell/gate-guard';
+import { setSessionPresence } from '../shell/session-presence';
 import { SignupDetailsForm, type SignupDetailsValues } from './signup-details-form';
 import { SignupOtpStep } from './signup-otp-step';
 
@@ -60,7 +59,7 @@ export const SignupScreen = () => {
     setError(null);
     try {
       const result = await api.signupCoachConfirm(email, code);
-      storage.setItem(AUTH_HINT_KEY, '1');
+      setSessionPresence(true);
       queryClient.setQueryData(qk.me, result.me);
       startTransition(() => {
         router.replace('/');
@@ -133,7 +132,7 @@ export const SignupScreen = () => {
               />
             )}
           </Card>
-          <Link href="/enter">
+          <Link href="/login">
             <Muted fontSize={13} textAlign="center" color="$accent">
               Already have an account? Sign in
             </Muted>

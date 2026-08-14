@@ -14,7 +14,7 @@ share.
 ## Decision
 
 1. **`apps/mobile` is an Expo Router (SDK 57) shell** — native-only (no Expo web
-   target). Route files mirror `apps/web/app/(coach)/**` and `/enter`.
+   target). Route files mirror `apps/web/app/(coach)/**` and `/login`.
 2. **Solito** continues to own cross-platform `Link` / `useRouter` / `usePathname`
    inside `@gymos/app` so the same screens navigate on web and native.
 3. **Platform splits** (`.native` / default web) in `@gymos/platform` cover
