@@ -6,6 +6,7 @@ import {
   ArrowLeft as ArrowLeftRaw,
   Bell as BellRaw,
   Check as CheckRaw,
+  ChevronLeft as ChevronLeftRaw,
   ChevronRight as ChevronRightRaw,
   ClipboardList as ClipboardListRaw,
   Download as DownloadRaw,
@@ -55,6 +56,7 @@ export const AlertTriangle: GymosIcon = fromLucide(AlertTriangleRaw);
 export const ArrowLeft: GymosIcon = fromLucide(ArrowLeftRaw);
 export const Bell: GymosIcon = fromLucide(BellRaw);
 export const Check: GymosIcon = fromLucide(CheckRaw);
+export const ChevronLeft: GymosIcon = fromLucide(ChevronLeftRaw);
 export const ChevronRight: GymosIcon = fromLucide(ChevronRightRaw);
 export const ClipboardList: GymosIcon = fromLucide(ClipboardListRaw);
 export const Download: GymosIcon = fromLucide(DownloadRaw);
