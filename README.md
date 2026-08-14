@@ -22,7 +22,7 @@ pnpm db:migrate && pnpm db:seed
 pnpm dev                # web :3000, api :8080, worker (loads root .env)
 ```
 
-Open `http://localhost:3000/enter` and sign in as `coach@pilot.local` with
+Open `http://localhost:3000/login` and sign in as `coach@pilot.local` with
 `PILOT_COACH_PASSWORD` from your `.env` (default after seed:
 `pilot-coach-change-me`).
 Production pilot: `https://gymos-pilot.duckdns.org`.

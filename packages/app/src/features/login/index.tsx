@@ -5,7 +5,6 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { storage } from '@gymos/platform';
 import {
   AppErrorBoundary,
   Card,
@@ -17,9 +16,9 @@ import {
   YStack,
 } from '@gymos/ui';
 import { qk } from '../../api';
-import { AUTH_HINT_KEY } from '../shell/gate-guard';
+import { setSessionPresence } from '../shell/session-presence';
 
-export const EnterScreen = () => (
+export const LoginScreen = () => (
   <AppErrorBoundary>
     <LoginForm />
   </AppErrorBoundary>
@@ -40,13 +39,13 @@ const LoginForm = () => {
     setError(null);
     try {
       const result = await api.login(email.trim(), password);
-      storage.setItem(AUTH_HINT_KEY, '1');
+      setSessionPresence(true);
       queryClient.setQueryData(qk.me, result.me);
       startTransition(() => {
         router.replace('/');
       });
     } catch (e) {
-      storage.removeItem(AUTH_HINT_KEY);
+      setSessionPresence(false);
       setError(
         e instanceof ApiError && e.status === 429
           ? 'Too many attempts — wait a minute and try again.'
