@@ -3,17 +3,14 @@
 import { type ReactElement, type ReactNode } from 'react';
 import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
-import { isWeb, useSafeAreaInsets, useThemeMode } from '@gymos/platform';
+import { isWeb, useSafeAreaInsets } from '@gymos/platform';
 import {
   Avatar,
   Bell,
   Body,
   Home,
-  IconButton,
-  Moon,
   Muted,
   Settings,
-  Sun,
   Text,
   Users,
   Wrench,
@@ -54,18 +51,6 @@ const navIcon = (href: NavHref, size: number, color: string): ReactElement => {
     case '/settings':
       return <Settings size={size} color={color} />;
   }
-};
-
-const ThemeToggle = () => {
-  const { mode, toggle } = useThemeMode();
-  const dark = mode === 'dark';
-  return (
-    <IconButton
-      onPress={toggle}
-      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      icon={dark ? <Sun size={22} color="$color" /> : <Moon size={22} color="$color" />}
-    />
-  );
 };
 
 const UnreadDot = ({ count }: { count: number }) =>
@@ -275,13 +260,8 @@ export const SideNav = () => {
         borderTopWidth={1}
         borderTopColor="$borderColor"
         paddingTop="$3"
-        gap="$3"
         paddingHorizontal="$1"
       >
-        <XStack alignItems="center" justifyContent="space-between">
-          <Muted fontSize={12}>Theme</Muted>
-          <ThemeToggle />
-        </XStack>
         <XStack alignItems="center" gap="$2.5">
           <Avatar name={coachName} size={32} />
           <YStack flex={1} minWidth={0}>
