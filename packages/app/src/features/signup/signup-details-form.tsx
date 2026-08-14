@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FormField, PrimaryButton, YStack } from '@gymos/ui';
+import { Body, FormField, PrimaryButton, YStack } from '@gymos/ui';
 
 export type SignupDetailsValues = {
   name: string;
@@ -11,9 +11,14 @@ export type SignupDetailsValues = {
   joinCode: string;
 };
 
+export type SignupDetailsError = {
+  message: string;
+  field?: 'email' | 'phone' | 'joinCode';
+} | null;
+
 type SignupDetailsFormProps = {
   busy: boolean;
-  error: string | null;
+  error: SignupDetailsError;
   onSubmit: (values: SignupDetailsValues) => void;
 };
 
@@ -30,6 +35,11 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
     phone.trim().length >= 7 &&
     password.length >= 8 &&
     !busy;
+
+  const fieldError = (field: 'email' | 'phone' | 'joinCode') => {
+    if (!error) return null;
+    return error.field === field ? error.message : null;
+  };
 
   return (
     <YStack gap="$4">
@@ -50,6 +60,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         autoCorrect={false}
         inputMode="email"
         required
+        error={fieldError('email')}
       />
       <FormField
         label="Phone"
@@ -61,6 +72,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         inputMode="tel"
         required
         hint="Used to prevent duplicate accounts"
+        error={fieldError('phone')}
       />
       <FormField
         label="Password"
@@ -80,8 +92,13 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         autoCapitalize="characters"
         autoCorrect={false}
         hint="Leave blank to create your own coaching workspace"
-        error={error}
+        error={fieldError('joinCode')}
       />
+      {error && !error.field ? (
+        <Body color="$danger" fontSize={12} fontWeight="600" role="alert">
+          {error.message}
+        </Body>
+      ) : null}
       <PrimaryButton
         disabled={!canSubmit}
         onPress={() =>
