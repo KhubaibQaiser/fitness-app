@@ -13,7 +13,6 @@ import {
   ErrorState,
   FormField,
   GhostButton,
-  LoadingState,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -27,6 +26,7 @@ import { useApplyAdjustment, useCheckIn, useUpdateCheckIn } from '../../api';
 import { MacroDonut, ProgressRing } from '../charts';
 import { AppScreen } from '../shell/app-screen';
 import { adherenceBarTone, adherencePctToRating, adherenceRatingToPct } from './adherence';
+import { CheckInDetailSkeleton } from './check-in-detail-skeleton';
 import { VERDICT_COPY } from './verdict-copy';
 
 const asAdherence = (n: number | null): 1 | 2 | 3 | 4 | 5 | null =>
@@ -103,11 +103,7 @@ export const CheckInDetailScreen = ({
   }, [detail.data, hydrated]);
 
   if (detail.isPending) {
-    return (
-      <AppScreen>
-        <LoadingState />
-      </AppScreen>
-    );
+    return <CheckInDetailSkeleton clientId={clientId} />;
   }
   if (detail.isError) {
     return (

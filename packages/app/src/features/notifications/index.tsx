@@ -9,7 +9,6 @@ import {
   EmptyState,
   ErrorState,
   GhostButton,
-  LoadingState,
   Muted,
   PageHeader,
   Row,
@@ -17,6 +16,7 @@ import {
 } from '@gymos/ui';
 import { useMarkAllRead, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { NotificationsSkeleton } from './notifications-skeleton';
 
 const TYPE_LABEL: Record<string, string> = {
   CHECKIN_DUE: 'Check-in due',
@@ -43,7 +43,7 @@ export const NotificationsScreen = () => {
   if (notifications.isPending) {
     return (
       <AppScreen>
-        <LoadingState />
+        <NotificationsSkeleton />
       </AppScreen>
     );
   }
@@ -65,7 +65,9 @@ export const NotificationsScreen = () => {
         action={
           items.some((n) => n.readAt === null) ? (
             <GhostButton onPress={() => markAll.mutate()}>Mark all read</GhostButton>
-          ) : null
+          ) : (
+            <YStack width={1} height={48} />
+          )
         }
       />
       {items.length === 0 ? (

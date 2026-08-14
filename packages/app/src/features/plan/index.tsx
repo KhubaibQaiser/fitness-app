@@ -9,7 +9,6 @@ import {
   Card,
   ErrorState,
   IconButton,
-  LoadingState,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -20,6 +19,7 @@ import { useClientDetail, useGeneratePlan, usePlan } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanEditor } from './plan-editor';
+import { PlanSkeleton } from './plan-skeleton';
 
 const MEAL_COUNT_OPTIONS = [
   { value: 3, label: '3 meals' },
@@ -55,11 +55,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
   const plan = usePlan(activePlanId);
 
   if (detail.isPending || (activePlanId !== null && plan.isPending)) {
-    return (
-      <AppScreen>
-        <LoadingState />
-      </AppScreen>
-    );
+    return <PlanSkeleton clientId={clientId} />;
   }
   if (detail.isError) {
     return (

@@ -1,5 +1,5 @@
-import { EnterScreen } from '@gymos/app/features/enter';
+import { Redirect } from 'expo-router';
 
-export default function EnterPage() {
-  return <EnterScreen />;
+export default function EnterRedirect() {
+  return <Redirect href="/login" />;
 }

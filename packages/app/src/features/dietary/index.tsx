@@ -10,7 +10,6 @@ import {
   Card,
   ErrorState,
   GhostButton,
-  LoadingState,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -20,6 +19,7 @@ import {
 import { useClientDetail, usePutDietary } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { DietaryChips } from './dietary-chips';
+import { DietarySkeleton } from './dietary-skeleton';
 
 type Selection = Map<string, Restriction>;
 
@@ -46,11 +46,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
   }, [detail.data, loadedVersion]);
 
   if (detail.isPending) {
-    return (
-      <AppScreen>
-        <LoadingState />
-      </AppScreen>
-    );
+    return <DietarySkeleton />;
   }
   if (detail.isError) {
     return (

@@ -1,40 +1,31 @@
 'use client';
 
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'solito/navigation';
 import { ApiError } from '@gymos/contracts';
-import { storage } from '@gymos/platform';
 import { LoadingState } from '@gymos/ui';
 import { useMe } from '../../api';
+import { setSessionPresence } from './session-presence';
 
-/** Companion to the access JWT — skips the full-screen spinner on return visits. */
-export const AUTH_HINT_KEY = 'gymos.authOk';
+export { AUTH_HINT_KEY } from './session-presence';
 
-const subscribe = () => () => undefined;
-const getAuthHint = () => storage.getItem(AUTH_HINT_KEY) === '1';
-const getServerAuthHint = () => false;
-
-/** Redirects to /enter when the access token is missing or refresh failed. */
+/** Overlay + /login only after silent refresh already failed (401). Not a first-paint router. */
 export const GateGuard = ({ children }: { children: ReactNode }) => {
   const me = useMe();
   const router = useRouter();
-  const hasAuthHint = useSyncExternalStore(subscribe, getAuthHint, getServerAuthHint);
 
   const authBlocked = me.error instanceof ApiError && me.error.status === 401;
 
   useEffect(() => {
-    if (me.isSuccess) storage.setItem(AUTH_HINT_KEY, '1');
+    if (me.isSuccess) setSessionPresence(true);
   }, [me.isSuccess]);
 
   useEffect(() => {
     if (!authBlocked) return;
-    storage.removeItem(AUTH_HINT_KEY);
-    router.replace('/enter');
+    setSessionPresence(false);
+    router.replace('/login');
   }, [authBlocked, router]);
 
-  if (me.isPending && !hasAuthHint) {
-    return <LoadingState label="Checking session…" />;
-  }
   if (authBlocked) return <LoadingState label="Redirecting…" />;
   return <>{children}</>;
 };

@@ -16,6 +16,7 @@ export type { BadgeTone } from './components/badge';
 export { AlertBanner } from './components/alert-banner';
 export type { AlertBannerTone } from './components/alert-banner';
 export { LoadingState, EmptyState, ErrorState } from './components/states';
+export { Skeleton, SkeletonCircle, SkeletonRegion } from './components/skeleton';
 export { FormField, FormSection } from './components/form-field';
 export {
   DateField,
