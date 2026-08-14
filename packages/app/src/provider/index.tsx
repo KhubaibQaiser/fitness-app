@@ -1,7 +1,8 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { getSessionPresence, subscribeSessionPresence } from '../features/shell/session-presence';
 
 /**
  * App-level providers (Tamagui's provider lives in the platform shell —
@@ -24,5 +25,14 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
         },
       }),
   );
+
+  useEffect(
+    () =>
+      subscribeSessionPresence(() => {
+        if (!getSessionPresence()) queryClient.clear();
+      }),
+    [queryClient],
+  );
+
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };

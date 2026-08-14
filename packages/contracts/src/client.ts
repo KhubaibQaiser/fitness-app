@@ -108,10 +108,18 @@ const performRefresh = async (): Promise<boolean> => {
     // already installed a fresh, valid token pair.
     const problem = await parseProblem(response);
     if (problem?.code === 'REFRESH_RACE') return false;
-    await config.setAccessToken(null);
-    await config.setRefreshToken?.(null);
-    config.onAuthFailure?.();
-    return false;
+    if (response.status === 401 || response.status === 403) {
+      await config.setAccessToken(null);
+      await config.setRefreshToken?.(null);
+      config.onAuthFailure?.();
+      return false;
+    }
+    throw new ApiError(
+      response.status,
+      problem?.code ?? 'UNKNOWN',
+      problem?.title ?? response.statusText,
+      problem?.detail,
+    );
   }
   const data = (await response.json()) as T.AuthTokens;
   await config.setAccessToken(data.accessToken);

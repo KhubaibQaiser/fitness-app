@@ -6,6 +6,14 @@ const REFRESH_KEY = 'gymos.refreshToken';
 
 let memoryAccess: string | null = null;
 
+export const hasStoredMobileSession = async (): Promise<boolean> => {
+  const refresh = await SecureStore.getItemAsync(REFRESH_KEY);
+  if (refresh !== null && refresh.length > 0) return true;
+  if (memoryAccess !== null && memoryAccess.length > 0) return true;
+  const access = await SecureStore.getItemAsync(ACCESS_KEY);
+  return access !== null && access.length > 0;
+};
+
 /**
  * Wire the shared contracts client for native: absolute API URL + SecureStore
  * for refresh (and access) tokens. Call once at app boot before any queries.

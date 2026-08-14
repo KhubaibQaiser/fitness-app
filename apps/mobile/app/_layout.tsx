@@ -1,19 +1,20 @@
 import 'react-native-gesture-handler';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AUTH_HINT_KEY } from '@gymos/app/features/shell/gate-guard';
-import { hydrateStorage, storage } from '@gymos/platform';
+import { setSessionPresence } from '@gymos/app/features/shell/session-presence';
+import { useSessionPresence } from '@gymos/app/features/shell/use-session-presence';
+import { hydrateStorage } from '@gymos/platform';
 import { LoadingState } from '@gymos/ui';
-import { configureMobileApiClient } from '../src/configure-mobile-api';
+import { configureMobileApiClient, hasStoredMobileSession } from '../src/configure-mobile-api';
 import { MobileProviders } from '../src/mobile-providers';
 
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const router = useRouter();
+  const signedIn = useSessionPresence();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -21,9 +22,10 @@ export default function RootLayout() {
     const boot = async () => {
       await hydrateStorage();
       configureMobileApiClient(() => {
-        storage.removeItem(AUTH_HINT_KEY);
-        router.replace('/enter');
+        setSessionPresence(false);
       });
+      const hasSession = await hasStoredMobileSession();
+      setSessionPresence(hasSession);
       if (!cancelled) {
         setReady(true);
         await SplashScreen.hideAsync();
@@ -33,7 +35,7 @@ export default function RootLayout() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   if (!ready) {
     return (
@@ -47,7 +49,14 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <MobileProviders>
         <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+        <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="(coach)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+        </Stack>
       </MobileProviders>
     </SafeAreaProvider>
   );

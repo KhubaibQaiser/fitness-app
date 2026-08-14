@@ -32,6 +32,9 @@ const nextConfig = {
   },
   // Same-origin API proxy: local/dev → localhost; PaaS → API_ORIGIN (Render);
   // VM prod still uses Caddy for the public hostname.
+  async redirects() {
+    return [{ source: '/enter', destination: '/login', permanent: true }];
+  },
   async rewrites() {
     const api = process.env.API_ORIGIN ?? 'http://localhost:8080';
     return [
