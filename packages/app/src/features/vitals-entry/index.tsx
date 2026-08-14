@@ -9,7 +9,6 @@ import {
   FormField,
   FormSection,
   GhostButton,
-  LoadingState,
   Muted,
   PageHeader,
   PrimaryButton,
@@ -18,6 +17,7 @@ import {
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { VitalsEntrySkeleton } from './vitals-entry-skeleton';
 
 type FieldKey =
   | 'weightKg'
@@ -62,11 +62,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const [saved, setSaved] = useState(false);
 
   if (vitals.isPending) {
-    return (
-      <AppScreen>
-        <LoadingState />
-      </AppScreen>
-    );
+    return <VitalsEntrySkeleton />;
   }
 
   if (saved) {

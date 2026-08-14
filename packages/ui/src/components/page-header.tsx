@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 import { Text, XStack, YStack } from 'tamagui';
 import { Muted } from './typography';
 
+const isPlainText = (value: ReactNode): value is string | number =>
+  typeof value === 'string' || typeof value === 'number';
+
 export const PageHeader = ({
   title,
   subtitle,
@@ -12,11 +15,11 @@ export const PageHeader = ({
   eyebrow,
   strip = false,
 }: {
-  title: string;
-  subtitle?: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
   action?: ReactNode;
   leading?: ReactNode;
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   strip?: boolean;
 }) => {
   const inner = (
@@ -25,24 +28,36 @@ export const PageHeader = ({
         {leading}
         <YStack flex={1} gap={2} minWidth={0}>
           {eyebrow ? (
-            <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
-              {eyebrow}
-            </Muted>
+            isPlainText(eyebrow) ? (
+              <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
+                {eyebrow}
+              </Muted>
+            ) : (
+              eyebrow
+            )
           ) : null}
-          <Text
-            fontFamily="$heading"
-            fontWeight="700"
-            fontSize={strip ? 22 : 20}
-            color="$color"
-            letterSpacing={-0.3}
-            numberOfLines={2}
-          >
-            {title}
-          </Text>
+          {isPlainText(title) ? (
+            <Text
+              fontFamily="$heading"
+              fontWeight="700"
+              fontSize={strip ? 22 : 20}
+              color="$color"
+              letterSpacing={-0.3}
+              numberOfLines={2}
+            >
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
           {subtitle ? (
-            <Muted fontSize={13} marginTop={2}>
-              {subtitle}
-            </Muted>
+            isPlainText(subtitle) ? (
+              <Muted fontSize={13} marginTop={2}>
+                {subtitle}
+              </Muted>
+            ) : (
+              <YStack marginTop={2}>{subtitle}</YStack>
+            )
           ) : null}
         </YStack>
       </XStack>

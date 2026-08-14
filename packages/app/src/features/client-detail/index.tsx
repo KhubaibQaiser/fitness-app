@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { type ClientIntake } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
-import { ErrorState, LoadingState } from '@gymos/ui';
+import { ErrorState } from '@gymos/ui';
 import {
   useClientCheckIns,
   useClientDetail,
@@ -16,6 +16,7 @@ import { ClientHubHeader } from './client-hub-header';
 import { ClientHubHistory } from './client-hub-history';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
+import { ClientHubSkeleton } from './client-hub-skeleton';
 
 const hasSignedIntake = (intake: ClientIntake | null): boolean =>
   typeof intake?.signedAt === 'string' &&
@@ -53,8 +54,8 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
 
   if (detail.isPending) {
     return (
-      <AppScreen>
-        <LoadingState />
+      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+        <ClientHubSkeleton clientId={clientId} tab={tab} onTabChange={setTab} />
       </AppScreen>
     );
   }

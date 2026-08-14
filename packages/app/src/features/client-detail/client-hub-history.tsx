@@ -2,8 +2,9 @@
 
 import { Link } from 'solito/link';
 import type { CheckIn } from '@gymos/contracts';
-import { Badge, Card, ErrorState, LoadingState, Muted, Text, XStack, YStack } from '@gymos/ui';
+import { Badge, Card, ErrorState, Muted, SkeletonRegion, Text, XStack, YStack } from '@gymos/ui';
 import { adherenceRatingToPct } from '../check-in/adherence';
+import { ClientHubHistorySkeleton } from './client-hub-skeleton';
 
 type Props = {
   clientId: string;
@@ -15,7 +16,13 @@ type Props = {
 
 /** History tab — check-in list with adherence % and optional weight. */
 export const ClientHubHistory = ({ clientId, isPending, isError, items, onRetry }: Props) => {
-  if (isPending) return <LoadingState />;
+  if (isPending) {
+    return (
+      <SkeletonRegion label="Loading check-ins">
+        <ClientHubHistorySkeleton />
+      </SkeletonRegion>
+    );
+  }
   if (isError) {
     return <ErrorState message="Could not load check-ins." retry={onRetry} />;
   }
