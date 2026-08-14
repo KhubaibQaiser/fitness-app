@@ -4,9 +4,8 @@ Living document. Revised at the start and end of each phase. Major architectural
 decisions land as ADRs under [`docs/adr/`](./adr/) — this file tracks **where we
 are**, **what comes next**, and **why the order matters**.
 
-Last updated: 2026-08-13 (Phase 4 product vision expanded: coach portfolio +
-sellable plans; Phase 7 payments/subscriptions and Phase 5 gym→coach invites
-scoped as follow-ons).
+Last updated: 2026-08-14 (logout immediately revokes access JWTs via `sid` session
+checks; Redis session-active cache deferred until measured auth load).
 
 ---
 
@@ -98,16 +97,16 @@ or organization exists. Mobile, client, and gym-admin all consume this layer.
 
 **Scope.**
 
-| Slice | Outcome                                                                                                         |
-| ----- | --------------------------------------------------------------------------------------------------------------- |
-| 1a    | Real per-user auth: email + password, short-lived JWT access token, rotating refresh tokens, session revocation |
-| 1b    | Per-request principal resolution from the verified JWT (no process-global cache)                                |
-| 1c    | List/query endpoints filter by org / outlet / assigned clients; cross-tenant isolation tests                    |
-| 1d    | Postgres Row-Level Security as defense-in-depth (session GUCs)                                                  |
-| 1e    | Backfill `outlet_id` / `org_id` onto tables that only had `client_id`; composite tenant-leading indexes         |
-| 1f    | Shared-store rate limiting (correct under multi-instance API)                                                   |
-| 1g    | Per-org tenant config registry (replace single cached manifest file)                                            |
-| 1h    | ESLint `app-client` / `app-admin` boundaries reserved ahead of those apps                                       |
+| Slice | Outcome                                                                                                                                                                               |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1a    | Real per-user auth: email + password, short-lived JWT access token, rotating refresh tokens, **active `sid` check** so logout / logout-all / password-reset revoke access immediately |
+| 1b    | Per-request principal resolution from the verified JWT (no process-global cache)                                                                                                      |
+| 1c    | List/query endpoints filter by org / outlet / assigned clients; cross-tenant isolation tests                                                                                          |
+| 1d    | Postgres Row-Level Security as defense-in-depth (session GUCs)                                                                                                                        |
+| 1e    | Backfill `outlet_id` / `org_id` onto tables that only had `client_id`; composite tenant-leading indexes                                                                               |
+| 1f    | Shared-store rate limiting (correct under multi-instance API)                                                                                                                         |
+| 1g    | Per-org tenant config registry (replace single cached manifest file)                                                                                                                  |
+| 1h    | ESLint `app-client` / `app-admin` boundaries reserved ahead of those apps                                                                                                             |
 
 **Entry criteria.** Phase 0 live; plan approved.
 
@@ -115,6 +114,8 @@ or organization exists. Mobile, client, and gym-admin all consume this layer.
 
 - Login issues access + refresh tokens; `/v1/*` accepts `Authorization: Bearer`
   (web: httpOnly refresh cookie + in-memory access token; mobile: SecureStore).
+  Protected routes also require the JWT `sid` to match a **live** `sessions` row
+  (`revokedAt` null, not expired, `userId` = `sub`) so logout is immediate.
 - Concurrent distinct users never share principal state.
 - Cross-tenant list queries return zero rows in integration tests.
 - RLS policies active on tenant-scoped tables.
@@ -137,7 +138,8 @@ fixes for flex + safe-area (no `100vh` / `position: fixed`).
 JWT / refresh contract).
 
 **Exit criteria.** All coach routes reachable on iOS and Android simulators /
-dev clients; auth login / refresh / logout works; PDFs shareable; signature pad
+dev clients; auth login / refresh / logout works (logout immediately rejects
+the previous access JWT, not only the refresh token); PDFs shareable; signature pad
 works on device.
 
 **Non-goals.** Client or gym-admin mobile surfaces; Expo web target; store
@@ -344,6 +346,12 @@ reconciliation as a first-class path.
 - Exercise image/video upload for plan demos (Phase 4 slice 4i — not v1)
 - Ratings / reviews as a prerequisite for first hire (ship when marketplace
   volume justifies; useful for both client browse and gym invites)
+- **Session-active cache (Redis or equivalent).** Protected routes currently
+  look up `sessions` by JWT `sid` in Postgres on every authenticated request
+  (source of truth; invalidate by setting `revokedAt`). Cache live/revoked
+  `sid`s with invalidate-on-revoke when measured auth QPS or DB latency
+  justifies it. Do not add Redis to the pilot stack yet (ADR-0003 rate limits
+  are also Postgres today).
 
 ---
 
