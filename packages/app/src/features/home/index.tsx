@@ -10,7 +10,6 @@ import {
   EmptyState,
   ErrorState,
   FadeIn,
-  LoadingState,
   MetricHero,
   Muted,
   PageHeader,
@@ -23,6 +22,7 @@ import {
 import { useClients, useDueCheckIns, useMe, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
+import { HomeSkeleton } from './home-skeleton';
 
 /** Coach home: due today, needs attention. */
 export const HomeScreen = () => {
@@ -31,10 +31,24 @@ export const HomeScreen = () => {
   const clients = useClients();
   const notifications = useNotifications();
 
+  const now = new Date();
+  const greeting =
+    now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  const dateStr = now.toLocaleDateString('en-PK', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  const firstName = me.data?.name.split(' ')[0];
+
   if (due.isPending || clients.isPending) {
     return (
-      <AppScreen>
-        <LoadingState />
+      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+        <HomeSkeleton
+          dateStr={dateStr}
+          greeting={greeting}
+          {...(firstName !== undefined ? { firstName } : {})}
+        />
       </AppScreen>
     );
   }
@@ -57,23 +71,14 @@ export const HomeScreen = () => {
   const highAlerts = (notifications.data?.items ?? []).filter(
     (n) => n.priority === 'HIGH' && n.readAt === null,
   ).length;
-  const firstName = me.data?.name.split(' ')[0] ?? 'Coach';
-
-  const now = new Date();
-  const greeting =
-    now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
-  const dateStr = now.toLocaleDateString('en-PK', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const displayName = firstName ?? 'Coach';
 
   return (
     <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
       <PageHeader
         strip
         eyebrow={dateStr}
-        title={`${greeting}, ${firstName}`}
+        title={`${greeting}, ${displayName}`}
         subtitle={
           atRisk.length > 0
             ? `${atRisk.length} client${atRisk.length > 1 ? 's' : ''} need your attention today.`
