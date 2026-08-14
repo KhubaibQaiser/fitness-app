@@ -42,17 +42,3 @@ export const createDbRateLimiter = (db: Db, limit: number, windowMs: number) => 
     }
   };
 };
-
-/** In-process fixed-window rate limiter — kept for unit tests / single-process tools. */
-export const createRateLimiter = (limit: number, windowMs: number) => {
-  const hits = new Map<string, { count: number; windowStart: number }>();
-  return (key: string, now = Date.now()): boolean => {
-    const entry = hits.get(key);
-    if (!entry || now - entry.windowStart >= windowMs) {
-      hits.set(key, { count: 1, windowStart: now });
-      return true;
-    }
-    entry.count += 1;
-    return entry.count <= limit;
-  };
-};

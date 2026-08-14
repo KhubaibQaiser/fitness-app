@@ -36,7 +36,7 @@ before treating the session as dead.
 
 ## Consequences
 
-- Existing bookmarkable `/gate/enter?key=` links return **410 GATE_RETIRED**.
+- Login is `POST /v1/auth/login`. There is no shared access-key cookie or `/gate/enter` route.
 - Seed must set a password for `coach@pilot.local` (`PILOT_COACH_PASSWORD`).
 - SSO / SAML / OIDC remain out of scope until a customer contract requires them.
 - Access JWTs are self-verifying (supports horizontal API scale); refresh still

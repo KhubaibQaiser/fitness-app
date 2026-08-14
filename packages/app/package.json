@@ -6,7 +6,6 @@
   "exports": {
     "./api": "./src/api/index.ts",
     "./provider": "./src/provider/index.tsx",
-    "./features/shell/tab-bar": "./src/features/shell/tab-bar.tsx",
     "./features/shell/gate-guard": "./src/features/shell/gate-guard.tsx",
     "./features/shell/session-presence": "./src/features/shell/session-presence.ts",
     "./features/shell/use-session-presence": "./src/features/shell/use-session-presence.ts",
