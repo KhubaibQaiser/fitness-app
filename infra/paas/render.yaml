@@ -5,7 +5,7 @@
 # Or: `render blueprints launch` if using the Render CLI.
 #
 # After first deploy, set sync:false secrets in the dashboard (or Render env group):
-#   DATABASE_URL, JWT_ACCESS_SECRET
+#   DATABASE_URL, JWT_ACCESS_SECRET, OTP_PEPPER, RESEND_API_KEY, EMAIL_FROM
 
 services:
   - type: web
@@ -29,4 +29,10 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: OTP_PEPPER
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
         sync: false

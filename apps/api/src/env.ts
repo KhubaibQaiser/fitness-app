@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_DEV_EMAIL_FROM, productionEmailFromError } from '@gymos/modules/identity';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
@@ -14,8 +15,12 @@ const envSchema = z.object({
   OTP_PEPPER: z.string().min(32).optional(),
   /** Resend API key — optional locally (OTP logged to stdout); required in production. */
   RESEND_API_KEY: z.string().min(1).optional(),
-  /** From address for OTP emails. */
-  EMAIL_FROM: z.string().min(3).default('GymOS <onboarding@resend.dev>'),
+  /**
+   * From address for OTP emails.
+   * Local default is Resend's testing domain (account-owner inbox only).
+   * Production requires a verified custom domain (mailbox need not exist).
+   */
+  EMAIL_FROM: z.string().min(3).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   /**
    * Seed-only password for the pilot coach (`coach@pilot.local`).
@@ -51,8 +56,30 @@ export const loadEnv = (source: Record<string, string | undefined>): Env => {
     if (parsed.RESEND_API_KEY === undefined) {
       throw new Error('RESEND_API_KEY is required when NODE_ENV=production');
     }
+    const fromError = productionEmailFromError(parsed.EMAIL_FROM);
+    if (fromError !== undefined) {
+      throw new Error(fromError);
+    }
   }
   return parsed;
+};
+
+/**
+ * Resolve the Resend From address. Production refuses `resend.dev`; local/test
+ * falls back to the testing domain when EMAIL_FROM is unset.
+ */
+export const resolveEmailFrom = (env: Pick<Env, 'EMAIL_FROM' | 'NODE_ENV'>): string => {
+  if (env.NODE_ENV !== 'production') {
+    return env.EMAIL_FROM ?? DEFAULT_DEV_EMAIL_FROM;
+  }
+  const fromError = productionEmailFromError(env.EMAIL_FROM);
+  if (fromError !== undefined) {
+    throw new Error(fromError);
+  }
+  if (env.EMAIL_FROM === undefined) {
+    throw new Error('EMAIL_FROM is required when NODE_ENV=production');
+  }
+  return env.EMAIL_FROM;
 };
 
 /** Resolve OTP pepper — fixed local fallback so pglite/dev works without .env. */

@@ -33,6 +33,10 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      OTP_PEPPER: ${OTP_PEPPER}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
       PILOT_ACCESS_KEY: ${PILOT_ACCESS_KEY}
       GATE_COOKIE_SECRET: ${GATE_COOKIE_SECRET}
       TENANT_MANIFEST_PATH: /repo/infra/tenants/pilot.json

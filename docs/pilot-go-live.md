@@ -46,11 +46,18 @@ Create `/srv/gymos/.env` (root-only, `chmod 600`):
 PILOT_HOSTNAME=gymos-pilot.duckdns.org
 DUCKDNS_TOKEN=<duckdns token>
 DATABASE_URL=<neon POOLED url>
+JWT_ACCESS_SECRET=<openssl rand -hex 32>
+OTP_PEPPER=<openssl rand -hex 32>
+RESEND_API_KEY=re_...
+EMAIL_FROM="GymOS <onboarding@khubaibqaiesr.com>"
 PILOT_ACCESS_KEY=<openssl rand -hex 16>
 GATE_COOKIE_SECRET=<openssl rand -hex 32>
 QUEUE_DB_PASSWORD=<openssl rand -hex 16>
 AI_MODE=fallback
 ```
+
+`EMAIL_FROM` must use a **verified custom domain** (never `resend.dev`). The
+mailbox does not need to exist. See [`runbooks/email-otp.md`](./runbooks/email-otp.md).
 
 ## 4. First deploy
 
