@@ -7,10 +7,10 @@ import {
   EmptyState,
   ErrorState,
   Input,
-  LoadingState,
   PageHeader,
   Plus,
   PrimaryButton,
+  Skeleton,
   Text,
   useMedia,
   XStack,
@@ -19,6 +19,7 @@ import {
 import { useClients } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { RosterRow } from './roster-row';
+import { RosterListSkeleton } from './roster-skeleton';
 
 type FilterId = 'all' | 'attention' | 'on-track' | 'new';
 
@@ -80,7 +81,13 @@ export const RosterScreen = () => {
     <AppScreen>
       <PageHeader
         title="Clients"
-        subtitle={`${items.length} active in caseload`}
+        subtitle={
+          clients.isPending ? (
+            <Skeleton width={160} height={18} />
+          ) : (
+            `${items.length} active in caseload`
+          )
+        }
         action={
           <Link href="/clients/new">
             <PrimaryButton
@@ -162,7 +169,7 @@ export const RosterScreen = () => {
                     color={selected ? '$primaryFg' : '$textMuted'}
                     opacity={selected ? 0.7 : 1}
                   >
-                    {counts[f.id]}
+                    {clients.isPending ? '–' : counts[f.id]}
                   </Text>
                 </XStack>
               </YStack>
@@ -172,7 +179,7 @@ export const RosterScreen = () => {
       </XStack>
 
       {clients.isPending ? (
-        <LoadingState />
+        <RosterListSkeleton />
       ) : clients.isError ? (
         <ErrorState message="Could not load clients." retry={() => void clients.refetch()} />
       ) : filtered.length === 0 ? (

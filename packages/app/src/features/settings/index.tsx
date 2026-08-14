@@ -7,12 +7,12 @@ import {
   Card,
   ErrorState,
   IosSwitch,
-  LoadingState,
   Muted,
   PageHeader,
   Row,
   SectionTitle,
   SegmentedControl,
+  Skeleton,
   YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig, useUpdateMe } from '../../api';
@@ -24,13 +24,6 @@ export const SettingsScreen = () => {
   const updateMe = useUpdateMe();
   const { mode, setMode } = useThemeMode();
 
-  if (me.isPending || config.isPending) {
-    return (
-      <AppScreen>
-        <LoadingState />
-      </AppScreen>
-    );
-  }
   if (me.isError || config.isError) {
     return (
       <AppScreen>
@@ -45,9 +38,9 @@ export const SettingsScreen = () => {
     );
   }
 
-  const saving = updateMe.isPending;
+  const saving = updateMe.isPending || me.isPending;
   const dark = mode === 'dark';
-  const prefs = me.data.unitPrefs;
+  const prefs = me.data?.unitPrefs ?? { weight: 'kg', height: 'cm', length: 'cm' };
 
   return (
     <AppScreen>
@@ -128,11 +121,11 @@ export const SettingsScreen = () => {
       <Card>
         <Row>
           <Body>Name</Body>
-          <Muted>{me.data.name}</Muted>
+          {me.data ? <Muted>{me.data.name}</Muted> : <Skeleton width={128} height={18} />}
         </Row>
         <Row>
           <Body>Email</Body>
-          <Muted>{me.data.email}</Muted>
+          {me.data ? <Muted>{me.data.email}</Muted> : <Skeleton width={168} height={18} />}
         </Row>
       </Card>
 
