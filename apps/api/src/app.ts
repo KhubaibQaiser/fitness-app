@@ -34,6 +34,7 @@ import {
 import {
   confirmCoachSignup,
   createEmailSender,
+  isSessionActive,
   loginWithPassword,
   requestPasswordReset,
   resendCoachSignupOtp,
@@ -571,6 +572,15 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     }
     const claims = await verifyAccessToken(accessToken, env.JWT_ACCESS_SECRET);
     if (claims === null) {
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+    }
+
+    const sessionLive = await isSessionActive(db, {
+      sessionId: claims.sid,
+      userId: claims.sub,
+    });
+    if (!sessionLive) {
+      clearAuthCookies(c);
       return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
     }
 

@@ -142,12 +142,46 @@ export const revokeSession = async (db: Db, sessionId: string): Promise<void> =>
     .where(and(eq(s.sessions.id, sessionId), isNull(s.sessions.revokedAt)));
 };
 
+/**
+ * Current-device logout: look up the presented refresh token, then revoke every
+ * live row in that session family so rotated `sid`s cannot keep serving access JWTs.
+ */
 export const revokeSessionByRefreshToken = async (db: Db, refreshToken: string): Promise<void> => {
   const hash = hashRefreshToken(refreshToken);
+  const [row] = await db
+    .select({ familyId: s.sessions.familyId })
+    .from(s.sessions)
+    .where(eq(s.sessions.refreshTokenHash, hash))
+    .limit(1);
+  if (!row) return;
   await db
     .update(s.sessions)
     .set({ revokedAt: nowIso() })
-    .where(and(eq(s.sessions.refreshTokenHash, hash), isNull(s.sessions.revokedAt)));
+    .where(and(eq(s.sessions.familyId, row.familyId), isNull(s.sessions.revokedAt)));
+};
+
+/**
+ * Access JWT is accepted only while this session row is live and belongs to `userId`.
+ * Signature validity is not enough — logout must take effect before JWT expiry.
+ */
+export const isSessionActive = async (
+  db: Db,
+  input: { sessionId: string; userId: string },
+): Promise<boolean> => {
+  const [row] = await db
+    .select({
+      userId: s.sessions.userId,
+      revokedAt: s.sessions.revokedAt,
+      expiresAt: s.sessions.expiresAt,
+    })
+    .from(s.sessions)
+    .where(eq(s.sessions.id, input.sessionId))
+    .limit(1);
+  if (!row) return false;
+  if (row.userId !== input.userId) return false;
+  if (row.revokedAt !== null) return false;
+  if (dbTimestampToMillis(row.expiresAt) <= Date.now()) return false;
+  return true;
 };
 
 /** Log out everywhere — revoke all active sessions for a user. */
