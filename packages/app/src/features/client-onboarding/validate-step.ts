@@ -71,7 +71,15 @@ export const validateStep = (
     if (w === null || w < 20 || w > 400) {
       errors.weightKg = `Enter weight in ${prefs.weight} (20–400 kg equivalent)`;
     }
-    for (const key of ['waistCm', 'chestCm', 'hipCm', 'armCm', 'thighCm'] as const) {
+    for (const key of [
+      'waistCm',
+      'chestCm',
+      'hipCm',
+      'armLeftCm',
+      'armRightCm',
+      'thighLeftCm',
+      'thighRightCm',
+    ] as const) {
       if (draft[key].trim() === '') continue;
       const n = resolveLengthCm(draft[key], prefs);
       if (n === null) errors[key] = 'Enter a valid number';
