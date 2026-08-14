@@ -69,8 +69,37 @@ export const renderCredentialsPdf = (data: CredentialsPdfData): Promise<Buffer> 
     row('Waist', fmtCm(latestVitals?.waistCm));
     row('Chest', fmtCm(latestVitals?.chestCm));
     row('Hip', fmtCm(latestVitals?.hipCm));
-    row('Arm', fmtCm(latestVitals?.armCm));
-    row('Thigh', fmtCm(latestVitals?.thighCm));
+    const limb = (
+      leftLabel: string,
+      rightLabel: string,
+      combinedLabel: string,
+      left: number | null | undefined,
+      right: number | null | undefined,
+      combined: number | null | undefined,
+    ) => {
+      if (left != null || right != null) {
+        row(leftLabel, fmtCm(left));
+        row(rightLabel, fmtCm(right));
+        return;
+      }
+      row(combinedLabel, fmtCm(combined));
+    };
+    limb(
+      'Arm left',
+      'Arm right',
+      'Arm',
+      latestVitals?.armLeftCm,
+      latestVitals?.armRightCm,
+      latestVitals?.armCm,
+    );
+    limb(
+      'Thigh left',
+      'Thigh right',
+      'Thigh',
+      latestVitals?.thighLeftCm,
+      latestVitals?.thighRightCm,
+      latestVitals?.thighCm,
+    );
 
     section('Goal');
     row('Preset', dash(goal?.preset));

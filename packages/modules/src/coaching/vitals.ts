@@ -10,7 +10,11 @@ export type RecordVitalsInput = {
   waistCm?: number | undefined;
   hipCm?: number | undefined;
   armCm?: number | undefined;
+  armLeftCm?: number | undefined;
+  armRightCm?: number | undefined;
   thighCm?: number | undefined;
+  thighLeftCm?: number | undefined;
+  thighRightCm?: number | undefined;
   restingHr?: number | undefined;
   bpSystolic?: number | undefined;
   bpDiastolic?: number | undefined;
@@ -49,7 +53,11 @@ export const recordVitals = async (
       waistCm: input.waistCm ?? null,
       hipCm: input.hipCm ?? null,
       armCm: input.armCm ?? null,
+      armLeftCm: input.armLeftCm ?? null,
+      armRightCm: input.armRightCm ?? null,
       thighCm: input.thighCm ?? null,
+      thighLeftCm: input.thighLeftCm ?? null,
+      thighRightCm: input.thighRightCm ?? null,
       restingHr: input.restingHr ?? null,
       bpSystolic: input.bpSystolic ?? null,
       bpDiastolic: input.bpDiastolic ?? null,

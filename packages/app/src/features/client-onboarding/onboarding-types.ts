@@ -19,8 +19,10 @@ export type OnboardingDraft = {
   waistCm: string;
   chestCm: string;
   hipCm: string;
-  armCm: string;
-  thighCm: string;
+  armLeftCm: string;
+  armRightCm: string;
+  thighLeftCm: string;
+  thighRightCm: string;
   goalPreset: GoalPreset;
   goalRate: GoalRate;
   startWeightKg: string;
@@ -46,8 +48,10 @@ export const INITIAL_DRAFT: OnboardingDraft = {
   waistCm: '',
   chestCm: '',
   hipCm: '',
-  armCm: '',
-  thighCm: '',
+  armLeftCm: '',
+  armRightCm: '',
+  thighLeftCm: '',
+  thighRightCm: '',
   goalPreset: 'LOSE',
   goalRate: 'STANDARD',
   startWeightKg: '',

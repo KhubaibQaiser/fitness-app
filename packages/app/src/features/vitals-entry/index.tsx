@@ -13,6 +13,7 @@ import {
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
+  XStack,
   YStack,
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
@@ -25,8 +26,10 @@ type FieldKey =
   | 'waistCm'
   | 'chestCm'
   | 'hipCm'
-  | 'armCm'
-  | 'thighCm'
+  | 'armLeftCm'
+  | 'armRightCm'
+  | 'thighLeftCm'
+  | 'thighRightCm'
   | 'restingHr'
   | 'bpSystolic'
   | 'bpDiastolic';
@@ -42,8 +45,17 @@ const MEASURE: Field[] = [
   { key: 'waistCm', label: 'Waist', unit: 'cm' },
   { key: 'chestCm', label: 'Chest', unit: 'cm' },
   { key: 'hipCm', label: 'Hip', unit: 'cm' },
-  { key: 'armCm', label: 'Arm', unit: 'cm' },
-  { key: 'thighCm', label: 'Thigh', unit: 'cm' },
+];
+
+const BILATERAL: [Field, Field][] = [
+  [
+    { key: 'armLeftCm', label: 'Arm left', unit: 'cm' },
+    { key: 'armRightCm', label: 'Arm right', unit: 'cm' },
+  ],
+  [
+    { key: 'thighLeftCm', label: 'Thigh left', unit: 'cm' },
+    { key: 'thighRightCm', label: 'Thigh right', unit: 'cm' },
+  ],
 ];
 
 const VITALS: Field[] = [
@@ -120,29 +132,30 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     record.mutate(payload, { onSuccess: () => setSaved(true) });
   };
 
-  const renderFields = (fields: Field[]) =>
-    fields.map((field) => {
-      const prior = priorOf(field.key);
-      return (
-        <FormField
-          key={field.key}
-          label={field.label}
-          unit={field.unit}
-          value={values[field.key] ?? ''}
-          onChangeText={(text) => {
-            setValues((v) => ({ ...v, [field.key]: text }));
-            setFieldErrors((e) => {
-              const { [field.key]: _, ...rest } = e;
-              return rest;
-            });
-          }}
-          placeholder={prior !== null ? `Last: ${prior}` : '—'}
-          inputMode="decimal"
-          hint={prior !== null ? `Previous: ${prior} ${field.unit}` : null}
-          error={fieldErrors[field.key] ?? null}
-        />
-      );
-    });
+  const renderField = (field: Field) => {
+    const prior = priorOf(field.key);
+    return (
+      <FormField
+        key={field.key}
+        label={field.label}
+        unit={field.unit}
+        value={values[field.key] ?? ''}
+        onChangeText={(text) => {
+          setValues((v) => ({ ...v, [field.key]: text }));
+          setFieldErrors((e) => {
+            const { [field.key]: _, ...rest } = e;
+            return rest;
+          });
+        }}
+        placeholder={prior !== null ? `Last: ${prior}` : '—'}
+        inputMode="decimal"
+        hint={prior !== null ? `Previous: ${prior} ${field.unit}` : null}
+        error={fieldErrors[field.key] ?? null}
+      />
+    );
+  };
+
+  const renderFields = (fields: Field[]) => fields.map(renderField);
 
   return (
     <AppScreen
@@ -171,7 +184,15 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         <FormSection title="Body composition">{renderFields(BODY)}</FormSection>
       </Card>
       <Card gap="$4">
-        <FormSection title="Circumferences">{renderFields(MEASURE)}</FormSection>
+        <FormSection title="Circumferences">
+          {renderFields(MEASURE)}
+          {BILATERAL.map(([left, right]) => (
+            <XStack key={left.key} gap="$3" width="100%">
+              <YStack flex={1}>{renderField(left)}</YStack>
+              <YStack flex={1}>{renderField(right)}</YStack>
+            </XStack>
+          ))}
+        </FormSection>
       </Card>
       <Card gap="$4">
         <FormSection title="Cardio">{renderFields(VITALS)}</FormSection>
