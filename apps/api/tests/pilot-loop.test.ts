@@ -252,12 +252,28 @@ describe('auth (JWT + refresh)', () => {
       locales: { enabled: string[] };
       defaultCountry: string;
       unitPrefs: { weight: string; height: string; length: string };
+      nutrition?: {
+        weeklyDeltaKg?: {
+          LOSE?: { CONSERVATIVE?: number; STANDARD?: number; AGGRESSIVE?: number };
+          GAIN?: { CONSERVATIVE?: number; STANDARD?: number; AGGRESSIVE?: number };
+        };
+      };
     };
     expect(body.appName).toBe('GymOS Coach');
     expect(body.currencies).toContain('PKR');
     expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
     expect(body.defaultCountry).toBe('PK');
     expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
+    expect(body.nutrition?.weeklyDeltaKg?.LOSE).toEqual({
+      CONSERVATIVE: -0.5,
+      STANDARD: -1,
+      AGGRESSIVE: -2,
+    });
+    expect(body.nutrition?.weeklyDeltaKg?.GAIN).toEqual({
+      CONSERVATIVE: 0.25,
+      STANDARD: 0.5,
+      AGGRESSIVE: 1,
+    });
   });
 });
 
@@ -610,7 +626,7 @@ describe('the pilot core loop', () => {
           thighLeftCm: 54,
           thighRightCm: 55.5,
         },
-        goal: { preset: 'LOSE', rate: 'STANDARD', startWeightKg: 82, targetWeightKg: 75 },
+        goal: { preset: 'LOSE', rate: 'CONSERVATIVE', startWeightKg: 82, targetWeightKg: 75 },
         dietary: [{ type: 'ALLERGY_SEVERE', code: 'allergen:peanut' }],
       },
     });
@@ -625,7 +641,7 @@ describe('the pilot core loop', () => {
         thighLeftCm: number | null;
         thighRightCm: number | null;
       };
-      goal: { preset: string };
+      goal: { preset: string; expectedWeeklyDeltaKg: number };
     };
     expect(body.client.email).toBe('onboard@example.com');
     expect(body.client.intake?.signedAt).toBe('2026-08-06T12:00:00.000Z');
@@ -636,6 +652,7 @@ describe('the pilot core loop', () => {
     expect(body.vitals.thighLeftCm).toBe(54);
     expect(body.vitals.thighRightCm).toBe(55.5);
     expect(body.goal.preset).toBe('LOSE');
+    expect(body.goal.expectedWeeklyDeltaKg).toBe(-0.5);
 
     const dietary = await req(`/v1/clients/${body.client.id}/dietary-profile`);
     expect(dietary.status).toBe(200);
@@ -750,6 +767,18 @@ describe('the pilot core loop', () => {
       },
     });
     expect(refused.status).toBe(422);
+
+    const refusedStandard = await req(`/v1/clients/${client.id}/goal`, {
+      method: 'PUT',
+      json: {
+        activityLevel: 1.2,
+        preset: 'LOSE',
+        rate: 'STANDARD',
+        startWeightKg: 50,
+        targetWeightKg: 45,
+      },
+    });
+    expect(refusedStandard.status).toBe(422);
 
     const detail = await req(`/v1/clients/${client.id}`);
     const detailBody = (await detail.json()) as {
