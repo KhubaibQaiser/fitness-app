@@ -2,11 +2,12 @@
 
 import { useRouter } from 'solito/navigation';
 import type { OnboardClientInput } from '@gymos/contracts';
-import { Body, Card, PageHeader } from '@gymos/ui';
+import { Body, Card, PageHeader, YStack } from '@gymos/ui';
 import { useMe, useOnboardClient, usePublicConfig } from '../../api';
 import { defaultCountryFrom, unitPrefsFrom } from '../../lib/unit-prefs';
 import { AppScreen } from '../shell/app-screen';
 import { OnboardingFooter } from './onboarding-footer';
+import { buildOnboardingPreview } from './onboarding-preview';
 import { OnboardingProgress } from './onboarding-progress';
 import { STEP_META } from './onboarding-types';
 import { StepBody } from './step-body';
@@ -41,9 +42,13 @@ export const ClientOnboardingScreen = () => {
   const isLast = stepIndex === STEP_META.length - 1;
   const meta = STEP_META[stepIndex];
   const stepId = meta?.id;
+  const preview = buildOnboardingPreview(draft, prefs, config.data);
+  const previewBlocked = preview?.safetyIssue !== null;
+  const goalStepIndex = STEP_META.findIndex((step) => step.id === 'goal');
 
   const goNext = () => {
     if (stepId === undefined) return;
+    if (isLast && previewBlocked) return;
     const nextErrors = validateStep(stepId, draft, prefs, defaultCountry);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -146,8 +151,13 @@ export const ClientOnboardingScreen = () => {
           canGoBack={stepIndex > 0}
           isLast={isLast}
           pending={onboard.isPending}
+          nextDisabled={isLast && previewBlocked}
           onBack={() => {
             setErrors({});
+            if (isLast && previewBlocked) {
+              setStepIndex(goalStepIndex);
+              return;
+            }
             setStepIndex((i) => Math.max(0, i - 1));
           }}
           onNext={goNext}
@@ -157,64 +167,72 @@ export const ClientOnboardingScreen = () => {
       <PageHeader title={meta?.title ?? 'Onboarding'} subtitle="New client" />
       <OnboardingProgress stepIndex={stepIndex} />
 
-      <Card gap="$4">
-        {stepId === 'identity' ? (
-          <StepIdentity draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
-        ) : null}
-        {stepId === 'height' ? (
-          <StepHeight
-            draft={draft}
-            errors={errors}
-            prefs={prefs}
-            onPatch={patch}
-            onClearError={clearError}
-          />
-        ) : null}
-        {stepId === 'contact' ? (
-          <StepContact
-            draft={draft}
-            errors={errors}
-            defaultCountry={defaultCountry}
-            onPatch={patch}
-            onClearError={clearError}
-          />
-        ) : null}
-        {stepId === 'body' ? (
-          <StepBody
-            draft={draft}
-            errors={errors}
-            prefs={prefs}
-            onPatch={patch}
-            onClearError={clearError}
-          />
-        ) : null}
-        {stepId === 'goal' ? (
-          <StepGoal
-            draft={draft}
-            errors={errors}
-            prefs={prefs}
-            onPatch={patch}
-            onClearError={clearError}
-          />
-        ) : null}
-        {stepId === 'medical' ? <StepMedical draft={draft} onPatch={patch} /> : null}
-        {stepId === 'diet' ? <StepDiet draft={draft} onPatch={patch} /> : null}
-        {stepId === 'sign' ? (
+      {stepId === 'sign' ? (
+        <YStack gap="$4">
           <StepSign
             draft={draft}
             errors={errors}
             prefs={prefs}
+            preview={preview}
             onPatch={patch}
             onClearError={clearError}
           />
-        ) : null}
-
-        {onboard.isError ? (
-          <Body color="$danger" role="alert">
-            {onboard.error.message}
-          </Body>
-        ) : null}
-      </Card>
+          {onboard.isError ? (
+            <Body color="$danger" role="alert">
+              {onboard.error.message}
+            </Body>
+          ) : null}
+        </YStack>
+      ) : (
+        <Card gap="$4">
+          {stepId === 'identity' ? (
+            <StepIdentity draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+          ) : null}
+          {stepId === 'height' ? (
+            <StepHeight
+              draft={draft}
+              errors={errors}
+              prefs={prefs}
+              onPatch={patch}
+              onClearError={clearError}
+            />
+          ) : null}
+          {stepId === 'contact' ? (
+            <StepContact
+              draft={draft}
+              errors={errors}
+              defaultCountry={defaultCountry}
+              onPatch={patch}
+              onClearError={clearError}
+            />
+          ) : null}
+          {stepId === 'body' ? (
+            <StepBody
+              draft={draft}
+              errors={errors}
+              prefs={prefs}
+              onPatch={patch}
+              onClearError={clearError}
+            />
+          ) : null}
+          {stepId === 'goal' ? (
+            <StepGoal
+              draft={draft}
+              errors={errors}
+              prefs={prefs}
+              onPatch={patch}
+              onClearError={clearError}
+            />
+          ) : null}
+          {stepId === 'medical' ? <StepMedical draft={draft} onPatch={patch} /> : null}
+          {stepId === 'diet' ? <StepDiet draft={draft} onPatch={patch} /> : null}
+          {onboard.isError ? (
+            <Body color="$danger" role="alert">
+              {onboard.error.message}
+            </Body>
+          ) : null}
+        </Card>
+      )}
     </AppScreen>
   );
 };

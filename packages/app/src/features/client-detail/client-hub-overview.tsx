@@ -1,14 +1,14 @@
 'use client';
 
-import type { Client, DietaryProfile, Goal } from '@gymos/contracts';
+import type { CheckIn, Client, DietaryProfile, Goal, Vitals } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import { formatWeight } from '@gymos/core/units';
 import { AlertBanner, Card, Muted, ShieldAlert, Stat, Text, XStack, YStack } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
-import { ProgressRing, WeightTrendChart } from '../charts';
-
-type WeightPoint = { t: number; weightKg: number };
+import { ProgressRing } from '../charts';
+import { buildLiveJourney } from '../client-journey/client-journey';
+import { ClientJourneyMap } from '../client-journey/client-journey-map';
 
 type Props = {
   client: Client;
@@ -16,7 +16,8 @@ type Props = {
   latestWeightKg: number | null;
   goalProgressPct: number | null;
   dietaryProfile: DietaryProfile;
-  weighIns: WeightPoint[];
+  vitals: Vitals[];
+  checkIns: CheckIn[];
   signed: boolean;
 };
 
@@ -47,7 +48,8 @@ export const ClientHubOverview = ({
   latestWeightKg,
   goalProgressPct,
   dietaryProfile,
-  weighIns,
+  vitals,
+  checkIns,
   signed,
 }: Props) => {
   const me = useMe();
@@ -98,6 +100,16 @@ export const ClientHubOverview = ({
   const startShown = startKg !== null ? formatWeight(startKg, weightUnit) : null;
   const targetShown =
     goal?.targetWeightKg != null ? formatWeight(goal.targetWeightKg, weightUnit) : null;
+  const journey =
+    goal !== null
+      ? buildLiveJourney({
+          clientId: client.id,
+          goal,
+          checkIns,
+          vitals,
+          latestWeightKg,
+        })
+      : [];
 
   return (
     <YStack gap="$5" width="100%">
@@ -221,29 +233,12 @@ export const ClientHubOverview = ({
         </Card>
       ) : null}
 
-      <Card flex={1} minWidth={0} padding="$5" gap="$4">
-        <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-          <YStack gap={2}>
-            <Text fontFamily="$heading" fontWeight="600" fontSize={13} color="$color">
-              Weight trend
-            </Text>
-            <Muted fontSize={11}>
-              {weighIns.length > 0 ? `${weighIns.length} data points` : 'No weigh-ins yet'}
-            </Muted>
-          </YStack>
-        </XStack>
-        {weighIns.length >= 2 ? (
-          <WeightTrendChart
-            points={weighIns}
-            goalWeightKg={goal?.targetWeightKg ?? null}
-            height={200}
-          />
-        ) : (
-          <YStack minHeight={160} alignItems="center" justifyContent="center">
-            <Muted fontSize={13}>No weight data recorded yet.</Muted>
-          </YStack>
-        )}
-      </Card>
+      <ClientJourneyMap
+        nodes={journey}
+        weightUnit={weightUnit}
+        title="Progress journey"
+        subtitle="Check-in performance, today’s position and the projected path to the goal."
+      />
     </YStack>
   );
 };

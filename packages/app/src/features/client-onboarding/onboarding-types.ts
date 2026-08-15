@@ -68,7 +68,7 @@ export const STEP_META = [
   { id: 'goal', title: 'Goal', subtitle: 'Direction and pace' },
   { id: 'medical', title: 'Medical', subtitle: 'Safety gates' },
   { id: 'diet', title: 'Diet', subtitle: 'Allergies and preferences' },
-  { id: 'sign', title: 'Sign', subtitle: 'Review and e-sign' },
+  { id: 'sign', title: 'Review', subtitle: 'Overview, journey and e-sign' },
 ] as const;
 
 export type StepId = (typeof STEP_META)[number]['id'];
