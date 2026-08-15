@@ -370,10 +370,26 @@ export const updateAndRerunCheckIn = async (
   return ok({ checkInId: checkIn.id, verdict: { ...verdict, narrative }, vitalsId });
 };
 
+/** CheckIn contract fields plus optional linked vitals.weightKg. */
+const checkInWithWeightSelect = {
+  id: s.checkIns.id,
+  clientId: s.checkIns.clientId,
+  goalId: s.checkIns.goalId,
+  scheduledFor: s.checkIns.scheduledFor,
+  completedAt: s.checkIns.completedAt,
+  vitalsId: s.checkIns.vitalsId,
+  adherenceRating: s.checkIns.adherenceRating,
+  coachNotes: s.checkIns.coachNotes,
+  engineOutput: s.checkIns.engineOutput,
+  status: s.checkIns.status,
+  weightKg: s.vitals.weightKg,
+} as const;
+
 export const listCheckIns = async (db: Db, clientId: string, limit = 50) =>
   db
-    .select()
+    .select(checkInWithWeightSelect)
     .from(s.checkIns)
+    .leftJoin(s.vitals, eq(s.checkIns.vitalsId, s.vitals.id))
     .where(eq(s.checkIns.clientId, clientId))
     .orderBy(desc(s.checkIns.scheduledFor))
     .limit(limit);
@@ -386,19 +402,7 @@ export const getCheckIn = async (db: Db, checkInId: string) => {
 /** Check-in row plus linked weight for detail/edit prefills. */
 export const getCheckInDetail = async (db: Db, checkInId: string) => {
   const [row] = await db
-    .select({
-      id: s.checkIns.id,
-      clientId: s.checkIns.clientId,
-      goalId: s.checkIns.goalId,
-      scheduledFor: s.checkIns.scheduledFor,
-      completedAt: s.checkIns.completedAt,
-      vitalsId: s.checkIns.vitalsId,
-      adherenceRating: s.checkIns.adherenceRating,
-      coachNotes: s.checkIns.coachNotes,
-      engineOutput: s.checkIns.engineOutput,
-      status: s.checkIns.status,
-      weightKg: s.vitals.weightKg,
-    })
+    .select(checkInWithWeightSelect)
     .from(s.checkIns)
     .leftJoin(s.vitals, eq(s.checkIns.vitalsId, s.vitals.id))
     .where(eq(s.checkIns.id, checkInId))

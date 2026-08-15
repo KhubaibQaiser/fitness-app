@@ -71,10 +71,6 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
     detail.data;
 
   const signed = hasSignedIntake(client.intake);
-  const weighIns = (vitals.data?.items ?? [])
-    .filter((v) => v.weightKg !== null)
-    .map((v) => ({ t: Date.parse(v.recordedAt), weightKg: v.weightKg ?? 0 }));
-
   const severeAllergies = (dietaryProfile?.restrictions ?? []).filter(
     (r) => r.type === 'ALLERGY_SEVERE',
   );
@@ -134,7 +130,8 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
             latestWeightKg={latestWeightKg}
             goalProgressPct={goalProgressPct}
             dietaryProfile={dietaryProfile}
-            weighIns={weighIns}
+            vitals={vitals.data?.items ?? []}
+            checkIns={checkIns.data?.items ?? []}
             signed={signed}
           />
         ) : null}

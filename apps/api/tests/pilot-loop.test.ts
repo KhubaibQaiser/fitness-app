@@ -530,6 +530,23 @@ describe('the pilot core loop', () => {
     const dueAfter = await req('/v1/check-ins');
     const dueAfterList = (await dueAfter.json()) as { items: { clientId: string }[] };
     expect(dueAfterList.items.some((i) => i.clientId === demoClientId)).toBe(true);
+
+    const listRes = await req(`/v1/clients/${demoClientId}/check-ins`);
+    expect(listRes.status).toBe(200);
+    const listBody = (await listRes.json()) as {
+      items: {
+        id: string;
+        status: string;
+        vitalsId: string | null;
+        weightKg: number | null;
+      }[];
+    };
+    const linked = listBody.items.find(
+      (row) => row.status === 'COMPLETED' && row.vitalsId !== null,
+    );
+    const dueRow = listBody.items.find((row) => row.status === 'DUE');
+    expect(linked?.weightKg).toBe(84);
+    expect(dueRow?.weightKg).toBeNull();
   });
 
   it('blocks generation for a pregnant client until an override is supplied', async () => {

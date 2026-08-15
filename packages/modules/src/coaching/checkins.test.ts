@@ -5,8 +5,8 @@ import { and, count, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { schema as s, seed, type Db, type SeedResult } from '@gymos/db';
-import { updateAndRerunCheckIn } from './checkins';
+import { nowIso, schema as s, seed, type Db, type SeedResult } from '@gymos/db';
+import { listCheckIns, updateAndRerunCheckIn } from './checkins';
 
 const migrationsFolder = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -86,5 +86,38 @@ describe('updateAndRerunCheckIn', () => {
       .from(s.checkIns)
       .where(and(eq(s.checkIns.clientId, seeded.demoClientId), eq(s.checkIns.status, 'DUE')));
     expect(afterDue?.n).toBe(beforeDue?.n);
+  });
+});
+
+describe('listCheckIns', () => {
+  it('returns linked weightKg for completed check-ins and null when unlinked', async () => {
+    const [vital] = await db
+      .insert(s.vitals)
+      .values({
+        clientId: seeded.demoClientId,
+        outletId: seeded.outletId,
+        recordedAt: nowIso(),
+        recordedBy: seeded.coachUserId,
+        source: 'coach',
+        weightKg: 83.25,
+      })
+      .returning();
+    if (!vital) throw new Error('vitals insert failed');
+
+    await db.update(s.checkIns).set({ vitalsId: vital.id }).where(eq(s.checkIns.id, completedId));
+
+    const items = await listCheckIns(db, seeded.demoClientId);
+    const linked = items.find((row) => row.id === completedId);
+    const due = items.find((row) => row.id === dueId);
+    const unlinkedCompleted = items.find(
+      (row) => row.status === 'COMPLETED' && row.id !== completedId,
+    );
+
+    expect(linked?.weightKg).toBe(83.25);
+    expect(linked?.vitalsId).toBe(vital.id);
+    expect(due?.status).toBe('DUE');
+    expect(due?.weightKg).toBeNull();
+    expect(due?.vitalsId).toBeNull();
+    expect(unlinkedCompleted?.weightKg).toBeNull();
   });
 });
