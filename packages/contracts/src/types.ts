@@ -264,7 +264,7 @@ export type CheckIn = {
   coachNotes: string | null;
   engineOutput: Verdict | null;
   status: 'DUE' | 'COMPLETED' | 'SKIPPED';
-  /** Present on GET /v1/check-ins/{id} when a vitals row is linked. */
+  /** Linked vitals weight when present on list or GET /v1/check-ins/{id}. */
   weightKg?: number | null;
 };
 
