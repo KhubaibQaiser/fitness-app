@@ -51,8 +51,8 @@ export const validateStep = (
 
   if (stepIndex === 1) {
     const cm = resolveHeightCm(draft, prefs);
-    if (cm === null || cm < 100 || cm > 230) {
-      errors.height = 'Enter a height between 100 and 230 cm';
+    if (cm === null || cm < 100 || cm > 305) {
+      errors.height = 'Enter a height between 100 and 305 cm';
     }
   }
 
