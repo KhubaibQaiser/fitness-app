@@ -1,9 +1,6 @@
 import type { Restriction } from '@gymos/contracts';
-
-export type ActivityLevel = '1.2' | '1.375' | '1.55' | '1.725' | '1.9';
-
-export type GoalPreset = 'LOSE' | 'GAIN' | 'MAINTAIN' | 'RECOMP';
-export type GoalRate = 'CONSERVATIVE' | 'STANDARD' | 'AGGRESSIVE';
+import type { GoalPreset, GoalRate } from '@gymos/core/nutrition';
+import type { ActivityLevelValue } from '../../lib/activity-levels';
 
 export type OnboardingDraft = {
   name: string;
@@ -14,7 +11,7 @@ export type OnboardingDraft = {
   heightIn: string;
   phone: string;
   email: string;
-  activityLevel: ActivityLevel;
+  activityLevel: ActivityLevelValue;
   weightKg: string;
   waistCm: string;
   chestCm: string;
@@ -67,7 +64,6 @@ export const STEP_META = [
   { id: 'identity', title: 'Identity', subtitle: 'Who are we coaching?' },
   { id: 'height', title: 'Height', subtitle: 'Used for calorie targets' },
   { id: 'contact', title: 'Contact', subtitle: 'WhatsApp preferred' },
-  { id: 'activity', title: 'Activity', subtitle: 'Daily movement baseline' },
   { id: 'body', title: 'Body', subtitle: 'Weight and measurements' },
   { id: 'goal', title: 'Goal', subtitle: 'Direction and pace' },
   { id: 'medical', title: 'Medical', subtitle: 'Safety gates' },

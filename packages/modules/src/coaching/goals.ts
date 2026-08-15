@@ -30,6 +30,14 @@ export type CreateGoalInput = {
   bodyFatPct?: number | undefined;
 };
 
+export type SaveActiveGoalInput = {
+  activityLevel: 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
+  preset: GoalPreset;
+  rate: GoalRate;
+  startWeightKg: number;
+  targetWeightKg: number;
+};
+
 export type GoalError =
   | { code: 'CLIENT_NOT_FOUND' }
   | { code: 'CLIENT_PROFILE_INCOMPLETE'; missing: string[] }
@@ -117,7 +125,12 @@ export const createGoalTx = async (
     action: 'goal.create',
     resourceType: 'client_goal',
     resourceId: created.id,
-    after: { preset: input.preset, rate: input.rate, targets: computation.value.targets },
+    after: {
+      activityLevel: activity,
+      preset: input.preset,
+      rate: input.rate,
+      targets: computation.value.targets,
+    },
   });
 
   return ok(created);
@@ -135,6 +148,91 @@ export const createGoal = async (
   return db.transaction(async (tx) => createGoalTx(tx, principal, client, input));
 };
 
+/**
+ * Saves the client's activity and ACTIVE goal as one unit. Existing goals are
+ * updated in place so goal history and scheduled check-ins remain intact.
+ */
+export const saveActiveGoal = async (
+  db: Db,
+  principal: { userId: string },
+  clientId: string,
+  input: SaveActiveGoalInput,
+): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
+  const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
+  if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
+
+  const nextClient = { ...client, activityLevel: input.activityLevel };
+  const missing = profileMissing(nextClient);
+  if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
+
+  const computation = computeTargets(
+    {
+      sex: nextClient.sex,
+      ageYears: ageYearsFromDob(nextClient.dob),
+      heightCm: nextClient.heightCm ?? 0,
+      weightKg: input.startWeightKg,
+      activity: input.activityLevel,
+    },
+    input.preset,
+    input.rate,
+  );
+  if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
+
+  return db.transaction(async (tx) => {
+    const activeGoal = await getActiveGoal(tx, clientId);
+
+    await tx
+      .update(s.clients)
+      .set({ activityLevel: input.activityLevel })
+      .where(eq(s.clients.id, clientId));
+
+    if (activeGoal === null) {
+      return createGoalTx(tx, principal, nextClient, input);
+    }
+
+    const [updated] = await tx
+      .update(s.clientGoals)
+      .set({
+        preset: input.preset,
+        rate: input.rate,
+        startWeightKg: input.startWeightKg,
+        targetWeightKg: input.targetWeightKg,
+        expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
+        initialTargets: computation.value.targets,
+        tdeeEstimate: computation.value.tdee,
+      })
+      .where(and(eq(s.clientGoals.id, activeGoal.id), eq(s.clientGoals.status, 'ACTIVE')))
+      .returning();
+    if (!updated) throw new Error('active goal update failed');
+
+    await writeAudit(tx, {
+      actorUserId: principal.userId,
+      actorRole: 'COACH',
+      action: 'goal.update',
+      resourceType: 'client_goal',
+      resourceId: updated.id,
+      before: {
+        activityLevel: client.activityLevel,
+        preset: activeGoal.preset,
+        rate: activeGoal.rate,
+        startWeightKg: activeGoal.startWeightKg,
+        targetWeightKg: activeGoal.targetWeightKg,
+        targets: activeGoal.initialTargets,
+      },
+      after: {
+        activityLevel: input.activityLevel,
+        preset: updated.preset,
+        rate: updated.rate,
+        startWeightKg: updated.startWeightKg,
+        targetWeightKg: updated.targetWeightKg,
+        targets: updated.initialTargets,
+      },
+    });
+
+    return ok(updated);
+  });
+};
+
 export const listGoals = async (db: Db, clientId: string) =>
   db
     .select()
@@ -142,7 +240,7 @@ export const listGoals = async (db: Db, clientId: string) =>
     .where(eq(s.clientGoals.clientId, clientId))
     .orderBy(desc(s.clientGoals.createdAt));
 
-export const getActiveGoal = async (db: Db, clientId: string) => {
+export const getActiveGoal = async (db: DbOrTx, clientId: string) => {
   const [goal] = await db
     .select()
     .from(s.clientGoals)

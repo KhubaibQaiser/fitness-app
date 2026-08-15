@@ -9,6 +9,7 @@ import {
   Download,
   IconButton,
   MoreHorizontal,
+  Pencil,
   Popover,
   Scale,
   Separator,
@@ -87,15 +88,13 @@ export const ClientHubMoreMenu = ({ clientId, signed, pdfPending, onDownloadPdf 
               onPress={close}
             />
           </Link>
-          <ClientHubMenuRow
-            icon={<Download size={18} color="$color" />}
-            label={pdfPending ? 'Preparing PDF…' : 'Download PDF'}
-            disabled={pdfDisabled}
-            onPress={() => {
-              onDownloadPdf();
-              close();
-            }}
-          />
+          <Link href={`/clients/${clientId}/goal/new`}>
+            <ClientHubMenuRow
+              icon={<Pencil size={18} color="$color" />}
+              label="Edit goal"
+              onPress={close}
+            />
+          </Link>
           <Link href={`/clients/${clientId}/dietary`}>
             <ClientHubMenuRow
               icon={<Utensils size={18} color="$color" />}
@@ -110,6 +109,15 @@ export const ClientHubMoreMenu = ({ clientId, signed, pdfPending, onDownloadPdf 
               onPress={close}
             />
           </Link>
+          <ClientHubMenuRow
+            icon={<Download size={18} color="$color" />}
+            label={pdfPending ? 'Preparing Client Intake PDF…' : 'Download Client Intake PDF'}
+            disabled={pdfDisabled}
+            onPress={() => {
+              onDownloadPdf();
+              close();
+            }}
+          />
 
           <Separator marginVertical="$1" />
 

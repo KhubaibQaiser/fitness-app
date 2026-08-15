@@ -154,11 +154,11 @@ export const usePutDietary = (clientId: string) => {
   });
 };
 
-export const useCreateGoal = (clientId: string) => {
+export const useSaveActiveGoal = (clientId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: Parameters<typeof api.goals.create>[1]) =>
-      api.goals.create(clientId, input),
+    mutationFn: (input: Parameters<typeof api.goals.saveActive>[1]) =>
+      api.goals.saveActive(clientId, input),
     onSuccess: () => invalidateClient(queryClient, clientId),
   });
 };

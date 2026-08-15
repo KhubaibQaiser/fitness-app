@@ -27,6 +27,7 @@ import {
   nextDueCheckIns,
   onboardClient,
   recordVitals,
+  saveActiveGoal,
   setGoalStatus,
   updateAndRerunCheckIn,
   updateClient,
@@ -1087,6 +1088,41 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   );
 
   // ---- goals ---------------------------------------------------------------------------
+  app.openapi(
+    createRoute({
+      method: 'put',
+      path: '/v1/clients/{clientId}/goal',
+      operationId: 'saveActiveGoal',
+      request: { params: dto.clientIdParam, body: json(dto.saveActiveGoalBody) },
+      responses: {
+        200: { description: 'Saved active goal with Layer-1 targets', ...json(dto.anyObject) },
+        ...problemDocs(404, 422),
+      },
+    }),
+    async (c) => {
+      const { clientId } = c.req.valid('param');
+      authorize(c, 'goal.manage', { clientId });
+      const result = await saveActiveGoal(
+        db,
+        asCoach(c.get('principal')),
+        clientId,
+        c.req.valid('json'),
+      );
+      if (!result.ok) {
+        if (result.error.code === 'CLIENT_NOT_FOUND') {
+          throw new ProblemError(404, 'NOT_FOUND', 'Client not found');
+        }
+        throw new ProblemError(
+          422,
+          result.error.code,
+          'Goal cannot be saved',
+          JSON.stringify(result.error),
+        );
+      }
+      return c.json(result.value);
+    },
+  );
+
   app.openapi(
     createRoute({
       method: 'get',

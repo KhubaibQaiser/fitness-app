@@ -1228,6 +1228,111 @@
         }
       }
     },
+    "/v1/clients/{clientId}/goal": {
+      "put": {
+        "operationId": "saveActiveGoal",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "activityLevel": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "enum": [1.2]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [1.375]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [1.55]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [1.725]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [1.9]
+                      }
+                    ]
+                  },
+                  "preset": {
+                    "type": "string",
+                    "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP"]
+                  },
+                  "rate": {
+                    "type": "string",
+                    "enum": ["CONSERVATIVE", "STANDARD", "AGGRESSIVE"]
+                  },
+                  "startWeightKg": {
+                    "type": "number",
+                    "minimum": 20,
+                    "maximum": 400
+                  },
+                  "targetWeightKg": {
+                    "type": "number",
+                    "minimum": 20,
+                    "maximum": 400
+                  }
+                },
+                "required": ["activityLevel", "preset", "rate", "startWeightKg", "targetWeightKg"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved active goal with Layer-1 targets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/clients/{clientId}/goals": {
       "get": {
         "operationId": "listGoals",
