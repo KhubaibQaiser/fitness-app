@@ -81,6 +81,30 @@
                   "currencyPref": {
                     "type": "string",
                     "enum": ["PKR", "USD", "EUR", "GBP", "AED", "SAR"]
+                  },
+                  "unitPrefs": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": ["kg", "lb"]
+                      },
+                      "height": {
+                        "type": "string",
+                        "enum": ["cm", "ft_in"]
+                      },
+                      "length": {
+                        "type": "string",
+                        "enum": ["cm", "in"]
+                      }
+                    },
+                    "required": ["weight", "height", "length"]
+                  },
+                  "defaultCountry": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2,
+                    "pattern": "^[A-Z]{2}$"
                   }
                 }
               }
@@ -298,7 +322,7 @@
                   "heightCm": {
                     "type": "number",
                     "minimum": 100,
-                    "maximum": 230
+                    "maximum": 305
                   },
                   "activityLevel": {
                     "anyOf": [
@@ -413,7 +437,7 @@
                       "heightCm": {
                         "type": "number",
                         "minimum": 100,
-                        "maximum": 230
+                        "maximum": 305
                       },
                       "activityLevel": {
                         "anyOf": [
@@ -559,7 +583,38 @@
                         "maximum": 70
                       }
                     },
-                    "required": ["preset", "rate", "startWeightKg"]
+                    "required": ["preset", "rate", "startWeightKg", "targetWeightKg"]
+                  },
+                  "dietary": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "ALLERGY_SEVERE",
+                            "ALLERGY_MILD",
+                            "INTOLERANCE",
+                            "DISLIKE",
+                            "RELIGIOUS",
+                            "ETHICAL",
+                            "MEDICAL"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "note": {
+                          "type": ["string", "null"],
+                          "maxLength": 500
+                        }
+                      },
+                      "required": ["type", "code"]
+                    },
+                    "maxItems": 50
                   }
                 },
                 "required": ["client", "vitals", "goal"]
@@ -719,7 +774,7 @@
                   "heightCm": {
                     "type": "number",
                     "minimum": 100,
-                    "maximum": 230
+                    "maximum": 305
                   },
                   "activityLevel": {
                     "anyOf": [
