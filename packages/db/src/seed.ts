@@ -1,5 +1,10 @@
 import { DateTime } from 'luxon';
-import { computeTargets } from '@gymos/core/nutrition';
+import {
+  computeTargets,
+  resolveWeeklyDeltaKg,
+  type GoalPreset,
+  type GoalRate,
+} from '@gymos/core/nutrition';
 import { type Db } from './client';
 import * as s from './schema';
 import { FOOD_SEED } from './seed-data/foods';
@@ -19,6 +24,23 @@ export type SeedOptions = {
   /** Optional tenant manifest JSON to register for the seeded org. */
   tenantManifest?: Record<string, unknown> | undefined;
   tenantSlug?: string | undefined;
+};
+
+const seedWeeklyDeltaKg = (
+  tenantManifest: Record<string, unknown> | undefined,
+  preset: GoalPreset,
+  rate: GoalRate,
+): number | undefined => {
+  if (tenantManifest === undefined) return undefined;
+  const nutrition = tenantManifest.nutrition;
+  if (nutrition === null || typeof nutrition !== 'object' || Array.isArray(nutrition)) {
+    return undefined;
+  }
+  const weekly = (nutrition as { weeklyDeltaKg?: unknown }).weeklyDeltaKg;
+  if (weekly === null || typeof weekly !== 'object' || Array.isArray(weekly)) {
+    return undefined;
+  }
+  return resolveWeeklyDeltaKg(weekly, preset, rate);
 };
 
 /**
@@ -140,11 +162,15 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
   ]);
 
   // Goal + Layer-1 targets snapshot.
+  // Pilot LOSE STANDARD is −1 kg/wk and exceeds the 25% deficit cap for typical
+  // TDEE — use CONSERVATIVE (−0.5) so the demo seed stays feasible.
   const startWeight = 88;
+  const weeklyDeltaKg = seedWeeklyDeltaKg(options.tenantManifest, 'LOSE', 'CONSERVATIVE');
   const computation = computeTargets(
     { sex: 'M', ageYears: 31, heightCm: 175, weightKg: startWeight, activity: 1.55 },
     'LOSE',
-    'STANDARD',
+    'CONSERVATIVE',
+    weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : undefined,
   );
   if (!computation.ok) throw new Error('seed target computation failed');
   const eightWeeksAgo = DateTime.utc().minus({ weeks: 8 });
@@ -154,7 +180,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
       clientId: demo.id,
       outletId: outlet.id,
       preset: 'LOSE',
-      rate: 'STANDARD',
+      rate: 'CONSERVATIVE',
       startDate: isoDate(eightWeeksAgo),
       startWeightKg: startWeight,
       targetWeightKg: 80,
