@@ -10,6 +10,7 @@ import {
 import { type ScopeSet } from '@gymos/core/rbac';
 import { isoDate, schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
+import { weeklyDeltaKgFromManifest, type TenantManifest } from '../tenancy';
 
 /** Used when DOB is omitted during onboarding — Mifflin still needs an age. */
 export const DEFAULT_AGE_YEARS = 30;
@@ -50,29 +51,55 @@ const profileMissing = (client: typeof s.clients.$inferSelect): string[] => {
   return missing;
 };
 
+const computeGoalTargets = (
+  client: typeof s.clients.$inferSelect,
+  input: {
+    preset: GoalPreset;
+    rate: GoalRate;
+    startWeightKg: number;
+    activityLevel: 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
+    bodyFatPct?: number | undefined;
+  },
+  manifest: TenantManifest | undefined,
+) => {
+  const weeklyDeltaKg = weeklyDeltaKgFromManifest(manifest, input.preset, input.rate);
+  return computeTargets(
+    {
+      sex: client.sex,
+      ageYears: ageYearsFromDob(client.dob),
+      heightCm: client.heightCm ?? 0,
+      weightKg: input.startWeightKg,
+      ...(input.bodyFatPct !== undefined ? { bodyFatPct: input.bodyFatPct } : {}),
+      activity: input.activityLevel,
+    },
+    input.preset,
+    input.rate,
+    weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : undefined,
+  );
+};
+
 /** Insert an ACTIVE goal (+ first DUE check-in). Works inside or outside a transaction. */
 export const createGoalTx = async (
   db: DbOrTx,
   principal: { userId: string },
   client: typeof s.clients.$inferSelect,
   input: CreateGoalInput,
+  manifest?: TenantManifest,
 ): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
   const missing = profileMissing(client);
   if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
 
-  const age = ageYearsFromDob(client.dob);
   const activity = (client.activityLevel ?? 1.55) as 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
-  const computation = computeTargets(
+  const computation = computeGoalTargets(
+    client,
     {
-      sex: client.sex,
-      ageYears: age,
-      heightCm: client.heightCm ?? 0,
-      weightKg: input.startWeightKg,
+      preset: input.preset,
+      rate: input.rate,
+      startWeightKg: input.startWeightKg,
+      activityLevel: activity,
       ...(input.bodyFatPct !== undefined ? { bodyFatPct: input.bodyFatPct } : {}),
-      activity,
     },
-    input.preset,
-    input.rate,
+    manifest,
   );
   if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
 
@@ -141,11 +168,12 @@ export const createGoal = async (
   principal: { userId: string },
   clientId: string,
   input: CreateGoalInput,
+  manifest?: TenantManifest,
 ): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
   const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
   if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
 
-  return db.transaction(async (tx) => createGoalTx(tx, principal, client, input));
+  return db.transaction(async (tx) => createGoalTx(tx, principal, client, input, manifest));
 };
 
 /**
@@ -157,6 +185,7 @@ export const saveActiveGoal = async (
   principal: { userId: string },
   clientId: string,
   input: SaveActiveGoalInput,
+  manifest?: TenantManifest,
 ): Promise<Result<typeof s.clientGoals.$inferSelect, GoalError>> => {
   const [client] = await db.select().from(s.clients).where(eq(s.clients.id, clientId)).limit(1);
   if (!client) return err({ code: 'CLIENT_NOT_FOUND' });
@@ -165,16 +194,15 @@ export const saveActiveGoal = async (
   const missing = profileMissing(nextClient);
   if (missing.length > 0) return err({ code: 'CLIENT_PROFILE_INCOMPLETE', missing });
 
-  const computation = computeTargets(
+  const computation = computeGoalTargets(
+    nextClient,
     {
-      sex: nextClient.sex,
-      ageYears: ageYearsFromDob(nextClient.dob),
-      heightCm: nextClient.heightCm ?? 0,
-      weightKg: input.startWeightKg,
-      activity: input.activityLevel,
+      preset: input.preset,
+      rate: input.rate,
+      startWeightKg: input.startWeightKg,
+      activityLevel: input.activityLevel,
     },
-    input.preset,
-    input.rate,
+    manifest,
   );
   if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
 
@@ -187,7 +215,7 @@ export const saveActiveGoal = async (
       .where(eq(s.clients.id, clientId));
 
     if (activeGoal === null) {
-      return createGoalTx(tx, principal, nextClient, input);
+      return createGoalTx(tx, principal, nextClient, input, manifest);
     }
 
     const [updated] = await tx

@@ -1,7 +1,14 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { assertSafeTargetKcal, CALORIE_FLOOR_KCAL, clampToSafeKcal } from './floors';
-import { bmr, computeTargets, goalDeltaFraction, splitMacros, tdee } from './layer1';
+import {
+  bmr,
+  computeTargets,
+  goalDeltaFraction,
+  resolveWeeklyDeltaKg,
+  splitMacros,
+  tdee,
+} from './layer1';
 import { ACTIVITY_LEVELS, GOAL_PRESETS, GOAL_RATES, type PhysiologyInput } from './types';
 
 const male30: PhysiologyInput = {
@@ -96,6 +103,31 @@ describe('splitMacros degradation cascade', () => {
   });
 });
 
+describe('resolveWeeklyDeltaKg', () => {
+  it('returns undefined when the table or cell is missing', () => {
+    expect(resolveWeeklyDeltaKg(undefined, 'LOSE', 'STANDARD')).toBeUndefined();
+    expect(resolveWeeklyDeltaKg({ LOSE: {} }, 'LOSE', 'STANDARD')).toBeUndefined();
+    expect(resolveWeeklyDeltaKg({ GAIN: { STANDARD: 0.5 } }, 'LOSE', 'STANDARD')).toBeUndefined();
+  });
+
+  it('returns the configured kg/week for a preset/rate cell', () => {
+    expect(
+      resolveWeeklyDeltaKg(
+        { LOSE: { AGGRESSIVE: -2 }, GAIN: { CONSERVATIVE: 0.25 } },
+        'LOSE',
+        'AGGRESSIVE',
+      ),
+    ).toBe(-2);
+    expect(
+      resolveWeeklyDeltaKg(
+        { LOSE: { AGGRESSIVE: -2 }, GAIN: { CONSERVATIVE: 0.25 } },
+        'GAIN',
+        'CONSERVATIVE',
+      ),
+    ).toBe(0.25);
+  });
+});
+
 describe('computeTargets', () => {
   it('produces the full target computation for a standard cut', () => {
     const result = computeTargets(male30, 'LOSE', 'STANDARD');
@@ -122,6 +154,27 @@ describe('computeTargets', () => {
     }
   });
 
+  it('uses fixed weekly kg when override is provided', () => {
+    const result = computeTargets(male30, 'LOSE', 'STANDARD', { weeklyDeltaKg: -0.5 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // TDEE 2759 → deficit 7700/7/2 = 550 → target 2209
+    expect(result.value.targets.kcal).toBe(2209);
+    expect(result.value.expectedWeeklyDeltaKg).toBe(-0.5);
+  });
+
+  it('keeps GOAL_DELTA behavior when no weekly override is passed', () => {
+    const withUndefined = computeTargets(male30, 'LOSE', 'STANDARD', {});
+    const withoutOpts = computeTargets(male30, 'LOSE', 'STANDARD');
+    expect(withUndefined).toEqual(withoutOpts);
+  });
+
+  it('refuses a fixed loss that exceeds the deficit cap', () => {
+    const result = computeTargets(male30, 'LOSE', 'STANDARD', { weeklyDeltaKg: -1 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('DEFICIT_CAP_EXCEEDED');
+  });
+
   it('refuses when the target lands below the calorie floor', () => {
     const petite: PhysiologyInput = {
       sex: 'F',
@@ -131,6 +184,19 @@ describe('computeTargets', () => {
       activity: 1.2,
     };
     const result = computeTargets(petite, 'LOSE', 'AGGRESSIVE');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('CALORIE_FLOOR_VIOLATION');
+  });
+
+  it('refuses a fixed-kg override that lands below the calorie floor', () => {
+    const petite: PhysiologyInput = {
+      sex: 'F',
+      ageYears: 55,
+      heightCm: 150,
+      weightKg: 45,
+      activity: 1.2,
+    };
+    const result = computeTargets(petite, 'LOSE', 'CONSERVATIVE', { weeklyDeltaKg: -0.5 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('CALORIE_FLOOR_VIOLATION');
   });

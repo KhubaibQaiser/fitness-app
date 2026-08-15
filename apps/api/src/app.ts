@@ -309,6 +309,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       defaultCountry: manifest.defaultCountry,
       currency: manifest.currency,
       currencies: [...CURRENCY_CODES],
+      ...(manifest.nutrition !== undefined ? { nutrition: manifest.nutrition } : {}),
     });
   });
 
@@ -837,30 +838,36 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     async (c) => {
       authorize(c, 'client.manage');
       const body = c.req.valid('json');
-      const result = await onboardClient(db, asCoach(c.get('principal')), {
-        client: {
-          name: body.client.name,
-          sex: body.client.sex,
-          ...(body.client.dob !== undefined ? { dob: body.client.dob } : {}),
-          ...(body.client.phone !== undefined ? { phone: body.client.phone } : {}),
-          ...(body.client.email !== undefined ? { email: body.client.email } : {}),
-          heightCm: body.client.heightCm,
-          activityLevel: body.client.activityLevel,
-          ...(body.client.medicalFlags !== undefined
-            ? { medicalFlags: body.client.medicalFlags }
-            : {}),
-          intake: {
-            signaturePngBase64: body.client.intake.signaturePngBase64,
-            signedAt: body.client.intake.signedAt,
-            ...(body.client.intake.heightDisplayUnit !== undefined
-              ? { heightDisplayUnit: body.client.intake.heightDisplayUnit }
+      const tenant = await resolveTenantManifest(c.get('principal'));
+      const result = await onboardClient(
+        db,
+        asCoach(c.get('principal')),
+        {
+          client: {
+            name: body.client.name,
+            sex: body.client.sex,
+            ...(body.client.dob !== undefined ? { dob: body.client.dob } : {}),
+            ...(body.client.phone !== undefined ? { phone: body.client.phone } : {}),
+            ...(body.client.email !== undefined ? { email: body.client.email } : {}),
+            heightCm: body.client.heightCm,
+            activityLevel: body.client.activityLevel,
+            ...(body.client.medicalFlags !== undefined
+              ? { medicalFlags: body.client.medicalFlags }
               : {}),
+            intake: {
+              signaturePngBase64: body.client.intake.signaturePngBase64,
+              signedAt: body.client.intake.signedAt,
+              ...(body.client.intake.heightDisplayUnit !== undefined
+                ? { heightDisplayUnit: body.client.intake.heightDisplayUnit }
+                : {}),
+            },
           },
+          vitals: body.vitals,
+          goal: body.goal,
+          ...(body.dietary !== undefined ? { dietary: body.dietary } : {}),
         },
-        vitals: body.vitals,
-        goal: body.goal,
-        ...(body.dietary !== undefined ? { dietary: body.dietary } : {}),
-      });
+        tenant,
+      );
       if (!result.ok) {
         throw new ProblemError(
           422,
@@ -1107,11 +1114,13 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'goal.manage', { clientId });
+      const tenant = await resolveTenantManifest(c.get('principal'));
       const result = await saveActiveGoal(
         db,
         asCoach(c.get('principal')),
         clientId,
         c.req.valid('json'),
+        tenant,
       );
       if (!result.ok) {
         if (result.error.code === 'CLIENT_NOT_FOUND') {
@@ -1157,11 +1166,13 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     async (c) => {
       const { clientId } = c.req.valid('param');
       authorize(c, 'goal.manage', { clientId });
+      const tenant = await resolveTenantManifest(c.get('principal'));
       const result = await createGoal(
         db,
         asCoach(c.get('principal')),
         clientId,
         c.req.valid('json'),
+        tenant,
       );
       if (!result.ok) {
         if (result.error.code === 'CLIENT_NOT_FOUND') {

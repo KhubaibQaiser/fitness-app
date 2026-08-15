@@ -129,6 +129,12 @@ const defaultCoachManifest = (slug: string, name: string): TenantManifest => ({
     monthlyGenerationQuota: 500,
     promptPackId: 'pakistani',
   },
+  nutrition: {
+    weeklyDeltaKg: {
+      LOSE: { CONSERVATIVE: -0.5, STANDARD: -1, AGGRESSIVE: -2 },
+      GAIN: { CONSERVATIVE: 0.25, STANDARD: 0.5, AGGRESSIVE: 1 },
+    },
+  },
 });
 
 export type CoachSignupDeps = OtpDeps & {

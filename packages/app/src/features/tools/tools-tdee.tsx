@@ -4,8 +4,6 @@ import { useState } from 'react';
 import {
   bmr as calcBmr,
   tdee as calcTdee,
-  goalDeltaFraction,
-  KCAL_PER_KG,
   type GoalPreset,
   type GoalRate,
   type Sex,
@@ -24,6 +22,7 @@ import {
 import { useMe, usePublicConfig } from '../../api';
 import { ACTIVITY_OPTIONS } from '../../lib/activity-levels';
 import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
+import { targetKcalFromPace } from '../../lib/goal-pace';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { HeightFields } from '../height-fields';
@@ -61,12 +60,10 @@ export const ToolsTdee = () => {
   const bmrValue = valid ? calcBmr({ sex, ageYears, heightCm, weightKg, activity }) : null;
   const tdeeValue = valid ? calcTdee({ sex, ageYears, heightCm, weightKg, activity }) : null;
 
-  const deltaFraction = goalDeltaFraction(goalPreset, goalRate);
-  const targetValue = tdeeValue !== null ? Math.round(tdeeValue * (1 + deltaFraction)) : null;
-  const weeklyDeltaKg =
-    tdeeValue !== null && targetValue !== null
-      ? ((targetValue - tdeeValue) * 7) / KCAL_PER_KG
-      : null;
+  const paced =
+    tdeeValue !== null ? targetKcalFromPace(tdeeValue, goalPreset, goalRate, config.data) : null;
+  const targetValue = paced?.targetKcal ?? null;
+  const weeklyDeltaKg = paced?.weeklyDeltaKg ?? null;
   const weeklyDeltaDisplay =
     weeklyDeltaKg !== null ? formatWeight(Math.abs(weeklyDeltaKg), prefs.weight, 2) : null;
   const targetHint =
