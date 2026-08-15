@@ -31,7 +31,7 @@ export const createClientBody = z.object({
   dob: z.iso.date().optional(),
   phone: z.string().max(32).optional(),
   email: z.email().max(254).optional(),
-  heightCm: z.number().min(100).max(230).optional(),
+  heightCm: z.number().min(100).max(305).optional(),
   activityLevel: z
     .union([z.literal(1.2), z.literal(1.375), z.literal(1.55), z.literal(1.725), z.literal(1.9)])
     .optional(),
@@ -78,7 +78,7 @@ export const onboardClientBody = z.object({
     dob: z.iso.date().optional(),
     phone: z.string().max(32).optional(),
     email: z.email().max(254).optional(),
-    heightCm: z.number().min(100).max(230),
+    heightCm: z.number().min(100).max(305),
     activityLevel: activityLevelSchema,
     medicalFlags: z
       .object({
