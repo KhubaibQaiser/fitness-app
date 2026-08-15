@@ -129,13 +129,18 @@ const readRefreshToken = (c: AppContext): string | undefined => {
   return undefined;
 };
 
+/**
+ * `Lax`, not `Strict`: WebKit drops `SameSite=Strict` cookies across browser
+ * relaunch / tab restore, which signs Safari users out on refresh. Cross-site
+ * mutations stay blocked by the `sec-fetch-site` check on `/v1/*`.
+ */
 const setRefreshCookie = (c: AppContext, refreshToken: string, maxAgeSec: number): void => {
   const https =
     c.req.header('x-forwarded-proto') === 'https' || new URL(c.req.url).protocol === 'https:';
   setCookie(c, REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: https,
-    sameSite: 'Strict',
+    sameSite: 'Lax',
     path: '/',
     maxAge: maxAgeSec,
   });
@@ -147,7 +152,7 @@ const setAccessCookie = (c: AppContext, accessToken: string): void => {
   setCookie(c, ACCESS_COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure: https,
-    sameSite: 'Strict',
+    sameSite: 'Lax',
     path: '/',
     maxAge: ACCESS_TOKEN_TTL_SECONDS,
   });
