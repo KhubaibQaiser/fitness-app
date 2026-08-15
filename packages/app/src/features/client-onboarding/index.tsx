@@ -9,7 +9,6 @@ import { AppScreen } from '../shell/app-screen';
 import { OnboardingFooter } from './onboarding-footer';
 import { OnboardingProgress } from './onboarding-progress';
 import { STEP_META } from './onboarding-types';
-import { StepActivity } from './step-activity';
 import { StepBody } from './step-body';
 import { StepContact } from './step-contact';
 import { StepDiet } from './step-diet';
@@ -41,9 +40,11 @@ export const ClientOnboardingScreen = () => {
   const defaultCountry = defaultCountryFrom(me.data, config.data);
   const isLast = stepIndex === STEP_META.length - 1;
   const meta = STEP_META[stepIndex];
+  const stepId = meta?.id;
 
   const goNext = () => {
-    const nextErrors = validateStep(stepIndex, draft, prefs, defaultCountry);
+    if (stepId === undefined) return;
+    const nextErrors = validateStep(stepId, draft, prefs, defaultCountry);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -157,10 +158,10 @@ export const ClientOnboardingScreen = () => {
       <OnboardingProgress stepIndex={stepIndex} />
 
       <Card gap="$4">
-        {stepIndex === 0 ? (
+        {stepId === 'identity' ? (
           <StepIdentity draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
         ) : null}
-        {stepIndex === 1 ? (
+        {stepId === 'height' ? (
           <StepHeight
             draft={draft}
             errors={errors}
@@ -169,7 +170,7 @@ export const ClientOnboardingScreen = () => {
             onClearError={clearError}
           />
         ) : null}
-        {stepIndex === 2 ? (
+        {stepId === 'contact' ? (
           <StepContact
             draft={draft}
             errors={errors}
@@ -178,8 +179,7 @@ export const ClientOnboardingScreen = () => {
             onClearError={clearError}
           />
         ) : null}
-        {stepIndex === 3 ? <StepActivity draft={draft} onPatch={patch} /> : null}
-        {stepIndex === 4 ? (
+        {stepId === 'body' ? (
           <StepBody
             draft={draft}
             errors={errors}
@@ -188,7 +188,7 @@ export const ClientOnboardingScreen = () => {
             onClearError={clearError}
           />
         ) : null}
-        {stepIndex === 5 ? (
+        {stepId === 'goal' ? (
           <StepGoal
             draft={draft}
             errors={errors}
@@ -197,9 +197,9 @@ export const ClientOnboardingScreen = () => {
             onClearError={clearError}
           />
         ) : null}
-        {stepIndex === 6 ? <StepMedical draft={draft} onPatch={patch} /> : null}
-        {stepIndex === 7 ? <StepDiet draft={draft} onPatch={patch} /> : null}
-        {stepIndex === 8 ? (
+        {stepId === 'medical' ? <StepMedical draft={draft} onPatch={patch} /> : null}
+        {stepId === 'diet' ? <StepDiet draft={draft} onPatch={patch} /> : null}
+        {stepId === 'sign' ? (
           <StepSign
             draft={draft}
             errors={errors}

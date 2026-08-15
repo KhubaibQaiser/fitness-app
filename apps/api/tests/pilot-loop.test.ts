@@ -674,6 +674,98 @@ describe('the pilot core loop', () => {
     });
     expect(goal.status).toBe(200);
   });
+
+  it('saves activity and the active goal atomically without replacing check-ins', async () => {
+    const create = await req('/v1/clients', {
+      method: 'POST',
+      json: {
+        name: 'Goal Edit Client',
+        sex: 'F',
+        dob: '1971-01-01',
+        heightCm: 150,
+        activityLevel: 1.2,
+      },
+    });
+    expect(create.status).toBe(200);
+    const client = (await create.json()) as { id: string };
+
+    const initial = await req(`/v1/clients/${client.id}/goal`, {
+      method: 'PUT',
+      json: {
+        activityLevel: 1.2,
+        preset: 'MAINTAIN',
+        rate: 'STANDARD',
+        startWeightKg: 50,
+        targetWeightKg: 50,
+      },
+    });
+    expect(initial.status).toBe(200);
+    const initialGoal = (await initial.json()) as {
+      id: string;
+      preset: string;
+      tdeeEstimate: number;
+    };
+
+    const checkInsBefore = await req(`/v1/clients/${client.id}/check-ins`);
+    expect(checkInsBefore.status).toBe(200);
+    const beforeItems = (await checkInsBefore.json()) as {
+      items: { id: string; status: string }[];
+    };
+    expect(beforeItems.items).toHaveLength(1);
+
+    const edit = await req(`/v1/clients/${client.id}/goal`, {
+      method: 'PUT',
+      json: {
+        activityLevel: 1.375,
+        preset: 'GAIN',
+        rate: 'STANDARD',
+        startWeightKg: 50,
+        targetWeightKg: 55,
+      },
+    });
+    expect(edit.status).toBe(200);
+    const editedGoal = (await edit.json()) as {
+      id: string;
+      preset: string;
+      tdeeEstimate: number;
+    };
+    expect(editedGoal.id).toBe(initialGoal.id);
+    expect(editedGoal.preset).toBe('GAIN');
+    expect(editedGoal.tdeeEstimate).not.toBe(initialGoal.tdeeEstimate);
+
+    const checkInsAfter = await req(`/v1/clients/${client.id}/check-ins`);
+    const afterItems = (await checkInsAfter.json()) as {
+      items: { id: string; status: string }[];
+    };
+    expect(afterItems.items).toEqual(beforeItems.items);
+
+    const refused = await req(`/v1/clients/${client.id}/goal`, {
+      method: 'PUT',
+      json: {
+        activityLevel: 1.2,
+        preset: 'LOSE',
+        rate: 'AGGRESSIVE',
+        startWeightKg: 45,
+        targetWeightKg: 40,
+      },
+    });
+    expect(refused.status).toBe(422);
+
+    const detail = await req(`/v1/clients/${client.id}`);
+    const detailBody = (await detail.json()) as {
+      client: { activityLevel: number };
+      goal: { id: string; preset: string };
+    };
+    expect(detailBody.client.activityLevel).toBe(1.375);
+    expect(detailBody.goal).toMatchObject({ id: initialGoal.id, preset: 'GAIN' });
+
+    const auditRows = await db.select().from(schema.auditLog);
+    const goalAudit = auditRows.find(
+      (row) => row.action === 'goal.update' && row.resourceId === initialGoal.id,
+    );
+    expect(goalAudit?.before).toMatchObject({ activityLevel: 1.2, preset: 'MAINTAIN' });
+    expect(goalAudit?.after).toMatchObject({ activityLevel: 1.375, preset: 'GAIN' });
+  });
 });
 
 describe('openapi document', () => {

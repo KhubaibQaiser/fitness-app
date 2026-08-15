@@ -148,6 +148,14 @@ export const createGoalBody = z.object({
   bodyFatPct: z.number().min(2).max(70).optional(),
 });
 
+export const saveActiveGoalBody = z.object({
+  activityLevel: activityLevelSchema,
+  preset: z.enum(['LOSE', 'GAIN', 'MAINTAIN', 'RECOMP']),
+  rate: z.enum(['CONSERVATIVE', 'STANDARD', 'AGGRESSIVE']),
+  startWeightKg: z.number().min(20).max(400),
+  targetWeightKg: z.number().min(20).max(400),
+});
+
 export const goalStatusBody = z.object({ status: z.enum(['ACHIEVED', 'ABANDONED']) });
 
 export const completeCheckInBody = z.object({

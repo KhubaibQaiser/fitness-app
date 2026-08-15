@@ -317,6 +317,8 @@ export const api = {
   goals: {
     list: (clientId: string) =>
       request<{ items: T.Goal[] }>('GET', `/v1/clients/${clientId}/goals`),
+    saveActive: (clientId: string, input: T.SaveActiveGoalInput) =>
+      request<T.Goal>('PUT', `/v1/clients/${clientId}/goal`, input, { idempotent: true }),
     create: (
       clientId: string,
       input: {

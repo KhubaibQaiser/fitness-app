@@ -123,6 +123,14 @@ export type Goal = {
   status: 'ACTIVE' | 'ACHIEVED' | 'ABANDONED' | 'SUPERSEDED';
 };
 
+export type SaveActiveGoalInput = {
+  activityLevel: 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
+  preset: Goal['preset'];
+  rate: Goal['rate'];
+  startWeightKg: number;
+  targetWeightKg: number;
+};
+
 export type Vitals = {
   id: string;
   recordedAt: string;
