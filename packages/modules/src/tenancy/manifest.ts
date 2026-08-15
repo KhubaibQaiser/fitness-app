@@ -1,5 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
+import {
+  resolveWeeklyDeltaKg,
+  type GoalPreset,
+  type GoalRate,
+  type WeeklyDeltaKgTable,
+} from '@gymos/core/nutrition';
 
 export const LOCALE_CODES = ['en', 'ur'] as const;
 export type LocaleCode = (typeof LOCALE_CODES)[number];
@@ -12,6 +18,14 @@ export type CurrencyCode = (typeof CURRENCY_CODES)[number];
  * (`getManifestForOrg` in ./registry.ts). `loadManifest(path)` remains for
  * bootstrap / tests that have no DB yet.
  */
+const goalRateWeeklyDeltaSchema = z
+  .object({
+    CONSERVATIVE: z.number().optional(),
+    STANDARD: z.number().optional(),
+    AGGRESSIVE: z.number().optional(),
+  })
+  .strict();
+
 export const tenantManifestSchema = z
   .object({
     version: z.number().int().positive(),
@@ -68,10 +82,41 @@ export const tenantManifestSchema = z
         .strict()
         .optional(),
     }),
+    /**
+     * Optional nutrition policy overrides. When a preset/rate cell is set,
+     * Layer 1 uses that fixed kg/week instead of the default TDEE %.
+     */
+    nutrition: z
+      .object({
+        weeklyDeltaKg: z
+          .object({
+            LOSE: goalRateWeeklyDeltaSchema.optional(),
+            GAIN: goalRateWeeklyDeltaSchema.optional(),
+            MAINTAIN: goalRateWeeklyDeltaSchema.optional(),
+            RECOMP: goalRateWeeklyDeltaSchema.optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
 export type TenantManifest = z.infer<typeof tenantManifestSchema>;
+
+/** Resolve a tenant fixed kg/week pace override, if configured for this preset/rate. */
+export const weeklyDeltaKgFromManifest = (
+  manifest: Pick<TenantManifest, 'nutrition'> | undefined,
+  preset: GoalPreset,
+  rate: GoalRate,
+): number | undefined =>
+  resolveWeeklyDeltaKg(
+    // Zod optional keys include `| undefined` under exactOptionalPropertyTypes.
+    manifest?.nutrition?.weeklyDeltaKg as WeeklyDeltaKgTable | undefined,
+    preset,
+    rate,
+  );
 
 /** Process-local cache for the deprecated file loader only. */
 let cached: TenantManifest | null = null;

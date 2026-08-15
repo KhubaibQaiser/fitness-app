@@ -4,6 +4,7 @@ import { type ScopeSet } from '@gymos/core/rbac';
 import { nowIso, schema as s, type Db } from '@gymos/db';
 import { writeDietaryProfileTx, type RestrictionInput } from '../nutrition/dietary';
 import { writeAudit } from '../shared/audit';
+import { type TenantManifest } from '../tenancy';
 import { createGoalTx, type CreateGoalInput, type GoalError } from './goals';
 import { recordVitals, type RecordVitalsInput } from './vitals';
 
@@ -180,6 +181,7 @@ export const onboardClient = async (
   db: Db,
   principal: { userId: string; coachId: string; outletId: string },
   input: OnboardClientInput,
+  manifest?: TenantManifest,
 ): Promise<Result<OnboardClientResult, OnboardError>> => {
   try {
     return await db.transaction(async (tx) => {
@@ -247,7 +249,7 @@ export const onboardClient = async (
         ...(input.vitals.bodyFatPct !== undefined ? { bodyFatPct: input.vitals.bodyFatPct } : {}),
       });
 
-      const goalResult = await createGoalTx(tx, principal, client, input.goal);
+      const goalResult = await createGoalTx(tx, principal, client, input.goal, manifest);
       if (!goalResult.ok) {
         throw new OnboardAbortError(goalResult);
       }

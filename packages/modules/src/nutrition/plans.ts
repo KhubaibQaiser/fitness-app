@@ -14,7 +14,7 @@ import {
 import { iso, nowIso, schema as s, type Db } from '@gymos/db';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
-import { type TenantManifest } from '../tenancy';
+import { weeklyDeltaKgFromManifest, type TenantManifest } from '../tenancy';
 import { getActiveProfile, restrictedAllergenCodes } from './dietary';
 import { candidatesForRestrictions, foodsById } from './foods';
 import { applyPlanOps, PatchFoodMissing, type PlanOp } from './plan-ops';
@@ -166,6 +166,7 @@ export const generatePlan = async (
       client.dob !== null && client.dob !== ''
         ? Math.floor(Math.abs(DateTime.fromISO(client.dob).diffNow('years').years))
         : 30;
+    const weeklyDeltaKg = weeklyDeltaKgFromManifest(manifest, goal.preset, goal.rate);
     const computation = computeTargets(
       {
         sex: client.sex,
@@ -176,6 +177,7 @@ export const generatePlan = async (
       },
       goal.preset,
       goal.rate,
+      weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : undefined,
     );
     if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
     targets = computation.value.targets;

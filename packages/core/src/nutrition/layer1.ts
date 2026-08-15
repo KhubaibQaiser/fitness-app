@@ -42,6 +42,23 @@ export const GOAL_DELTA: Record<GoalPreset, Record<GoalRate, number>> = {
 export const goalDeltaFraction = (preset: GoalPreset, rate: GoalRate): number =>
   GOAL_DELTA[preset][rate];
 
+/**
+ * Optional tenant override table: fixed kg/week by preset × rate.
+ * When a cell is set, Layer 1 uses energy-balance kcal instead of GOAL_DELTA %.
+ */
+export type WeeklyDeltaKgTable = Partial<Record<GoalPreset, Partial<Record<GoalRate, number>>>>;
+
+export const resolveWeeklyDeltaKg = (
+  table: WeeklyDeltaKgTable | undefined,
+  preset: GoalPreset,
+  rate: GoalRate,
+): number | undefined => table?.[preset]?.[rate];
+
+export type ComputeTargetsOptions = {
+  /** Exact desired weekly weight change (kg). Negative = loss. */
+  readonly weeklyDeltaKg?: number;
+};
+
 /** Protein g/kg by goal — higher in a deficit to preserve lean mass. */
 export const PROTEIN_G_PER_KG: Record<GoalPreset, number> = {
   LOSE: 2.2,
@@ -95,15 +112,23 @@ export const splitMacros = (
 /**
  * Layer 1 entry point: physiology + goal preset → macro targets.
  * Refuses loudly on floor/deficit/feasibility violations.
+ *
+ * Default pace is a fraction of TDEE (`GOAL_DELTA`). Pass `opts.weeklyDeltaKg`
+ * for tenant-configured fixed kg/week rates.
  */
 export const computeTargets = (
   input: PhysiologyInput,
   preset: GoalPreset,
   rate: GoalRate,
+  opts?: ComputeTargetsOptions,
 ): Result<TargetComputation, NutritionRefusal> => {
   const bmrKcal = bmr(input);
   const tdeeKcal = bmrKcal * input.activity;
-  const targetKcal = Math.round(tdeeKcal * (1 + goalDeltaFraction(preset, rate)));
+  const weeklyOverride = opts?.weeklyDeltaKg;
+  const targetKcal =
+    weeklyOverride !== undefined
+      ? Math.round(tdeeKcal + (weeklyOverride * KCAL_PER_KG) / 7)
+      : Math.round(tdeeKcal * (1 + goalDeltaFraction(preset, rate)));
 
   const safe = assertSafeTargetKcal(targetKcal, tdeeKcal, input.sex);
   if (!safe.ok) return safe;
@@ -121,6 +146,9 @@ export const computeTargets = (
     bmr: Math.round(bmrKcal),
     tdee: Math.round(tdeeKcal),
     targets,
-    expectedWeeklyDeltaKg: Number((((targetKcal - tdeeKcal) * 7) / KCAL_PER_KG).toFixed(2)),
+    expectedWeeklyDeltaKg:
+      weeklyOverride !== undefined
+        ? Number(weeklyOverride.toFixed(2))
+        : Number((((targetKcal - tdeeKcal) * 7) / KCAL_PER_KG).toFixed(2)),
   });
 };

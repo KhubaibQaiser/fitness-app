@@ -30,6 +30,15 @@ export type PublicConfig = {
   defaultCountry: string;
   currency: CurrencyCode;
   currencies: CurrencyCode[];
+  /** Optional tenant fixed kg/week pace overrides (Lose/Gain ladders, etc.). */
+  nutrition?: {
+    weeklyDeltaKg?: Partial<
+      Record<
+        'LOSE' | 'GAIN' | 'MAINTAIN' | 'RECOMP',
+        Partial<Record<'CONSERVATIVE' | 'STANDARD' | 'AGGRESSIVE', number>>
+      >
+    >;
+  };
 };
 
 export type Me = {
