@@ -1,7 +1,7 @@
 import { parseLength, parseWeight, type UnitPrefs } from '@gymos/core/units';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { isCountryCode, toE164, type CountryCode } from '../../lib/phone';
-import type { OnboardingDraft } from './onboarding-types';
+import type { OnboardingDraft, StepId } from './onboarding-types';
 
 export const resolveHeightCm = (draft: OnboardingDraft, prefs: UnitPrefs): number | null =>
   resolveHeightCmInput(prefs.height, {
@@ -35,28 +35,28 @@ export const resolvePhoneE164 = (raw: string, defaultCountry: string): string | 
 };
 
 export const validateStep = (
-  stepIndex: number,
+  stepId: StepId,
   draft: OnboardingDraft,
   prefs: UnitPrefs,
   defaultCountry: string,
 ): Record<string, string> => {
   const errors: Record<string, string> = {};
 
-  if (stepIndex === 0) {
+  if (stepId === 'identity') {
     if (draft.name.trim().length === 0) errors.name = 'Name is required';
     if (draft.dob.trim() !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(draft.dob.trim())) {
       errors.dob = 'Use YYYY-MM-DD format';
     }
   }
 
-  if (stepIndex === 1) {
+  if (stepId === 'height') {
     const cm = resolveHeightCm(draft, prefs);
     if (cm === null || cm < 100 || cm > 305) {
       errors.height = 'Enter a height between 100 and 305 cm';
     }
   }
 
-  if (stepIndex === 2) {
+  if (stepId === 'contact') {
     if (draft.phone.trim().length === 0) errors.phone = 'WhatsApp number is required';
     else if (resolvePhoneE164(draft.phone, defaultCountry) === null) {
       errors.phone = 'Enter a valid phone number';
@@ -66,7 +66,7 @@ export const validateStep = (
     }
   }
 
-  if (stepIndex === 4) {
+  if (stepId === 'body') {
     const w = resolveWeightKg(draft.weightKg, prefs);
     if (w === null || w < 20 || w > 400) {
       errors.weightKg = `Enter weight in ${prefs.weight} (20–400 kg equivalent)`;
@@ -86,7 +86,7 @@ export const validateStep = (
     }
   }
 
-  if (stepIndex === 5) {
+  if (stepId === 'goal') {
     const start =
       resolveWeightKg(draft.startWeightKg, prefs) ?? resolveWeightKg(draft.weightKg, prefs);
     if (start === null) errors.startWeightKg = 'Enter a starting weight';
@@ -94,7 +94,7 @@ export const validateStep = (
     if (target === null) errors.targetWeightKg = 'Target weight is required';
   }
 
-  if (stepIndex === 8) {
+  if (stepId === 'sign') {
     if (draft.signaturePngBase64 === null || draft.signaturePngBase64.length < 40) {
       errors.signature = 'Client signature is required';
     }
