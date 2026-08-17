@@ -69,6 +69,11 @@ export const StepSign = ({
               subtitle="A projection from today to the goal. Weekly check-ins keep this path honest and adaptable."
             />
           </StaggerItem>
+          {preview.paceAdjustment !== null ? (
+            <AlertBanner tone="warning" title={preview.paceAdjustment.title}>
+              {preview.paceAdjustment.detail}
+            </AlertBanner>
+          ) : null}
           {preview.safetyIssue !== null ? (
             <AlertBanner
               tone="danger"

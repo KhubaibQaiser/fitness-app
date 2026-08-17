@@ -83,8 +83,9 @@ export const tenantManifestSchema = z
         .optional(),
     }),
     /**
-     * Optional nutrition policy overrides. When a preset/rate cell is set,
-     * Layer 1 uses that fixed kg/week instead of the default TDEE %.
+     * Optional desired kg/week by preset × rate. Layer 1 treats this as intent
+     * only — calories are clamped into the safety band and displayed kg/week
+     * is derived from the clamped target.
      */
     nutrition: z
       .object({
