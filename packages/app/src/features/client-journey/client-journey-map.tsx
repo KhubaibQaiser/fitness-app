@@ -2,18 +2,9 @@
 
 import type { ReactNode } from 'react';
 import type { WeightUnit } from '@gymos/core/units';
-import {
-  Activity,
-  EmptyState,
-  Muted,
-  SectionTitle,
-  StaggerItem,
-  Text,
-  XStack,
-  YStack,
-} from '@gymos/ui';
+import { Activity, EmptyState, Muted, SectionTitle, Text, XStack, YStack } from '@gymos/ui';
 import type { JourneyNode } from './client-journey';
-import { ClientJourneyNode } from './client-journey-node';
+import { ClientJourneyNode, JOURNEY_SPINE_INSET, JOURNEY_SPINE_LEFT } from './client-journey-node';
 
 export const ClientJourneyMap = ({
   nodes,
@@ -66,16 +57,24 @@ export const ClientJourneyMap = ({
     )}
 
     {nodes.length > 0 ? (
-      <YStack width="100%">
+      <YStack width="100%" position="relative">
+        <YStack
+          position="absolute"
+          top={JOURNEY_SPINE_INSET}
+          bottom={JOURNEY_SPINE_INSET}
+          left={JOURNEY_SPINE_LEFT}
+          width={2}
+          backgroundColor="$track"
+          zIndex={0}
+        />
         {nodes.map((node, index) => (
-          <StaggerItem key={node.id} index={index}>
-            <ClientJourneyNode
-              node={node}
-              weightUnit={weightUnit}
-              first={index === 0}
-              last={index === nodes.length - 1}
-            />
-          </StaggerItem>
+          <ClientJourneyNode
+            key={node.id}
+            node={node}
+            weightUnit={weightUnit}
+            last={index === nodes.length - 1}
+            index={index}
+          />
         ))}
       </YStack>
     ) : (
