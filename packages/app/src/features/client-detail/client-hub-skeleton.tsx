@@ -11,6 +11,12 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
+import {
+  JOURNEY_MARKER_SIZE,
+  JOURNEY_RAIL_WIDTH,
+  JOURNEY_SPINE_INSET,
+  JOURNEY_SPINE_LEFT,
+} from '../client-journey/client-journey-node';
 import { ScreenBody } from '../shell/screen-body';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
 import { CLIENT_HUB_TABS } from './client-hub-tabs';
@@ -113,24 +119,41 @@ export const ClientHubOverviewSkeleton = () => (
 export const ClientHubJourneySkeleton = () => (
   <YStack width="100%" maxWidth={760} alignSelf="center" gap="$3">
     <Skeleton width="72%" height={22} />
-    {Array.from({ length: 3 }, (_, i) => (
-      <XStack key={i} gap="$3" alignItems="stretch" width="100%" paddingBottom={i === 2 ? 0 : '$5'}>
-        <YStack width={40} alignItems="center">
-          <SkeletonCircle size={i === 1 ? 32 : 24} />
-        </YStack>
-        <Card flex={1} minWidth={0} gap="$3" padding="$4">
-          <XStack alignItems="center" justifyContent="space-between" gap="$3">
-            <YStack gap="$1" flex={1} minWidth={0}>
-              <Skeleton width="48%" height={18} />
-              <Skeleton width={96} height={14} />
-            </YStack>
-            <SkeletonCircle size={48} />
-          </XStack>
-          <Skeleton width={72} height={24} />
-          <Skeleton width="90%" height={16} />
-        </Card>
-      </XStack>
-    ))}
+    <YStack width="100%" position="relative">
+      <YStack
+        position="absolute"
+        top={JOURNEY_SPINE_INSET}
+        bottom={JOURNEY_SPINE_INSET}
+        left={JOURNEY_SPINE_LEFT}
+        width={2}
+        backgroundColor="$track"
+        zIndex={0}
+      />
+      {Array.from({ length: 3 }, (_, i) => (
+        <XStack
+          key={i}
+          gap="$3"
+          alignItems="stretch"
+          width="100%"
+          paddingBottom={i === 2 ? 0 : '$5'}
+        >
+          <YStack width={JOURNEY_RAIL_WIDTH} alignItems="center" zIndex={1}>
+            <SkeletonCircle size={JOURNEY_MARKER_SIZE} />
+          </YStack>
+          <Card flex={1} minWidth={0} gap="$3" padding="$4">
+            <XStack alignItems="center" justifyContent="space-between" gap="$3">
+              <YStack gap="$1" flex={1} minWidth={0}>
+                <Skeleton width="48%" height={18} />
+                <Skeleton width={96} height={14} />
+              </YStack>
+              <SkeletonCircle size={48} />
+            </XStack>
+            <Skeleton width={72} height={24} />
+            <Skeleton width="90%" height={16} />
+          </Card>
+        </XStack>
+      ))}
+    </YStack>
   </YStack>
 );
 
