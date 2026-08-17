@@ -83,7 +83,7 @@ export const MobileTabBar = () => {
 
   return (
     <XStack
-      backgroundColor="$screenBg"
+      backgroundColor="$cardBg"
       borderTopWidth={1}
       borderTopColor="$borderColor"
       justifyContent="space-around"
@@ -125,16 +125,6 @@ export const MobileTabBar = () => {
               >
                 {label}
               </Text>
-              {active ? (
-                <YStack
-                  width={4}
-                  height={4}
-                  borderRadius={999}
-                  backgroundColor="$primary"
-                  position="absolute"
-                  bottom={2}
-                />
-              ) : null}
             </YStack>
           </Link>
         );
@@ -160,8 +150,8 @@ export const SideNav = () => {
           minHeight={40}
           paddingHorizontal="$3"
           borderRadius="$radiusControl"
-          backgroundColor={active ? '$cardBg' : 'transparent'}
-          hoverStyle={{ backgroundColor: active ? '$cardBg' : '$elevatedBg' }}
+          backgroundColor={active ? '$coachAccentWash' : 'transparent'}
+          hoverStyle={{ backgroundColor: active ? '$coachAccentWash' : '$elevatedBg' }}
           focusVisibleStyle={{
             outlineWidth: 2,
             outlineColor: '$focusRing',
@@ -181,11 +171,11 @@ export const SideNav = () => {
               borderRadius={2}
             />
           ) : null}
-          {navIcon(href, 18, active ? '$primary' : '$textMuted')}
+          {navIcon(href, 18, active ? '$coachAccentText' : '$textMuted')}
           <Body
             fontWeight={active ? '600' : '400'}
             fontSize={13.5}
-            color={active ? '$color' : '$textMuted'}
+            color={active ? '$coachAccentText' : '$textMuted'}
             flex={1}
           >
             {label}
@@ -217,7 +207,7 @@ export const SideNav = () => {
       maxWidth={200}
       flexGrow={0}
       flexShrink={0}
-      backgroundColor="$screenBg"
+      backgroundColor="$cardBg"
       borderRightWidth={1}
       borderRightColor="$borderColor"
       paddingVertical="$4"
@@ -291,7 +281,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
 
   if (isDesktop) {
     return (
-      <XStack flex={1} width="100%" {...webHeight} backgroundColor="$screenBg">
+      <XStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
         <SideNav />
         <YStack flex={1} minWidth={0} minHeight={0} position="relative" overflow="hidden">
           {children}
@@ -301,7 +291,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <YStack flex={1} width="100%" {...webHeight} backgroundColor="$screenBg">
+    <YStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
       <YStack flex={1} minHeight={0} width="100%" overflow="hidden">
         {children}
       </YStack>

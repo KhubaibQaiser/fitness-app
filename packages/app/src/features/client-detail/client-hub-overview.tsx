@@ -3,10 +3,19 @@
 import type { CheckIn, Client, DietaryProfile, Goal, Vitals } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import { formatWeight } from '@gymos/core/units';
-import { AlertBanner, Card, Muted, ShieldAlert, Stat, Text, XStack, YStack } from '@gymos/ui';
+import {
+  AlertBanner,
+  Card,
+  GradientRing,
+  Muted,
+  ShieldAlert,
+  StatPill,
+  Text,
+  XStack,
+  YStack,
+} from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
-import { ProgressRing } from '../charts';
 import { buildLiveJourney } from '../client-journey/client-journey';
 import { ClientJourneyMap } from '../client-journey/client-journey-map';
 
@@ -72,30 +81,6 @@ export const ClientHubOverview = ({
   const pace = paceDisplay(goal, weightUnit);
 
   const startKg = goal?.startWeightKg ?? null;
-  const weightDelta = startKg !== null && latestWeightKg !== null ? startKg - latestWeightKg : null;
-  const loseGoal = goal?.preset === 'LOSE' || goal?.preset === 'RECOMP';
-  const deltaGood =
-    weightDelta === null
-      ? null
-      : loseGoal
-        ? weightDelta > 0
-          ? 'success'
-          : weightDelta < 0
-            ? 'danger'
-            : 'muted'
-        : goal?.preset === 'GAIN'
-          ? weightDelta < 0
-            ? 'success'
-            : weightDelta > 0
-              ? 'danger'
-              : 'muted'
-          : 'muted';
-  const deltaShown = weightDelta !== null ? formatWeight(Math.abs(weightDelta), weightUnit) : null;
-  const deltaText =
-    deltaShown !== null
-      ? `${deltaShown.value} ${deltaShown.unit} ${weightDelta !== null && weightDelta >= 0 ? '↓' : '↑'}`
-      : undefined;
-
   const currentShown = latestWeightKg !== null ? formatWeight(latestWeightKg, weightUnit) : null;
   const startShown = startKg !== null ? formatWeight(startKg, weightUnit) : null;
   const targetShown =
@@ -140,82 +125,44 @@ export const ClientHubOverview = ({
       ) : null}
 
       <XStack flexWrap="wrap" gap="$3" width="100%">
-        <Card
-          flexBasis="47%"
-          flexGrow={1}
-          flexShrink={1}
-          minWidth={140}
-          $md={{ flexBasis: 0, flex: 1 }}
-          padding="$4"
-        >
-          <Stat
+        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <StatPill
             label="Current weight"
             value={currentShown !== null ? String(currentShown.value) : '—'}
-            unit={currentShown?.unit ?? weightUnit}
-            {...(deltaText !== undefined
-              ? { delta: deltaText, deltaTone: deltaGood ?? 'muted' }
-              : {})}
-            {...(startShown !== null
-              ? { hint: `Start: ${startShown.value} ${startShown.unit}` }
-              : {})}
+            suffix={currentShown !== null ? ` ${currentShown.unit}` : ''}
           />
-        </Card>
-        <Card
-          flexBasis="47%"
-          flexGrow={1}
-          flexShrink={1}
-          minWidth={140}
-          $md={{ flexBasis: 0, flex: 1 }}
-          padding="$4"
-        >
-          <Stat
+        </YStack>
+        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <StatPill
             label="Goal progress"
             value={goalProgressPct !== null ? String(goalProgressPct) : '—'}
-            unit="%"
-            hint={
-              targetShown !== null
-                ? `Target: ${targetShown.value} ${targetShown.unit}`
-                : (goal?.preset ?? 'No goal')
-            }
+            suffix={goalProgressPct !== null ? '%' : ''}
           />
-        </Card>
-        <Card
-          flexBasis="47%"
-          flexGrow={1}
-          flexShrink={1}
-          minWidth={140}
-          $md={{ flexBasis: 0, flex: 1 }}
-          padding="$4"
-        >
-          <Stat
-            label="BMI"
-            value={bmi !== null ? bmi.toFixed(1) : '—'}
-            hint={client.heightCm !== null ? `${client.heightCm} cm` : 'Needs height + weight'}
-          />
-        </Card>
-        <Card
-          flexBasis="47%"
-          flexGrow={1}
-          flexShrink={1}
-          minWidth={140}
-          $md={{ flexBasis: 0, flex: 1 }}
-          padding="$4"
-        >
-          <Stat
+        </YStack>
+        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <StatPill label="BMI" value={bmi !== null ? bmi.toFixed(1) : '—'} />
+        </YStack>
+        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <StatPill
             label="Pace"
             value={pace.value}
-            {...(pace.unit !== undefined ? { unit: pace.unit } : {})}
-            hint={pace.hint}
+            suffix={pace.unit !== undefined ? ` ${pace.unit}` : ''}
           />
-        </Card>
+        </YStack>
       </XStack>
 
       {goalProgressPct !== null && goal !== null ? (
         <Card gap="$3" padding="$5" alignItems="center">
-          <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
+          <Muted fontSize={14} fontWeight="500">
             Goal progress
           </Muted>
-          <ProgressRing value={goalProgressPct} size={180} strokeWidth={12} label="progress" />
+          <GradientRing
+            id="client-goal-progress"
+            value={goalProgressPct}
+            size={92}
+            stroke={8}
+            role="coach"
+          />
           <XStack gap="$6">
             <YStack alignItems="center">
               <Muted fontSize={11}>Start</Muted>

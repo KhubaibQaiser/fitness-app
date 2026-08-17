@@ -1,30 +1,40 @@
 'use client';
 
-import { Card, PageHeader, Row, Skeleton, SkeletonRegion, YStack } from '@gymos/ui';
+import {
+  Card,
+  PageHeader,
+  Skeleton,
+  SkeletonCircle,
+  SkeletonRegion,
+  XStack,
+  YStack,
+} from '@gymos/ui';
 
-const AlertCardSkeleton = () => (
-  <Card>
-    <Row>
-      <Skeleton width="48%" height={22} />
-      <Skeleton width={56} height={22} borderRadius={999} />
-    </Row>
-    <Skeleton width="36%" height={18} />
-    <Skeleton width="44%" height={18} />
-  </Card>
+const AlertRowSkeleton = () => (
+  <XStack alignItems="center" gap={12} paddingHorizontal="$2" paddingVertical="$2.5" minHeight={44}>
+    <SkeletonCircle size={32} />
+    <YStack flex={1} minWidth={0} gap={2}>
+      <Skeleton width="58%" height={16} />
+      <Skeleton width="36%" height={14} />
+    </YStack>
+    <Skeleton width={8} height={8} borderRadius={999} />
+  </XStack>
 );
 
-/** Inner twin of NotificationsScreen — real header, 5 alert cards. */
+/** Inner twin of NotificationsScreen — real header, one card of rows. */
 export const NotificationsSkeleton = () => (
   <SkeletonRegion label="Loading alerts" gap="$4">
     <PageHeader
-      title="Alerts"
+      title="Notifications"
       subtitle="Check-ins, safety flags, plan blocks"
       action={<YStack width={1} height={48} />}
     />
-    <AlertCardSkeleton />
-    <AlertCardSkeleton />
-    <AlertCardSkeleton />
-    <AlertCardSkeleton />
-    <AlertCardSkeleton />
+    <Card padding="$2" gap={0}>
+      <AlertRowSkeleton />
+      <AlertRowSkeleton />
+      <AlertRowSkeleton />
+      <AlertRowSkeleton />
+      <AlertRowSkeleton />
+    </Card>
   </SkeletonRegion>
 );

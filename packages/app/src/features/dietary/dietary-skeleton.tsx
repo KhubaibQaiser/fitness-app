@@ -8,10 +8,10 @@ import {
   Muted,
   PageHeader,
   PrimaryButton,
-  SectionTitle,
   Skeleton,
   SkeletonRegion,
   StickyFormFooter,
+  Text,
   XStack,
 } from '@gymos/ui';
 import { AppScreen } from '../shell/app-screen';
@@ -59,25 +59,42 @@ export const DietarySkeleton = () => {
           }
         />
 
-        <SectionTitle>Severe allergies</SectionTitle>
-        <Card>
+        <Card padding="$4">
+          <Text
+            fontFamily="$heading"
+            fontSize={14}
+            fontWeight="500"
+            color="$danger"
+            marginBottom="$2"
+          >
+            Severe allergies
+          </Text>
           <XStack gap="$2" flexWrap="wrap">
             {DIETARY_ALLERGENS.map((a) => (
               <ChipBone key={a} code={`allergen:${a}`} />
             ))}
           </XStack>
+          <Muted fontSize={12} marginTop="$3">
+            Severe allergies are hard blocks in the meal engine.
+          </Muted>
         </Card>
 
-        <SectionTitle>Religious / lifestyle</SectionTitle>
-        <Card>
+        <Card padding="$4">
+          <Text
+            fontFamily="$heading"
+            fontSize={14}
+            fontWeight="500"
+            color="$color"
+            marginBottom="$2"
+          >
+            Religious / lifestyle
+          </Text>
           <XStack gap="$2" flexWrap="wrap">
             {DIETARY_RELIGIOUS.map((r) => (
               <ChipBone key={r} code={`religious:${r}`} />
             ))}
           </XStack>
         </Card>
-
-        <Muted fontSize={12}>Severe allergies are hard blocks in the meal engine.</Muted>
       </SkeletonRegion>
     </AppScreen>
   );

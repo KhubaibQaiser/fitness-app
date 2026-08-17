@@ -8,7 +8,7 @@ import { ClientHubStatusDot } from './client-hub-status-dot';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'plan', label: 'Plan' },
+  { id: 'plan', label: 'Meal Plan' },
   { id: 'history', label: 'History' },
 ] as const;
 
@@ -51,15 +51,15 @@ export const ClientHubHeader = ({
       backgroundColor="$cardBg"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
-      paddingHorizontal="$4"
+      paddingHorizontal={16}
       paddingTop="$3"
       paddingBottom={0}
       width="100%"
       alignSelf="stretch"
-      $md={{ paddingHorizontal: '$8' }}
+      $md={{ paddingHorizontal: 24 }}
     >
-      <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$2.5">
-        <Avatar name={name} size={36} tone={status === 'attention' ? 'primary' : 'accent'} />
+      <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom={16}>
+        <Avatar name={name} size={64} tone={status === 'attention' ? 'primary' : 'accent'} />
 
         <YStack flex={1} minWidth={0} gap={2}>
           <XStack alignItems="center" gap="$2" minWidth={0}>
@@ -69,7 +69,8 @@ export const ClientHubHeader = ({
               minWidth={0}
               fontFamily="$heading"
               fontWeight="700"
-              fontSize={16}
+              fontSize={20}
+              lineHeight={26}
               color="$color"
               letterSpacing={-0.3}
               numberOfLines={1}

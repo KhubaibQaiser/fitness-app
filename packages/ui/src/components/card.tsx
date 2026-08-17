@@ -3,10 +3,15 @@ import { styled, YStack } from 'tamagui';
 export const Card = styled(YStack, {
   name: 'Card',
   backgroundColor: '$cardBg',
-  borderRadius: '$radiusCard',
+  borderRadius: 16,
   padding: '$4',
   gap: '$2',
-  borderWidth: 0,
+  borderWidth: 1,
+  borderColor: '$borderColor',
+  shadowColor: 'rgba(0,0,0,0.06)',
+  shadowOffset: { width: 0, height: 1 },
+  shadowRadius: 3,
+  shadowOpacity: 1,
 
   variants: {
     interactive: {
@@ -22,14 +27,16 @@ export const Card = styled(YStack, {
     },
     elevated: {
       true: {
-        borderWidth: 1,
-        borderColor: '$borderColor',
+        shadowRadius: 8,
+        shadowOpacity: 0.18,
+        shadowOffset: { width: 0, height: 8 },
       },
     },
     tone: {
       default: {},
       danger: {
         backgroundColor: '$dangerMuted',
+        borderColor: '$danger',
       },
       accent: {
         backgroundColor: '$elevatedBg',

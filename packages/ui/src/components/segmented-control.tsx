@@ -24,10 +24,10 @@ export const SegmentedControl = <T extends string | number>({
     <XStack
       role="tablist"
       aria-label={ariaLabel}
-      gap="$1"
+      gap="$0.5"
       flexWrap="wrap"
-      backgroundColor="$cardBg"
-      borderRadius="$radiusCard"
+      backgroundColor="$elevatedBg"
+      borderRadius={999}
       padding="$1"
     >
       {options.map((option) => {
@@ -43,11 +43,11 @@ export const SegmentedControl = <T extends string | number>({
             minHeight={44}
             alignItems="center"
             justifyContent="center"
-            borderRadius="$radiusControl"
+            borderRadius={999}
             paddingHorizontal="$2"
-            backgroundColor={selected ? '$elevatedBg' : 'transparent'}
+            backgroundColor={selected ? '$surface' : 'transparent'}
             cursor="pointer"
-            hoverStyle={{ backgroundColor: selected ? '$elevatedBg' : '$cardBg' }}
+            hoverStyle={{ backgroundColor: '$surface' }}
             pressStyle={{ opacity: 0.9 }}
             focusVisibleStyle={{
               outlineWidth: 2,
@@ -61,8 +61,9 @@ export const SegmentedControl = <T extends string | number>({
           >
             <Text
               fontFamily="$heading"
-              fontWeight={selected ? '700' : '500'}
-              fontSize={13}
+              fontWeight="500"
+              fontSize={12}
+              lineHeight={16}
               color={selected ? '$color' : '$textMuted'}
             >
               {option.label}

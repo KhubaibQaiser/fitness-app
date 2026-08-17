@@ -13,9 +13,9 @@ import {
   Muted,
   PageHeader,
   Row,
-  SectionTitle,
   SegmentedControl,
   Skeleton,
+  Text,
   YStack,
 } from '@gymos/ui';
 import { useMe, usePublicConfig, useUpdateMe } from '../../api';
@@ -52,8 +52,10 @@ export const SettingsScreen = () => {
     <AppScreen>
       <PageHeader title="Settings" subtitle="Workspace, appearance, units" />
 
-      <SectionTitle>Appearance</SectionTitle>
       <Card gap="$3">
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          Appearance
+        </Text>
         <Row minHeight={48}>
           <YStack flex={1} gap={2} minWidth={0}>
             <Body fontWeight="700">Dark mode</Body>
@@ -67,8 +69,10 @@ export const SettingsScreen = () => {
         </Row>
       </Card>
 
-      <SectionTitle>Units</SectionTitle>
       <Card gap="$4">
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          Units
+        </Text>
         <YStack gap="$2" width="100%">
           <Body fontWeight="700">Weight</Body>
           <SegmentedControl
@@ -123,8 +127,10 @@ export const SettingsScreen = () => {
         )}
       </Card>
 
-      <SectionTitle>Coach</SectionTitle>
       <Card>
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          Coach
+        </Text>
         <Row>
           <Body>Name</Body>
           {me.data ? <Muted>{me.data.name}</Muted> : <Skeleton width={128} height={18} />}
@@ -135,8 +141,10 @@ export const SettingsScreen = () => {
         </Row>
       </Card>
 
-      <SectionTitle>Account</SectionTitle>
       <Card gap="$3">
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          Account
+        </Text>
         <GhostButton
           disabled={signingOut}
           onPress={() => {
@@ -171,8 +179,10 @@ export const SettingsScreen = () => {
         </Muted>
       </Card>
 
-      <SectionTitle>About</SectionTitle>
       <Card>
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          About
+        </Text>
         <Row>
           <Body>Product</Body>
           <Muted>GymOS Coach</Muted>
@@ -183,8 +193,10 @@ export const SettingsScreen = () => {
         </Row>
       </Card>
 
-      <SectionTitle>Privacy & safety</SectionTitle>
       <Card gap="$2">
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+          Privacy & safety
+        </Text>
         <Body fontSize={14}>
           Client health data never leaves this platform. Optional AI meal naming runs on our own
           infrastructure; every number is computed by verified formulas, and every AI generation is

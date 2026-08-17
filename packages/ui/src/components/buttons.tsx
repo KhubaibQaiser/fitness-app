@@ -8,16 +8,41 @@ const focusRing = {
 } as const;
 
 const baseButton = {
-  borderRadius: '$radiusControl',
-  height: 48,
-  minHeight: 48,
+  borderRadius: 999,
+  height: 44,
+  minHeight: 44,
   paddingHorizontal: '$4',
   fontFamily: '$heading',
-  fontWeight: '600',
-  fontSize: 15,
-  pressStyle: { opacity: 0.9, scale: 0.97 },
+  fontWeight: '500',
+  fontSize: 14,
+  pressStyle: { opacity: 0.9, scale: 0.95 },
   focusVisibleStyle: focusRing,
   disabledStyle: { opacity: 0.4 },
+  variants: {
+    size: {
+      sm: {
+        minHeight: 44,
+        height: 44,
+        paddingHorizontal: '$3',
+        fontSize: 12,
+      },
+      md: {
+        minHeight: 44,
+        height: 44,
+        paddingHorizontal: '$4',
+        fontSize: 14,
+      },
+      lg: {
+        minHeight: 48,
+        height: 48,
+        paddingHorizontal: '$5',
+        fontSize: 16,
+      },
+    },
+  },
+  defaultVariants: {
+    size: 'md',
+  },
 } as const;
 
 export const PrimaryButton = styled(Button, {
@@ -42,11 +67,10 @@ export const GhostButton = styled(Button, {
   name: 'GhostButton',
   ...baseButton,
   backgroundColor: 'transparent',
-  borderWidth: 1,
-  borderColor: '$borderColor',
-  color: '$color',
+  borderWidth: 0,
+  color: '$textMuted',
   fontFamily: '$body',
-  hoverStyle: { backgroundColor: '$elevatedBg', borderColor: '$borderColorHover' },
+  hoverStyle: { backgroundColor: '$elevatedBg' },
 });
 
 export const DangerButton = styled(Button, {
@@ -65,6 +89,6 @@ export const OutlineButton = styled(Button, {
   borderWidth: 1,
   borderColor: '$borderColor',
   color: '$color',
-  fontFamily: '$body',
+  fontFamily: '$heading',
   hoverStyle: { backgroundColor: '$elevatedBg' },
 });
