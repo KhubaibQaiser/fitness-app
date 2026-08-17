@@ -4,14 +4,14 @@ import { Link } from 'solito/link';
 import type { Notification } from '@gymos/contracts';
 import {
   Badge,
-  Body,
+  Bell,
   Card,
   EmptyState,
   ErrorState,
   GhostButton,
-  Muted,
+  NotificationRow,
   PageHeader,
-  Row,
+  ShieldAlert,
   YStack,
 } from '@gymos/ui';
 import { useMarkAllRead, useNotifications } from '../../api';
@@ -60,7 +60,7 @@ export const NotificationsScreen = () => {
   return (
     <AppScreen>
       <PageHeader
-        title="Alerts"
+        title="Notifications"
         subtitle="Check-ins, safety flags, plan blocks"
         action={
           items.some((n) => n.readAt === null) ? (
@@ -73,33 +73,38 @@ export const NotificationsScreen = () => {
       {items.length === 0 ? (
         <EmptyState title="No alerts" hint="Check-in reminders and safety flags land here." />
       ) : (
-        items.map((n) => {
-          const clientName = typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
-          const high = n.priority === 'HIGH';
-          const body = (
-            <Card
-              interactive={n.deepLink !== null}
-              opacity={n.readAt === null ? 1 : 0.65}
-              tone={high ? 'danger' : 'default'}
-            >
-              <Row>
-                <Body fontWeight={n.readAt === null ? '800' : '500'} flex={1}>
-                  {TYPE_LABEL[n.type] ?? n.type}
-                </Body>
-                <Badge tone={high ? 'danger' : 'neutral'} label={high ? 'HIGH' : 'NORMAL'} />
-              </Row>
-              {clientName !== null ? <Muted>{clientName}</Muted> : null}
-              <Muted fontSize={12}>{new Date(n.createdAt).toLocaleString()}</Muted>
-            </Card>
-          );
-          return n.deepLink !== null ? (
-            <Link key={n.id} href={n.deepLink}>
-              {body}
-            </Link>
-          ) : (
-            <YStack key={n.id}>{body}</YStack>
-          );
-        })
+        <Card padding="$2" gap={0}>
+          {items.map((n) => {
+            const clientName =
+              typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
+            const high = n.priority === 'HIGH';
+            const unread = n.readAt === null;
+            const body = (
+              <NotificationRow
+                title={TYPE_LABEL[n.type] ?? n.type}
+                time={new Date(n.createdAt).toLocaleString()}
+                {...(clientName !== null ? { subtitle: clientName } : {})}
+                unread={unread}
+                priority={high ? 'high' : 'normal'}
+                icon={
+                  high ? (
+                    <ShieldAlert size={14} color="$danger" />
+                  ) : (
+                    <Bell size={14} color="$coachAccentText" />
+                  )
+                }
+                {...(high ? { trailing: <Badge tone="alert" label="HIGH" /> } : {})}
+              />
+            );
+            return n.deepLink !== null ? (
+              <Link key={n.id} href={n.deepLink}>
+                {body}
+              </Link>
+            ) : (
+              <YStack key={n.id}>{body}</YStack>
+            );
+          })}
+        </Card>
       )}
     </AppScreen>
   );

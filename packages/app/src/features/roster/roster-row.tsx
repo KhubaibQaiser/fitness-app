@@ -2,7 +2,7 @@
 
 import { Link } from 'solito/link';
 import type { ClientListItem } from '@gymos/contracts';
-import { Avatar, Badge, Card, ChevronRight, Muted, Text, XStack, YStack } from '@gymos/ui';
+import { Avatar, Badge, Card, ChevronRight, GoalTag, Muted, Text, XStack, YStack } from '@gymos/ui';
 
 const GOAL_LABEL: Record<string, string> = {
   LOSE: 'Lose',
@@ -87,11 +87,17 @@ export const RosterRow = ({ client, desktop }: Props) => {
     <Link href={`/clients/${client.id}`}>
       <Card
         interactive
+        borderRadius={0}
+        backgroundColor="$surface"
+        borderWidth={0}
+        borderBottomWidth={1}
+        borderBottomColor="$borderColor"
         paddingHorizontal="$4"
-        paddingVertical="$3.5"
+        paddingVertical="$3"
         flexDirection="row"
         alignItems="center"
         gap="$4"
+        shadowOpacity={0}
       >
         {/* Client — flex 1 */}
         <XStack flex={1} alignItems="center" gap="$3" minWidth={0}>
@@ -128,9 +134,7 @@ export const RosterRow = ({ client, desktop }: Props) => {
 
         {/* Goal — fixed 100 */}
         <YStack width={COL.goal} flexShrink={0}>
-          <Text fontSize={12} fontWeight="500" color="$textMuted" numberOfLines={1}>
-            {goalText}
-          </Text>
+          {client.goalPreset ? <GoalTag goal={goalText} /> : <Muted fontSize={12}>—</Muted>}
         </YStack>
 
         {/* Status — fixed 160 */}

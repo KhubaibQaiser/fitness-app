@@ -10,12 +10,13 @@ import {
   EmptyState,
   ErrorState,
   FadeIn,
-  MetricHero,
   Muted,
   PageHeader,
+  ScrollView,
   StaggerItem,
-  Stat,
+  StatPill,
   Text,
+  WeaveLine,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -87,47 +88,83 @@ export const HomeScreen = () => {
       />
 
       <ScreenBody gap="$4">
-        <Card padding="$5">
-          <MetricHero
-            label="Needs attention"
-            value={String(atRisk.length)}
-            tone={atRisk.length > 0 ? 'warning' : 'success'}
-            delta={
-              <Muted fontSize={12}>
-                {atRisk.length > 0
-                  ? `${atRisk.length} client${atRisk.length > 1 ? 's' : ''} need intervention today`
-                  : 'All clients are on track today'}
-              </Muted>
-            }
-          />
-          <XStack gap="$4" flexWrap="wrap" marginTop="$3">
-            <YStack minWidth={110} flex={1}>
-              <Stat label="Total clients" value={String(allClients.length)} />
-            </YStack>
-            <YStack minWidth={110} flex={1}>
-              <Stat label="On track" value={String(onTrack)} tone="success" />
-            </YStack>
-            <YStack minWidth={110} flex={1}>
-              <Stat
-                label="High alerts"
-                value={String(highAlerts)}
-                {...(highAlerts > 0 ? { tone: 'warning' as const } : {})}
-              />
-            </YStack>
-          </XStack>
-        </Card>
+        <WeaveLine id="home-idle" mode="idle" height={28} />
+        <XStack flexWrap="wrap" gap="$3" width="100%">
+          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+            <StatPill label="Needs attention" value={atRisk.length} />
+          </YStack>
+          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+            <StatPill label="Total clients" value={allClients.length} />
+          </YStack>
+          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+            <StatPill label="On track" value={onTrack} />
+          </YStack>
+          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+            <StatPill label="High alerts" value={highAlerts} />
+          </YStack>
+        </XStack>
 
         <YStack gap="$5">
           <YStack gap="$3">
             <XStack alignItems="center" justifyContent="space-between">
-              <Text
-                fontFamily="$heading"
-                fontSize={13}
-                fontWeight="600"
-                textTransform="uppercase"
-                letterSpacing={0.8}
-                color="$color"
-              >
+              <Text fontFamily="$heading" fontSize={14} fontWeight="600" color="$color">
+                Needs attention
+              </Text>
+              <Link href="/clients">
+                <Text fontSize={12} color="$primary" fontWeight="500">
+                  All clients →
+                </Text>
+              </Link>
+            </XStack>
+            {atRisk.length === 0 ? (
+              <Card padding="$4">
+                <Muted textAlign="center" fontSize={13}>
+                  No clients need attention.
+                </Muted>
+              </Card>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <XStack gap="$3">
+                  {atRisk.map((client, i) => (
+                    <FadeIn key={client.id} delay={i * 35}>
+                      <Link href={`/clients/${client.id}`}>
+                        <Card interactive padding="$4" minWidth={240}>
+                          <XStack alignItems="flex-start" gap="$3">
+                            <Avatar name={client.name} size={40} />
+                            <YStack flex={1} minWidth={0} gap="$1.5">
+                              <Text
+                                fontFamily="$heading"
+                                fontWeight="600"
+                                fontSize={13.5}
+                                color="$color"
+                                numberOfLines={1}
+                              >
+                                {client.name}
+                              </Text>
+                              <XStack gap="$1" flexWrap="wrap">
+                                {client.attentionReasons.map((r) => (
+                                  <Badge
+                                    key={r.code}
+                                    tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
+                                    label={r.code.replaceAll('_', ' ')}
+                                  />
+                                ))}
+                              </XStack>
+                            </YStack>
+                            <ChevronRight size={14} color="$textMuted" />
+                          </XStack>
+                        </Card>
+                      </Link>
+                    </FadeIn>
+                  ))}
+                </XStack>
+              </ScrollView>
+            )}
+          </YStack>
+
+          <YStack gap="$3">
+            <XStack alignItems="center" justifyContent="space-between">
+              <Text fontFamily="$heading" fontSize={14} fontWeight="600" color="$color">
                 Due today
               </Text>
               {dueItems.length > 0 ? (
@@ -180,66 +217,6 @@ export const HomeScreen = () => {
                     </Card>
                   </Link>
                 </StaggerItem>
-              ))
-            )}
-          </YStack>
-
-          <YStack gap="$3">
-            <XStack alignItems="center" justifyContent="space-between">
-              <Text
-                fontFamily="$heading"
-                fontSize={13}
-                fontWeight="600"
-                textTransform="uppercase"
-                letterSpacing={0.8}
-                color="$color"
-              >
-                Needs attention
-              </Text>
-              <Link href="/clients">
-                <Text fontSize={12} color="$primary" fontWeight="500">
-                  All clients →
-                </Text>
-              </Link>
-            </XStack>
-            {atRisk.length === 0 ? (
-              <Card padding="$4">
-                <Muted textAlign="center" fontSize={13}>
-                  No clients need attention.
-                </Muted>
-              </Card>
-            ) : (
-              atRisk.map((client, i) => (
-                <FadeIn key={client.id} delay={i * 35}>
-                  <Link href={`/clients/${client.id}`}>
-                    <Card interactive padding="$3.5">
-                      <XStack alignItems="flex-start" gap="$3">
-                        <Avatar name={client.name} size={40} />
-                        <YStack flex={1} minWidth={0} gap="$1.5">
-                          <Text
-                            fontFamily="$heading"
-                            fontWeight="600"
-                            fontSize={13.5}
-                            color="$color"
-                            numberOfLines={1}
-                          >
-                            {client.name}
-                          </Text>
-                          <XStack gap="$1" flexWrap="wrap">
-                            {client.attentionReasons.map((r) => (
-                              <Badge
-                                key={r.code}
-                                tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
-                                label={r.code.replaceAll('_', ' ')}
-                              />
-                            ))}
-                          </XStack>
-                        </YStack>
-                        <ChevronRight size={14} color="$textMuted" />
-                      </XStack>
-                    </Card>
-                  </Link>
-                </FadeIn>
               ))
             )}
           </YStack>

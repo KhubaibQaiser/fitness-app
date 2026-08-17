@@ -59,8 +59,7 @@ export const FormField = ({
         fontWeight="500"
         fontSize={12}
         color="$textMuted"
-        textTransform="uppercase"
-        letterSpacing={0.8}
+        lineHeight={16}
       >
         {label}
         {required ? ' *' : ''}
@@ -75,10 +74,10 @@ export const FormField = ({
           size="$4"
           borderWidth={1}
           borderColor={borderColor}
-          backgroundColor="$cardBg"
+          backgroundColor="$surface"
           color="$color"
           placeholderTextColor="$placeholderColor"
-          borderRadius="$radiusControl"
+          borderRadius={12}
           paddingHorizontal="$3"
           fontFamily="$body"
           numberOfLines={numberOfLines}
@@ -107,10 +106,10 @@ export const FormField = ({
             width="100%"
             borderWidth={1}
             borderColor={borderColor}
-            backgroundColor="$cardBg"
+            backgroundColor="$surface"
             color="$color"
             placeholderTextColor="$placeholderColor"
-            borderRadius="$radiusControl"
+            borderRadius={12}
             paddingHorizontal="$3"
             paddingRight={unit ? 44 : undefined}
             fontFamily="$body"

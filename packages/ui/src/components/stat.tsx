@@ -112,15 +112,25 @@ export const avatarInitials = (name: string): string =>
 export const Avatar = ({
   name,
   size = 40,
-  tone = 'primary',
+  tone = 'neutral',
 }: {
   name: string;
   size?: number;
-  tone?: 'primary' | 'accent';
+  tone?: 'neutral' | 'coach' | 'client' | 'primary' | 'accent';
 }) => {
   const initials = avatarInitials(name);
-  const bg = tone === 'accent' ? '$accent' : '$primary';
-  const fg = tone === 'accent' ? '$accentFg' : '$primaryFg';
+  const bg =
+    tone === 'neutral'
+      ? '$elevatedBg'
+      : tone === 'client' || tone === 'accent'
+        ? '$accent'
+        : '$primary';
+  const fg =
+    tone === 'neutral'
+      ? '$textMuted'
+      : tone === 'client' || tone === 'accent'
+        ? '$accentFg'
+        : '$primaryFg';
   return (
     <XStack
       width={size}

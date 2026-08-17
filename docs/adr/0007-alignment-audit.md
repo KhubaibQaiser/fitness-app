@@ -1,6 +1,6 @@
 # ADR-0007: Alignment Phase 0 gap audit
 
-- **Status**: Proposed (blocks Phase 1 until human review)
+- **Status**: Accepted
 - **Date**: 2026-08-17
 - **Deciders**: GymOS platform
 - **Supersedes**: none. Does not replace ADR-0001 through ADR-0006. Those remain current-state decisions.

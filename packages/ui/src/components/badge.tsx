@@ -1,14 +1,17 @@
 import { Text, XStack } from 'tamagui';
 
-export type BadgeTone = 'danger' | 'warning' | 'success' | 'neutral' | 'primary' | 'accent';
+export type BadgeTone =
+  'danger' | 'warning' | 'success' | 'neutral' | 'primary' | 'accent' | 'milestone' | 'alert';
 
 const BADGE_BG: Record<BadgeTone, string> = {
   danger: '$dangerMuted',
   warning: '$warningMuted',
   success: '$successMuted',
   neutral: '$elevatedBg',
-  primary: '$elevatedBg',
-  accent: '$elevatedBg',
+  primary: '$primaryMuted',
+  accent: '$primaryMuted',
+  milestone: '$milestoneMuted',
+  alert: '$dangerMuted',
 };
 
 const BADGE_FG: Record<BadgeTone, string> = {
@@ -17,15 +20,17 @@ const BADGE_FG: Record<BadgeTone, string> = {
   success: '$success',
   neutral: '$textMuted',
   primary: '$primary',
-  accent: '$accent',
+  accent: '$primary',
+  milestone: '$milestoneText',
+  alert: '$danger',
 };
 
 export const Badge = ({ tone = 'neutral', label }: { tone?: BadgeTone; label: string }) => (
   <XStack
     backgroundColor={BADGE_BG[tone]}
     borderRadius={999}
-    paddingHorizontal="$2.5"
-    paddingVertical="$1.5"
+    paddingHorizontal="$2"
+    paddingVertical="$0.5"
     alignSelf="flex-start"
     alignItems="center"
     gap="$1"
@@ -33,9 +38,9 @@ export const Badge = ({ tone = 'neutral', label }: { tone?: BadgeTone; label: st
     <Text
       fontFamily="$heading"
       color={BADGE_FG[tone]}
-      fontSize={11}
-      fontWeight="600"
-      letterSpacing={0.2}
+      fontSize={12}
+      lineHeight={16}
+      fontWeight="500"
     >
       {label}
     </Text>

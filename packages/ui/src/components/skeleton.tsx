@@ -40,19 +40,19 @@ const usePulseLoop = (opacity: Animated.Value, active: boolean) => {
   useEffect(() => {
     if (!active) return;
     if (reduceMotion) {
-      opacity.setValue(0.7);
+      opacity.setValue(0.65);
       return;
     }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
-          toValue: 1,
-          duration: 750,
+          toValue: 0.8,
+          duration: 700,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0.45,
-          duration: 750,
+          duration: 700,
           useNativeDriver: true,
         }),
       ]),
@@ -64,7 +64,7 @@ const usePulseLoop = (opacity: Animated.Value, active: boolean) => {
 
 const usePulseOpacity = (): Animated.Value => {
   const shared = useContext(PulseContext);
-  const local = useRef(new Animated.Value(0.55)).current;
+  const local = useRef(new Animated.Value(0.45)).current;
   usePulseLoop(local, shared === null);
   return shared ?? local;
 };
@@ -79,7 +79,7 @@ export const SkeletonRegion = ({
   label?: string;
   gap?: ComponentProps<typeof YStack>['gap'];
 }) => {
-  const opacity = useRef(new Animated.Value(0.55)).current;
+  const opacity = useRef(new Animated.Value(0.45)).current;
   usePulseLoop(opacity, true);
 
   return (

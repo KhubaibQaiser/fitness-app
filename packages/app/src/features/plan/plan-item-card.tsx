@@ -11,6 +11,7 @@ import {
   IconButton,
   Muted,
   Row,
+  Text,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -66,9 +67,9 @@ export const PlanItemCard = ({
   };
 
   return (
-    <Card gap="$2">
+    <Card padding="$3" gap="$2">
       <Row>
-        <YStack flex={1} gap="$1">
+        <YStack flex={1} gap="$1" minWidth={0}>
           <XStack gap="$2" alignItems="center" flexWrap="wrap">
             <Body fontWeight="700">{item.foodName}</Body>
             {item.macrosSource === 'coach_override' ? (
@@ -76,10 +77,13 @@ export const PlanItemCard = ({
             ) : null}
           </XStack>
           <Muted>
-            {item.portionGrams} g · {item.macros.kcal} kcal · P {item.macros.proteinG}g · F{' '}
-            {item.macros.fatG}g · C {item.macros.carbsG}g
+            {item.portionGrams} g · P {item.macros.proteinG}g · F {item.macros.fatG}g · C{' '}
+            {item.macros.carbsG}g
           </Muted>
         </YStack>
+        <Text fontFamily="$mono" fontWeight="600" fontSize={14} color="$color">
+          {item.macros.kcal}
+        </Text>
         {editable ? (
           <XStack gap="$1.5">
             <IconButton tone="ghost" onPress={() => step(-1)} aria-label="Smaller portion">
