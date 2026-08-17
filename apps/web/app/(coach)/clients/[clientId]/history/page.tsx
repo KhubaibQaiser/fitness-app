@@ -5,6 +5,6 @@ import { ClientDetailScreen } from '@gymos/app/features/client-detail';
 
 const Page = ({ params }: { params: Promise<{ clientId: string }> }) => {
   const { clientId } = use(params);
-  return <ClientDetailScreen clientId={clientId} tab="overview" />;
+  return <ClientDetailScreen clientId={clientId} tab="history" />;
 };
 export default Page;
