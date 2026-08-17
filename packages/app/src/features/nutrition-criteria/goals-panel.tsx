@@ -66,17 +66,21 @@ export const GoalsPanel = () => {
       <Card gap="$3">
         <Muted lineHeight={19}>
           {hasTenantOverrides
-            ? 'This tenant sets Lose/Gain pace as fixed kg/week. Other goals still use a % of TDEE. Unsafe targets are refused.'
-            : 'Target calories = TDEE adjusted by a percentage. Negative = deficit, positive = surplus.'}
+            ? 'This tenant may set Lose/Gain as a desired kg/week. Calories are still clamped to safety floors; displayed kg/week is derived from the safe target.'
+            : 'Target calories = TDEE adjusted by a percentage, then clamped to safety floors. Negative = deficit, positive = surplus.'}
         </Muted>
         <FormulaBlock
           lines={
             hasTenantOverrides
               ? [
-                  'override: target kcal = round(TDEE + weekly kg × 7700 ÷ 7)',
-                  'default: target kcal = round(TDEE × (1 + adjustment))',
+                  'intent: round(TDEE + weekly kg × 7700 ÷ 7), then clamp',
+                  'default: round(TDEE × (1 + adjustment)), then clamp',
+                  'displayed kg/week is derived from the clamped kcal',
                 ]
-              : ['target kcal = round(TDEE × (1 + adjustment))']
+              : [
+                  'target kcal = clamp(round(TDEE × (1 + adjustment)))',
+                  'displayed kg/week is derived from the clamped kcal',
+                ]
           }
         />
       </Card>
@@ -111,7 +115,7 @@ export const GoalsPanel = () => {
       <Card gap="$2">
         <Muted fontSize={12} lineHeight={18}>
           {hasTenantOverrides
-            ? 'Example: TDEE 2,800 kcal · Lose · Gentle (−0.5 kg/wk) → round(2,800 − 550) = 2,250 kcal/day.'
+            ? 'Example: TDEE 2,270 kcal · Lose · Aggressive (−2 kg/wk intent) → clamp to 1,703 kcal/day (−0.52 kg/wk), not 70.'
             : 'Example: TDEE 2,500 kcal · Lose · Standard → 2,500 × 0.80 = 2,000 kcal/day.'}
         </Muted>
       </Card>

@@ -1,6 +1,11 @@
 'use client';
 
-import { CALORIE_FLOOR_KCAL, KCAL_PER_KG, MAX_DEFICIT_FRACTION } from '@gymos/core/nutrition';
+import {
+  CALORIE_FLOOR_KCAL,
+  KCAL_PER_KG,
+  MAX_DEFICIT_FRACTION,
+  MAX_SURPLUS_FRACTION,
+} from '@gymos/core/nutrition';
 import { Body, Card, Muted, Stat, XStack, YStack } from '@gymos/ui';
 import { FormulaBlock } from './formula-block';
 import { PanelHeading } from './panel-heading';
@@ -21,6 +26,11 @@ export const SafetyPanel = () => (
         value={`${Math.round(MAX_DEFICIT_FRACTION * 100)}%`}
         hint="of TDEE"
       />
+      <Stat
+        label="Max surplus"
+        value={`${Math.round(MAX_SURPLUS_FRACTION * 100)}%`}
+        hint="of TDEE"
+      />
     </XStack>
 
     <Card gap="$3">
@@ -28,8 +38,9 @@ export const SafetyPanel = () => (
         What happens if a target is unsafe?
       </Body>
       <Muted lineHeight={19}>
-        Creating a goal: the engine refuses — it never quietly lowers the target. Weekly check-ins:
-        suggested adjustments are clamped into the safe band instead.
+        Creating a goal: named paces are clamped into the safe band (floors, 25% deficit cap, 15%
+        surplus cap, 1% body-weight/week). Only infeasible macros are refused. Weekly check-ins use
+        the same clamp for suggested adjustments.
       </Muted>
     </Card>
 

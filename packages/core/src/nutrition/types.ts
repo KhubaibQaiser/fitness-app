@@ -27,12 +27,19 @@ export type MacroTargets = {
   readonly fiberG: number;
 };
 
+/** Why a named-pace kcal intent was moved into the safe band. */
+export type PaceClampReason = 'CALORIE_FLOOR' | 'DEFICIT_CAP' | 'SURPLUS_CAP' | 'BODY_WEIGHT_RATE';
+
 export type TargetComputation = {
   readonly bmr: number;
   readonly tdee: number;
   readonly targets: MacroTargets;
-  /** kg per week implied by the kcal delta; negative = loss. */
+  /** kg per week implied by the *clamped* kcal delta; negative = loss. */
   readonly expectedWeeklyDeltaKg: number;
+  /** Kcal before safety clamp (tenant kg/week or GOAL_DELTA). */
+  readonly requestedKcal: number;
+  readonly clamped: boolean;
+  readonly clampReasons: readonly PaceClampReason[];
 };
 
 export type NutritionRefusal =

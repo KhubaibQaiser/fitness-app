@@ -20,7 +20,7 @@ const STEPS = [
   },
   {
     title: 'Goal calories',
-    detail: 'TDEE nudged up or down by goal + pace, then checked against safety floors.',
+    detail: 'TDEE nudged up or down by goal + pace, then clamped to safety floors.',
   },
   {
     title: 'Macros & fiber',
