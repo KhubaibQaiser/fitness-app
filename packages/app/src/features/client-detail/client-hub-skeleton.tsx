@@ -51,22 +51,19 @@ export const ClientHubHeaderSkeleton = ({
     borderBottomWidth={1}
     borderBottomColor="$borderColor"
     paddingHorizontal="$4"
-    paddingTop="$3"
+    paddingTop="$md"
     paddingBottom={0}
     width="100%"
     alignSelf="stretch"
     $md={{ paddingHorizontal: '$8' }}
   >
-    <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$2.5">
-      <SkeletonCircle size={36} />
+    <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$md">
+      <SkeletonCircle size={40} />
       <YStack flex={1} minWidth={0} gap={2}>
-        <XStack alignItems="center" gap="$2" minWidth={0}>
-          <SkeletonCircle size={12} />
-          <Skeleton width="48%" height={20} />
-        </XStack>
-        <XStack flexWrap="wrap" gap="$2" alignItems="center">
-          <Skeleton width={112} height={18} />
-          <Skeleton width={140} height={18} />
+        <Skeleton width="48%" height={16} />
+        <XStack flexWrap="wrap" gap="$xs" alignItems="center">
+          <Skeleton width={112} height={16} />
+          <Skeleton width={140} height={16} />
         </XStack>
       </YStack>
       <ClientHubMoreMenu
