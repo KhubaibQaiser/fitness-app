@@ -264,16 +264,7 @@ describe('auth (JWT + refresh)', () => {
     expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
     expect(body.defaultCountry).toBe('PK');
     expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
-    expect(body.nutrition?.weeklyDeltaKg?.LOSE).toEqual({
-      CONSERVATIVE: -0.5,
-      STANDARD: -1,
-      AGGRESSIVE: -2,
-    });
-    expect(body.nutrition?.weeklyDeltaKg?.GAIN).toEqual({
-      CONSERVATIVE: 0.25,
-      STANDARD: 0.5,
-      AGGRESSIVE: 1,
-    });
+    expect(body.nutrition?.weeklyDeltaKg).toBeUndefined();
   });
 });
 

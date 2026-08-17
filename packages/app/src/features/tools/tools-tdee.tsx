@@ -61,7 +61,13 @@ export const ToolsTdee = () => {
   const tdeeValue = valid ? calcTdee({ sex, ageYears, heightCm, weightKg, activity }) : null;
 
   const paced =
-    tdeeValue !== null ? targetKcalFromPace(tdeeValue, goalPreset, goalRate, config.data) : null;
+    tdeeValue !== null && weightKg !== null
+      ? targetKcalFromPace(tdeeValue, goalPreset, goalRate, {
+          sex,
+          weightKg,
+          ...(config.data !== undefined ? { config: config.data } : {}),
+        })
+      : null;
   const targetValue = paced?.targetKcal ?? null;
   const weeklyDeltaKg = paced?.weeklyDeltaKg ?? null;
   const weeklyDeltaDisplay =

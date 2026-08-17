@@ -7,7 +7,7 @@ import {
   formatGoalEta,
 } from './goal-preview';
 
-const pilotConfig = {
+const legacyConfig = {
   nutrition: {
     weeklyDeltaKg: {
       LOSE: { CONSERVATIVE: -0.5, STANDARD: -1, AGGRESSIVE: -2 },
@@ -51,7 +51,7 @@ describe('goal preview', () => {
       rate: 'CONSERVATIVE',
       startWeightKg: 80,
       targetWeightKg: 70,
-      config: pilotConfig,
+      config: legacyConfig,
       today: new Date('2026-08-15T00:00:00Z'),
     });
 
@@ -60,9 +60,35 @@ describe('goal preview', () => {
     expect(preview.etaWeeks).toBe(20);
     expect(preview.estimatedTargetDate).toBe('2027-01-02');
     expect(preview.safetyIssue).toBeNull();
+    expect(preview.paceAdjustment).toBeNull();
   });
 
-  it('preserves requested numbers and explains an unsafe pace', () => {
+  it('clamps an unsafe tenant pace and explains the limit instead of showing 70 kcal', () => {
+    const preview = buildGoalPreview({
+      sex: 'M',
+      dob: '1994-01-01',
+      heightCm: 174,
+      weightKg: 95,
+      activity: 1.2,
+      preset: 'LOSE',
+      rate: 'AGGRESSIVE',
+      startWeightKg: 95,
+      targetWeightKg: 85,
+      config: legacyConfig,
+      today: new Date('2024-08-17T00:00:00Z'),
+    });
+
+    expect(preview.targetKcal).toBeGreaterThanOrEqual(Math.ceil(preview.tdeeKcal * 0.75));
+    expect(preview.targetKcal).not.toBe(70);
+    expect(preview.targetKcal).toBeGreaterThan(1500);
+    expect(preview.safetyIssue).toBeNull();
+    expect(preview.paceAdjustment).not.toBeNull();
+    expect(preview.paceAdjustment?.reasons).toEqual(['DEFICIT_CAP']);
+    expect(preview.expectedWeeklyDeltaKg).toBeGreaterThan(-1);
+    expect(preview.etaWeeks).toBeGreaterThan(10);
+  });
+
+  it('clamps STANDARD −1 kg/wk to the deficit cap and still allows create', () => {
     const preview = buildGoalPreview({
       sex: 'F',
       dob: '1996-01-01',
@@ -73,15 +99,13 @@ describe('goal preview', () => {
       rate: 'STANDARD',
       startWeightKg: 70,
       targetWeightKg: 60,
-      config: pilotConfig,
+      config: legacyConfig,
       today: new Date('2026-08-15T00:00:00Z'),
     });
 
-    expect(preview.expectedWeeklyDeltaKg).toBe(-1);
-    expect(preview.dailyEnergyDeltaKcal).toBe(-1100);
-    expect(preview.safetyIssue).not.toBeNull();
-    expect(['CALORIE_FLOOR_VIOLATION', 'DEFICIT_CAP_EXCEEDED']).toContain(
-      preview.safetyIssue?.code,
-    );
+    expect(preview.expectedWeeklyDeltaKg).not.toBe(-1);
+    expect(Math.abs(preview.dailyEnergyDeltaKcal)).toBeLessThan(1100);
+    expect(preview.safetyIssue).toBeNull();
+    expect(preview.paceAdjustment).not.toBeNull();
   });
 });
