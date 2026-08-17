@@ -56,9 +56,14 @@ const badgeFor = (node: JourneyNode): { tone: BadgeTone; label: string } | null 
   }
   if (node.projected) return { tone: 'neutral', label: 'Projected' };
   if (node.state === 'skipped') return { tone: 'neutral', label: 'Skipped' };
+  if (node.kind === 'MILESTONE') return { tone: 'milestone', label: 'Milestone' };
+  if (node.kind === 'TARGET') return { tone: 'primary', label: 'Goal' };
   if (node.kind === 'CHECK_IN') return { tone: 'success', label: 'Completed' };
   return null;
 };
+
+const formatDelta = (kgPerWeek: number): string =>
+  `${kgPerWeek > 0 ? '+' : ''}${kgPerWeek.toFixed(2)} kg/wk`;
 
 export const ClientJourneyNode = ({
   node,
@@ -74,43 +79,38 @@ export const ClientJourneyNode = ({
   const Icon = iconFor(node);
   const badge = badgeFor(node);
   const shownWeight = node.weightKg !== null ? formatWeight(node.weightKg, weightUnit, 1) : null;
-  const markerColor =
-    node.state === 'current'
-      ? '$primary'
-      : node.state === 'past'
-        ? '$success'
-        : node.state === 'skipped'
-          ? '$textMuted'
-          : '$borderStrong';
+  const isCurrent = node.state === 'current';
+  const isPast = node.state === 'past';
+  const markerColor = isCurrent || isPast ? '$primary' : '$textMuted';
+  const spineColor = isCurrent || isPast ? '$primary' : '$track';
   const content = (
     <Card
       interactive={node.href !== undefined}
-      elevated={node.state === 'current'}
-      backgroundColor={node.state === 'current' ? '$elevatedBg' : '$cardBg'}
-      borderWidth={node.projected ? 1 : node.state === 'current' ? 1 : 0}
-      borderColor={node.state === 'current' ? '$primary' : '$borderColor'}
+      backgroundColor={isCurrent ? '$primaryMuted' : '$cardBg'}
+      borderColor={isCurrent ? '$primary' : '$borderColor'}
       borderStyle={node.projected ? 'dashed' : 'solid'}
-      padding="$4"
       gap="$3"
-      flex={1}
-      minWidth={0}
-      opacity={node.state === 'future' ? 0.82 : 1}
+      width="100%"
+      opacity={node.state === 'future' ? 0.88 : 1}
       accessibilityLabel={`${node.title}, ${formatDate(node.date)}${shownWeight !== null ? `, ${shownWeight.value} ${shownWeight.unit}` : ''}`}
     >
       <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-        <YStack gap={2} flex={1} minWidth={0}>
+        <YStack gap="$1" flex={1} minWidth={0}>
           <XStack alignItems="center" flexWrap="wrap" gap="$2">
             <Text
               fontFamily="$heading"
-              fontSize={15}
-              fontWeight={node.state === 'current' ? '800' : '700'}
+              fontSize="$headline"
+              lineHeight="$headline"
+              fontWeight={isCurrent ? '700' : '600'}
               color="$color"
             >
               {node.title}
             </Text>
             {badge !== null ? <Badge tone={badge.tone} label={badge.label} /> : null}
           </XStack>
-          <Muted fontSize={12}>{formatDate(node.date)}</Muted>
+          <Muted fontSize="$captionDefault" lineHeight="$captionDefault">
+            {formatDate(node.date)}
+          </Muted>
         </YStack>
         {node.adherenceScore !== undefined ? (
           <JourneyAdherenceScore score={node.adherenceScore} />
@@ -120,39 +120,61 @@ export const ClientJourneyNode = ({
       </XStack>
 
       {shownWeight !== null ? (
-        <XStack alignItems="baseline" gap="$1.5">
-          <Text fontFamily="$heading" fontSize={22} fontWeight="800" color="$color">
+        <XStack alignItems="baseline" gap="$2">
+          <Text
+            fontFamily="$mono"
+            fontSize="$statMd"
+            lineHeight="$statMd"
+            fontWeight="600"
+            color="$color"
+          >
             {shownWeight.value}
           </Text>
-          <Muted fontWeight="600">{shownWeight.unit}</Muted>
+          <Muted fontSize="$captionDefault" lineHeight="$captionDefault" fontWeight="500">
+            {shownWeight.unit}
+          </Muted>
         </XStack>
       ) : null}
 
       {node.actualWeeklyDeltaKg !== undefined || node.expectedWeeklyDeltaKg !== undefined ? (
-        <XStack flexWrap="wrap" gap="$3">
+        <XStack flexWrap="wrap" gap="$4">
           {node.actualWeeklyDeltaKg !== undefined ? (
-            <Muted fontSize={12}>
-              Actual{' '}
-              <Text fontFamily="$mono" fontSize={12} fontWeight="700" color="$color">
-                {node.actualWeeklyDeltaKg > 0 ? '+' : ''}
-                {node.actualWeeklyDeltaKg.toFixed(2)} kg/wk
+            <YStack gap="$1">
+              <Muted fontSize="$captionDefault" lineHeight="$captionDefault">
+                Actual
+              </Muted>
+              <Text
+                fontFamily="$mono"
+                fontSize="$caption"
+                lineHeight="$caption"
+                fontWeight="500"
+                color="$color"
+              >
+                {formatDelta(node.actualWeeklyDeltaKg)}
               </Text>
-            </Muted>
+            </YStack>
           ) : null}
           {node.expectedWeeklyDeltaKg !== undefined ? (
-            <Muted fontSize={12}>
-              Expected{' '}
-              <Text fontFamily="$mono" fontSize={12} fontWeight="700" color="$color">
-                {node.expectedWeeklyDeltaKg > 0 ? '+' : ''}
-                {node.expectedWeeklyDeltaKg.toFixed(2)} kg/wk
+            <YStack gap="$1">
+              <Muted fontSize="$captionDefault" lineHeight="$captionDefault">
+                Expected
+              </Muted>
+              <Text
+                fontFamily="$mono"
+                fontSize="$caption"
+                lineHeight="$caption"
+                fontWeight="500"
+                color="$color"
+              >
+                {formatDelta(node.expectedWeeklyDeltaKg)}
               </Text>
-            </Muted>
+            </YStack>
           ) : null}
         </XStack>
       ) : null}
 
       {node.detail !== null ? (
-        <Muted fontSize={12.5} lineHeight={18}>
+        <Muted fontSize="$bodyDefault" lineHeight="$bodyDefault">
           {node.detail}
         </Muted>
       ) : null}
@@ -160,42 +182,32 @@ export const ClientJourneyNode = ({
   );
 
   return (
-    <XStack gap="$3" alignItems="stretch" width="100%">
-      <YStack width={34} alignItems="center" position="relative">
+    <XStack gap="$3" alignItems="stretch" width="100%" paddingBottom={last ? 0 : '$5'}>
+      <YStack width={40} alignItems="center" position="relative">
         {!first ? (
-          <YStack
-            position="absolute"
-            top={0}
-            bottom="50%"
-            width={2}
-            backgroundColor="$borderColor"
-          />
+          <YStack position="absolute" top={0} bottom="50%" width={2} backgroundColor={spineColor} />
         ) : null}
         {!last ? (
-          <YStack
-            position="absolute"
-            top="50%"
-            bottom={0}
-            width={2}
-            backgroundColor="$borderColor"
-          />
+          <YStack position="absolute" top="50%" bottom={0} width={2} backgroundColor={spineColor} />
         ) : null}
         <YStack
-          width={node.state === 'current' ? 32 : 26}
-          height={node.state === 'current' ? 32 : 26}
+          width={isCurrent ? 32 : 24}
+          height={isCurrent ? 32 : 24}
           marginTop="$4"
           borderRadius={999}
           alignItems="center"
           justifyContent="center"
-          backgroundColor={node.state === 'current' ? '$primaryMuted' : '$cardBg'}
-          borderWidth={node.state === 'current' ? 3 : 2}
+          backgroundColor={isCurrent ? '$primaryMuted' : '$cardBg'}
+          borderWidth={isCurrent ? 3 : 2}
           borderColor={markerColor}
           zIndex={1}
         >
-          <Icon size={node.state === 'current' ? 15 : 12} color={markerColor} />
+          <Icon size={isCurrent ? 16 : 12} color={markerColor} />
         </YStack>
       </YStack>
-      {node.href !== undefined ? <Link href={node.href}>{content}</Link> : content}
+      <YStack flex={1} minWidth={0}>
+        {node.href !== undefined ? <Link href={node.href}>{content}</Link> : content}
+      </YStack>
     </XStack>
   );
 };
