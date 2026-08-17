@@ -3,6 +3,11 @@
 import type { ReactNode } from 'react';
 import { Sheet, Text, XStack, YStack } from 'tamagui';
 import { X } from '../icons';
+import {
+  gymosSheetFrameRadius,
+  gymosSheetOverlayColor,
+  gymosSheetTransition,
+} from './gymos-sheet-motion';
 import { IconButton } from './icon-button';
 
 type GymosSheetProps = {
@@ -21,10 +26,18 @@ export const GymosSheet = ({ open, onClose, title, children }: GymosSheetProps) 
     }}
     snapPointsMode="fit"
     dismissOnSnapToBottom
+    transition={gymosSheetTransition}
   >
-    <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" onPress={onClose} />
+    <Sheet.Overlay
+      enterStyle={{ opacity: 0 }}
+      exitStyle={{ opacity: 0 }}
+      backgroundColor={gymosSheetOverlayColor}
+      onPress={onClose}
+    />
     <Sheet.Handle />
     <Sheet.Frame
+      borderTopLeftRadius={gymosSheetFrameRadius}
+      borderTopRightRadius={gymosSheetFrameRadius}
       role="dialog"
       aria-modal
       aria-label={title}
