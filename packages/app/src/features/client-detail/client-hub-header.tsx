@@ -5,12 +5,7 @@ import { Avatar, IconButton, MessageCircle, Muted, Tabs, Text, XStack, YStack } 
 import { formatInternational, whatsappDigits } from '../../lib/phone';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
 import { ClientHubStatusDot } from './client-hub-status-dot';
-
-const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'plan', label: 'Meal Plan' },
-  { id: 'history', label: 'History' },
-] as const;
+import { CLIENT_HUB_TABS } from './client-hub-tabs';
 
 type StatusKind = 'attention' | 'on-track' | 'new';
 
@@ -111,7 +106,12 @@ export const ClientHubHeader = ({
         />
       </XStack>
 
-      <Tabs items={[...TABS]} value={tab} onChange={onTabChange} ariaLabel="Client sections" />
+      <Tabs
+        items={[...CLIENT_HUB_TABS]}
+        value={tab}
+        onChange={onTabChange}
+        ariaLabel="Client sections"
+      />
     </YStack>
   );
 };

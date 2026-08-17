@@ -13,12 +13,7 @@ import {
 } from '@gymos/ui';
 import { ScreenBody } from '../shell/screen-body';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
-
-const HUB_TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'plan', label: 'Plan' },
-  { id: 'history', label: 'History' },
-] as const;
+import { CLIENT_HUB_TABS } from './client-hub-tabs';
 
 const HubStatCard = ({ label }: { label: string }) => (
   <Card
@@ -81,7 +76,12 @@ export const ClientHubHeaderSkeleton = ({
         onDownloadPdf={() => undefined}
       />
     </XStack>
-    <Tabs items={[...HUB_TABS]} value={tab} onChange={onTabChange} ariaLabel="Client sections" />
+    <Tabs
+      items={[...CLIENT_HUB_TABS]}
+      value={tab}
+      onChange={onTabChange}
+      ariaLabel="Client sections"
+    />
   </YStack>
 );
 
@@ -110,16 +110,30 @@ export const ClientHubOverviewSkeleton = () => (
         </YStack>
       </XStack>
     </Card>
+  </YStack>
+);
 
-    <Card flex={1} minWidth={0} padding="$5" gap="$4">
-      <YStack gap={2}>
-        <Text fontFamily="$heading" fontWeight="600" fontSize={13} color="$color">
-          Weight trend
-        </Text>
-        <Skeleton width={88} height={14} />
-      </YStack>
-      <Skeleton width="100%" height={200} borderRadius="$radiusCard" />
-    </Card>
+export const ClientHubJourneySkeleton = () => (
+  <YStack width="100%" maxWidth={760} alignSelf="center" gap="$3">
+    <Skeleton width="72%" height={22} />
+    {Array.from({ length: 3 }, (_, i) => (
+      <XStack key={i} gap="$3" alignItems="stretch" width="100%" paddingBottom={i === 2 ? 0 : '$5'}>
+        <YStack width={40} alignItems="center">
+          <SkeletonCircle size={i === 1 ? 32 : 24} />
+        </YStack>
+        <Card flex={1} minWidth={0} gap="$3" padding="$4">
+          <XStack alignItems="center" justifyContent="space-between" gap="$3">
+            <YStack gap="$1" flex={1} minWidth={0}>
+              <Skeleton width="48%" height={18} />
+              <Skeleton width={96} height={14} />
+            </YStack>
+            <SkeletonCircle size={48} />
+          </XStack>
+          <Skeleton width={72} height={24} />
+          <Skeleton width="90%" height={16} />
+        </Card>
+      </XStack>
+    ))}
   </YStack>
 );
 
@@ -220,6 +234,8 @@ export const ClientHubSkeleton = ({
         <ClientHubPlanSkeleton />
       ) : tab === 'history' ? (
         <ClientHubHistorySkeleton />
+      ) : tab === 'journey' ? (
+        <ClientHubJourneySkeleton />
       ) : (
         <ClientHubOverviewSkeleton />
       )}
