@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'solito/navigation';
 import { type ClientIntake } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
 import { ErrorState } from '@gymos/ui';
@@ -18,7 +18,7 @@ import { ClientHubJourney } from './client-hub-journey';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
 import { ClientHubSkeleton } from './client-hub-skeleton';
-import { isClientHubTabId, type ClientHubTabId } from './client-hub-tabs';
+import { clientHubPath, isClientHubTabId, type ClientHubTabId } from './client-hub-tabs';
 
 const hasSignedIntake = (intake: ClientIntake | null): boolean =>
   typeof intake?.signedAt === 'string' &&
@@ -47,14 +47,21 @@ const resolveHubStatus = ({
 };
 
 /** Client hub — kit layout with overview / journey / plan / history tabs. */
-export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
+export const ClientDetailScreen = ({
+  clientId,
+  tab,
+}: {
+  clientId: string;
+  tab: ClientHubTabId;
+}) => {
+  const router = useRouter();
   const detail = useClientDetail(clientId);
   const vitals = useVitals(clientId);
   const checkIns = useClientCheckIns(clientId);
   const downloadPdf = useDownloadCredentialsPdf(clientId);
-  const [tab, setTab] = useState<ClientHubTabId>('overview');
   const onTabChange = (id: string) => {
-    if (isClientHubTabId(id)) setTab(id);
+    if (!isClientHubTabId(id) || id === tab) return;
+    router.replace(clientHubPath(clientId, id));
   };
 
   if (detail.isPending) {

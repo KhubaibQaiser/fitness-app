@@ -2,6 +2,7 @@
 
 import { usePathname } from 'solito/navigation';
 import { useIsDesktop } from '@gymos/platform';
+import { isClientHubPath } from '../client-detail/client-hub-tabs';
 
 type ScreenChrome = 'mobile' | 'desktop' | 'bare';
 
@@ -13,7 +14,7 @@ export const useAppChrome = () => {
   const isDesktop = useIsDesktop();
   const pathname = usePathname() ?? '/';
 
-  const isClientHub = /^\/clients\/[^/]+$/.test(pathname) && pathname !== '/clients/new';
+  const isClientHub = isClientHubPath(pathname);
 
   const isPrimary =
     pathname === '/' ||
