@@ -1,17 +1,17 @@
 import type { PublicConfig } from '@gymos/contracts';
 import {
-  assertSafeTargetKcal,
   bmr,
   computeTargets,
-  splitMacros,
+  resolvePaceEnergy,
   tdee,
   type ActivityLevel,
   type GoalPreset,
   type GoalRate,
   type NutritionRefusal,
+  type PaceClampReason,
   type Sex,
 } from '@gymos/core/nutrition';
-import { targetKcalFromPace, weeklyDeltaKgFromPublicConfig } from './goal-pace';
+import { formatPaceKgPerWeek, weeklyDeltaKgFromPublicConfig } from './goal-pace';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -35,17 +35,25 @@ export type GoalSafetyIssue = {
   detail: string;
 };
 
+export type GoalPaceAdjustment = {
+  reasons: readonly PaceClampReason[];
+  title: string;
+  detail: string;
+};
+
 export type GoalPreview = {
   ageYears: number;
   bmrKcal: number;
   tdeeKcal: number;
   targetKcal: number;
+  requestedKcal: number;
   dailyEnergyDeltaKcal: number;
   deficitPct: number;
   expectedWeeklyDeltaKg: number;
   etaWeeks: number | null;
   estimatedTargetDate: string | null;
   safetyIssue: GoalSafetyIssue | null;
+  paceAdjustment: GoalPaceAdjustment | null;
 };
 
 export const ageYearsFromDob = (dob: string | null | undefined, today = new Date()): number => {
@@ -97,31 +105,57 @@ export const formatPreviewDate = (isoDate: string | null): string => {
   }).format(date);
 };
 
-const safetyIssueFrom = (
-  refusal: NutritionRefusal,
-  tdeeKcal: number,
-  expectedWeeklyDeltaKg: number,
-): GoalSafetyIssue => {
-  if (refusal.code === 'CALORIE_FLOOR_VIOLATION') {
+const safetyIssueFrom = (refusal: NutritionRefusal): GoalSafetyIssue => {
+  if (refusal.code === 'CALORIE_FLOOR_VIOLATION' || refusal.code === 'DEFICIT_CAP_EXCEEDED') {
     return {
       code: refusal.code,
-      title: 'Target calories are below the safe floor',
-      detail: `This pace requests ${refusal.requestedKcal.toLocaleString()} kcal/day. The minimum for this client is ${refusal.floorKcal.toLocaleString()} kcal/day. Return to Goal and choose a gentler pace.`,
-    };
-  }
-  if (refusal.code === 'DEFICIT_CAP_EXCEEDED') {
-    const maxWeeklyLossKg = (tdeeKcal * refusal.maxDeficitPct * 7) / 7700;
-    return {
-      code: refusal.code,
-      title: 'Planned deficit is too aggressive',
-      detail: `This pace requires a ${Math.round(refusal.requestedDeficitPct * 100)}% deficit. The limit is ${Math.round(refusal.maxDeficitPct * 100)}%, about ${maxWeeklyLossKg.toFixed(2)} kg/week for this client (requested ${Math.abs(expectedWeeklyDeltaKg).toFixed(2)} kg/week).`,
+      title: 'Target calories could not be computed',
+      detail: 'Return to Goal and choose a different pace.',
     };
   }
   return {
     code: refusal.code,
     title: 'Calories cannot support the minimum macros',
     detail:
-      'The requested calories cannot fit minimum protein and fat targets. Return to Goal and choose a gentler pace.',
+      'The safe calorie target cannot fit minimum protein and fat. Return to Goal and choose a gentler pace.',
+  };
+};
+
+const paceAdjustmentFrom = (
+  reasons: readonly PaceClampReason[],
+  requestedKcal: number,
+  targetKcal: number,
+  expectedWeeklyDeltaKg: number,
+): GoalPaceAdjustment | null => {
+  if (reasons.length === 0) return null;
+  const weekly = formatPaceKgPerWeek(expectedWeeklyDeltaKg);
+  const requested = requestedKcal.toLocaleString();
+  const target = targetKcal.toLocaleString();
+  if (reasons[0] === 'DEFICIT_CAP') {
+    return {
+      reasons,
+      title: 'Pace limited to the safe deficit',
+      detail: `This pace requested ${requested} kcal/day. The 25% deficit cap sets the target at ${target} kcal/day (${weekly}).`,
+    };
+  }
+  if (reasons[0] === 'CALORIE_FLOOR') {
+    return {
+      reasons,
+      title: 'Pace limited by the calorie floor',
+      detail: `This pace requested ${requested} kcal/day. The minimum for this client is ${target} kcal/day (${weekly}).`,
+    };
+  }
+  if (reasons[0] === 'SURPLUS_CAP') {
+    return {
+      reasons,
+      title: 'Pace limited to the safe surplus',
+      detail: `This pace requested ${requested} kcal/day. The 15% surplus cap sets the target at ${target} kcal/day (${weekly}).`,
+    };
+  }
+  return {
+    reasons,
+    title: 'Pace limited to 1% of body weight per week',
+    detail: `This pace requested ${requested} kcal/day. The weekly-rate cap sets the target at ${target} kcal/day (${weekly}).`,
   };
 };
 
@@ -135,9 +169,7 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
     weightKg: input.weightKg,
     activity: input.activity,
   } as const;
-  const rawBmr = bmr(physiology);
   const rawTdee = tdee(physiology);
-  const pace = targetKcalFromPace(rawTdee, input.preset, input.rate, input.config);
   const weeklyOverride = weeklyDeltaKgFromPublicConfig(input.config, input.preset, input.rate);
   const computation = computeTargets(
     physiology,
@@ -146,34 +178,64 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
     weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : undefined,
   );
 
-  // Preserve requested figures even when Layer 1 refuses them.
-  let refusal: NutritionRefusal | null = computation.ok ? null : computation.error;
-  if (refusal === null) {
-    const safe = assertSafeTargetKcal(pace.targetKcal, rawTdee, input.sex);
-    if (!safe.ok) refusal = safe.error;
-  }
-  if (refusal === null) {
-    const macros = splitMacros(pace.targetKcal, input.weightKg, input.preset);
-    if (!macros.ok) refusal = macros.error;
-  }
+  const energy = computation.ok
+    ? {
+        bmrKcal: computation.value.bmr,
+        tdeeKcal: computation.value.tdee,
+        targetKcal: computation.value.targets.kcal,
+        requestedKcal: computation.value.requestedKcal,
+        expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
+        clampReasons: computation.value.clampReasons,
+      }
+    : (() => {
+        const paced = resolvePaceEnergy(rawTdee, input.preset, input.rate, {
+          sex: input.sex,
+          weightKg: input.weightKg,
+          ...(weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : {}),
+        });
+        return {
+          bmrKcal: Math.round(bmr(physiology)),
+          tdeeKcal: Math.round(rawTdee),
+          targetKcal: paced.targetKcal,
+          requestedKcal: paced.requestedKcal,
+          expectedWeeklyDeltaKg: paced.expectedWeeklyDeltaKg,
+          clampReasons: paced.clampReasons,
+        };
+      })();
 
-  const etaWeeks = estimateGoalWeeks(input.startWeightKg, input.targetWeightKg, pace.weeklyDeltaKg);
+  const refusal: NutritionRefusal | null = computation.ok ? null : computation.error;
+
+  const etaWeeks = estimateGoalWeeks(
+    input.startWeightKg,
+    input.targetWeightKg,
+    energy.expectedWeeklyDeltaKg,
+  );
   const targetDate =
     etaWeeks === null
       ? null
       : new Date(today.getTime() + Math.ceil(etaWeeks * 7) * MS_PER_DAY).toISOString().slice(0, 10);
-  const dailyEnergyDeltaKcal = pace.targetKcal - Math.round(rawTdee);
+  const dailyEnergyDeltaKcal = energy.targetKcal - energy.tdeeKcal;
 
   return {
     ageYears,
-    bmrKcal: Math.round(rawBmr),
-    tdeeKcal: Math.round(rawTdee),
-    targetKcal: pace.targetKcal,
+    bmrKcal: energy.bmrKcal,
+    tdeeKcal: energy.tdeeKcal,
+    targetKcal: energy.targetKcal,
+    requestedKcal: energy.requestedKcal,
     dailyEnergyDeltaKcal,
-    deficitPct: rawTdee > 0 ? Math.max(0, (rawTdee - pace.targetKcal) / rawTdee) : 0,
-    expectedWeeklyDeltaKg: pace.weeklyDeltaKg,
+    deficitPct:
+      energy.tdeeKcal > 0
+        ? Math.max(0, (energy.tdeeKcal - energy.targetKcal) / energy.tdeeKcal)
+        : 0,
+    expectedWeeklyDeltaKg: energy.expectedWeeklyDeltaKg,
     etaWeeks,
     estimatedTargetDate: targetDate,
-    safetyIssue: refusal !== null ? safetyIssueFrom(refusal, rawTdee, pace.weeklyDeltaKg) : null,
+    safetyIssue: refusal !== null ? safetyIssueFrom(refusal) : null,
+    paceAdjustment: paceAdjustmentFrom(
+      energy.clampReasons,
+      energy.requestedKcal,
+      energy.targetKcal,
+      energy.expectedWeeklyDeltaKg,
+    ),
   };
 };

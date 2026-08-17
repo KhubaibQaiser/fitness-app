@@ -121,7 +121,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           setErrors({
             form:
               error instanceof ApiError && error.code === 'NUTRITION_REFUSAL'
-                ? 'These settings would breach the calorie safety floor. Choose a gentler rate.'
+                ? 'These settings cannot fit minimum protein and fat at a safe calorie target. Choose a gentler rate or review body-weight inputs.'
                 : error instanceof ApiError && error.code === 'CLIENT_PROFILE_INCOMPLETE'
                   ? 'Complete the client profile first (height and activity).'
                   : error.message,
