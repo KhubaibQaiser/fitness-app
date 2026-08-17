@@ -1,6 +1,6 @@
 'use client';
 
-import type { CheckIn, Client, DietaryProfile, Goal, Vitals } from '@gymos/contracts';
+import type { Client, DietaryProfile, Goal } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import { formatWeight } from '@gymos/core/units';
 import {
@@ -16,8 +16,6 @@ import {
 } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
-import { buildLiveJourney } from '../client-journey/client-journey';
-import { ClientJourneyMap } from '../client-journey/client-journey-map';
 
 type Props = {
   client: Client;
@@ -25,8 +23,6 @@ type Props = {
   latestWeightKg: number | null;
   goalProgressPct: number | null;
   dietaryProfile: DietaryProfile;
-  vitals: Vitals[];
-  checkIns: CheckIn[];
   signed: boolean;
 };
 
@@ -50,15 +46,13 @@ const paceDisplay = (
   return { value: rate, unit: `${weightUnit}/wk`, hint: goal.preset };
 };
 
-/** Overview tab — alerts, stats, large goal ring, weight trend last. */
+/** Overview tab — alerts, stats, and goal ring. */
 export const ClientHubOverview = ({
   client,
   goal,
   latestWeightKg,
   goalProgressPct,
   dietaryProfile,
-  vitals,
-  checkIns,
   signed,
 }: Props) => {
   const me = useMe();
@@ -85,16 +79,6 @@ export const ClientHubOverview = ({
   const startShown = startKg !== null ? formatWeight(startKg, weightUnit) : null;
   const targetShown =
     goal?.targetWeightKg != null ? formatWeight(goal.targetWeightKg, weightUnit) : null;
-  const journey =
-    goal !== null
-      ? buildLiveJourney({
-          clientId: client.id,
-          goal,
-          checkIns,
-          vitals,
-          latestWeightKg,
-        })
-      : [];
 
   return (
     <YStack gap="$5" width="100%">
@@ -179,13 +163,6 @@ export const ClientHubOverview = ({
           </XStack>
         </Card>
       ) : null}
-
-      <ClientJourneyMap
-        nodes={journey}
-        weightUnit={weightUnit}
-        title="Progress journey"
-        subtitle="Check-in performance, today’s position and the projected path to the goal."
-      />
     </YStack>
   );
 };
