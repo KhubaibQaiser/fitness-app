@@ -46,6 +46,11 @@ export type { WeaveLineMode } from './components/weave-line';
 export { NotificationRow } from './components/notification-row';
 export { GymosModal } from './components/gymos-modal';
 export { GymosSheet } from './components/gymos-sheet';
+export {
+  gymosSheetFrameRadius,
+  gymosSheetOverlayColor,
+  gymosSheetTransition,
+} from './components/gymos-sheet-motion';
 export { GymosToast } from './components/gymos-toast';
 export * from './icons';
 export type { GymosIcon } from './icons';
