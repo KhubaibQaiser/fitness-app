@@ -302,7 +302,10 @@ export const evaluateProgress = (input: AdaptiveInput): AdjustmentRecommendation
     Math.min(ADAPTIVE.maxStepKcalPerDay, ADAPTIVE.dampingFactor * gapKcalPerDay),
   );
   const proposedKcal = Math.round(input.currentTargets.kcal - step);
-  const safeKcal = clampToSafeKcal(proposedKcal, input.tdeeEstimate, input.sex);
+  const safeKcal = clampToSafeKcal(proposedKcal, input.tdeeEstimate, input.sex, {
+    weightKg: input.weightKg,
+    kcalPerKg: KCAL_PER_KG,
+  });
   const clampedBySafety = safeKcal !== proposedKcal;
 
   return {
@@ -313,7 +316,7 @@ export const evaluateProgress = (input: AdaptiveInput): AdjustmentRecommendation
     ...base,
     reasons: [
       `deviation ${round2(deviation)} kg/wk ⇒ energy gap ${Math.round(gapKcalPerDay)} kcal/day; ` +
-        `damped step ${Math.round(step)} kcal${clampedBySafety ? ' (clamped by safety floor)' : ''}`,
+        `damped step ${Math.round(step)} kcal${clampedBySafety ? ' (clamped into the safety band)' : ''}`,
     ],
   };
 };

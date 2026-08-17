@@ -264,16 +264,7 @@ describe('auth (JWT + refresh)', () => {
     expect(body.locales.enabled).toEqual(expect.arrayContaining(['en', 'ur']));
     expect(body.defaultCountry).toBe('PK');
     expect(body.unitPrefs).toEqual({ weight: 'kg', height: 'ft_in', length: 'in' });
-    expect(body.nutrition?.weeklyDeltaKg?.LOSE).toEqual({
-      CONSERVATIVE: -0.5,
-      STANDARD: -1,
-      AGGRESSIVE: -2,
-    });
-    expect(body.nutrition?.weeklyDeltaKg?.GAIN).toEqual({
-      CONSERVATIVE: 0.25,
-      STANDARD: 0.5,
-      AGGRESSIVE: 1,
-    });
+    expect(body.nutrition?.weeklyDeltaKg).toBeUndefined();
   });
 });
 
@@ -669,7 +660,7 @@ describe('the pilot core loop', () => {
     expect(body.vitals.thighLeftCm).toBe(54);
     expect(body.vitals.thighRightCm).toBe(55.5);
     expect(body.goal.preset).toBe('LOSE');
-    expect(body.goal.expectedWeeklyDeltaKg).toBe(-0.5);
+    expect(body.goal.expectedWeeklyDeltaKg).toBe(-0.25);
 
     const dietary = await req(`/v1/clients/${body.client.id}/dietary-profile`);
     expect(dietary.status).toBe(200);
@@ -779,31 +770,39 @@ describe('the pilot core loop', () => {
         activityLevel: 1.2,
         preset: 'LOSE',
         rate: 'AGGRESSIVE',
-        startWeightKg: 45,
-        targetWeightKg: 40,
+        startWeightKg: 200,
+        targetWeightKg: 180,
       },
     });
     expect(refused.status).toBe(422);
 
-    const refusedStandard = await req(`/v1/clients/${client.id}/goal`, {
+    const detail = await req(`/v1/clients/${client.id}`);
+    const detailBody = (await detail.json()) as {
+      client: { activityLevel: number };
+      goal: { id: string; preset: string; expectedWeeklyDeltaKg: number };
+    };
+    expect(detailBody.client.activityLevel).toBe(1.375);
+    expect(detailBody.goal).toMatchObject({ id: initialGoal.id, preset: 'GAIN' });
+
+    const clamped = await req(`/v1/clients/${client.id}/goal`, {
       method: 'PUT',
       json: {
         activityLevel: 1.2,
         preset: 'LOSE',
-        rate: 'STANDARD',
-        startWeightKg: 50,
-        targetWeightKg: 45,
+        rate: 'AGGRESSIVE',
+        startWeightKg: 45,
+        targetWeightKg: 40,
       },
     });
-    expect(refusedStandard.status).toBe(422);
-
-    const detail = await req(`/v1/clients/${client.id}`);
-    const detailBody = (await detail.json()) as {
-      client: { activityLevel: number };
-      goal: { id: string; preset: string };
+    expect(clamped.status).toBe(200);
+    const clampedGoal = (await clamped.json()) as {
+      preset: string;
+      expectedWeeklyDeltaKg: number;
+      initialTargets: { kcal: number };
     };
-    expect(detailBody.client.activityLevel).toBe(1.375);
-    expect(detailBody.goal).toMatchObject({ id: initialGoal.id, preset: 'GAIN' });
+    expect(clampedGoal.preset).toBe('LOSE');
+    expect(clampedGoal.initialTargets.kcal).toBe(1200);
+    expect(clampedGoal.expectedWeeklyDeltaKg).toBeGreaterThan(-0.5);
 
     const auditRows = await db.select().from(schema.auditLog);
     const goalAudit = auditRows.find(

@@ -1,11 +1,13 @@
 import { err, ok, type Result } from '../shared/result';
-import { assertSafeTargetKcal } from './floors';
+import { clampToSafeKcal, explainPaceClamp, safeKcalBand } from './floors';
 import {
   type GoalPreset,
   type GoalRate,
   type MacroTargets,
   type NutritionRefusal,
+  type PaceClampReason,
   type PhysiologyInput,
+  type Sex,
   type TargetComputation,
 } from './types';
 
@@ -43,8 +45,9 @@ export const goalDeltaFraction = (preset: GoalPreset, rate: GoalRate): number =>
   GOAL_DELTA[preset][rate];
 
 /**
- * Optional tenant override table: fixed kg/week by preset × rate.
- * When a cell is set, Layer 1 uses energy-balance kcal instead of GOAL_DELTA %.
+ * Optional tenant override table: *desired* kg/week by preset × rate.
+ * Layer 1 converts that to kcal, then clamps into the safety band. kg/week
+ * displayed to coaches is always derived from the clamped target.
  */
 export type WeeklyDeltaKgTable = Partial<Record<GoalPreset, Partial<Record<GoalRate, number>>>>;
 
@@ -55,8 +58,52 @@ export const resolveWeeklyDeltaKg = (
 ): number | undefined => table?.[preset]?.[rate];
 
 export type ComputeTargetsOptions = {
-  /** Exact desired weekly weight change (kg). Negative = loss. */
+  /** Desired weekly weight change (kg). Negative = loss. Clamped, never echoed. */
   readonly weeklyDeltaKg?: number;
+};
+
+export type PaceEnergy = {
+  readonly requestedKcal: number;
+  readonly targetKcal: number;
+  readonly expectedWeeklyDeltaKg: number;
+  readonly clamped: boolean;
+  readonly clampReasons: readonly PaceClampReason[];
+};
+
+export const weeklyDeltaKgFromKcal = (targetKcal: number, tdeeKcal: number): number =>
+  Number((((targetKcal - tdeeKcal) * 7) / KCAL_PER_KG).toFixed(2));
+
+/**
+ * Named-pace energy: intent kcal → clamp → derive kg/week.
+ * Single source of truth for preview, goal create, and plan generation.
+ */
+export const resolvePaceEnergy = (
+  tdeeKcal: number,
+  preset: GoalPreset,
+  rate: GoalRate,
+  input: { sex: Sex; weightKg: number; weeklyDeltaKg?: number },
+): PaceEnergy => {
+  const weeklyOverride = input.weeklyDeltaKg;
+  const requestedKcal =
+    weeklyOverride !== undefined
+      ? Math.round(tdeeKcal + (weeklyOverride * KCAL_PER_KG) / 7)
+      : Math.round(tdeeKcal * (1 + goalDeltaFraction(preset, rate)));
+  const band = safeKcalBand(tdeeKcal, input.sex, {
+    weightKg: input.weightKg,
+    kcalPerKg: KCAL_PER_KG,
+  });
+  const targetKcal = clampToSafeKcal(requestedKcal, tdeeKcal, input.sex, {
+    weightKg: input.weightKg,
+    kcalPerKg: KCAL_PER_KG,
+  });
+  const clampReasons = explainPaceClamp(requestedKcal, targetKcal, band);
+  return {
+    requestedKcal,
+    targetKcal,
+    expectedWeeklyDeltaKg: weeklyDeltaKgFromKcal(targetKcal, tdeeKcal),
+    clamped: clampReasons.length > 0,
+    clampReasons,
+  };
 };
 
 /** Protein g/kg by goal — higher in a deficit to preserve lean mass. */
@@ -111,10 +158,10 @@ export const splitMacros = (
 
 /**
  * Layer 1 entry point: physiology + goal preset → macro targets.
- * Refuses loudly on floor/deficit/feasibility violations.
+ * Named paces are clamped into the safety band; only infeasible macros refuse.
  *
  * Default pace is a fraction of TDEE (`GOAL_DELTA`). Pass `opts.weeklyDeltaKg`
- * for tenant-configured fixed kg/week rates.
+ * as a desired rate — calories and displayed kg/week are derived after clamp.
  */
 export const computeTargets = (
   input: PhysiologyInput,
@@ -124,14 +171,12 @@ export const computeTargets = (
 ): Result<TargetComputation, NutritionRefusal> => {
   const bmrKcal = bmr(input);
   const tdeeKcal = bmrKcal * input.activity;
-  const weeklyOverride = opts?.weeklyDeltaKg;
-  const targetKcal =
-    weeklyOverride !== undefined
-      ? Math.round(tdeeKcal + (weeklyOverride * KCAL_PER_KG) / 7)
-      : Math.round(tdeeKcal * (1 + goalDeltaFraction(preset, rate)));
-
-  const safe = assertSafeTargetKcal(targetKcal, tdeeKcal, input.sex);
-  if (!safe.ok) return safe;
+  const energy = resolvePaceEnergy(tdeeKcal, preset, rate, {
+    sex: input.sex,
+    weightKg: input.weightKg,
+    ...(opts?.weeklyDeltaKg !== undefined ? { weeklyDeltaKg: opts.weeklyDeltaKg } : {}),
+  });
+  const targetKcal = energy.targetKcal;
 
   const macros = splitMacros(targetKcal, input.weightKg, preset);
   if (!macros.ok) return macros;
@@ -146,9 +191,9 @@ export const computeTargets = (
     bmr: Math.round(bmrKcal),
     tdee: Math.round(tdeeKcal),
     targets,
-    expectedWeeklyDeltaKg:
-      weeklyOverride !== undefined
-        ? Number(weeklyOverride.toFixed(2))
-        : Number((((targetKcal - tdeeKcal) * 7) / KCAL_PER_KG).toFixed(2)),
+    expectedWeeklyDeltaKg: energy.expectedWeeklyDeltaKg,
+    requestedKcal: energy.requestedKcal,
+    clamped: energy.clamped,
+    clampReasons: energy.clampReasons,
   });
 };

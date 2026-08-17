@@ -161,9 +161,8 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
     { profileId: profile.id, type: 'RELIGIOUS', code: 'religious:halal' },
   ]);
 
-  // Goal + Layer-1 targets snapshot.
-  // Pilot LOSE STANDARD is −1 kg/wk and exceeds the 25% deficit cap for typical
-  // TDEE — use CONSERVATIVE (−0.5) so the demo seed stays feasible.
+  // Demo client uses Gentle lose. Named paces now clamp, so STANDARD would also
+  // seed — keep CONSERVATIVE so the journey shows a moderate, realistic rate.
   const startWeight = 88;
   const weeklyDeltaKg = seedWeeklyDeltaKg(options.tenantManifest, 'LOSE', 'CONSERVATIVE');
   const computation = computeTargets(
