@@ -29,6 +29,7 @@ import {
   X as XRaw,
 } from '@tamagui/lucide-icons-2';
 import { createElement, type ReactElement } from 'react';
+import { MenuLines as MenuLinesRaw } from './components/menu-lines';
 
 /**
  * Minimal icon props — keep this shallow. Deep Tamagui `IconProps` generics
@@ -64,6 +65,7 @@ export const Dumbbell: GymosIcon = fromLucide(DumbbellRaw);
 export const Home: GymosIcon = fromLucide(HomeRaw);
 export const MessageCircle: GymosIcon = fromLucide(MessageCircleRaw);
 export const Moon: GymosIcon = fromLucide(MoonRaw);
+export const MenuLines: GymosIcon = fromLucide(MenuLinesRaw);
 export const MoreHorizontal: GymosIcon = fromLucide(MoreHorizontalRaw);
 export const Plus: GymosIcon = fromLucide(PlusRaw);
 export const Pencil: GymosIcon = fromLucide(PencilRaw);

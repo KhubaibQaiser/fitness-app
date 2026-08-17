@@ -4,7 +4,6 @@ import { Link } from 'solito/link';
 import { Avatar, IconButton, MessageCircle, Muted, Tabs, Text, XStack, YStack } from '@gymos/ui';
 import { formatInternational, whatsappDigits } from '../../lib/phone';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
-import { ClientHubStatusDot } from './client-hub-status-dot';
 import { CLIENT_HUB_TABS } from './client-hub-tabs';
 
 type StatusKind = 'attention' | 'on-track' | 'new';
@@ -47,63 +46,63 @@ export const ClientHubHeader = ({
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
       paddingHorizontal={16}
-      paddingTop="$3"
+      paddingTop="$md"
       paddingBottom={0}
       width="100%"
       alignSelf="stretch"
       $md={{ paddingHorizontal: 24 }}
     >
-      <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom={16}>
-        <Avatar name={name} size={64} tone={status === 'attention' ? 'primary' : 'accent'} />
+      <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$md">
+        <Avatar name={name} size={40} tone={status === 'attention' ? 'primary' : 'accent'} />
 
         <YStack flex={1} minWidth={0} gap={2}>
-          <XStack alignItems="center" gap="$2" minWidth={0}>
-            <ClientHubStatusDot status={status} />
-            <Text
-              flex={1}
-              minWidth={0}
-              fontFamily="$heading"
-              fontWeight="700"
-              fontSize={20}
-              lineHeight={26}
-              color="$color"
-              letterSpacing={-0.3}
-              numberOfLines={1}
-            >
-              {name}
-            </Text>
-          </XStack>
-          <XStack flexWrap="wrap" gap="$2" alignItems="center">
+          <Text
+            fontFamily="$heading"
+            fontWeight="600"
+            fontSize={16}
+            lineHeight={22}
+            color="$color"
+            letterSpacing={-0.2}
+            numberOfLines={1}
+          >
+            {name}
+          </Text>
+          <XStack flexWrap="wrap" gap="$xs" alignItems="center">
             {phoneLabel ? (
-              <XStack alignItems="center" gap="$1">
-                <Muted fontSize={12} numberOfLines={1}>
-                  {phoneLabel}
-                </Muted>
-                {waDigits.length > 0 ? (
-                  <Link href={`https://wa.me/${waDigits}`} target="_blank">
-                    <IconButton
-                      density="xs"
-                      aria-label="Open WhatsApp"
-                      icon={<MessageCircle size={14} color="$primary" />}
-                    />
-                  </Link>
-                ) : null}
-              </XStack>
+              <Muted fontSize={12} lineHeight={16} numberOfLines={1}>
+                {phoneLabel}
+              </Muted>
+            ) : null}
+            {phoneLabel && email ? (
+              <Muted fontSize={12} lineHeight={16}>
+                ·
+              </Muted>
             ) : null}
             {email ? (
-              <Muted fontSize={12} numberOfLines={1}>
+              <Muted fontSize={12} lineHeight={16} numberOfLines={1}>
                 {email}
               </Muted>
             ) : null}
           </XStack>
         </YStack>
 
-        <ClientHubMoreMenu
-          clientId={clientId}
-          signed={signed}
-          pdfPending={pdfPending}
-          onDownloadPdf={onDownloadPdf}
-        />
+        <XStack alignItems="center" flexShrink={0}>
+          {waDigits.length > 0 ? (
+            <Link href={`https://wa.me/${waDigits}`} target="_blank">
+              <IconButton
+                density="xs"
+                aria-label="Open WhatsApp"
+                icon={<MessageCircle size={14} color="$primary" />}
+              />
+            </Link>
+          ) : null}
+          <ClientHubMoreMenu
+            clientId={clientId}
+            signed={signed}
+            pdfPending={pdfPending}
+            onDownloadPdf={onDownloadPdf}
+          />
+        </XStack>
       </XStack>
 
       <Tabs

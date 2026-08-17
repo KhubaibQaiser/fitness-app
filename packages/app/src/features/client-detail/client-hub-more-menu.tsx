@@ -7,8 +7,11 @@ import {
   Check,
   ClipboardList,
   Download,
+  gymosSheetFrameRadius,
+  gymosSheetOverlayColor,
+  gymosSheetTransition,
   IconButton,
-  MoreHorizontal,
+  MenuLines,
   Pencil,
   Popover,
   Scale,
@@ -46,15 +49,26 @@ export const ClientHubMoreMenu = ({ clientId, signed, pdfPending, onDownloadPdf 
         <IconButton
           aria-label="More actions"
           aria-expanded={open}
-          icon={<MoreHorizontal size={20} color="$color" />}
+          icon={<MenuLines size={20} color="$color" />}
         />
       </Popover.Trigger>
 
       <Adapt when={isCompact}>
-        <Sheet modal snapPointsMode="fit" dismissOnSnapToBottom>
-          <Sheet.Overlay backgroundColor="$shadowColor" />
+        <Sheet modal snapPointsMode="fit" dismissOnSnapToBottom transition={gymosSheetTransition}>
+          <Sheet.Overlay
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+            backgroundColor={gymosSheetOverlayColor}
+          />
           <Sheet.Handle />
-          <Sheet.Frame padding="$3" paddingBottom="$5" gap="$1" backgroundColor="$cardBg">
+          <Sheet.Frame
+            borderTopLeftRadius={gymosSheetFrameRadius}
+            borderTopRightRadius={gymosSheetFrameRadius}
+            padding="$3"
+            paddingBottom="$5"
+            gap="$1"
+            backgroundColor="$cardBg"
+          >
             <Adapt.Contents />
           </Sheet.Frame>
         </Sheet>
