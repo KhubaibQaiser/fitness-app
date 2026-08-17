@@ -10,6 +10,7 @@ import {
   Check,
   ChevronRight,
   Muted,
+  StaggerItem,
   Target,
   Text,
   XStack,
@@ -65,16 +66,23 @@ const badgeFor = (node: JourneyNode): { tone: BadgeTone; label: string } | null 
 const formatDelta = (kgPerWeek: number): string =>
   `${kgPerWeek > 0 ? '+' : ''}${kgPerWeek.toFixed(2)} kg/wk`;
 
+/** Rail geometry — marker top matches Card padding `$4` (16). */
+export const JOURNEY_RAIL_WIDTH = 40;
+export const JOURNEY_MARKER_SIZE = 24;
+export const JOURNEY_MARKER_TOP = 16;
+export const JOURNEY_SPINE_INSET = JOURNEY_MARKER_TOP + JOURNEY_MARKER_SIZE / 2;
+export const JOURNEY_SPINE_LEFT = (JOURNEY_RAIL_WIDTH - 2) / 2;
+
 export const ClientJourneyNode = ({
   node,
   weightUnit,
-  first,
   last,
+  index,
 }: {
   node: JourneyNode;
   weightUnit: WeightUnit;
-  first: boolean;
   last: boolean;
+  index: number;
 }) => {
   const Icon = iconFor(node);
   const badge = badgeFor(node);
@@ -82,7 +90,6 @@ export const ClientJourneyNode = ({
   const isCurrent = node.state === 'current';
   const isPast = node.state === 'past';
   const markerColor = isCurrent || isPast ? '$primary' : '$textMuted';
-  const spineColor = isCurrent || isPast ? '$primary' : '$track';
   const content = (
     <Card
       interactive={node.href !== undefined}
@@ -183,30 +190,25 @@ export const ClientJourneyNode = ({
 
   return (
     <XStack gap="$3" alignItems="stretch" width="100%" paddingBottom={last ? 0 : '$5'}>
-      <YStack width={40} alignItems="center" position="relative">
-        {!first ? (
-          <YStack position="absolute" top={0} bottom="50%" width={2} backgroundColor={spineColor} />
-        ) : null}
-        {!last ? (
-          <YStack position="absolute" top="50%" bottom={0} width={2} backgroundColor={spineColor} />
-        ) : null}
+      <YStack width={JOURNEY_RAIL_WIDTH} alignItems="center" zIndex={1}>
         <YStack
-          width={isCurrent ? 32 : 24}
-          height={isCurrent ? 32 : 24}
-          marginTop="$4"
+          width={JOURNEY_MARKER_SIZE}
+          height={JOURNEY_MARKER_SIZE}
+          marginTop={JOURNEY_MARKER_TOP}
           borderRadius={999}
           alignItems="center"
           justifyContent="center"
           backgroundColor={isCurrent ? '$primaryMuted' : '$cardBg'}
           borderWidth={isCurrent ? 3 : 2}
           borderColor={markerColor}
-          zIndex={1}
         >
-          <Icon size={isCurrent ? 16 : 12} color={markerColor} />
+          <Icon size={12} color={markerColor} />
         </YStack>
       </YStack>
       <YStack flex={1} minWidth={0}>
-        {node.href !== undefined ? <Link href={node.href}>{content}</Link> : content}
+        <StaggerItem index={index}>
+          {node.href !== undefined ? <Link href={node.href}>{content}</Link> : content}
+        </StaggerItem>
       </YStack>
     </XStack>
   );
