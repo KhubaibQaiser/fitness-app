@@ -14,9 +14,11 @@ import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
 import { ClientHubHeader } from './client-hub-header';
 import { ClientHubHistory } from './client-hub-history';
+import { ClientHubJourney } from './client-hub-journey';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
 import { ClientHubSkeleton } from './client-hub-skeleton';
+import { isClientHubTabId, type ClientHubTabId } from './client-hub-tabs';
 
 const hasSignedIntake = (intake: ClientIntake | null): boolean =>
   typeof intake?.signedAt === 'string' &&
@@ -44,18 +46,21 @@ const resolveHubStatus = ({
   return 'on-track';
 };
 
-/** Client hub — kit layout with overview / plan / history tabs. */
+/** Client hub — kit layout with overview / journey / plan / history tabs. */
 export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
   const detail = useClientDetail(clientId);
   const vitals = useVitals(clientId);
   const checkIns = useClientCheckIns(clientId);
   const downloadPdf = useDownloadCredentialsPdf(clientId);
-  const [tab, setTab] = useState<string>('overview');
+  const [tab, setTab] = useState<ClientHubTabId>('overview');
+  const onTabChange = (id: string) => {
+    if (isClientHubTabId(id)) setTab(id);
+  };
 
   if (detail.isPending) {
     return (
       <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
-        <ClientHubSkeleton clientId={clientId} tab={tab} onTabChange={setTab} />
+        <ClientHubSkeleton clientId={clientId} tab={tab} onTabChange={onTabChange} />
       </AppScreen>
     );
   }
@@ -116,7 +121,7 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
         email={client.email}
         status={status}
         tab={tab}
-        onTabChange={setTab}
+        onTabChange={onTabChange}
         signed={signed}
         pdfPending={downloadPdf.isPending}
         onDownloadPdf={onDownloadPdf}
@@ -130,9 +135,18 @@ export const ClientDetailScreen = ({ clientId }: { clientId: string }) => {
             latestWeightKg={latestWeightKg}
             goalProgressPct={goalProgressPct}
             dietaryProfile={dietaryProfile}
+            signed={signed}
+          />
+        ) : null}
+
+        {tab === 'journey' ? (
+          <ClientHubJourney
+            clientId={clientId}
+            client={client}
+            goal={goal}
+            latestWeightKg={latestWeightKg}
             vitals={vitals.data?.items ?? []}
             checkIns={checkIns.data?.items ?? []}
-            signed={signed}
           />
         ) : null}
 
