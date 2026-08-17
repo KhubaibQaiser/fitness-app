@@ -5,6 +5,7 @@ import {
   bmr,
   computeTargets,
   goalDeltaFraction,
+  resolvePaceEnergy,
   resolveWeeklyDeltaKg,
   splitMacros,
   tdee,
@@ -77,6 +78,14 @@ describe('floors', () => {
     expect(clampToSafeKcal(1100, 2000, 'F')).toBe(1500); // deficit cap binds (0.75*2000)
     expect(clampToSafeKcal(1100, 1500, 'F')).toBe(1200); // floor binds
     expect(clampToSafeKcal(1800, 2000, 'M')).toBe(1800); // already safe
+  });
+
+  it('caps surplus at 15% of TDEE', () => {
+    expect(clampToSafeKcal(4000, 2270, 'M')).toBe(Math.floor(2270 * 1.15));
+  });
+
+  it('keeps the sex floor when TDEE sits below it', () => {
+    expect(clampToSafeKcal(800, 1000, 'M')).toBe(1500);
   });
 });
 
@@ -154,13 +163,15 @@ describe('computeTargets', () => {
     }
   });
 
-  it('uses fixed weekly kg when override is provided', () => {
+  it('uses desired weekly kg when the override is inside the safe band', () => {
     const result = computeTargets(male30, 'LOSE', 'STANDARD', { weeklyDeltaKg: -0.5 });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     // TDEE 2759 → deficit 7700/7/2 = 550 → target 2209
     expect(result.value.targets.kcal).toBe(2209);
     expect(result.value.expectedWeeklyDeltaKg).toBe(-0.5);
+    expect(result.value.clamped).toBe(false);
+    expect(result.value.requestedKcal).toBe(2209);
   });
 
   it('keeps GOAL_DELTA behavior when no weekly override is passed', () => {
@@ -169,13 +180,18 @@ describe('computeTargets', () => {
     expect(withUndefined).toEqual(withoutOpts);
   });
 
-  it('refuses a fixed loss that exceeds the deficit cap', () => {
+  it('clamps a fixed loss that exceeds the deficit cap instead of refusing', () => {
     const result = computeTargets(male30, 'LOSE', 'STANDARD', { weeklyDeltaKg: -1 });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('DEFICIT_CAP_EXCEEDED');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const deficitFloor = Math.ceil(tdee(male30) * 0.75);
+    expect(result.value.targets.kcal).toBe(deficitFloor);
+    expect(result.value.clamped).toBe(true);
+    expect(result.value.clampReasons).toEqual(['DEFICIT_CAP']);
+    expect(result.value.expectedWeeklyDeltaKg).not.toBe(-1);
   });
 
-  it('refuses when the target lands below the calorie floor', () => {
+  it('clamps petite aggressive lose to the sex floor instead of refusing', () => {
     const petite: PhysiologyInput = {
       sex: 'F',
       ageYears: 55,
@@ -184,11 +200,14 @@ describe('computeTargets', () => {
       activity: 1.2,
     };
     const result = computeTargets(petite, 'LOSE', 'AGGRESSIVE');
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('CALORIE_FLOOR_VIOLATION');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.targets.kcal).toBe(CALORIE_FLOOR_KCAL.F);
+    expect(result.value.clamped).toBe(true);
+    expect(result.value.clampReasons).toEqual(['CALORIE_FLOOR']);
   });
 
-  it('refuses a fixed-kg override that lands below the calorie floor', () => {
+  it('clamps a fixed-kg override that lands below the calorie floor', () => {
     const petite: PhysiologyInput = {
       sex: 'F',
       ageYears: 55,
@@ -197,8 +216,55 @@ describe('computeTargets', () => {
       activity: 1.2,
     };
     const result = computeTargets(petite, 'LOSE', 'CONSERVATIVE', { weeklyDeltaKg: -0.5 });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('CALORIE_FLOOR_VIOLATION');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.targets.kcal).toBe(CALORIE_FLOOR_KCAL.F);
+    expect(result.value.clamped).toBe(true);
+  });
+
+  it('clamps the screenshot Aggressive −2 kg/wk case to 25% of TDEE, not 70 or 1500', () => {
+    const energy = resolvePaceEnergy(2270, 'LOSE', 'AGGRESSIVE', {
+      sex: 'M',
+      weightKg: 95,
+      weeklyDeltaKg: -2,
+    });
+    expect(energy.requestedKcal).toBe(70);
+    expect(energy.targetKcal).toBe(1703);
+    expect(energy.expectedWeeklyDeltaKg).toBeCloseTo(-0.52, 2);
+    expect(energy.clamped).toBe(true);
+    expect(energy.clampReasons).toEqual(['DEFICIT_CAP']);
+  });
+
+  it('caps GAIN aggressive +1 kg/wk at +15% TDEE', () => {
+    const energy = resolvePaceEnergy(2270, 'GAIN', 'AGGRESSIVE', {
+      sex: 'M',
+      weightKg: 95,
+      weeklyDeltaKg: 1,
+    });
+    expect(energy.requestedKcal).toBe(3370);
+    expect(energy.targetKcal).toBe(Math.floor(2270 * 1.15));
+    expect(energy.clamped).toBe(true);
+    expect(energy.clampReasons).toEqual(['SURPLUS_CAP']);
+  });
+
+  it('caps loss at 1% of body weight when that is tighter than 25% TDEE', () => {
+    const energy = resolvePaceEnergy(3500, 'LOSE', 'AGGRESSIVE', {
+      sex: 'M',
+      weightKg: 50,
+      weeklyDeltaKg: -2,
+    });
+    expect(energy.clampReasons).toEqual(['BODY_WEIGHT_RATE']);
+    expect(energy.targetKcal).toBe(Math.ceil(3500 - (50 * 0.01 * 7700) / 7));
+  });
+
+  it('caps surplus at 1% of body weight when that is tighter than +15% TDEE', () => {
+    const energy = resolvePaceEnergy(4000, 'GAIN', 'AGGRESSIVE', {
+      sex: 'F',
+      weightKg: 45,
+      weeklyDeltaKg: 1,
+    });
+    expect(energy.clampReasons).toEqual(['BODY_WEIGHT_RATE']);
+    expect(energy.targetKcal).toBe(Math.floor(4000 + (45 * 0.01 * 7700) / 7));
   });
 
   it('refuses infeasible macro splits above the floor', () => {
@@ -236,6 +302,9 @@ describe('computeTargets', () => {
           const rawTdee = tdee(input);
           expect(targets.kcal).toBeGreaterThanOrEqual(CALORIE_FLOOR_KCAL[input.sex]);
           expect((rawTdee - targets.kcal) / rawTdee).toBeLessThanOrEqual(0.2501);
+          if (targets.kcal > rawTdee && targets.kcal !== CALORIE_FLOOR_KCAL[input.sex]) {
+            expect((targets.kcal - rawTdee) / rawTdee).toBeLessThanOrEqual(0.1501);
+          }
           // Macro energy reconciles with the kcal target (rounding tolerance).
           const macroKcal = targets.proteinG * 4 + targets.fatG * 9 + targets.carbsG * 4;
           expect(Math.abs(macroKcal - targets.kcal)).toBeLessThanOrEqual(12);

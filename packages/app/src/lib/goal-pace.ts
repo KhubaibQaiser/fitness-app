@@ -1,10 +1,10 @@
 import type { PublicConfig } from '@gymos/contracts';
 import {
-  GOAL_DELTA,
-  KCAL_PER_KG,
+  resolvePaceEnergy,
   resolveWeeklyDeltaKg,
   type GoalPreset,
   type GoalRate,
+  type Sex,
 } from '@gymos/core/nutrition';
 
 export const weeklyDeltaKgFromPublicConfig = (
@@ -13,27 +13,31 @@ export const weeklyDeltaKgFromPublicConfig = (
   rate: GoalRate,
 ): number | undefined => resolveWeeklyDeltaKg(config?.nutrition?.weeklyDeltaKg, preset, rate);
 
-/** Target kcal from TDEE using tenant kg/week override when present, else GOAL_DELTA %. */
+/** Target kcal from TDEE: tenant kg/week is intent only; result is always clamped. */
 export const targetKcalFromPace = (
   tdeeKcal: number,
   preset: GoalPreset,
   rate: GoalRate,
-  config?: PublicConfig,
-): { targetKcal: number; weeklyDeltaKg: number; mode: 'weekly_kg' | 'tdee_fraction' } => {
-  const weeklyOverride = weeklyDeltaKgFromPublicConfig(config, preset, rate);
-  if (weeklyOverride !== undefined) {
-    return {
-      targetKcal: Math.round(tdeeKcal + (weeklyOverride * KCAL_PER_KG) / 7),
-      weeklyDeltaKg: weeklyOverride,
-      mode: 'weekly_kg',
-    };
-  }
-  const fraction = GOAL_DELTA[preset][rate];
-  const targetKcal = Math.round(tdeeKcal * (1 + fraction));
+  opts: { sex: Sex; weightKg: number; config?: PublicConfig },
+): {
+  targetKcal: number;
+  requestedKcal: number;
+  weeklyDeltaKg: number;
+  clamped: boolean;
+  mode: 'weekly_kg' | 'tdee_fraction';
+} => {
+  const weeklyOverride = weeklyDeltaKgFromPublicConfig(opts.config, preset, rate);
+  const energy = resolvePaceEnergy(tdeeKcal, preset, rate, {
+    sex: opts.sex,
+    weightKg: opts.weightKg,
+    ...(weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : {}),
+  });
   return {
-    targetKcal,
-    weeklyDeltaKg: Number((((targetKcal - tdeeKcal) * 7) / KCAL_PER_KG).toFixed(2)),
-    mode: 'tdee_fraction',
+    targetKcal: energy.targetKcal,
+    requestedKcal: energy.requestedKcal,
+    weeklyDeltaKg: energy.expectedWeeklyDeltaKg,
+    clamped: energy.clamped,
+    mode: weeklyOverride !== undefined ? 'weekly_kg' : 'tdee_fraction',
   };
 };
 

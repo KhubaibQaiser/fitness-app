@@ -17,7 +17,11 @@ export const GoalEnergySummary = ({ preview }: { preview: GoalPreview }) => {
             label="Daily calorie target"
             value={preview.targetKcal.toLocaleString()}
             unit="kcal"
-            tone={preview.safetyIssue !== null ? 'warning' : 'primary'}
+            tone={
+              preview.safetyIssue !== null || preview.paceAdjustment !== null
+                ? 'warning'
+                : 'primary'
+            }
             delta={
               <Muted>
                 Based on a {preview.tdeeKcal.toLocaleString()} kcal maintenance estimate
