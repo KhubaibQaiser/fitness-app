@@ -215,7 +215,7 @@ export const ClientHubPlan = ({
             <XStack
               gap="$2"
               backgroundColor="$elevatedBg"
-              borderRadius="$radiusCard"
+              borderRadius={12}
               padding="$3"
               justifyContent="space-between"
             >
@@ -229,10 +229,10 @@ export const ClientHubPlan = ({
                 ] as const
               ).map((m) => (
                 <YStack key={m.label} alignItems="center" flex={1} gap={4}>
-                  <Text fontFamily="$mono" fontWeight="700" fontSize={15} color="$color">
+                  <Text fontFamily="$mono" fontWeight="600" fontSize={14} color="$color">
                     {m.value}
                   </Text>
-                  <Muted fontSize={10}>{m.label}</Muted>
+                  <Muted fontSize={12}>{m.label}</Muted>
                 </YStack>
               ))}
             </XStack>

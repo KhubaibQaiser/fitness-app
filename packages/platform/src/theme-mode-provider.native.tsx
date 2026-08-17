@@ -23,7 +23,9 @@ const readStored = (): ThemeMode | null => {
 
 /** Persisted light/dark mode for native — no `document` / CSS color-scheme. */
 export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setModeState] = useState<ThemeMode>(() => readStored() ?? 'dark');
+  const [mode, setModeState] = useState<ThemeMode>(
+    () => readStored() ?? (Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'),
+  );
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);

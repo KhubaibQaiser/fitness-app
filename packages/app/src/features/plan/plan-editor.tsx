@@ -13,9 +13,9 @@ import {
   IconButton,
   Muted,
   PrimaryButton,
-  Row,
   SectionTitle,
   SegmentedControl,
+  Text,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -274,19 +274,36 @@ export const PlanEditor = ({
       ) : null}
 
       <Card>
-        <Row>
-          <Body fontWeight="800">
-            {Math.round(dayTotals.kcal)} / {targets.kcal} kcal
-          </Body>
+        <XStack alignItems="flex-end" gap="$3" flexWrap="wrap">
+          <YStack flex={1} minWidth={72} gap={4}>
+            <Muted fontSize={12}>kcal</Muted>
+            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+              {Math.round(dayTotals.kcal)}/{targets.kcal}
+            </Text>
+          </YStack>
+          <YStack flex={1} minWidth={72} gap={4}>
+            <Muted fontSize={12}>Protein</Muted>
+            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+              {Math.round(dayTotals.proteinG)}/{targets.proteinG}g
+            </Text>
+          </YStack>
+          <YStack flex={1} minWidth={72} gap={4}>
+            <Muted fontSize={12}>Fat</Muted>
+            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+              {Math.round(dayTotals.fatG)}/{targets.fatG}g
+            </Text>
+          </YStack>
+          <YStack flex={1} minWidth={72} gap={4}>
+            <Muted fontSize={12}>Carbs</Muted>
+            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+              {Math.round(dayTotals.carbsG)}/{targets.carbsG}g
+            </Text>
+          </YStack>
           <Badge
             tone={Math.abs(kcalDeltaPct) <= 5 ? 'success' : 'warning'}
             label={`${kcalDeltaPct > 0 ? '+' : ''}${kcalDeltaPct.toFixed(1)}%`}
           />
-        </Row>
-        <Muted>
-          P {Math.round(dayTotals.proteinG)}/{targets.proteinG}g · F {Math.round(dayTotals.fatG)}/
-          {targets.fatG}g · C {Math.round(dayTotals.carbsG)}/{targets.carbsG}g
-        </Muted>
+        </XStack>
       </Card>
 
       <YStack gap="$2">

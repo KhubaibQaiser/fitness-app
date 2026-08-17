@@ -8,10 +8,11 @@ import {
   Inter_800ExtraBold,
 } from '@expo-google-fonts/inter';
 import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_500Medium,
-  JetBrainsMono_700Bold,
-} from '@expo-google-fonts/jetbrains-mono';
+  RobotoMono_400Regular,
+  RobotoMono_500Medium,
+  RobotoMono_600SemiBold,
+  RobotoMono_700Bold,
+} from '@expo-google-fonts/roboto-mono';
 import { useFonts } from 'expo-font';
 import { type ReactNode } from 'react';
 import { TamaguiProvider } from 'tamagui';
@@ -26,9 +27,10 @@ export const MobileProviders = ({ children }: { children: ReactNode }) => {
     'Inter-SemiBold': Inter_600SemiBold,
     'Inter-Bold': Inter_700Bold,
     'Inter-ExtraBold': Inter_800ExtraBold,
-    JetBrainsMono: JetBrainsMono_400Regular,
-    'JetBrainsMono-Medium': JetBrainsMono_500Medium,
-    'JetBrainsMono-Bold': JetBrainsMono_700Bold,
+    RobotoMono: RobotoMono_400Regular,
+    'RobotoMono-Medium': RobotoMono_500Medium,
+    'RobotoMono-SemiBold': RobotoMono_600SemiBold,
+    'RobotoMono-Bold': RobotoMono_700Bold,
   });
 
   if (!loaded) {

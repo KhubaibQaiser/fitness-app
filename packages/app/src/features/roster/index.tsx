@@ -4,6 +4,7 @@ import { startTransition, useMemo, useState } from 'react';
 import { Link } from 'solito/link';
 import { useDebouncedValue } from '@gymos/platform';
 import {
+  Card,
   EmptyState,
   ErrorState,
   Input,
@@ -201,67 +202,55 @@ export const RosterScreen = () => {
       ) : (
         <YStack gap="$1.5" width="100%">
           {isDesktop ? (
-            <XStack paddingHorizontal="$4" gap="$4" marginBottom="$1">
-              <Text
-                flex={1}
-                fontSize={10}
-                fontWeight="600"
-                color="$textMuted"
-                textTransform="uppercase"
-                letterSpacing={1}
-              >
-                Client
-              </Text>
-              <Text
-                width={COL.weight}
-                fontSize={10}
-                fontWeight="600"
-                color="$textMuted"
-                textTransform="uppercase"
-                letterSpacing={1}
-                flexShrink={0}
-              >
-                Weight
-              </Text>
-              <Text
-                width={COL.goal}
-                fontSize={10}
-                fontWeight="600"
-                color="$textMuted"
-                textTransform="uppercase"
-                letterSpacing={1}
-                flexShrink={0}
-              >
-                Goal
-              </Text>
-              <Text
-                width={COL.status}
-                fontSize={10}
-                fontWeight="600"
-                color="$textMuted"
-                textTransform="uppercase"
-                letterSpacing={1}
-                flexShrink={0}
-              >
-                Status
-              </Text>
-              <Text
-                width={COL.progress}
-                fontSize={10}
-                fontWeight="600"
-                color="$textMuted"
-                textTransform="uppercase"
-                letterSpacing={1}
-                flexShrink={0}
-              >
-                Progress
-              </Text>
-            </XStack>
-          ) : null}
-
-          {filtered.map((client) => (
-            <RosterRow key={client.id} client={client} desktop={isDesktop} />
-          ))}
+            <Card padding={0} gap={0} overflow="hidden">
+              <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
+                <Text flex={1} fontSize={13} fontWeight="500" color="$textMuted">
+                  Client
+                </Text>
+                <Text
+                  width={COL.weight}
+                  fontSize={13}
+                  fontWeight="500"
+                  color="$textMuted"
+                  flexShrink={0}
+                >
+                  Weight
+                </Text>
+                <Text
+                  width={COL.goal}
+                  fontSize={13}
+                  fontWeight="500"
+                  color="$textMuted"
+                  flexShrink={0}
+                >
+                  Goal
+                </Text>
+                <Text
+                  width={COL.status}
+                  fontSize={13}
+                  fontWeight="500"
+                  color="$textMuted"
+                  flexShrink={0}
+                >
+                  Status
+                </Text>
+                <Text
+                  width={COL.progress}
+                  fontSize={13}
+                  fontWeight="500"
+                  color="$textMuted"
+                  flexShrink={0}
+                >
+                  Progress
+                </Text>
+              </XStack>
+              {filtered.map((client) => (
+                <RosterRow key={client.id} client={client} desktop />
+              ))}
+            </Card>
+          ) : (
+            filtered.map((client) => <RosterRow key={client.id} client={client} desktop={false} />)
+          )}
         </YStack>
       )}
     </AppScreen>

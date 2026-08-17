@@ -34,7 +34,7 @@ export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setModeState(readStored() ?? (preferDark() ? 'dark' : 'dark'));
+    setModeState(readStored() ?? (preferDark() ? 'dark' : 'light'));
     setReady(true);
   }, []);
 

@@ -39,11 +39,17 @@ const MobileRow = () => (
 
 const DesktopRow = () => (
   <Card
+    borderRadius={0}
+    backgroundColor="$surface"
+    borderWidth={0}
+    borderBottomWidth={1}
+    borderBottomColor="$borderColor"
     paddingHorizontal="$4"
-    paddingVertical="$3.5"
+    paddingVertical="$3"
     flexDirection="row"
     alignItems="center"
     gap="$4"
+    shadowOpacity={0}
   >
     <XStack flex={1} alignItems="center" gap="$3" minWidth={0}>
       <SkeletonCircle size={32} />
@@ -79,11 +85,9 @@ const ColumnLabel = ({
   <Text
     flex={flex}
     width={width}
-    fontSize={10}
-    fontWeight="600"
+    fontSize={13}
+    fontWeight="500"
     color="$textMuted"
-    textTransform="uppercase"
-    letterSpacing={1}
     flexShrink={width !== undefined ? 0 : undefined}
   >
     {children}
@@ -99,16 +103,20 @@ export const RosterListSkeleton = () => {
     <SkeletonRegion label="Loading clients">
       <YStack gap="$1.5" width="100%">
         {isDesktop ? (
-          <XStack paddingHorizontal="$4" gap="$4" marginBottom="$1">
-            <ColumnLabel flex={1}>Client</ColumnLabel>
-            <ColumnLabel width={COL.weight}>Weight</ColumnLabel>
-            <ColumnLabel width={COL.goal}>Goal</ColumnLabel>
-            <ColumnLabel width={COL.status}>Status</ColumnLabel>
-            <ColumnLabel width={COL.progress}>Progress</ColumnLabel>
-          </XStack>
-        ) : null}
-        {Array.from({ length: 6 }, (_, i) =>
-          isDesktop ? <DesktopRow key={i} /> : <MobileRow key={i} />,
+          <Card padding={0} gap={0} overflow="hidden">
+            <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
+              <ColumnLabel flex={1}>Client</ColumnLabel>
+              <ColumnLabel width={COL.weight}>Weight</ColumnLabel>
+              <ColumnLabel width={COL.goal}>Goal</ColumnLabel>
+              <ColumnLabel width={COL.status}>Status</ColumnLabel>
+              <ColumnLabel width={COL.progress}>Progress</ColumnLabel>
+            </XStack>
+            {Array.from({ length: 6 }, (_, i) => (
+              <DesktopRow key={i} />
+            ))}
+          </Card>
+        ) : (
+          Array.from({ length: 6 }, (_, i) => <MobileRow key={i} />)
         )}
       </YStack>
     </SkeletonRegion>

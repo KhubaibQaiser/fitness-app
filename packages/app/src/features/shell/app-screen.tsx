@@ -18,7 +18,7 @@ export const AppScreen = ({ children, footer, ...rest }: Props) => {
   const { screenChrome } = useAppChrome();
 
   return (
-    <YStack flex={1} minHeight={0} width="100%" backgroundColor="$screenBg">
+    <YStack flex={1} minHeight={0} width="100%" backgroundColor="$coachCanvas">
       <ScrollView flex={1} minHeight={0} keyboardShouldPersistTaps="handled">
         <UiScreen
           chrome={screenChrome}

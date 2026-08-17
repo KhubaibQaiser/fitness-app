@@ -39,10 +39,15 @@ export const DietaryChips = ({
           <GhostButton
             key={code}
             onPress={() => onToggle(code, type)}
-            backgroundColor={selectedDanger ? '$dangerMuted' : '$elevatedBg'}
-            color={selectedDanger ? '$danger' : selectedNeutral ? '$primary' : '$color'}
+            borderRadius={999}
+            minHeight={44}
+            paddingHorizontal="$3"
+            borderWidth={1}
+            backgroundColor={
+              selectedDanger ? '$dangerMuted' : selectedNeutral ? '$coachAccentWash' : '$surface'
+            }
+            color={selectedDanger ? '$danger' : selectedNeutral ? '$coachAccentText' : '$color'}
             borderColor={selectedDanger ? '$danger' : selectedNeutral ? '$primary' : '$borderColor'}
-            opacity={active ? 1 : 0.85}
             aria-pressed={active}
           >
             {formatRestrictionLabel(code)}

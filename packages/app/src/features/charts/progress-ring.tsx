@@ -26,13 +26,13 @@ export const ProgressRing = ({
   const offset = circumference * (1 - pct);
 
   const toneColors: Record<string, string> = {
-    primary: String(theme.primary?.val ?? '#00D68F'),
-    success: String(theme.success?.val ?? '#16EC06'),
-    danger: String(theme.danger?.val ?? '#FF0026'),
-    warning: String(theme.warning?.val ?? '#FFDE00'),
+    primary: String(theme.primary?.val ?? '#1D4ED8'),
+    success: String(theme.success?.val ?? '#0EA600'),
+    danger: String(theme.danger?.val ?? '#EF4444'),
+    warning: String(theme.warning?.val ?? '#F59E0B'),
   };
-  const strokeColor = toneColors[tone] ?? toneColors.primary ?? '#00D68F';
-  const trackColor = String(theme.elevatedBg?.val ?? '#1A1A1A');
+  const strokeColor = toneColors[tone] ?? toneColors.primary ?? '#1D4ED8';
+  const trackColor = String(theme.track?.val ?? '#E4E4E7');
 
   return (
     <YStack alignItems="center" justifyContent="center" width={size} height={size}>

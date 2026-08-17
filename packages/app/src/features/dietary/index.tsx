@@ -13,8 +13,8 @@ import {
   Muted,
   PageHeader,
   PrimaryButton,
-  SectionTitle,
   StickyFormFooter,
+  Text,
 } from '@gymos/ui';
 import { useClientDetail, usePutDietary } from '../../api';
 import { AppScreen } from '../shell/app-screen';
@@ -92,13 +92,26 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
         subtitle={`Version ${profile?.version ?? 0} · changes re-validate the live plan`}
       />
 
-      <SectionTitle>Severe allergies</SectionTitle>
-      <Card>
+      <Card tone="danger" padding="$4">
+        <Text
+          fontFamily="$heading"
+          fontSize={14}
+          fontWeight="500"
+          color="$danger"
+          marginBottom="$2"
+        >
+          Severe allergies
+        </Text>
         <DietaryChips kind="allergens" selection={selection} onToggle={toggle} />
+        <Muted fontSize={12} marginTop="$3">
+          Severe allergies are hard blocks in the meal engine.
+        </Muted>
       </Card>
 
-      <SectionTitle>Religious / lifestyle</SectionTitle>
-      <Card>
+      <Card padding="$4">
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color" marginBottom="$2">
+          Religious / lifestyle
+        </Text>
         <DietaryChips kind="religious" selection={selection} onToggle={toggle} />
       </Card>
 
@@ -117,7 +130,6 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
           {put.error.message}
         </Body>
       ) : null}
-      <Muted fontSize={12}>Severe allergies are hard blocks in the meal engine.</Muted>
     </AppScreen>
   );
 };

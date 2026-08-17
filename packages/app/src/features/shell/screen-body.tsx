@@ -10,11 +10,11 @@ import { YStack } from '@gymos/ui';
 export const ScreenBody = ({ children, gap = '$5' }: { children: ReactNode; gap?: string }) => (
   <YStack
     width="100%"
-    paddingHorizontal="$5"
-    paddingTop="$5"
+    paddingHorizontal={16}
+    paddingTop={16}
     paddingBottom="$2"
     gap={gap}
-    $md={{ paddingHorizontal: '$8', paddingTop: '$6' }}
+    $md={{ paddingHorizontal: 24, paddingTop: 24 }}
   >
     {children}
   </YStack>

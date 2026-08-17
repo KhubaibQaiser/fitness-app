@@ -69,12 +69,12 @@ export const PageHeader = ({
 
   return (
     <YStack
-      paddingHorizontal="$4"
+      paddingHorizontal={16}
       paddingTop="$6"
       paddingBottom="$5"
       width="100%"
       alignSelf="stretch"
-      $md={{ paddingHorizontal: '$8', paddingTop: '$7' }}
+      $md={{ paddingHorizontal: 24, paddingTop: '$7' }}
     >
       {inner}
     </YStack>
