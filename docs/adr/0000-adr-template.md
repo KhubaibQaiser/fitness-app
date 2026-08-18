@@ -1,7 +1,7 @@
 # ADR-0000: Title
 
 Numbers are sequential. Gaps are reserved slots from planning, not deleted
-decisions — do not reuse 0010–0013 (reserved; next free number after 0014).
+decisions. Do not reuse 0010–0013 (reserved; next free number after 0014).
 
 - **Status**: Proposed | Accepted | Superseded by ADR-XXXX
 - **Date**: YYYY-MM-DD
