@@ -97,34 +97,46 @@ export const ClientHubOverviewSkeleton = () => (
       <HubStatCard label="Pace" />
     </XStack>
 
-    <Card padding="$4" gap="$3" width="100%">
-      <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
-        <YStack gap="$1.5" flex={1} minWidth={0}>
-          <Skeleton width={96} height={12} />
-          <Skeleton width={88} height={24} />
-          <Skeleton width={72} height={22} borderRadius={999} />
-        </YStack>
-        <Skeleton width={88} height={22} borderRadius={999} />
-      </XStack>
-      <Skeleton width="100%" height={220} borderRadius={12} />
-    </Card>
-
-    <Card gap="$3" padding="$5" alignItems="center">
-      <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
-        Goal progress
-      </Muted>
-      <SkeletonCircle size={180} />
-      <XStack gap="$6">
-        <YStack alignItems="center" gap={2}>
-          <Muted fontSize={11}>Start</Muted>
-          <Skeleton width={48} height={18} />
-        </YStack>
-        <YStack alignItems="center" gap={2}>
-          <Muted fontSize={11}>Target</Muted>
-          <Skeleton width={48} height={18} />
-        </YStack>
-      </XStack>
-    </Card>
+    <XStack flexWrap="wrap" gap="$3" width="100%" alignItems="stretch">
+      <YStack flex={1} flexBasis={280} minWidth={280}>
+        <Card padding="$4" gap="$3" width="100%">
+          <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
+            <YStack gap="$1.5" flex={1} minWidth={0}>
+              <Skeleton width={96} height={12} />
+              <Skeleton width={88} height={24} />
+              <Skeleton width={72} height={22} borderRadius={999} />
+            </YStack>
+            <Skeleton width={88} height={22} borderRadius={999} />
+          </XStack>
+          <Skeleton width="100%" height={220} borderRadius={12} />
+        </Card>
+      </YStack>
+      <Card
+        gap="$3"
+        padding="$5"
+        alignItems="center"
+        justifyContent="center"
+        flex={1}
+        flexBasis={220}
+        minWidth={220}
+        minHeight={220}
+      >
+        <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.8}>
+          Goal progress
+        </Muted>
+        <SkeletonCircle size={220} />
+        <XStack gap="$6">
+          <YStack alignItems="center" gap={2}>
+            <Muted fontSize={11}>Start</Muted>
+            <Skeleton width={48} height={18} />
+          </YStack>
+          <YStack alignItems="center" gap={2}>
+            <Muted fontSize={11}>Target</Muted>
+            <Skeleton width={48} height={18} />
+          </YStack>
+        </XStack>
+      </Card>
+    </XStack>
   </YStack>
 );
 

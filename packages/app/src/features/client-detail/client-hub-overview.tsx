@@ -140,42 +140,66 @@ export const ClientHubOverview = ({
         </YStack>
       </XStack>
 
-      <ClientWeightJourneyChart
-        goal={goal}
-        vitals={vitals}
-        latestWeightKg={latestWeightKg}
-        weightUnit={weightUnit}
-        pending={vitalsPending}
-      />
-
-      {goalProgressPct !== null && goal !== null ? (
-        <Card gap="$3" padding="$5" alignItems="center">
-          <Muted fontSize={14} fontWeight="500">
-            Goal progress
-          </Muted>
-          <GradientRing
-            id="client-goal-progress"
-            value={goalProgressPct}
-            size={92}
-            stroke={8}
-            role="coach"
-          />
-          <XStack gap="$6">
-            <YStack alignItems="center">
-              <Muted fontSize={11}>Start</Muted>
-              <Text fontFamily="$mono" fontWeight="700">
-                {startShown !== null ? `${startShown.value} ${startShown.unit}` : '—'}
+      <XStack flexWrap="wrap" gap="$3" width="100%" alignItems="stretch">
+        {goal !== null ? (
+          <YStack flex={1} flexBasis={280} minWidth={280}>
+            <ClientWeightJourneyChart
+              goal={goal}
+              vitals={vitals}
+              latestWeightKg={latestWeightKg}
+              weightUnit={weightUnit}
+              pending={vitalsPending}
+            />
+          </YStack>
+        ) : null}
+        {goalProgressPct !== null && goal !== null ? (
+          <Card
+            gap="$3"
+            padding="$5"
+            alignItems="center"
+            justifyContent="center"
+            flex={1}
+            flexBasis={220}
+            minWidth={220}
+            minHeight={220}
+          >
+            <Muted fontSize={14} fontWeight="500">
+              Goal progress
+            </Muted>
+            <GradientRing
+              id="client-goal-progress"
+              value={goalProgressPct}
+              size={220}
+              stroke={16}
+              role="coach"
+            >
+              <Text
+                fontFamily="$mono"
+                fontSize={24}
+                lineHeight={28}
+                fontWeight="600"
+                color="$color"
+              >
+                {Math.round(goalProgressPct)}%
               </Text>
-            </YStack>
-            <YStack alignItems="center">
-              <Muted fontSize={11}>Target</Muted>
-              <Text fontFamily="$mono" fontWeight="700">
-                {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '—'}
-              </Text>
-            </YStack>
-          </XStack>
-        </Card>
-      ) : null}
+            </GradientRing>
+            <XStack gap="$6">
+              <YStack alignItems="center">
+                <Muted fontSize={11}>Start</Muted>
+                <Text fontFamily="$mono" fontWeight="700">
+                  {startShown !== null ? `${startShown.value} ${startShown.unit}` : '—'}
+                </Text>
+              </YStack>
+              <YStack alignItems="center">
+                <Muted fontSize={11}>Target</Muted>
+                <Text fontFamily="$mono" fontWeight="700">
+                  {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '—'}
+                </Text>
+              </YStack>
+            </XStack>
+          </Card>
+        ) : null}
+      </XStack>
     </YStack>
   );
 };
