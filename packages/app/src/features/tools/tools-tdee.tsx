@@ -27,7 +27,7 @@ import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
-import { PaceField, PaceOverrideBanner } from '../goal-form/pace-field';
+import { PaceField } from '../goal-form/pace-field';
 import { HeightFields } from '../height-fields';
 
 type Activity = 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
@@ -177,7 +177,6 @@ export const ToolsTdee = () => {
             setGoalRate(rate);
           }}
         />
-        {pace !== null ? <PaceOverrideBanner pace={pace} /> : null}
       </FormSection>
 
       <Card>
