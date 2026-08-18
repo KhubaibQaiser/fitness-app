@@ -1,0 +1,12 @@
+---
+description: Hybrid nutrition — LLM never owns calories or macros
+alwaysApply: true
+---
+
+# Nutrition safety (ADR-0001)
+
+- Layer 1: physiology → targets in `packages/core`.
+- Layer 2: deterministic solver over the food catalog. Seeded, reproducible.
+- Layer 3 (`packages/ai`): meal names and prep notes only. Schema + numeric-claim + groundedness guardrails. Fail closed to `fallbackNarrative`.
+- Plans stay DRAFT until explicit coach publish. Never auto-publish on generate.
+- Do not send PII to the model. `assertDeidentified` is required at the Layer-3 boundary.
