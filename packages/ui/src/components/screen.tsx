@@ -33,6 +33,15 @@ export const Screen = styled(YStack, {
         },
       },
     },
+    /** Zero horizontal inset at every breakpoint (tabbed strip headers). */
+    flush: {
+      true: {
+        paddingHorizontal: 0,
+        $md: {
+          paddingHorizontal: 0,
+        },
+      },
+    },
     density: {
       comfortable: { gap: '$4' },
       compact: { gap: '$3' },

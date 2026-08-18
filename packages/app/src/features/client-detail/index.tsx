@@ -66,7 +66,7 @@ export const ClientDetailScreen = ({
 
   if (detail.isPending) {
     return (
-      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
         <ClientHubSkeleton clientId={clientId} tab={tab} onTabChange={onTabChange} />
       </AppScreen>
     );
@@ -120,7 +120,7 @@ export const ClientDetailScreen = ({
   };
 
   return (
-    <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+    <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
       <ClientHubHeader
         clientId={clientId}
         name={client.name}
