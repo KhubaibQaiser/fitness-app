@@ -130,3 +130,18 @@ export const buildPaceControlView = (input: PaceControlInput): PaceControlView =
     expectedWeeklyDeltaKg: energy.expectedWeeklyDeltaKg,
   };
 };
+
+/** Map a slider kcal onto the nearest named pace (Standard when all ticks coincide). */
+export const rateFromSliderKcal = (
+  kcal: number,
+  ticks: readonly PaceControlView['ticks'][number][],
+): GoalRate => {
+  const unique = new Set(ticks.map((tick) => tick.value));
+  if (unique.size <= 1) return 'STANDARD';
+  const first = ticks[0];
+  if (first === undefined) return 'STANDARD';
+  const nearest = ticks.reduce((best, tick) =>
+    Math.abs(tick.value - kcal) < Math.abs(best.value - kcal) ? tick : best,
+  );
+  return GOAL_RATE_OPTIONS.find((option) => option.label === nearest.label)?.value ?? 'AGGRESSIVE';
+};

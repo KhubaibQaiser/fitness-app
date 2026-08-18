@@ -25,6 +25,7 @@ import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { resolveWeightKg } from '../client-onboarding/validate-step';
 import { AppScreen } from '../shell/app-screen';
 import { GoalFields, type GoalFieldsValue } from './goal-fields';
+import { PaceOverrideBanner } from './pace-field';
 
 const activityLevelFrom = (value: number | null): ActivityLevelValue =>
   ACTIVITY_LEVELS.find((option) => Number(option.value) === value)?.value ?? '1.55';
@@ -189,17 +190,11 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           {medicalSummary}. Use clinical judgment — GymOS is not medical advice.
         </AlertBanner>
       ) : null}
-      {pace !== null && (pace.beyondRecommended || pace.belowSexFloor) ? (
-        <AlertBanner
-          tone={pace.belowSexFloor ? 'danger' : 'warning'}
-          title={
-            pace.belowSexFloor
-              ? 'Calorie target is below the sex floor'
-              : 'Calorie target is beyond the recommended pace'
-          }
-        >
-          {pace.helper} You can still save — review at the next check-in.
-        </AlertBanner>
+      {pace !== null ? (
+        <PaceOverrideBanner
+          pace={pace}
+          followUp="You can still save — review at the next check-in."
+        />
       ) : null}
       <Card gap="$4">
         {chain.toolbar}

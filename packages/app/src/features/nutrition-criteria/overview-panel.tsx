@@ -20,7 +20,8 @@ const STEPS = [
   },
   {
     title: 'Goal calories',
-    detail: 'TDEE nudged up or down by goal + pace, then clamped to safety floors.',
+    detail:
+      'TDEE nudged by goal + named pace (clamped), or a coach calorie override (warns, hard min 800).',
   },
   {
     title: 'Macros & fiber',

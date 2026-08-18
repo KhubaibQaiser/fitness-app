@@ -2,17 +2,11 @@
 
 import type { GoalPreset, GoalRate } from '@gymos/core/nutrition';
 import type { UnitPrefs } from '@gymos/core/units';
-import {
-  Body,
-  FormField,
-  PaceSlider,
-  SegmentedControl,
-  YStack,
-  type FocusChainBind,
-} from '@gymos/ui';
+import { Body, FormField, SegmentedControl, YStack, type FocusChainBind } from '@gymos/ui';
 import { ACTIVITY_LEVELS, type ActivityLevelValue } from '../../lib/activity-levels';
-import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
+import { GOAL_PRESET_OPTIONS } from '../../lib/goal-options';
 import type { PaceControlView } from '../../lib/pace-control';
+import { PaceField } from './pace-field';
 
 export type GoalFieldsValue = {
   activityLevel: ActivityLevelValue;
@@ -71,43 +65,10 @@ export const GoalFields = ({
       />
     </YStack>
 
-    <YStack gap="$2">
-      <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
-        Pace
-      </Body>
-      {pace !== null ? (
-        <PaceSlider
-          ariaLabel="Target calories"
-          min={pace.min}
-          max={pace.max}
-          value={pace.value}
-          ticks={pace.ticks}
-          suggestedValue={pace.suggestedValue}
-          tone={pace.tone}
-          hint={pace.hint}
-          helper={pace.helper}
-          warning={pace.warning}
-          onChange={(targetKcal) => {
-            const unique = new Set(pace.ticks.map((tick) => tick.value));
-            if (unique.size === 1) {
-              onChange({ targetKcal, goalRate: 'STANDARD' });
-              return;
-            }
-            const nearest = pace.ticks.reduce((best, tick) =>
-              Math.abs(tick.value - targetKcal) < Math.abs(best.value - targetKcal) ? tick : best,
-            );
-            const rate =
-              GOAL_RATE_OPTIONS.find((option) => option.label === nearest.label)?.value ??
-              'AGGRESSIVE';
-            onChange({ targetKcal, goalRate: rate });
-          }}
-        />
-      ) : (
-        <Body color="$textMuted" fontSize={13}>
-          Enter height, weight and activity to fine-tune target calories.
-        </Body>
-      )}
-    </YStack>
+    <PaceField
+      pace={pace}
+      onChange={({ targetKcal, goalRate }) => onChange({ targetKcal, goalRate })}
+    />
 
     <FormField
       label="Start weight"

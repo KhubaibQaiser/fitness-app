@@ -14,7 +14,6 @@ import {
   FormField,
   FormSection,
   Muted,
-  PaceSlider,
   SegmentedControl,
   Stat,
   useFocusChain,
@@ -23,11 +22,12 @@ import {
 } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { ACTIVITY_OPTIONS } from '../../lib/activity-levels';
-import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
+import { GOAL_PRESET_OPTIONS } from '../../lib/goal-options';
 import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
+import { PaceField, PaceOverrideBanner } from '../goal-form/pace-field';
 import { HeightFields } from '../height-fields';
 
 type Activity = 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
@@ -45,7 +45,7 @@ export const ToolsTdee = () => {
   const [age, setAge] = useState('30');
   const [sex, setSex] = useState<Sex>('M');
   const [activity, setActivity] = useState<Activity>(1.55);
-  const [goalPreset, setGoalPreset] = useState<GoalPreset>('MAINTAIN');
+  const [goalPreset, setGoalPreset] = useState<GoalPreset>('LOSE');
   const [goalRate, setGoalRate] = useState<GoalRate>('STANDARD');
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
 
@@ -169,43 +169,15 @@ export const ToolsTdee = () => {
           />
         </YStack>
 
-        <YStack gap="$2" width="100%">
-          <Muted fontSize={12} fontWeight="600">
-            Pace
-          </Muted>
-          {pace !== null ? (
-            <PaceSlider
-              ariaLabel="Target calories"
-              min={pace.min}
-              max={pace.max}
-              value={pace.value}
-              ticks={pace.ticks}
-              suggestedValue={pace.suggestedValue}
-              tone={pace.tone}
-              hint={pace.hint}
-              helper={pace.helper}
-              warning={pace.warning}
-              onChange={(kcal) => {
-                const unique = new Set(pace.ticks.map((tick) => tick.value));
-                if (unique.size === 1) {
-                  setTargetKcal(kcal);
-                  setGoalRate('STANDARD');
-                  return;
-                }
-                const nearest = pace.ticks.reduce((best, tick) =>
-                  Math.abs(tick.value - kcal) < Math.abs(best.value - kcal) ? tick : best,
-                );
-                const rate =
-                  GOAL_RATE_OPTIONS.find((option) => option.label === nearest.label)?.value ??
-                  'AGGRESSIVE';
-                setTargetKcal(kcal);
-                setGoalRate(rate);
-              }}
-            />
-          ) : (
-            <Muted>Enter weight, height and age to set a calorie target.</Muted>
-          )}
-        </YStack>
+        <PaceField
+          pace={pace}
+          emptyHint="Enter weight, height and age to set a calorie target."
+          onChange={({ targetKcal: kcal, goalRate: rate }) => {
+            setTargetKcal(kcal);
+            setGoalRate(rate);
+          }}
+        />
+        {pace !== null ? <PaceOverrideBanner pace={pace} /> : null}
       </FormSection>
 
       <Card>
