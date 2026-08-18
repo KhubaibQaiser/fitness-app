@@ -4,6 +4,9 @@
 - **Date**: 2026-08-18
 - **Phase**: P2/P3 (goal create + onboarding)
 
+Numbers 0010–0013 were reserved during planning and never issued. This ADR is
+not a replacement for missing records; the gap is intentional.
+
 ## Context
 
 [ADR-0008](0008-pace-clamp-then-derive.md) made Gentle / Standard / Aggressive an intensity name. Calories are clamped into a safety band (25% deficit, 15% surplus, sex floor, 1% body weight). Coaches could not set a custom kcal. Aggressive Lose at TDEE 2,270 is 1,703 kcal even when the male sex floor is 1,500.
