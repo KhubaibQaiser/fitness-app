@@ -21,7 +21,7 @@ export const ClientJourneyMap = ({
   subtitle?: string;
   emptyAction?: ReactNode;
 }) => (
-  <YStack gap="$5" width="100%" maxWidth={760} alignSelf="center">
+  <YStack gap="$5" width="100%" maxWidth={760} alignSelf="flex-start">
     {chrome === 'embedded' ? (
       <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
         <YStack gap="$1" flex={1} minWidth={0}>
