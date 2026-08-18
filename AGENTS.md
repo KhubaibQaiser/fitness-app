@@ -32,7 +32,9 @@ Do not dump the whole monorepo. Start from the owning package `index.ts` plus it
 
 ## Merge gates that exist
 
-CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, tests, web build, prod audit, iOS Metro export. Maestro and Lighthouse are **not** CI-gated. Playwright smoke is added only when that workflow job exists.
+CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, web build, Playwright login smoke, prod audit, iOS Metro export.
+
+Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (needs a running API). Do not claim those as merge gates.
 
 ## Human gate
 
