@@ -1,16 +1,18 @@
-'use client';
-
+import { HydrationBoundary } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
-import { AppShell } from '@gymos/app/features/shell/app-shell';
-import { GateGuard } from '@gymos/app/features/shell/gate-guard';
-import { AppErrorBoundary } from '@gymos/ui';
+import { dehydrateCoachQueries } from '../../lib/prefetch-coach';
+import { requestCookieHeader } from '../../lib/request-cookies';
+import { CoachShell } from './coach-shell';
 
-const CoachLayout = ({ children }: { children: ReactNode }) => (
-  <GateGuard>
-    <AppErrorBoundary>
-      <AppShell>{children}</AppShell>
-    </AppErrorBoundary>
-  </GateGuard>
-);
+const CoachLayout = async ({ children }: { children: ReactNode }) => {
+  const cookieHeader = await requestCookieHeader();
+  const state = await dehydrateCoachQueries({ cookieHeader, include: ['me', 'unread'] });
+
+  return (
+    <HydrationBoundary state={state}>
+      <CoachShell>{children}</CoachShell>
+    </HydrationBoundary>
+  );
+};
 
 export default CoachLayout;
