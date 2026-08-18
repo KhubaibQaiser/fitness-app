@@ -56,14 +56,19 @@ export const ClientHubHeaderSkeleton = ({
     backgroundColor="$cardBg"
     borderBottomWidth={1}
     borderBottomColor="$borderColor"
-    paddingHorizontal="$4"
     paddingTop="$md"
     paddingBottom={0}
     width="100%"
     alignSelf="stretch"
-    $md={{ paddingHorizontal: '$8' }}
   >
-    <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$md">
+    <XStack
+      alignItems="center"
+      gap="$2.5"
+      width="100%"
+      paddingHorizontal={16}
+      paddingBottom="$md"
+      $md={{ paddingHorizontal: 24 }}
+    >
       <SkeletonCircle size={40} />
       <YStack flex={1} minWidth={0} gap={2}>
         <Skeleton width="48%" height={16} />
