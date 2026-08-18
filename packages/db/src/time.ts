@@ -24,11 +24,17 @@ export const isoDate = (dt: DateTime): string => {
 };
 
 /**
- * Parse a Postgres timestamptz string. Drivers return SQL format
+ * Parse a Postgres timestamptz value. Drivers return SQL format
  * ('2026-08-06 10:46:52.235+00'), not strict ISO — fromISO alone
- * silently fails on it, so always try both.
+ * silently fails on it, so always try both. postgres.js may also hand
+ * back a Date before Drizzle stringifies it.
  */
-export const parseDbTimestamp = (value: string): DateTime => {
+export const parseDbTimestamp = (value: string | Date): DateTime => {
+  if (value instanceof Date) {
+    const fromDate = DateTime.fromJSDate(value, { zone: 'utc' });
+    if (fromDate.isValid) return fromDate;
+    throw new Error(`unparseable timestamp from database: ${value.toISOString()}`);
+  }
   const isoParsed = DateTime.fromISO(value, { setZone: true });
   if (isoParsed.isValid) return isoParsed;
   const sqlParsed = DateTime.fromSQL(value, { setZone: true });
@@ -37,7 +43,8 @@ export const parseDbTimestamp = (value: string): DateTime => {
 };
 
 /** Strict ISO (with 'T') from a database timestamptz string. */
-export const toStrictIso = (value: string): string => iso(parseDbTimestamp(value).toUTC());
+export const toStrictIso = (value: string | Date): string => iso(parseDbTimestamp(value).toUTC());
 
 /** Epoch milliseconds from a database timestamptz string. */
-export const dbTimestampToMillis = (value: string): number => parseDbTimestamp(value).toMillis();
+export const dbTimestampToMillis = (value: string | Date): number =>
+  parseDbTimestamp(value).toMillis();
