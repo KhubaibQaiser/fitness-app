@@ -186,6 +186,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
       expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
       initialTargets: computation.value.targets,
       tdeeEstimate: computation.value.tdee,
+      targetKcal: computation.value.targets.kcal,
       checkinWeekday: 1,
       status: 'ACTIVE',
     })

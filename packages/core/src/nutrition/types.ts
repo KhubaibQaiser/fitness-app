@@ -30,16 +30,27 @@ export type MacroTargets = {
 /** Why a named-pace kcal intent was moved into the safe band. */
 export type PaceClampReason = 'CALORIE_FLOOR' | 'DEFICIT_CAP' | 'SURPLUS_CAP' | 'BODY_WEIGHT_RATE';
 
+/** Coach override warnings — never refuse create/save on these. */
+export type PaceOverrideWarning =
+  'KCAL_OVERRIDDEN' | 'BEYOND_RECOMMENDED' | 'BELOW_SEX_FLOOR' | 'MACROS_DEGRADED';
+
 export type TargetComputation = {
   readonly bmr: number;
   readonly tdee: number;
   readonly targets: MacroTargets;
-  /** kg per week implied by the *clamped* kcal delta; negative = loss. */
+  /** kg per week implied by the resolved kcal delta; negative = loss. */
   readonly expectedWeeklyDeltaKg: number;
-  /** Kcal before safety clamp (tenant kg/week or GOAL_DELTA). */
+  /** Kcal before safety clamp (tenant kg/week, GOAL_DELTA, or coach override). */
   readonly requestedKcal: number;
   readonly clamped: boolean;
   readonly clampReasons: readonly PaceClampReason[];
+  /** Clamped named-pace suggestion for the stored rate (tick the coach left). */
+  readonly recommendedKcal: number;
+  readonly kcalOverridden: boolean;
+  readonly beyondRecommended: boolean;
+  readonly belowSexFloor: boolean;
+  readonly macrosDegraded: boolean;
+  readonly overrideWarnings: readonly PaceOverrideWarning[];
 };
 
 export type NutritionRefusal =

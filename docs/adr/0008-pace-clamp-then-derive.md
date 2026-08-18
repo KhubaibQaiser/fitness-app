@@ -41,4 +41,6 @@ Safety floors themselves stay non-configurable downward. The 25% deficit cap win
 
 **Harder:** A tenant that still advertises “Aggressive = 2 kg/week” will see the label rewritten per client. That is the point — the named pace is intensity, not a promise of an unsafe rate.
 
-**Revisit when:** clinical policy changes the 25% cap / sex floors; or we add coach-entered custom kcal (that path should still _refuse_ below the floor, not clamp a typed-in 70).
+**Revisit when:** clinical policy changes the 25% cap / sex floors.
+
+Coach-entered custom kcal is specified in [ADR-0014](0014-coach-calorie-override.md): named ticks still clamp (this ADR); a coach override warns and persists, including below the sex floor down to 800 kcal.

@@ -126,6 +126,8 @@ export type Goal = {
   targetWeightKg: number | null;
   targetDate: string | null;
   expectedWeeklyDeltaKg: number;
+  /** Coach-resolved daily kcal. Null on goals created before calorie override. */
+  targetKcal: number | null;
   initialTargets: MacroTargets | null;
   tdeeEstimate: number | null;
   checkinWeekday: number;
@@ -138,6 +140,7 @@ export type SaveActiveGoalInput = {
   rate: Goal['rate'];
   startWeightKg: number;
   targetWeightKg: number;
+  targetKcal?: number;
 };
 
 export type Vitals = {
@@ -198,6 +201,7 @@ export type OnboardClientInput = {
     targetDate?: string;
     checkinWeekday?: number;
     bodyFatPct?: number;
+    targetKcal?: number;
   };
   dietary?: Restriction[];
 };

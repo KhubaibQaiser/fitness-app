@@ -39,16 +39,13 @@ export const ClientOnboardingScreen = () => {
 
   const prefs = unitPrefsFrom(me.data, config.data);
   const defaultCountry = defaultCountryFrom(me.data, config.data);
+  const preview = buildOnboardingPreview(draft, prefs, config.data);
   const isLast = stepIndex === STEP_META.length - 1;
   const meta = STEP_META[stepIndex];
   const stepId = meta?.id;
-  const preview = buildOnboardingPreview(draft, prefs, config.data);
-  const previewBlocked = preview?.safetyIssue !== null;
-  const goalStepIndex = STEP_META.findIndex((step) => step.id === 'goal');
 
   const goNext = () => {
     if (stepId === undefined) return;
-    if (isLast && previewBlocked) return;
     const nextErrors = validateStep(stepId, draft, prefs, defaultCountry);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -135,6 +132,7 @@ export const ClientOnboardingScreen = () => {
         rate: draft.goalRate,
         startWeightKg,
         targetWeightKg,
+        ...(draft.targetKcal !== null ? { targetKcal: draft.targetKcal } : {}),
       },
       ...(draft.dietary.length > 0 ? { dietary: draft.dietary } : {}),
     };
@@ -151,13 +149,8 @@ export const ClientOnboardingScreen = () => {
           canGoBack={stepIndex > 0}
           isLast={isLast}
           pending={onboard.isPending}
-          nextDisabled={isLast && previewBlocked}
           onBack={() => {
             setErrors({});
-            if (isLast && previewBlocked) {
-              setStepIndex(goalStepIndex);
-              return;
-            }
             setStepIndex((i) => Math.max(0, i - 1));
           }}
           onNext={goNext}

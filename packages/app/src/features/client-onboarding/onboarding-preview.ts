@@ -29,6 +29,7 @@ export const buildOnboardingPreview = (
     rate: draft.goalRate,
     startWeightKg,
     targetWeightKg,
+    ...(draft.targetKcal !== null ? { targetKcal: draft.targetKcal } : {}),
     ...(config !== undefined ? { config } : {}),
     ...(today !== undefined ? { today } : {}),
   });

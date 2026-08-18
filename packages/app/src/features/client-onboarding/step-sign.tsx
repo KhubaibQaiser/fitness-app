@@ -69,9 +69,26 @@ export const StepSign = ({
               subtitle="A projection from today to the goal. Weekly check-ins keep this path honest and adaptable."
             />
           </StaggerItem>
-          {preview.paceAdjustment !== null ? (
+          {preview.paceAdjustment !== null && !preview.kcalOverridden ? (
             <AlertBanner tone="warning" title={preview.paceAdjustment.title}>
               {preview.paceAdjustment.detail}
+            </AlertBanner>
+          ) : null}
+          {preview.kcalOverridden || preview.beyondRecommended || preview.belowSexFloor ? (
+            <AlertBanner
+              tone={preview.belowSexFloor ? 'danger' : 'warning'}
+              title={
+                preview.belowSexFloor
+                  ? 'Calorie target is below the sex floor'
+                  : preview.beyondRecommended
+                    ? 'Calorie target is beyond the recommended pace'
+                    : 'Calorie target was overridden'
+              }
+              icon={preview.belowSexFloor ? <AlertTriangle size={18} color="$danger" /> : undefined}
+            >
+              {preview.belowSexFloor
+                ? `Chosen ${preview.targetKcal.toLocaleString()} kcal is below the usual calorie floor (suggested ${preview.recommendedKcal.toLocaleString()} kcal). This may not be healthy. You can still create the client — targets stay estimates and are reviewed at every check-in.`
+                : `Chosen ${preview.targetKcal.toLocaleString()} kcal differs from the suggested ${preview.recommendedKcal.toLocaleString()} kcal for this pace. This override may not be appropriate for every client. You can still create the client — targets stay estimates and are reviewed at every check-in.`}
             </AlertBanner>
           ) : null}
           {preview.safetyIssue !== null ? (

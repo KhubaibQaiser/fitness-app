@@ -108,4 +108,26 @@ describe('goal preview', () => {
     expect(preview.safetyIssue).toBeNull();
     expect(preview.paceAdjustment).not.toBeNull();
   });
+
+  it('allows a coach override below the sex floor and marks it instead of blocking', () => {
+    const preview = buildGoalPreview({
+      sex: 'M',
+      dob: '1994-01-01',
+      heightCm: 174,
+      weightKg: 95,
+      activity: 1.2,
+      preset: 'LOSE',
+      rate: 'STANDARD',
+      startWeightKg: 95,
+      targetWeightKg: 85,
+      targetKcal: 1100,
+      today: new Date('2024-08-17T00:00:00Z'),
+    });
+
+    expect(preview.targetKcal).toBe(1100);
+    expect(preview.safetyIssue).toBeNull();
+    expect(preview.kcalOverridden).toBe(true);
+    expect(preview.belowSexFloor).toBe(true);
+    expect(preview.beyondRecommended).toBe(true);
+  });
 });

@@ -177,7 +177,10 @@ export const generatePlan = async (
       },
       goal.preset,
       goal.rate,
-      weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : undefined,
+      {
+        ...(weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : {}),
+        ...(goal.targetKcal !== null ? { targetKcal: goal.targetKcal } : {}),
+      },
     );
     if (!computation.ok) return err({ code: 'NUTRITION_REFUSAL', refusal: computation.error });
     targets = computation.value.targets;
