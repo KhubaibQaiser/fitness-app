@@ -162,9 +162,7 @@ export const WeightChart = ({
   const areaGradId = `${useId().replace(/:/g, '')}-area`;
   const [progress, setProgress] = useState(0);
   const [active, setActive] = useState<number | null>(null);
-  const [pulse, setPulse] = useState(1);
   const raf = useRef<number | null>(null);
-  const pulseRaf = useRef<number | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   const layout = useMemo(
@@ -212,24 +210,24 @@ export const WeightChart = ({
     };
   }, [layout, reduceMotion]);
 
-  useEffect(() => {
-    if (reduceMotion || layout?.current === null) {
-      setPulse(1);
-      return;
-    }
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = ((now - start) % 1800) / 1800;
-      setPulse(0.4 + 0.6 * (0.5 - 0.5 * Math.cos(t * 2 * Math.PI)));
-      pulseRaf.current = requestAnimationFrame(tick);
+  const geometry = useMemo(() => {
+    if (layout === null) return null;
+    const actualPath = monotoneCubicPath(layout.actual);
+    const firstActual = layout.actual[0];
+    const lastActual = layout.actual[layout.actual.length - 1];
+    return {
+      actualPath,
+      expectedPath: monotoneCubicPath(layout.expected),
+      projectedPath: monotoneCubicPath(layout.projected),
+      actualLen: Math.max(1, pathLength(layout.actual)),
+      area:
+        firstActual !== undefined && lastActual !== undefined && layout.actual.length >= 2
+          ? areaFromLinePath(actualPath, firstActual.x, lastActual.x, height - PAD.bottom)
+          : '',
     };
-    pulseRaf.current = requestAnimationFrame(tick);
-    return () => {
-      if (pulseRaf.current !== null) cancelAnimationFrame(pulseRaf.current);
-    };
-  }, [layout, reduceMotion]);
+  }, [layout, height]);
 
-  if (layout === null) {
+  if (layout === null || geometry === null) {
     return (
       <YStack height={height} alignItems="center" justifyContent="center">
         <Muted>Record a few weigh-ins to see the trend</Muted>
@@ -237,7 +235,7 @@ export const WeightChart = ({
     );
   }
 
-  const { actual, expected, projected, minW, maxW, tMin, tMax, goalY } = layout;
+  const { actual, expected, minW, maxW, tMin, tMax, goalY } = layout;
   const gradientStart = String(theme.gradientStart?.val ?? '#0EA5E9');
   const gradientEnd = String(theme.gradientEnd?.val ?? '#2563EB');
   const primary = String(theme.primary?.val ?? '#1D4ED8');
@@ -250,17 +248,9 @@ export const WeightChart = ({
   const wash = String(theme.primaryMuted?.val ?? '#EFF6FF');
   const surface = String(theme.cardBg?.val ?? '#FFFFFF');
 
-  const actualPath = monotoneCubicPath(actual);
-  const expectedPath = monotoneCubicPath(expected);
-  const projectedPath = monotoneCubicPath(projected);
-  const actualLen = Math.max(1, pathLength(actual));
+  const { actualPath, expectedPath, projectedPath, actualLen, area } = geometry;
   const actualDash = dashFor(actualLen, progress);
-  const firstActual = actual[0];
   const lastActual = actual[actual.length - 1];
-  const area =
-    firstActual !== undefined && lastActual !== undefined && actual.length >= 2
-      ? areaFromLinePath(actualPath, firstActual.x, lastActual.x, height - PAD.bottom)
-      : '';
   const areaOpacity = Math.max(0, (progress - 0.35) / 0.65);
   const markerOpacity = Math.max(0, (progress - 0.55) / 0.45);
   const activePoint = active !== null ? actual[active] : null;
@@ -492,7 +482,7 @@ export const WeightChart = ({
                 cy={layout.current.y}
                 r={11}
                 fill={wash}
-                opacity={0.35 + pulse * 0.4}
+                opacity={0.55}
               />
               <Circle
                 cx={layout.current.x}
@@ -516,7 +506,7 @@ export const WeightChart = ({
             width={`${(32 / WIDTH) * 100}%`}
             height="100%"
             cursor="pointer"
-            onPress={() => setActive(index)}
+            onPress={() => setActive((current) => (current === index ? null : index))}
             onMouseEnter={() => setActive(index)}
             onMouseLeave={() => setActive(null)}
             accessibilityRole="button"
@@ -579,24 +569,18 @@ export const WeightChart = ({
             <Muted>Weigh-ins</Muted>
           </XStack>
           <XStack alignItems="center" gap="$1.5">
-            <YStack
-              width={14}
-              height={0}
-              borderTopWidth={2}
-              borderStyle="dashed"
-              borderColor="$textMuted"
-            />
+            <XStack alignItems="center" gap={3}>
+              <YStack width={5} height={2} borderRadius={999} backgroundColor="$textMuted" />
+              <YStack width={5} height={2} borderRadius={999} backgroundColor="$textMuted" />
+            </XStack>
             <Muted>Expected</Muted>
           </XStack>
           {goalWeightKg !== null ? (
             <XStack alignItems="center" gap="$1.5">
-              <YStack
-                width={14}
-                height={0}
-                borderTopWidth={2}
-                borderStyle="dashed"
-                borderColor="$accent"
-              />
+              <XStack alignItems="center" gap={3}>
+                <YStack width={5} height={2} borderRadius={999} backgroundColor="$accent" />
+                <YStack width={5} height={2} borderRadius={999} backgroundColor="$accent" />
+              </XStack>
               <Muted>
                 Goal {goalWeightKg.toFixed(1)} {unitLabel}
               </Muted>
