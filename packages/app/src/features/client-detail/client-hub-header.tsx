@@ -45,14 +45,19 @@ export const ClientHubHeader = ({
       backgroundColor="$cardBg"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
-      paddingHorizontal={16}
       paddingTop="$md"
       paddingBottom={0}
       width="100%"
       alignSelf="stretch"
-      $md={{ paddingHorizontal: 24 }}
     >
-      <XStack alignItems="center" gap="$2.5" width="100%" paddingBottom="$md">
+      <XStack
+        alignItems="center"
+        gap="$2.5"
+        width="100%"
+        paddingHorizontal={16}
+        paddingBottom="$md"
+        $md={{ paddingHorizontal: 24 }}
+      >
         <Avatar name={name} size={40} tone={status === 'attention' ? 'primary' : 'accent'} />
 
         <YStack flex={1} minWidth={0} gap={2}>
