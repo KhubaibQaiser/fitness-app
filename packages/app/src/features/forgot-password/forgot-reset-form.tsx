@@ -1,6 +1,6 @@
 'use client';
 
-import { FormField, Muted, PrimaryButton, YStack } from '@gymos/ui';
+import { FormField, Muted, PrimaryButton, useFocusChain, YStack } from '@gymos/ui';
 import { OtpCodeField } from '../auth/otp-code-field';
 
 type ForgotResetFormProps = {
@@ -23,32 +23,43 @@ export const ForgotResetForm = ({
   error,
   info,
   onSubmit,
-}: ForgotResetFormProps) => (
-  <YStack gap="$4">
-    {info !== null ? (
-      <Muted fontSize={13} textAlign="center">
-        {info}
-      </Muted>
-    ) : null}
-    <OtpCodeField value={code} onChangeText={onChangeCode} />
-    <FormField
-      label="New password"
-      value={newPassword}
-      onChangeText={onChangePassword}
-      placeholder="At least 8 characters"
-      autoCapitalize="none"
-      autoCorrect={false}
-      secureTextEntry
-      required
-      error={error}
-      onSubmitEditing={onSubmit}
-    />
-    <PrimaryButton
-      disabled={busy || code.length !== 6 || newPassword.length < 8}
-      onPress={onSubmit}
-      width="100%"
-    >
-      {busy ? 'Updating…' : 'Update password'}
-    </PrimaryButton>
-  </YStack>
-);
+}: ForgotResetFormProps) => {
+  const submit = () => {
+    if (busy || code.length !== 6 || newPassword.length < 8) return;
+    onSubmit();
+  };
+
+  const chain = useFocusChain(['code', 'password'], { onSubmit: submit, submitKey: 'go' });
+
+  return (
+    <YStack gap="$4">
+      {chain.toolbar}
+      {info !== null ? (
+        <Muted fontSize={13} textAlign="center">
+          {info}
+        </Muted>
+      ) : null}
+      <OtpCodeField value={code} onChangeText={onChangeCode} field={chain.bind('code')} />
+      <FormField
+        label="New password"
+        value={newPassword}
+        onChangeText={onChangePassword}
+        placeholder="At least 8 characters"
+        autoCapitalize="none"
+        autoCorrect={false}
+        secureTextEntry
+        autoComplete="new-password"
+        required
+        error={error}
+        {...chain.bind('password')}
+      />
+      <PrimaryButton
+        disabled={busy || code.length !== 6 || newPassword.length < 8}
+        onPress={submit}
+        width="100%"
+      >
+        {busy ? 'Updating…' : 'Update password'}
+      </PrimaryButton>
+    </YStack>
+  );
+};

@@ -12,6 +12,7 @@ import {
   Muted,
   Row,
   Text,
+  useFocusChain,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -65,6 +66,8 @@ export const PlanItemCard = ({
     ]);
     setOverrideOpen(false);
   };
+
+  const chain = useFocusChain(['kcal', 'proteinG', 'fatG', 'carbsG'], { onSubmit: applyOverride });
 
   return (
     <Card padding="$3" gap="$2">
@@ -132,16 +135,36 @@ export const PlanItemCard = ({
       ) : null}
       {overrideOpen ? (
         <YStack gap="$2">
+          {chain.toolbar}
           <Muted fontSize={12}>Coach-entered macros (audited). Food stays the same.</Muted>
-          <FormField label="kcal" value={kcal} onChangeText={setKcal} inputMode="numeric" />
+          <FormField
+            label="kcal"
+            value={kcal}
+            onChangeText={setKcal}
+            inputMode="numeric"
+            {...chain.bind('kcal')}
+          />
           <FormField
             label="Protein g"
             value={proteinG}
             onChangeText={setProteinG}
             inputMode="decimal"
+            {...chain.bind('proteinG')}
           />
-          <FormField label="Fat g" value={fatG} onChangeText={setFatG} inputMode="decimal" />
-          <FormField label="Carbs g" value={carbsG} onChangeText={setCarbsG} inputMode="decimal" />
+          <FormField
+            label="Fat g"
+            value={fatG}
+            onChangeText={setFatG}
+            inputMode="decimal"
+            {...chain.bind('fatG')}
+          />
+          <FormField
+            label="Carbs g"
+            value={carbsG}
+            onChangeText={setCarbsG}
+            inputMode="decimal"
+            {...chain.bind('carbsG')}
+          />
           <GhostButton disabled={busy} onPress={applyOverride}>
             Save override
           </GhostButton>

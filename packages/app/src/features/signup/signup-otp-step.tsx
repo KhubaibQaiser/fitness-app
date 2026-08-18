@@ -1,6 +1,6 @@
 'use client';
 
-import { GhostButton, PrimaryButton, YStack } from '@gymos/ui';
+import { GhostButton, PrimaryButton, useFocusChain, YStack } from '@gymos/ui';
 import { OtpCodeField } from '../auth/otp-code-field';
 
 type SignupOtpStepProps = {
@@ -21,19 +21,24 @@ export const SignupOtpStep = ({
   onConfirm,
   onResend,
   resendBusy,
-}: SignupOtpStepProps) => (
-  <YStack gap="$4">
-    <OtpCodeField
-      value={code}
-      onChangeText={onChangeCode}
-      error={error}
-      onSubmitEditing={onConfirm}
-    />
-    <PrimaryButton disabled={busy || code.length !== 6} onPress={onConfirm} width="100%">
-      {busy ? 'Creating account…' : 'Verify and create account'}
-    </PrimaryButton>
-    <GhostButton disabled={resendBusy || busy} onPress={onResend} width="100%">
-      {resendBusy ? 'Resending…' : 'Resend code'}
-    </GhostButton>
-  </YStack>
-);
+}: SignupOtpStepProps) => {
+  const chain = useFocusChain(['code'], { onSubmit: onConfirm, submitKey: 'go' });
+
+  return (
+    <YStack gap="$4">
+      {chain.toolbar}
+      <OtpCodeField
+        value={code}
+        onChangeText={onChangeCode}
+        error={error}
+        field={chain.bind('code')}
+      />
+      <PrimaryButton disabled={busy || code.length !== 6} onPress={onConfirm} width="100%">
+        {busy ? 'Creating account…' : 'Verify and create account'}
+      </PrimaryButton>
+      <GhostButton disabled={resendBusy || busy} onPress={onResend} width="100%">
+        {resendBusy ? 'Resending…' : 'Resend code'}
+      </GhostButton>
+    </YStack>
+  );
+};

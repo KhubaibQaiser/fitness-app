@@ -1,8 +1,33 @@
 'use client';
 
-import { useId, type ReactNode } from 'react';
-import { Input, Label, Text, TextArea, XStack, YStack, type ColorTokens } from 'tamagui';
+import { forwardRef, useId, useImperativeHandle, useRef, type ReactNode } from 'react';
+import {
+  Input,
+  Label,
+  Text,
+  TextArea,
+  XStack,
+  YStack,
+  type ColorTokens,
+  type TamaguiElement,
+} from 'tamagui';
+import type { FormFieldHandle } from './form-field-handle';
+import {
+  defaultAutoComplete,
+  enterKeyHintForReturnKey,
+  isPadKeyboard,
+  keyboardTypeForInputMode,
+  textContentTypeForAutoComplete,
+  type AutoCompleteValue,
+  type EnterKeyHint,
+  type InputMode,
+  type ReturnKeyType,
+} from './keyboard-map';
 import { Body, Muted } from './typography';
+
+export type { FormFieldHandle } from './form-field-handle';
+
+type HostFocusable = TamaguiElement;
 
 type FormFieldProps = {
   label: string;
@@ -15,41 +40,119 @@ type FormFieldProps = {
   secureTextEntry?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoCorrect?: boolean;
-  inputMode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'email' | 'url' | 'search';
+  inputMode?: InputMode;
+  autoComplete?: AutoCompleteValue;
   multiline?: boolean;
   numberOfLines?: number;
   onSubmitEditing?: () => void;
+  onFocus?: () => void;
   disabled?: boolean;
   unit?: string;
+  returnKeyType?: ReturnKeyType;
+  enterKeyHint?: EnterKeyHint;
+  blurOnSubmit?: boolean;
+  inputAccessoryViewID?: string;
+  autoFocus?: boolean;
+  maxLength?: number;
 };
 
-export const FormField = ({
-  label,
-  value,
-  onChangeText,
-  error = null,
-  hint = null,
-  placeholder,
-  required = false,
-  secureTextEntry = false,
-  autoCapitalize,
-  autoCorrect,
-  inputMode,
-  multiline = false,
-  numberOfLines = 3,
-  onSubmitEditing,
-  disabled = false,
-  unit,
-}: FormFieldProps) => {
+export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function FormField(
+  {
+    label,
+    value,
+    onChangeText,
+    error = null,
+    hint = null,
+    placeholder,
+    required = false,
+    secureTextEntry = false,
+    autoCapitalize,
+    autoCorrect,
+    inputMode,
+    autoComplete: autoCompleteProp,
+    multiline = false,
+    numberOfLines = 3,
+    onSubmitEditing,
+    onFocus,
+    disabled = false,
+    unit,
+    returnKeyType,
+    enterKeyHint: enterKeyHintProp,
+    blurOnSubmit,
+    inputAccessoryViewID,
+    autoFocus,
+    maxLength,
+  },
+  ref,
+) {
   const id = useId();
+  const inputRef = useRef<HostFocusable | null>(null);
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
   const describedBy = [error ? errorId : null, hint && !error ? hintId : null]
     .filter(Boolean)
     .join(' ');
 
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      const node = inputRef.current;
+      if (node && 'focus' in node && typeof node.focus === 'function') {
+        node.focus();
+      }
+    },
+  }));
+
   const borderColor = (error ? '$danger' : '$borderColor') as ColorTokens;
   const focusBorder = (error ? '$danger' : '$focusRing') as ColorTokens;
+  const keyboardType = keyboardTypeForInputMode(inputMode);
+  const autoComplete = defaultAutoComplete({
+    inputMode,
+    secureTextEntry,
+    autoComplete: autoCompleteProp,
+  });
+  const textContentType = textContentTypeForAutoComplete(autoComplete);
+  const enterKeyHint =
+    enterKeyHintProp ??
+    (returnKeyType !== undefined ? enterKeyHintForReturnKey(returnKeyType) : undefined);
+  const accessoryId =
+    !multiline && isPadKeyboard(keyboardType) && inputAccessoryViewID !== undefined
+      ? inputAccessoryViewID
+      : undefined;
+
+  const a11y = {
+    id,
+    nativeID: id.replace(/[^a-zA-Z0-9_-]/g, ''),
+    accessibilityLabel: label,
+    accessibilityState: { disabled },
+    'aria-invalid': Boolean(error),
+    'aria-required': required,
+    ...(error ? { accessibilityHint: error } : hint ? { accessibilityHint: hint } : {}),
+    ...(describedBy !== '' ? { 'aria-describedby': describedBy } : {}),
+  };
+
+  const keyboardProps = {
+    keyboardType,
+    ...(autoComplete !== undefined ? { autoComplete } : {}),
+    ...(textContentType !== undefined ? { textContentType } : {}),
+    ...(returnKeyType !== undefined ? { returnKeyType } : {}),
+    ...(enterKeyHint !== undefined ? { enterKeyHint } : {}),
+    ...(blurOnSubmit !== undefined ? { blurOnSubmit } : {}),
+    ...(accessoryId !== undefined ? { inputAccessoryViewID: accessoryId } : {}),
+    ...(autoFocus !== undefined ? { autoFocus } : {}),
+    ...(maxLength !== undefined ? { maxLength } : {}),
+    ...(autoCapitalize !== undefined ? { autoCapitalize } : {}),
+    ...(autoCorrect !== undefined ? { autoCorrect } : {}),
+    ...(inputMode !== undefined ? { inputMode } : {}),
+    ...(onSubmitEditing !== undefined ? { onSubmitEditing } : {}),
+    ...(onFocus !== undefined ? { onFocus } : {}),
+  };
+
+  const focusStyle = {
+    borderColor: focusBorder,
+    outlineWidth: 2,
+    outlineColor: '$focusRing',
+    outlineStyle: 'solid' as const,
+  };
 
   return (
     <YStack gap="$1.5" width="100%">
@@ -66,7 +169,7 @@ export const FormField = ({
       </Label>
       {multiline ? (
         <TextArea
-          id={id}
+          ref={inputRef}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -81,20 +184,14 @@ export const FormField = ({
           paddingHorizontal="$3"
           fontFamily="$body"
           numberOfLines={numberOfLines}
-          aria-invalid={Boolean(error)}
-          aria-required={required}
-          aria-describedby={describedBy || undefined}
-          focusStyle={{
-            borderColor: focusBorder,
-            outlineWidth: 2,
-            outlineColor: '$focusRing',
-            outlineStyle: 'solid',
-          }}
+          {...a11y}
+          {...keyboardProps}
+          focusStyle={focusStyle}
         />
       ) : (
         <XStack position="relative" alignItems="center" width="100%">
           <Input
-            id={id}
+            ref={inputRef}
             value={value}
             onChangeText={onChangeText}
             placeholder={placeholder}
@@ -116,23 +213,13 @@ export const FormField = ({
             fontSize={15}
             secureTextEntry={secureTextEntry}
             {...(secureTextEntry
-              ? { type: 'password' as const, autoComplete: 'current-password' as const }
+              ? { type: 'password' as const }
               : inputMode === 'email'
-                ? { type: 'email' as const, autoComplete: 'email' as const }
+                ? { type: 'email' as const }
                 : {})}
-            {...(autoCapitalize !== undefined ? { autoCapitalize } : {})}
-            {...(autoCorrect !== undefined ? { autoCorrect } : {})}
-            {...(inputMode !== undefined ? { inputMode } : {})}
-            {...(onSubmitEditing !== undefined ? { onSubmitEditing } : {})}
-            aria-invalid={Boolean(error)}
-            aria-required={required}
-            aria-describedby={describedBy || undefined}
-            focusStyle={{
-              borderColor: focusBorder,
-              outlineWidth: 2,
-              outlineColor: '$focusRing',
-              outlineStyle: 'solid',
-            }}
+            {...a11y}
+            {...keyboardProps}
+            focusStyle={focusStyle}
           />
           {unit ? (
             <Text
@@ -159,7 +246,7 @@ export const FormField = ({
       ) : null}
     </YStack>
   );
-};
+});
 
 export const FormSection = ({ title, children }: { title: string; children: ReactNode }) => (
   <YStack gap="$3" width="100%" aria-label={title}>
