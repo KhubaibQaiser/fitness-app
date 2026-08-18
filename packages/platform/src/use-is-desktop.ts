@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
-/** Desktop shell breakpoint — matches Tamagui `md` / common tablet+ width. */
+/** Desktop shell breakpoint — must match Tamagui `md` media. */
 export const DESKTOP_MIN_WIDTH_PX = 768;
 
 /**
- * Viewport ≥ desktop breakpoint. Web uses matchMedia (reliable with Next +
- * react-native-web). Native (P3) can swap to Dimensions / useWindowDimensions.
+ * Viewport ≥ desktop breakpoint. Useful for runtime UI details on web/native.
+ * Do not use for web shell first-paint structure decisions — shell visibility
+ * should be media/CSS-driven to avoid hydration-time layout swaps.
  *
- * Mobile-first: returns false until mounted to avoid SSR/desktop mismatch flash
- * of the side nav.
+ * Returns false until mounted on web.
  */
 export const useIsDesktop = (minWidthPx = DESKTOP_MIN_WIDTH_PX): boolean => {
   const [isDesktop, setIsDesktop] = useState(false);

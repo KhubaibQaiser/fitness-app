@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DESKTOP_MIN_WIDTH_PX } from './breakpoints';
 import { config } from './tamagui.config';
 
 const themeColor = (value: unknown): string => {
@@ -40,5 +41,9 @@ describe('GymOS design tokens', () => {
     expect(themeColor(theme('light').alertText)).toBe('#EF4444');
     expect(themeColor(theme('light').milestoneFill)).toBe('#F59E0B');
     expect(themeColor(theme('dark').alertText)).toBe('#F87171');
+  });
+
+  it('keeps desktop breakpoint aligned with Tamagui md media', () => {
+    expect(config.media.md.minWidth).toBe(DESKTOP_MIN_WIDTH_PX);
   });
 });
