@@ -8,12 +8,10 @@ export const PaceField = ({
   pace,
   onChange,
   emptyHint = 'Enter height, weight and activity to fine-tune target calories.',
-  footer = 'Preview only — review with the client at check-in.',
 }: {
   pace: PaceControlView | null;
   onChange: (next: { targetKcal: number; goalRate: GoalRate }) => void;
   emptyHint?: string;
-  footer?: string;
 }) => {
   const media = useMedia();
   return (
@@ -30,7 +28,6 @@ export const PaceField = ({
           hint={pace.hint}
           warning={pace.warning}
           floor={pace.sexFloorKcal}
-          footer={footer}
           compact={!media.md}
           onChange={(targetKcal) =>
             onChange({ targetKcal, goalRate: rateFromSliderKcal(targetKcal, pace.ticks) })
