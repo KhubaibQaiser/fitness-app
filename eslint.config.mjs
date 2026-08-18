@@ -23,6 +23,8 @@ export default tseslint.config(
       '**/coverage/',
       'packages/contracts/generated/',
       '**/*.d.ts',
+      'apps/web/e2e/',
+      '**/playwright.config.ts',
     ],
   },
 
