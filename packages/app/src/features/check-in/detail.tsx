@@ -63,13 +63,6 @@ const VERDICT_ICON_FG = {
   neutral: '$textMuted',
 } as const;
 
-const BAR_COLOR = {
-  success: '$success',
-  warning: '$warning',
-  danger: '$danger',
-  primary: '$primary',
-} as const;
-
 /** View / edit a completed check-in and re-run the adaptive engine. */
 export const CheckInDetailScreen = ({
   clientId,
@@ -320,22 +313,7 @@ export const CheckInDetailScreen = ({
                   height={140}
                 />
               </YStack>
-            ) : (
-              <YStack flex={1} minWidth={0}>
-                <YStack
-                  height={8}
-                  width="100%"
-                  backgroundColor="$elevatedBg"
-                  borderRadius={999}
-                  overflow="hidden"
-                >
-                  <YStack height={8} width={`${pctNum}%`} backgroundColor={BAR_COLOR[barTone]} />
-                </YStack>
-                <Muted fontSize={11} marginTop="$2">
-                  {pctNum}% adherence
-                </Muted>
-              </YStack>
-            )}
+            ) : null}
           </XStack>
         </YStack>
 
