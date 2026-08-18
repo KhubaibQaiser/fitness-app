@@ -117,7 +117,18 @@ export const ClientHubOverviewSkeleton = () => (
 );
 
 export const ClientHubJourneySkeleton = () => (
-  <YStack width="100%" maxWidth={760} alignSelf="center" gap="$3">
+  <YStack width="100%" maxWidth={760} alignSelf="center" gap="$5">
+    <Card padding="$4" gap="$3" width="100%">
+      <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
+        <YStack gap="$1.5" flex={1} minWidth={0}>
+          <Skeleton width={96} height={12} />
+          <Skeleton width={88} height={24} />
+          <Skeleton width={72} height={22} borderRadius={999} />
+        </YStack>
+        <Skeleton width={88} height={22} borderRadius={999} />
+      </XStack>
+      <Skeleton width="100%" height={220} borderRadius={12} />
+    </Card>
     <Skeleton width="72%" height={22} />
     <YStack width="100%" position="relative">
       <YStack
