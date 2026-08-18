@@ -21,7 +21,7 @@ export const AppScreen = ({ children, footer, avoidKeyboard, ...rest }: Props) =
   const avoid = avoidKeyboard ?? footer !== undefined;
 
   return (
-    <FormKeyboardRoot fill enabled={avoid}>
+    <FormKeyboardRoot fill avoidKeyboard={avoid}>
       <YStack flex={1} minHeight={0} width="100%" backgroundColor="$coachCanvas">
         <ScrollView
           flex={1}

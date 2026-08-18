@@ -1,23 +1,18 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { YStack } from 'tamagui';
-
-type FormKeyboardRootProps = {
-  children: ReactNode;
-  fill?: boolean;
-  enabled?: boolean;
-};
+import type { FormKeyboardRootProps } from './form-keyboard-root-types';
 
 /**
  * iOS: pad the screen when the keyboard opens so Next-focused fields and the
  * sticky footer stay visible. Android uses `softwareKeyboardLayoutMode: resize`.
+ * `asForm` is a web-only landmark and is ignored here.
  */
 export const FormKeyboardRoot = ({
   children,
   fill = false,
-  enabled = true,
+  avoidKeyboard = false,
 }: FormKeyboardRootProps) => {
   const body = (
     <YStack flex={fill ? 1 : undefined} width="100%" minHeight={fill ? 0 : undefined}>
@@ -25,7 +20,7 @@ export const FormKeyboardRoot = ({
     </YStack>
   );
 
-  if (!enabled || Platform.OS !== 'ios') return body;
+  if (!avoidKeyboard || Platform.OS !== 'ios') return body;
 
   return (
     <KeyboardAvoidingView

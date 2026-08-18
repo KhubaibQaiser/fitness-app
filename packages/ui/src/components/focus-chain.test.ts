@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveChainAction } from './focus-chain';
+import { invokeOncePerTick, resolveChainAction } from './focus-chain';
 
 const names = ['email', 'phone', 'password'] as const;
 
@@ -70,5 +70,34 @@ describe('resolveChainAction', () => {
     });
     expect(action.kind).toBe('newline');
     expect(action.nextName).toBeNull();
+  });
+});
+
+describe('invokeOncePerTick', () => {
+  it('drops a second submit in the same tick', () => {
+    const inflight = { current: false };
+    let count = 0;
+    invokeOncePerTick(inflight, () => {
+      count += 1;
+    });
+    invokeOncePerTick(inflight, () => {
+      count += 1;
+    });
+    expect(count).toBe(1);
+  });
+
+  it('allows another submit on the next microtask', async () => {
+    const inflight = { current: false };
+    let count = 0;
+    invokeOncePerTick(inflight, () => {
+      count += 1;
+    });
+    await new Promise<void>((resolve) => {
+      queueMicrotask(resolve);
+    });
+    invokeOncePerTick(inflight, () => {
+      count += 1;
+    });
+    expect(count).toBe(2);
   });
 });

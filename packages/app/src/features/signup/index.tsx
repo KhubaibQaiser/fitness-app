@@ -112,7 +112,7 @@ export const SignupScreen = () => {
 
   return (
     <AppErrorBoundary>
-      <FormKeyboardRoot>
+      <FormKeyboardRoot asForm fill avoidKeyboard>
         <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
           <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
             <YStack gap="$2" alignItems="center">
