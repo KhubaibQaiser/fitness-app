@@ -22,6 +22,44 @@ export const tToKcal = (t: number, min: number, max: number, invert: boolean): n
   return Math.round(lo + raw * (hi - lo));
 };
 
+/** Map a pointer's clientX onto 0..1 given the track's viewport box. */
+export const tFromClientX = (clientX: number, left: number, width: number): number => {
+  if (width <= 0) return 0.5;
+  return Math.min(1, Math.max(0, (clientX - left) / width));
+};
+
+export type PositionedTick = {
+  value: number;
+  label: string;
+  t: number;
+};
+
+/** Place named ticks on the track. Collapsed kcal values become a single mark. */
+export const positionedTicks = (
+  ticks: readonly { value: number; label: string }[],
+  min: number,
+  max: number,
+  invert: boolean,
+): PositionedTick[] => {
+  const uniqueValues = new Set(ticks.map((tick) => tick.value));
+  if (uniqueValues.size <= 1) {
+    const preferred = ticks[Math.floor(ticks.length / 2)] ?? ticks[0];
+    if (preferred === undefined) return [];
+    return [
+      {
+        value: preferred.value,
+        label: preferred.label,
+        t: kcalToT(preferred.value, min, max, invert),
+      },
+    ];
+  }
+  return ticks.map((tick) => ({
+    value: tick.value,
+    label: tick.label,
+    t: kcalToT(tick.value, min, max, invert),
+  }));
+};
+
 export const nearestTickLabel = (
   kcal: number,
   ticks: readonly { value: number; label: string }[],
