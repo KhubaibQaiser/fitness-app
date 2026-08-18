@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { type ReactNode } from 'react';
 import { AppProviders } from '@gymos/app/provider';
+import { parseThemeMode, THEME_MODE_KEY, themeBootstrapScript } from '@gymos/platform';
 import { NextTamaguiProvider } from '../components/next-tamagui-provider';
 import './globals.css';
 
@@ -21,14 +23,27 @@ export const viewport: Viewport = {
   ],
 };
 
-const RootLayout = ({ children }: { children: ReactNode }) => (
-  <html lang="en" suppressHydrationWarning>
-    <body style={{ margin: 0, WebkitFontSmoothing: 'antialiased' }}>
-      <NextTamaguiProvider>
-        <AppProviders>{children}</AppProviders>
-      </NextTamaguiProvider>
-    </body>
-  </html>
-);
+const RootLayout = async ({ children }: { children: ReactNode }) => {
+  const jar = await cookies();
+  const initialTheme = parseThemeMode(jar.get(THEME_MODE_KEY)?.value);
+
+  return (
+    <html
+      lang="en"
+      suppressHydrationWarning
+      {...(initialTheme !== null ? { 'data-theme': initialTheme } : {})}
+      style={initialTheme !== null ? { colorScheme: initialTheme } : undefined}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript() }} />
+      </head>
+      <body style={{ margin: 0, WebkitFontSmoothing: 'antialiased' }}>
+        <NextTamaguiProvider {...(initialTheme !== null ? { initialTheme } : {})}>
+          <AppProviders>{children}</AppProviders>
+        </NextTamaguiProvider>
+      </body>
+    </html>
+  );
+};
 
 export default RootLayout;

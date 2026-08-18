@@ -8,7 +8,6 @@ import {
   SkeletonCircle,
   SkeletonRegion,
   Text,
-  useMedia,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -95,30 +94,28 @@ const ColumnLabel = ({
 );
 
 /** List-only twin of RosterScreen pending branch — chrome stays mounted. */
-export const RosterListSkeleton = () => {
-  const media = useMedia();
-  const isDesktop = Boolean(media.md);
-
-  return (
-    <SkeletonRegion label="Loading clients">
-      <YStack gap="$1.5" width="100%">
-        {isDesktop ? (
-          <Card padding={0} gap={0} overflow="hidden">
-            <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
-              <ColumnLabel flex={1}>Client</ColumnLabel>
-              <ColumnLabel width={COL.weight}>Weight</ColumnLabel>
-              <ColumnLabel width={COL.goal}>Goal</ColumnLabel>
-              <ColumnLabel width={COL.status}>Status</ColumnLabel>
-              <ColumnLabel width={COL.progress}>Progress</ColumnLabel>
-            </XStack>
-            {Array.from({ length: 6 }, (_, i) => (
-              <DesktopRow key={i} />
-            ))}
-          </Card>
-        ) : (
-          Array.from({ length: 6 }, (_, i) => <MobileRow key={i} />)
-        )}
+export const RosterListSkeleton = () => (
+  <SkeletonRegion label="Loading clients">
+    <YStack gap="$1.5" width="100%">
+      <YStack width="100%" display="flex" $md={{ display: 'none' }} gap="$1.5">
+        {Array.from({ length: 6 }, (_, i) => (
+          <MobileRow key={i} />
+        ))}
       </YStack>
-    </SkeletonRegion>
-  );
-};
+      <YStack width="100%" display="none" $md={{ display: 'flex' }}>
+        <Card padding={0} gap={0} overflow="hidden">
+          <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
+            <ColumnLabel flex={1}>Client</ColumnLabel>
+            <ColumnLabel width={COL.weight}>Weight</ColumnLabel>
+            <ColumnLabel width={COL.goal}>Goal</ColumnLabel>
+            <ColumnLabel width={COL.status}>Status</ColumnLabel>
+            <ColumnLabel width={COL.progress}>Progress</ColumnLabel>
+          </XStack>
+          {Array.from({ length: 6 }, (_, i) => (
+            <DesktopRow key={i} />
+          ))}
+        </Card>
+      </YStack>
+    </YStack>
+  </SkeletonRegion>
+);
