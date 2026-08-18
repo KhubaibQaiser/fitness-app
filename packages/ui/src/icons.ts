@@ -12,6 +12,7 @@ import {
   Download as DownloadRaw,
   Dumbbell as DumbbellRaw,
   Home as HomeRaw,
+  Info as InfoRaw,
   MessageCircle as MessageCircleRaw,
   Moon as MoonRaw,
   MoreHorizontal as MoreHorizontalRaw,
@@ -63,6 +64,7 @@ export const ClipboardList: GymosIcon = fromLucide(ClipboardListRaw);
 export const Download: GymosIcon = fromLucide(DownloadRaw);
 export const Dumbbell: GymosIcon = fromLucide(DumbbellRaw);
 export const Home: GymosIcon = fromLucide(HomeRaw);
+export const Info: GymosIcon = fromLucide(InfoRaw);
 export const MessageCircle: GymosIcon = fromLucide(MessageCircleRaw);
 export const Moon: GymosIcon = fromLucide(MoonRaw);
 export const MenuLines: GymosIcon = fromLucide(MenuLinesRaw);

@@ -9,7 +9,6 @@ import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { ageYearsFromDob } from '../../lib/goal-preview';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { GoalFields } from '../goal-form/goal-fields';
-import { PaceOverrideBanner } from '../goal-form/pace-field';
 import type { OnboardingDraft } from './onboarding-types';
 import { resolveHeightCm, resolveWeightKg } from './validate-step';
 
@@ -74,12 +73,6 @@ export const StepGoal = ({
         bind={chain.bind}
         pace={pace}
       />
-      {pace !== null ? (
-        <PaceOverrideBanner
-          pace={pace}
-          followUp="You can still create the client — review this on the last step."
-        />
-      ) : null}
     </YStack>
   );
 };
