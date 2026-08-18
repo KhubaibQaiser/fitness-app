@@ -143,6 +143,8 @@ export const ClientDetailScreen = ({
             goalProgressPct={goalProgressPct}
             dietaryProfile={dietaryProfile}
             signed={signed}
+            vitals={vitals.data?.items ?? []}
+            vitalsPending={vitals.isPending}
           />
         ) : null}
 
@@ -153,7 +155,6 @@ export const ClientDetailScreen = ({
             goal={goal}
             latestWeightKg={latestWeightKg}
             vitals={vitals.data?.items ?? []}
-            vitalsPending={vitals.isPending}
             checkIns={checkIns.data?.items ?? []}
           />
         ) : null}
