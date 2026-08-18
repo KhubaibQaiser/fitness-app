@@ -7,6 +7,10 @@ const focusRing = {
   outlineOffset: 2,
 } as const;
 
+/** Apple HIG: highlight in place. Never scale — shrinking a control feels like a game button. */
+const pressHighlight = { opacity: 0.88, scale: 1 } as const;
+const pressWash = { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 } as const;
+
 const baseButton = {
   borderRadius: 999,
   height: 44,
@@ -15,7 +19,7 @@ const baseButton = {
   fontFamily: '$heading',
   fontWeight: '500',
   fontSize: 14,
-  pressStyle: { opacity: 0.9, scale: 0.95 },
+  pressStyle: pressHighlight,
   focusVisibleStyle: focusRing,
   disabledStyle: { opacity: 0.4 },
   variants: {
@@ -52,6 +56,7 @@ export const PrimaryButton = styled(Button, {
   color: '$primaryFg',
   borderWidth: 0,
   hoverStyle: { backgroundColor: '$primaryHover', opacity: 1 },
+  pressStyle: { backgroundColor: '$primaryHover', opacity: 1, scale: 1 },
 });
 
 export const AccentButton = styled(Button, {
@@ -71,6 +76,7 @@ export const GhostButton = styled(Button, {
   color: '$textMuted',
   fontFamily: '$body',
   hoverStyle: { backgroundColor: '$elevatedBg' },
+  pressStyle: pressWash,
 });
 
 export const DangerButton = styled(Button, {
@@ -91,4 +97,5 @@ export const OutlineButton = styled(Button, {
   color: '$color',
   fontFamily: '$heading',
   hoverStyle: { backgroundColor: '$elevatedBg' },
+  pressStyle: pressWash,
 });
