@@ -16,7 +16,7 @@ Mount-order React context (auto-register fields as they mount) is unsafe here: S
 2. **`FormField` maps `inputMode` → native `keyboardType`** and web `enterKeyHint`. Pads attach `inputAccessoryViewID`.
 3. **iOS-only `KeyboardToolbar`** (`.ios.tsx`) via `InputAccessoryView` — Previous / Next / Done. Web and Android stay no-op; Android IME + `softwareKeyboardLayoutMode: resize` cover Next/Done.
 4. **Enter in the middle of a multi-field form does not submit.** Last single-line field submits (or dismisses when there is no handler). Multiline fields keep newline.
-5. **`FormKeyboardRoot`**: web `<form onSubmit={preventDefault}>` only when enabled (actual form screens). Native: iOS `KeyboardAvoidingView` only. Not a new form library; no Tamagui `Form.Trigger` (would fight Next).
+5. **`FormKeyboardRoot`**: `asForm` (web `<form onSubmit={preventDefault}>`) is independent of `avoidKeyboard` (iOS `KeyboardAvoidingView`). `AppScreen` only avoids the keyboard. Auth screens opt into `asForm` + `fill`. No Tamagui `Form.Trigger` (would fight Next).
 
 ## Consequences
 

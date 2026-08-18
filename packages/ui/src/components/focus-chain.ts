@@ -73,3 +73,16 @@ export const resolveChainAction = (
     prevName,
   };
 };
+
+/** Drops same-tick double Go / Enter before `busy` state can flip. */
+export const invokeOncePerTick = (inflight: { current: boolean }, fn: () => void): void => {
+  if (inflight.current) return;
+  inflight.current = true;
+  try {
+    fn();
+  } finally {
+    queueMicrotask(() => {
+      inflight.current = false;
+    });
+  }
+};

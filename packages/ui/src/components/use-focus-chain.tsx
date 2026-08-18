@@ -2,7 +2,7 @@
 
 import { useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Keyboard } from 'react-native';
-import { resolveChainAction } from './focus-chain';
+import { invokeOncePerTick, resolveChainAction } from './focus-chain';
 import type { FormFieldHandle } from './form-field-handle';
 import type { EnterKeyHint, ReturnKeyType } from './keyboard-map';
 import { KeyboardToolbar } from './keyboard-toolbar';
@@ -36,10 +36,12 @@ export const useFocusChain = (
   const multiline = useMemo(() => new Set(options.multiline ?? []), [multilineKey]);
   const accessoryId = nativeIdFromReactId(useId());
   const refs = useRef(new Map<string, FormFieldHandle | null>());
+  const refCallbacks = useRef(new Map<string, (instance: FormFieldHandle | null) => void>());
   const namesRef = useRef(names);
   namesRef.current = names;
   const onSubmitRef = useRef(options.onSubmit);
   onSubmitRef.current = options.onSubmit;
+  const submitInflight = useRef(false);
   const [activeName, setActiveName] = useState<string | null>(null);
 
   const resolve = useCallback(
@@ -59,6 +61,12 @@ export const useFocusChain = (
     });
   }, []);
 
+  const submit = useCallback(() => {
+    invokeOncePerTick(submitInflight, () => {
+      onSubmitRef.current?.();
+    });
+  }, []);
+
   const runAction = useCallback(
     (name: string) => {
       const action = resolve(name);
@@ -67,23 +75,28 @@ export const useFocusChain = (
         return;
       }
       if (action.kind === 'submit') {
-        onSubmitRef.current?.();
+        submit();
         return;
       }
       if (action.kind === 'dismiss') {
         Keyboard.dismiss();
       }
     },
-    [focusName, resolve],
+    [focusName, resolve, submit],
   );
 
   const bind = useCallback(
     (name: string): FocusChainBind => {
+      let ref = refCallbacks.current.get(name);
+      if (ref === undefined) {
+        ref = (instance) => {
+          refs.current.set(name, instance);
+        };
+        refCallbacks.current.set(name, ref);
+      }
       const action = resolve(name);
       return {
-        ref: (instance) => {
-          refs.current.set(name, instance);
-        },
+        ref,
         returnKeyType: action.returnKeyType,
         enterKeyHint: action.enterKeyHint,
         blurOnSubmit: action.blurOnSubmit,
@@ -112,7 +125,7 @@ export const useFocusChain = (
       }}
       onDone={() => {
         if (activeAction?.kind === 'submit') {
-          onSubmitRef.current?.();
+          submit();
           return;
         }
         Keyboard.dismiss();

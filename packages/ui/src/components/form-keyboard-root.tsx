@@ -1,26 +1,20 @@
 'use client';
 
-import type { CSSProperties, ReactNode, SyntheticEvent } from 'react';
+import type { CSSProperties, SyntheticEvent } from 'react';
 import { YStack } from 'tamagui';
-
-type FormKeyboardRootProps = {
-  children: ReactNode;
-  /** Stretch to fill a screen column (AppScreen). Auth cards leave this false. */
-  fill?: boolean;
-  /** When false, skip the `<form>` wrapper (non-form screens). */
-  enabled?: boolean;
-};
+import type { FormKeyboardRootProps } from './form-keyboard-root-types';
 
 /**
- * Web: real `<form>` so Enter is a form event. Submit is still owned by the
- * last-field chain (`preventDefault` here avoids "Enter in field 3 submits").
+ * Web: optional real `<form>` so the page is a form landmark. Submit is still
+ * owned by the last-field chain (`preventDefault` avoids Enter-in-field-3 submit).
+ * Keyboard avoidance is a native concern — see `.native.tsx`.
  */
 export const FormKeyboardRoot = ({
   children,
   fill = false,
-  enabled = true,
+  asForm = false,
 }: FormKeyboardRootProps) => {
-  if (!enabled) {
+  if (!asForm) {
     return (
       <YStack flex={fill ? 1 : undefined} width="100%" minHeight={fill ? 0 : undefined}>
         {children}
