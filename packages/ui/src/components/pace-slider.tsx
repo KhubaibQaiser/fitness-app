@@ -39,7 +39,6 @@ type Props = {
   hint?: string;
   warning?: PaceSliderWarning;
   floor?: number;
-  footer?: string;
   compact?: boolean;
   ariaLabel: string;
   disabled?: boolean;
@@ -65,11 +64,11 @@ type PointerLike = {
 };
 
 const TRACK_H = 8;
-const THUMB_IDLE = 18;
-const THUMB_DRAG = 22;
+const THUMB = 20;
 const HIT = 44;
 const MARKER = 28;
-const SNAP_PULSE_MS = 260;
+const OVERLAY = 48;
+const CAPTION_MIN = 40;
 
 const fillToken = (warning: PaceSliderWarning): string => {
   if (warning === 'floor') return '$alertText';
@@ -119,15 +118,43 @@ const extremeTickLabel = (ticks: readonly PaceSliderTick[], invert: boolean): st
   return best.label;
 };
 
+const tickTooltipId = (kcal: number): string => `tick:${kcal}`;
+const floorTooltipId = (kcal: number): string => `floor:${kcal}`;
+
+const tooltipKcal = (id: string): number | null => {
+  const kcal = Number(id.slice(id.indexOf(':') + 1));
+  return Number.isFinite(kcal) ? kcal : null;
+};
+
+const isMarkerEventTarget = (target: EventTarget | null): boolean => {
+  if (target === null || typeof Element === 'undefined' || typeof Node === 'undefined')
+    return false;
+  const el =
+    target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
+  if (el === null) return false;
+  return el.closest('[data-pace-marker], [id^="pace-marker-"]') !== null;
+};
+
+const blurActiveElement = (): void => {
+  if (typeof document === 'undefined') return;
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) active.blur();
+};
+
 const TrackMarker = ({
   pct,
   label,
   sublabel,
   colorHex,
   active,
-  pulse,
+  open,
   tall,
   disabled,
+  markerDomId,
+  onOpen,
+  onClose,
+  onPin,
+  onUnpin,
   onActivate,
 }: {
   pct: number;
@@ -135,92 +162,100 @@ const TrackMarker = ({
   sublabel?: string;
   colorHex: string;
   active: boolean;
-  pulse: boolean;
+  open: boolean;
   tall?: boolean;
   disabled: boolean;
+  markerDomId: string;
+  onOpen: () => void;
+  onClose: () => void;
+  onPin: () => void;
+  onUnpin: () => void;
   onActivate?: () => void;
-}) => {
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const show = hovered || focused || pulse;
-  return (
-    <HitTarget
-      position="absolute"
-      left={`${pct}%`}
-      top="50%"
-      width={MARKER}
-      height={MARKER}
-      marginLeft={-MARKER / 2}
-      marginTop={-MARKER / 2}
-      alignItems="center"
-      justifyContent="center"
-      pointerEvents="auto"
-      cursor={onActivate !== undefined && !disabled ? 'pointer' : 'default'}
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-label={sublabel !== undefined ? `${label}, ${sublabel}` : label}
-      focusVisibleStyle={{
-        outlineWidth: 2,
-        outlineColor: '$focusRing',
-        outlineStyle: 'solid',
-        outlineOffset: 1,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      onPress={() => {
-        if (!disabled) onActivate?.();
-      }}
-    >
+}) => (
+  <HitTarget
+    id={markerDomId}
+    {...{ 'data-pace-marker': 'true' }}
+    position="absolute"
+    left={`${pct}%`}
+    top="50%"
+    width={MARKER}
+    height={MARKER}
+    marginLeft={-MARKER / 2}
+    marginTop={-MARKER / 2}
+    alignItems="center"
+    justifyContent="center"
+    pointerEvents="auto"
+    cursor={onActivate !== undefined && !disabled ? 'pointer' : 'default'}
+    role="button"
+    tabIndex={disabled ? -1 : 0}
+    aria-label={sublabel !== undefined ? `${label}, ${sublabel}` : label}
+    focusVisibleStyle={{
+      outlineWidth: 2,
+      outlineColor: '$focusRing',
+      outlineStyle: 'solid',
+      outlineOffset: 1,
+    }}
+    onMouseEnter={onOpen}
+    onMouseLeave={onClose}
+    onFocus={onPin}
+    onBlur={onUnpin}
+    onPointerDown={(event: { stopPropagation?: () => void }) => {
+      event.stopPropagation?.();
+      onPin();
+    }}
+    onPress={() => {
+      if (!disabled) onActivate?.();
+      onPin();
+    }}
+  >
+    <YStack
+      width={tall === true ? 3 : 2}
+      height={tall === true ? 16 : 12}
+      borderRadius={999}
+      backgroundColor={colorHex}
+      opacity={tall === true ? 0.55 : active || open ? 0.95 : 0.6}
+    />
+    {open ? (
       <YStack
-        width={tall === true ? 3 : 2}
-        height={tall === true ? 16 : 12}
-        borderRadius={999}
-        backgroundColor={colorHex}
-        opacity={tall === true ? 0.55 : active ? 0.95 : 0.6}
-        scale={show ? 1.5 : 1}
-      />
-      {show ? (
-        <XStack
-          position="absolute"
-          bottom="100%"
-          marginBottom={4}
-          paddingHorizontal="$2"
-          paddingVertical="$1"
-          borderRadius={8}
+        position="absolute"
+        left="50%"
+        bottom="100%"
+        x="-50%"
+        marginBottom={6}
+        alignItems="center"
+        pointerEvents="none"
+        zIndex={20}
+      >
+        <YStack
           backgroundColor="$color"
-          pointerEvents="none"
-          zIndex={10}
-          gap="$1"
-          alignItems="center"
+          paddingHorizontal={10}
+          paddingVertical={6}
+          borderRadius={10}
+          width="max-content"
+          maxWidth={240}
+          shadowColor="rgba(0,0,0,0.18)"
+          shadowOpacity={1}
+          shadowRadius={16}
+          shadowOffset={{ width: 0, height: 8 }}
         >
           <Text
             fontFamily="$heading"
             fontSize={12}
             lineHeight={16}
-            fontWeight="500"
+            fontWeight="600"
             color="$surface"
+            letterSpacing={0.1}
+            whiteSpace="nowrap"
+            numberOfLines={1}
           >
-            {label}
+            {sublabel !== undefined ? `${label}  ·  ${sublabel}` : label}
           </Text>
-          {sublabel !== undefined ? (
-            <Text
-              fontFamily="$heading"
-              fontSize={12}
-              lineHeight={16}
-              fontWeight="500"
-              color="$surface"
-              opacity={0.65}
-            >
-              · {sublabel}
-            </Text>
-          ) : null}
-        </XStack>
-      ) : null}
-    </HitTarget>
-  );
-};
+        </YStack>
+        <YStack width={8} height={8} marginTop={-4} backgroundColor="$color" rotate="45deg" />
+      </YStack>
+    ) : null}
+  </HitTarget>
+);
 
 export const PaceSlider = ({
   min,
@@ -233,7 +268,6 @@ export const PaceSlider = ({
   hint,
   warning = 'none',
   floor,
-  footer,
   compact = false,
   ariaLabel,
   disabled = false,
@@ -246,11 +280,35 @@ export const PaceSlider = ({
   const disabledRef = useRef(disabled);
   const applyRef = useRef<(clientX: number) => void>(() => undefined);
   const listenersRef = useRef<{ move: (event: Event) => void; up: () => void } | null>(null);
-  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoveringTooltipIdRef = useRef<string | null>(null);
   const [host, setHost] = useState<TrackNode | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [snapPulse, setSnapPulse] = useState<number | null>(null);
+  const [tooltipId, setTooltipId] = useState<string | null>(null);
   disabledRef.current = disabled;
+
+  const openTooltip = (id: string) => {
+    hoveringTooltipIdRef.current = id;
+    setTooltipId(id);
+  };
+
+  const closeTooltip = (id: string) => {
+    if (hoveringTooltipIdRef.current === id) hoveringTooltipIdRef.current = null;
+    setTooltipId((current) => (current === id ? null : current));
+  };
+
+  const pinTooltip = (id: string) => {
+    setTooltipId(id);
+  };
+
+  const unpinTooltip = (id: string) => {
+    if (hoveringTooltipIdRef.current === id) return;
+    setTooltipId((current) => (current === id ? null : current));
+  };
+
+  const dismissTooltip = () => {
+    hoveringTooltipIdRef.current = null;
+    setTooltipId(null);
+  };
 
   const t = kcalToT(value, min, max, invert);
   const label = nearestTickLabel(value, ticks);
@@ -259,7 +317,6 @@ export const PaceSlider = ({
   const onSuggested =
     suggestedValue !== undefined && Math.abs(value - suggestedValue) <= 1 && warning === 'none';
   const pill = statusPillLabel(warning, label, onSuggested);
-  const thumb = dragging ? THUMB_DRAG : THUMB_IDLE;
   const faintHex = String(theme.textFaint?.val ?? '#A1A1AA');
   const dangerHex = String(theme.alertText?.val ?? '#EF4444');
   const floorMark =
@@ -270,16 +327,7 @@ export const PaceSlider = ({
 
   applyRef.current = (clientX: number) => {
     const commit = (raw: number) => {
-      const next = snapToTick(raw, ticks, min, max);
-      if (ticks.some((tick) => tick.value === next) && next !== value) {
-        if (pulseTimerRef.current !== null) clearTimeout(pulseTimerRef.current);
-        setSnapPulse(next);
-        pulseTimerRef.current = setTimeout(() => {
-          setSnapPulse(null);
-          pulseTimerRef.current = null;
-        }, SNAP_PULSE_MS);
-      }
-      onChange(next);
+      onChange(snapToTick(raw, ticks, min, max));
     };
     const node = trackRef.current;
     if (node?.getBoundingClientRect !== undefined) {
@@ -331,6 +379,8 @@ export const PaceSlider = ({
     if (disabledRef.current) return;
     draggingRef.current = true;
     setDragging(true);
+    blurActiveElement();
+    dismissTooltip();
     applyRef.current(clientX);
     if (pointerId !== undefined) target?.setPointerCapture?.(pointerId);
     attachWindow();
@@ -367,12 +417,27 @@ export const PaceSlider = ({
     };
   }, [host]);
 
-  useEffect(
-    () => () => {
-      if (pulseTimerRef.current !== null) clearTimeout(pulseTimerRef.current);
-    },
-    [],
-  );
+  useEffect(() => {
+    const onPointerDownAway = (event: Event) => {
+      if (isMarkerEventTarget(event.target)) return;
+      dismissTooltip();
+      blurActiveElement();
+    };
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
+      return undefined;
+    }
+    window.addEventListener('pointerdown', onPointerDownAway);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDownAway);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (tooltipId === null) return;
+    if (hoveringTooltipIdRef.current === tooltipId) return;
+    const kcal = tooltipKcal(tooltipId);
+    if (kcal !== null && kcal !== value) setTooltipId(null);
+  }, [tooltipId, value]);
 
   const caption =
     warning === 'floor'
@@ -397,8 +462,19 @@ export const PaceSlider = ({
       padding={compact ? '$4' : '$6'}
       opacity={disabled ? 0.45 : 1}
       overflow="visible"
+      onPointerDown={(event: { target?: EventTarget }) => {
+        if (isMarkerEventTarget(event.target ?? null)) return;
+        dismissTooltip();
+      }}
     >
-      <XStack alignItems="center" justifyContent="space-between" gap="$2" marginBottom="$1">
+      <XStack
+        alignItems="center"
+        justifyContent="space-between"
+        gap="$2"
+        marginBottom="$1"
+        minHeight={28}
+        flexWrap="nowrap"
+      >
         <Text
           id={labelId}
           fontFamily="$heading"
@@ -412,7 +488,7 @@ export const PaceSlider = ({
         {pill !== '' ? <Badge tone={statusPillTone(warning)} label={pill} /> : null}
       </XStack>
 
-      <XStack alignItems="baseline" gap="$1.5" marginBottom="$0.5">
+      <XStack alignItems="baseline" gap="$1.5" minHeight={compact ? 28 : 40} marginBottom="$0.5">
         <Text
           fontFamily="$mono"
           fontSize={compact ? 24 : 36}
@@ -427,15 +503,11 @@ export const PaceSlider = ({
           kcal
         </Text>
       </XStack>
-      {hint ? (
-        <Muted fontSize={14} lineHeight={20} marginBottom="$6">
-          {hint}
-        </Muted>
-      ) : (
-        <YStack height={0} marginBottom="$6" />
-      )}
+      <Muted fontSize={14} lineHeight={20} marginBottom="$5" minHeight={20}>
+        {hint ?? ' '}
+      </Muted>
 
-      <YStack width="100%" height={HIT} position="relative" marginBottom="$7" overflow="visible">
+      <YStack width="100%" height={HIT + OVERLAY} position="relative" marginBottom="$4">
         <YStack
           ref={(node: TrackNode | null) => {
             trackRef.current = node;
@@ -443,6 +515,7 @@ export const PaceSlider = ({
           }}
           width="100%"
           height={HIT}
+          marginTop={OVERLAY}
           justifyContent="center"
           cursor={disabled ? 'default' : dragging ? 'grabbing' : 'grab'}
           userSelect="none"
@@ -522,19 +595,19 @@ export const PaceSlider = ({
 
           <YStack
             position="absolute"
-            top={(HIT - thumb) / 2}
+            top={(HIT - THUMB) / 2}
             left={`${t * 100}%`}
-            width={thumb}
-            height={thumb}
-            marginLeft={-thumb / 2}
+            width={THUMB}
+            height={THUMB}
+            marginLeft={-THUMB / 2}
             borderRadius={999}
             backgroundColor="$surface"
             borderWidth={2}
             borderColor={fill}
             shadowColor="rgba(15,23,42,0.18)"
             shadowOpacity={1}
-            shadowRadius={dragging ? 8 : 4}
-            shadowOffset={{ width: 0, height: dragging ? 3 : 1 }}
+            shadowRadius={4}
+            shadowOffset={{ width: 0, height: 1 }}
             pointerEvents="none"
           />
 
@@ -542,7 +615,7 @@ export const PaceSlider = ({
             <YStack
               position="absolute"
               left={`${t * 100}%`}
-              top={-30}
+              top={-OVERLAY + 4}
               x="-50%"
               paddingHorizontal="$2"
               paddingVertical="$1"
@@ -557,24 +630,39 @@ export const PaceSlider = ({
           ) : null}
         </YStack>
 
-        <YStack position="absolute" top={0} right={0} bottom={0} left={0} pointerEvents="none">
-          {marks.map((mark) => (
-            <TrackMarker
-              key={`${mark.label}-${mark.value}`}
-              pct={mark.t * 100}
-              label={mark.label}
-              sublabel={
-                suggestedValue !== undefined && Math.abs(mark.value - suggestedValue) <= 1
-                  ? 'Suggested'
-                  : `${mark.value.toLocaleString()} kcal`
-              }
-              colorHex={mark.t <= t ? 'rgba(255,255,255,0.75)' : faintHex}
-              active={value === mark.value}
-              pulse={snapPulse === mark.value}
-              disabled={disabled}
-              onActivate={() => onChange(mark.value)}
-            />
-          ))}
+        <YStack
+          position="absolute"
+          top={OVERLAY}
+          right={0}
+          bottom={0}
+          left={0}
+          pointerEvents="none"
+        >
+          {marks.map((mark) => {
+            const id = tickTooltipId(mark.value);
+            return (
+              <TrackMarker
+                key={`${mark.label}-${mark.value}`}
+                pct={mark.t * 100}
+                label={mark.label}
+                sublabel={
+                  suggestedValue !== undefined && Math.abs(mark.value - suggestedValue) <= 1
+                    ? 'Suggested'
+                    : `${mark.value.toLocaleString()} kcal`
+                }
+                colorHex={mark.t <= t ? 'rgba(255,255,255,0.75)' : faintHex}
+                active={value === mark.value}
+                open={!dragging && tooltipId === id}
+                disabled={disabled}
+                markerDomId={`pace-marker-${id.replace(':', '-')}`}
+                onOpen={() => openTooltip(id)}
+                onClose={() => closeTooltip(id)}
+                onPin={() => pinTooltip(id)}
+                onUnpin={() => unpinTooltip(id)}
+                onActivate={() => onChange(mark.value)}
+              />
+            );
+          })}
           {floorMark !== null ? (
             <TrackMarker
               pct={kcalToT(floorMark, min, max, invert) * 100}
@@ -582,46 +670,39 @@ export const PaceSlider = ({
               sublabel={`${floorMark.toLocaleString()} kcal minimum`}
               colorHex={dangerHex}
               active={false}
-              pulse={false}
+              open={!dragging && tooltipId === floorTooltipId(floorMark)}
               tall
               disabled={disabled}
+              markerDomId={`pace-marker-${floorTooltipId(floorMark).replace(':', '-')}`}
+              onOpen={() => openTooltip(floorTooltipId(floorMark))}
+              onClose={() => closeTooltip(floorTooltipId(floorMark))}
+              onPin={() => pinTooltip(floorTooltipId(floorMark))}
+              onUnpin={() => unpinTooltip(floorTooltipId(floorMark))}
             />
           ) : null}
         </YStack>
       </YStack>
 
-      {caption !== null ? (
-        <XStack alignItems="flex-start" gap="$2" marginBottom="$3">
-          {warning === 'none' ? (
-            <Info size={14} color={captionColor(warning)} />
-          ) : (
-            <AlertTriangle size={15} color={captionColor(warning)} />
-          )}
-          <Text
-            fontFamily="$body"
-            fontSize={14}
-            lineHeight={20}
-            color={captionColor(warning)}
-            flex={1}
-          >
-            {caption}
-          </Text>
-        </XStack>
-      ) : null}
-
-      {footer !== undefined && footer !== '' ? (
-        <Text
-          fontFamily="$body"
-          fontSize={12}
-          lineHeight={16}
-          color="$textFaint"
-          paddingTop="$3"
-          borderTopWidth={1}
-          borderColor="$borderColor"
-        >
-          {footer}
-        </Text>
-      ) : null}
+      <XStack alignItems="flex-start" gap="$2" minHeight={CAPTION_MIN}>
+        {caption !== null ? (
+          <>
+            {warning === 'none' ? (
+              <Info size={14} color={captionColor(warning)} />
+            ) : (
+              <AlertTriangle size={15} color={captionColor(warning)} />
+            )}
+            <Text
+              fontFamily="$body"
+              fontSize={14}
+              lineHeight={20}
+              color={captionColor(warning)}
+              flex={1}
+            >
+              {caption}
+            </Text>
+          </>
+        ) : null}
+      </XStack>
     </YStack>
   );
 };
