@@ -554,15 +554,9 @@ export const WeightChart = ({
         flexWrap="wrap"
         minHeight={22}
       >
-        {activePoint !== undefined && activePoint !== null ? (
-          <Text fontFamily="$heading" fontWeight="600" fontSize={13} color="$color">
-            {activePoint.weightKg.toFixed(1)} {unitLabel} · {formatChartDate(activePoint.t)}
-          </Text>
-        ) : (
-          <Muted>
-            {formatChartDate(tMin)} → {formatChartDate(tMax)}
-          </Muted>
-        )}
+        <Muted>
+          {formatChartDate(tMin)} → {formatChartDate(tMax)}
+        </Muted>
         <XStack alignItems="center" gap="$3" flexWrap="wrap">
           <XStack alignItems="center" gap="$1.5">
             <YStack width={14} height={3} borderRadius={999} backgroundColor="$primary" />
