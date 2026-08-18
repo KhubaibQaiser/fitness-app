@@ -19,9 +19,7 @@ export const Screen = styled(YStack, {
       },
       desktop: {
         paddingBottom: '$6',
-        maxWidth: 1100,
         paddingHorizontal: '$8',
-        marginHorizontal: 'auto',
       },
       bare: {
         paddingBottom: '$4',
