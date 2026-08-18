@@ -34,7 +34,7 @@ export const ClientHubMenuRow = ({
       ? {}
       : {
           hoverStyle: { backgroundColor: '$elevatedBg' },
-          pressStyle: { opacity: 0.7 },
+          pressStyle: { backgroundColor: '$elevatedBg', opacity: 1 },
           onPress,
         })}
     focusVisibleStyle={{ outlineWidth: 2, outlineColor: '$focusRing', outlineStyle: 'solid' }}

@@ -17,7 +17,7 @@ export const Card = styled(YStack, {
     interactive: {
       true: {
         cursor: 'pointer',
-        pressStyle: { opacity: 0.9, scale: 0.97 },
+        pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
         focusVisibleStyle: {
           outlineWidth: 2,
           outlineColor: '$focusRing',
