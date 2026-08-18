@@ -15,7 +15,7 @@ Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-align
 
 ## Denied
 
-- New routes appended to `apps/api/src/app.ts`. Register them in `apps/api/src/routes/` (after that split lands, keep `app.ts` as a composition root under ~250 lines).
+- New routes appended to `apps/api/src/app.ts`. Register them in `apps/api/src/routes/`. Keep `app.ts` as a composition root (middleware, token issuance, health).
 - Secrets, `.env`, tenant-name conditionals (`if (tenant === …)`), `Platform.OS` in `packages/app`, raw `fetch` in feature code, raw `<div>` in `packages/app`, `new Date()` in `packages/db` or `packages/modules` (Luxon only).
 - Expanding scope into a later `CLAUDE.md` alignment phase. Flag it; do not sneak it in.
 - Editing `apps/web/CLAUDE.md`.
