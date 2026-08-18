@@ -11,6 +11,7 @@ import {
   Card,
   GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
@@ -162,9 +163,9 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton
             flex={1}
             disabled={!initialized.current || save.isPending}

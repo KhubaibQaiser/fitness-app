@@ -3,8 +3,8 @@
 import { useRouter } from 'solito/navigation';
 import {
   Card,
-  GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   Skeleton,
@@ -53,9 +53,9 @@ export const CheckInDetailSkeleton = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
+          <OutlineButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton flex={1} disabled>
             Save & re-run
           </PrimaryButton>
