@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, type LayoutChangeEvent } from 'react-native';
 import {
   Circle,
   Defs,
@@ -15,6 +15,14 @@ import {
 import { isWeb, Text, useTheme, XStack, YStack } from 'tamagui';
 import { HitTarget } from './hit-target';
 import { Muted } from './typography';
+import {
+  AXIS_FONT_SIZE,
+  CHART_PAD,
+  CHART_VIEW_WIDTH,
+  chartViewHeight,
+  MILESTONE_FONT_SIZE,
+  type ChartPad,
+} from './weight-chart-layout';
 import {
   areaFromLinePath,
   interpolateY,
@@ -53,10 +61,9 @@ type ChartLayout = {
   tMax: number;
 };
 
-const WIDTH = 640;
-const PAD = { top: 28, right: 20, bottom: 34, left: 52 };
 const DRAW_MS = 700;
 const MONO = isWeb ? 'Roboto Mono' : 'RobotoMono';
+const HIT_PX = 32;
 
 const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
 
@@ -83,7 +90,9 @@ const buildLayout = ({
   milestones,
   current,
   goalWeightKg,
-  height,
+  viewWidth,
+  viewHeight,
+  pad,
 }: {
   points: WeightPoint[];
   expectedPoints: WeightPoint[];
@@ -91,7 +100,9 @@ const buildLayout = ({
   milestones: WeightChartMilestone[];
   current: WeightPoint | null;
   goalWeightKg: number | null;
-  height: number;
+  viewWidth: number;
+  viewHeight: number;
+  pad: ChartPad;
 }): ChartLayout | null => {
   const domain = [
     ...points,
@@ -111,10 +122,10 @@ const buildLayout = ({
   const maxW = Math.max(...weights) + 0.6;
   const spanT = Math.max(1, tMax - tMin);
   const spanW = Math.max(0.1, maxW - minW);
-  const plotW = WIDTH - PAD.left - PAD.right;
-  const plotH = height - PAD.top - PAD.bottom;
-  const x = (t: number) => PAD.left + ((t - tMin) / spanT) * plotW;
-  const y = (w: number) => PAD.top + ((maxW - w) / spanW) * plotH;
+  const plotW = viewWidth - pad.left - pad.right;
+  const plotH = viewHeight - pad.top - pad.bottom;
+  const x = (t: number) => pad.left + ((t - tMin) / spanT) * plotW;
+  const y = (w: number) => pad.top + ((maxW - w) / spanW) * plotH;
 
   if (expectedPoints.length < 2 && points.length < 1) return null;
 
@@ -164,6 +175,11 @@ export const WeightChart = ({
   const [active, setActive] = useState<number | null>(null);
   const raf = useRef<number | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [boxWidth, setBoxWidth] = useState<number | null>(null);
+
+  const viewWidth = boxWidth ?? CHART_VIEW_WIDTH;
+  const viewHeight = chartViewHeight(viewWidth, height);
+  const pad = CHART_PAD;
 
   const layout = useMemo(
     () =>
@@ -174,10 +190,41 @@ export const WeightChart = ({
         milestones,
         current,
         goalWeightKg,
-        height,
+        viewWidth,
+        viewHeight,
+        pad,
       }),
-    [points, expectedPoints, projectedPoints, milestones, current, goalWeightKg, height],
+    [
+      points,
+      expectedPoints,
+      projectedPoints,
+      milestones,
+      current,
+      goalWeightKg,
+      viewWidth,
+      viewHeight,
+      pad,
+    ],
   );
+
+  const dataKey = useMemo(
+    () =>
+      [
+        points.map((p) => `${p.t}:${p.weightKg}`).join(','),
+        expectedPoints.map((p) => `${p.t}:${p.weightKg}`).join(','),
+        projectedPoints.map((p) => `${p.t}:${p.weightKg}`).join(','),
+        String(goalWeightKg ?? ''),
+      ].join('|'),
+    [points, expectedPoints, projectedPoints, goalWeightKg],
+  );
+
+  const onChartLayout = (event: LayoutChangeEvent) => {
+    const next = event.nativeEvent.layout.width;
+    if (next <= 0) return;
+    setBoxWidth((currentWidth) =>
+      currentWidth !== null && Math.abs(currentWidth - next) < 1 ? currentWidth : next,
+    );
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -208,7 +255,7 @@ export const WeightChart = ({
     return () => {
       if (raf.current !== null) cancelAnimationFrame(raf.current);
     };
-  }, [layout, reduceMotion]);
+  }, [dataKey, reduceMotion]);
 
   const geometry = useMemo(() => {
     if (layout === null) return null;
@@ -222,14 +269,14 @@ export const WeightChart = ({
       actualLen: Math.max(1, pathLength(layout.actual)),
       area:
         firstActual !== undefined && lastActual !== undefined && layout.actual.length >= 2
-          ? areaFromLinePath(actualPath, firstActual.x, lastActual.x, height - PAD.bottom)
+          ? areaFromLinePath(actualPath, firstActual.x, lastActual.x, viewHeight - pad.bottom)
           : '',
     };
-  }, [layout, height]);
+  }, [layout, viewHeight, pad.bottom]);
 
   if (layout === null || geometry === null) {
     return (
-      <YStack height={height} alignItems="center" justifyContent="center">
+      <YStack height={viewHeight} alignItems="center" justifyContent="center">
         <Muted>Record a few weigh-ins to see the trend</Muted>
       </YStack>
     );
@@ -269,19 +316,20 @@ export const WeightChart = ({
     <YStack width="100%" gap="$3">
       <YStack
         width="100%"
-        aspectRatio={WIDTH / height}
+        aspectRatio={CHART_VIEW_WIDTH / height}
         overflow="visible"
         accessibilityRole="image"
         accessibilityLabel={`Weight journey from ${a11yStart} ${unitLabel} to goal ${a11yGoal} ${unitLabel}, currently ${a11yCurrent} ${unitLabel}`}
         position="relative"
+        onLayout={onChartLayout}
       >
-        <Svg viewBox={`0 0 ${WIDTH} ${height}`} width="100%" height="100%">
+        <Svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} width="100%" height="100%">
           <Defs>
             <LinearGradient
               id={strokeGradId}
-              x1={PAD.left}
+              x1={pad.left}
               y1="0"
-              x2={WIDTH - PAD.right}
+              x2={viewWidth - pad.right}
               y2="0"
               gradientUnits="userSpaceOnUse"
             >
@@ -296,12 +344,13 @@ export const WeightChart = ({
 
           {yTicks.map((w) => {
             const y =
-              PAD.top + ((maxW - w) / Math.max(0.1, maxW - minW)) * (height - PAD.top - PAD.bottom);
+              pad.top +
+              ((maxW - w) / Math.max(0.1, maxW - minW)) * (viewHeight - pad.top - pad.bottom);
             return (
               <Line
                 key={`grid-${w}`}
-                x1={PAD.left}
-                x2={WIDTH - PAD.right}
+                x1={pad.left}
+                x2={viewWidth - pad.right}
                 y1={y}
                 y2={y}
                 stroke={grid}
@@ -313,16 +362,17 @@ export const WeightChart = ({
 
           {yTicks.map((w) => {
             const y =
-              PAD.top + ((maxW - w) / Math.max(0.1, maxW - minW)) * (height - PAD.top - PAD.bottom);
+              pad.top +
+              ((maxW - w) / Math.max(0.1, maxW - minW)) * (viewHeight - pad.top - pad.bottom);
             return (
               <SvgText
                 key={`ylabel-${w}`}
                 // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-                x={PAD.left - 8}
+                x={pad.left - 8}
                 // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-                y={y + 4}
+                y={y + AXIS_FONT_SIZE * 0.35}
                 fill={muted}
-                fontSize={11}
+                fontSize={AXIS_FONT_SIZE}
                 fontFamily={MONO}
                 fontWeight="600"
                 textAnchor="end"
@@ -337,10 +387,11 @@ export const WeightChart = ({
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
               x={startLabel.x}
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-              y={height - 8}
+              y={viewHeight - 10}
               fill={muted}
-              fontSize={11}
+              fontSize={AXIS_FONT_SIZE}
               fontFamily={MONO}
+              fontWeight="600"
               textAnchor="start"
             >
               {formatChartDate(tMin)}
@@ -349,12 +400,13 @@ export const WeightChart = ({
           {endLabel !== undefined ? (
             <SvgText
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-              x={WIDTH - PAD.right}
+              x={viewWidth - pad.right}
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-              y={height - 8}
+              y={viewHeight - 10}
               fill={muted}
-              fontSize={11}
+              fontSize={AXIS_FONT_SIZE}
               fontFamily={MONO}
+              fontWeight="600"
               textAnchor="end"
             >
               {formatChartDate(tMax)}
@@ -363,8 +415,8 @@ export const WeightChart = ({
 
           {goalY !== null ? (
             <Line
-              x1={PAD.left}
-              x2={WIDTH - PAD.right}
+              x1={pad.left}
+              x2={viewWidth - pad.right}
               y1={goalY}
               y2={goalY}
               stroke={goalStroke}
@@ -420,8 +472,8 @@ export const WeightChart = ({
             <Line
               x1={activePoint.x}
               x2={activePoint.x}
-              y1={PAD.top}
-              y2={height - PAD.bottom}
+              y1={pad.top}
+              y2={viewHeight - pad.bottom}
               stroke={faint}
               strokeWidth={1}
               strokeDasharray="2 4"
@@ -444,9 +496,9 @@ export const WeightChart = ({
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
               x={item.x}
               // eslint-disable-next-line @typescript-eslint/no-deprecated -- SVG attribute
-              y={item.y - 10}
+              y={item.y - MILESTONE_FONT_SIZE - 4}
               fill={milestoneText}
-              fontSize={10}
+              fontSize={MILESTONE_FONT_SIZE}
               fontFamily={MONO}
               fontWeight="600"
               textAnchor="middle"
@@ -501,9 +553,9 @@ export const WeightChart = ({
           <HitTarget
             key={`hit-${p.t}`}
             position="absolute"
-            left={`${((p.x - 16) / WIDTH) * 100}%`}
+            left={`${((p.x - HIT_PX / 2) / viewWidth) * 100}%`}
             top={0}
-            width={`${(32 / WIDTH) * 100}%`}
+            width={`${(HIT_PX / viewWidth) * 100}%`}
             height="100%"
             cursor="pointer"
             onPress={() => setActive((current) => (current === index ? null : index))}
@@ -517,8 +569,8 @@ export const WeightChart = ({
         {activePoint !== undefined && activePoint !== null ? (
           <YStack
             position="absolute"
-            left={`${Math.min(72, Math.max(4, (activePoint.x / WIDTH) * 100 - 14))}%`}
-            top={`${Math.max(2, (activePoint.y / height) * 100 - 28)}%`}
+            left={`${Math.min(72, Math.max(4, (activePoint.x / viewWidth) * 100 - 14))}%`}
+            top={`${Math.max(2, (activePoint.y / viewHeight) * 100 - 28)}%`}
             pointerEvents="none"
             backgroundColor="$cardBg"
             borderWidth={1}
@@ -533,12 +585,12 @@ export const WeightChart = ({
             shadowRadius={24}
             shadowOpacity={1}
           >
-            <Muted fontSize={11}>{formatChartDate(activePoint.t)}</Muted>
-            <Text fontFamily="$mono" fontSize={14} fontWeight="600" color="$color">
+            <Muted fontSize={13}>{formatChartDate(activePoint.t)}</Muted>
+            <Text fontFamily="$mono" fontSize={16} fontWeight="600" color="$color">
               {activePoint.weightKg.toFixed(1)} {unitLabel}
             </Text>
             {expectedAtActive !== null ? (
-              <Muted fontSize={11}>
+              <Muted fontSize={13}>
                 Expected {expectedAtActive.toFixed(1)} {unitLabel}
                 {` · ${activePoint.weightKg - expectedAtActive >= 0 ? '+' : ''}${(activePoint.weightKg - expectedAtActive).toFixed(1)} vs plan`}
               </Muted>
