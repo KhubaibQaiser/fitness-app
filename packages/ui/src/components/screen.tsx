@@ -16,6 +16,10 @@ export const Screen = styled(YStack, {
       mobile: {
         paddingBottom: 96,
         paddingHorizontal: '$4',
+        $md: {
+          paddingBottom: '$6',
+          paddingHorizontal: '$8',
+        },
       },
       desktop: {
         paddingBottom: '$6',
@@ -24,6 +28,9 @@ export const Screen = styled(YStack, {
       bare: {
         paddingBottom: '$4',
         paddingHorizontal: '$4',
+        $md: {
+          paddingHorizontal: '$8',
+        },
       },
     },
     density: {

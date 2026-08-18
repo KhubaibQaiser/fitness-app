@@ -1,37 +1,14 @@
 'use client';
 
 import { usePathname } from 'solito/navigation';
-import { useIsDesktop } from '@gymos/platform';
-import { isClientHubPath } from '../client-detail/client-hub-tabs';
-
-type ScreenChrome = 'mobile' | 'desktop' | 'bare';
+import { getAppRouteChromePolicy, type AppRouteChromePolicy } from './route-chrome-policy';
 
 /**
- * Subflows hide the bottom tab bar on phone (more canvas for forms).
- * Desktop keeps the side nav always.
+ * Route-only chrome policy (no viewport logic).
+ * Viewport presentation (mobile vs desktop) is owned by shell styles so web
+ * SSR + hydration do not swap structure.
  */
-export const useAppChrome = () => {
-  const isDesktop = useIsDesktop();
+export const useAppChrome = (): AppRouteChromePolicy => {
   const pathname = usePathname() ?? '/';
-
-  const isClientHub = isClientHubPath(pathname);
-
-  const isPrimary =
-    pathname === '/' ||
-    pathname === '/clients' ||
-    pathname === '/tools' ||
-    pathname === '/notifications' ||
-    pathname === '/settings' ||
-    isClientHub;
-
-  const showMobileTabBar = !isDesktop && isPrimary;
-  const screenChrome: ScreenChrome = isDesktop ? 'desktop' : showMobileTabBar ? 'mobile' : 'bare';
-
-  return {
-    isDesktop,
-    showMobileTabBar,
-    showSideNav: isDesktop,
-    screenChrome,
-    pathname,
-  };
+  return getAppRouteChromePolicy(pathname);
 };

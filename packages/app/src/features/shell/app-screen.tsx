@@ -17,8 +17,9 @@ type Props = Omit<ComponentProps<typeof UiScreen>, 'chrome'> & {
  * overflow, so every screen (with or without a footer) must own its scroll.
  */
 export const AppScreen = ({ children, footer, avoidKeyboard, ...rest }: Props) => {
-  const { screenChrome } = useAppChrome();
+  const { allowMobileTabBar } = useAppChrome();
   const avoid = avoidKeyboard ?? footer !== undefined;
+  const chrome = allowMobileTabBar ? 'mobile' : 'bare';
 
   return (
     <FormKeyboardRoot fill avoidKeyboard={avoid}>
@@ -30,7 +31,7 @@ export const AppScreen = ({ children, footer, avoidKeyboard, ...rest }: Props) =
           keyboardDismissMode="interactive"
         >
           <UiScreen
-            chrome={screenChrome}
+            chrome={chrome}
             flex={0}
             {...(footer !== undefined ? { paddingBottom: '$4' } : {})}
             {...rest}

@@ -2,7 +2,7 @@
 
 import { useWindowDimensions } from 'react-native';
 
-/** Desktop shell breakpoint — matches Tamagui `md` / common tablet+ width. */
+/** Desktop shell breakpoint — must match Tamagui `md` media. */
 export const DESKTOP_MIN_WIDTH_PX = 768;
 
 /**

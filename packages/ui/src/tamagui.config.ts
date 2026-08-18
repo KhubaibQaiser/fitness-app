@@ -4,6 +4,7 @@
 import { defaultConfig } from '@tamagui/config/v4';
 import { createTamagui } from 'tamagui';
 import manifest from '../../../infra/tenants/pilot.json';
+import { DESKTOP_MIN_WIDTH_PX } from './breakpoints';
 import { bodyFont, headingFont, monoFont } from './fonts';
 
 const brand = manifest.branding.colors;
@@ -202,6 +203,11 @@ export const elevationTokens = {
 
 export const config = createTamagui({
   ...defaultConfig,
+  media: {
+    ...defaultConfig.media,
+    md: { minWidth: DESKTOP_MIN_WIDTH_PX },
+    maxMd: { maxWidth: DESKTOP_MIN_WIDTH_PX },
+  },
   tokens: {
     ...defaultConfig.tokens,
     color: primitiveColors,

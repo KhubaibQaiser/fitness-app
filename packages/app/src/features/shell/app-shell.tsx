@@ -18,27 +18,13 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useMe, useUnreadCount } from '../../api';
+import { PRIMARY_NAV, type PrimaryNavHref, type PrimaryNavItem } from './primary-nav';
 import { useAppChrome } from './use-app-chrome';
-
-type NavHref = '/' | '/clients' | '/tools' | '/notifications' | '/settings';
-
-type NavItem = {
-  href: NavHref;
-  label: string;
-};
-
-const NAV: readonly NavItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/clients', label: 'Clients' },
-  { href: '/tools', label: 'Tools' },
-  { href: '/notifications', label: 'Alerts' },
-  { href: '/settings', label: 'Settings' },
-];
 
 const isActive = (pathname: string, href: string) =>
   href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
-const navIcon = (href: NavHref, size: number, color: string): ReactElement => {
+const navIcon = (href: PrimaryNavHref, size: number, color: string): ReactElement => {
   switch (href) {
     case '/':
       return <Home size={size} color={color} />;
@@ -77,9 +63,9 @@ export const MobileTabBar = () => {
   const pathname = usePathname() ?? '/';
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
-  const { showMobileTabBar } = useAppChrome();
+  const { allowMobileTabBar } = useAppChrome();
   const insets = useSafeAreaInsets();
-  if (!showMobileTabBar) return null;
+  if (!allowMobileTabBar) return null;
 
   return (
     <XStack
@@ -93,8 +79,10 @@ export const MobileTabBar = () => {
       zIndex={100}
       role="navigation"
       aria-label="Primary"
+      display="flex"
+      $md={{ display: 'none' }}
     >
-      {NAV.map(({ href, label }) => {
+      {PRIMARY_NAV.map(({ href, label }) => {
         const active = isActive(pathname, href);
         const iconColor = active ? '$primary' : '$textMuted';
         return (
@@ -140,7 +128,7 @@ export const SideNav = () => {
   const me = useMe();
   const coachName = me.data?.name ?? 'Coach';
 
-  const link = ({ href, label }: NavItem) => {
+  const link = ({ href, label }: PrimaryNavItem) => {
     const active = isActive(pathname, href);
     return (
       <Link key={href} href={href}>
@@ -202,6 +190,8 @@ export const SideNav = () => {
 
   return (
     <YStack
+      display="none"
+      $md={{ display: 'flex' }}
       width={200}
       minWidth={200}
       maxWidth={200}
@@ -243,7 +233,7 @@ export const SideNav = () => {
         >
           Workspace
         </Muted>
-        {NAV.map(link)}
+        {PRIMARY_NAV.map(link)}
       </YStack>
 
       <YStack
@@ -273,29 +263,18 @@ export const SideNav = () => {
 };
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { isDesktop } = useAppChrome();
   // Web needs an explicit viewport-bound height so flex children can compute a
   // determinate size and scroll internally (native screens are already bounded
   // by the OS window, so flex={1} alone is enough there).
   const webHeight = isWeb ? { height: '100dvh' as const } : {};
 
-  if (isDesktop) {
-    return (
-      <XStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
-        <SideNav />
-        <YStack flex={1} minWidth={0} minHeight={0} position="relative" overflow="hidden">
-          {children}
-        </YStack>
-      </XStack>
-    );
-  }
-
   return (
-    <YStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
-      <YStack flex={1} minHeight={0} width="100%" overflow="hidden">
+    <XStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
+      <SideNav />
+      <YStack flex={1} minHeight={0} minWidth={0} width="100%" overflow="hidden">
         {children}
+        <MobileTabBar />
       </YStack>
-      <MobileTabBar />
-    </YStack>
+    </XStack>
   );
 };

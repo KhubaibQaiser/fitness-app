@@ -1,4 +1,5 @@
 export { config as tamaguiConfig } from './tamagui.config';
+export { DESKTOP_MIN_WIDTH_PX } from './breakpoints';
 
 export { Screen } from './components/screen';
 export { Card } from './components/card';
