@@ -18,6 +18,10 @@ export type { AlertBannerTone } from './components/alert-banner';
 export { LoadingState, EmptyState, ErrorState } from './components/states';
 export { Skeleton, SkeletonCircle, SkeletonRegion } from './components/skeleton';
 export { FormField, FormSection } from './components/form-field';
+export type { FormFieldHandle } from './components/form-field';
+export { useFocusChain } from './components/use-focus-chain';
+export type { FocusChainBind, UseFocusChainOptions } from './components/use-focus-chain';
+export { FormKeyboardRoot } from './components/form-keyboard-root';
 export {
   DateField,
   calendarDateYearsAgo,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Body, FormField, PrimaryButton, YStack } from '@gymos/ui';
+import { Body, FormField, PrimaryButton, useFocusChain, YStack } from '@gymos/ui';
 
 export type SignupDetailsValues = {
   name: string;
@@ -36,6 +36,22 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
     password.length >= 8 &&
     !busy;
 
+  const submit = () => {
+    if (!canSubmit) return;
+    onSubmit({
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      password,
+      joinCode: joinCode.trim(),
+    });
+  };
+
+  const chain = useFocusChain(['name', 'email', 'phone', 'password', 'joinCode'], {
+    onSubmit: submit,
+    submitKey: 'go',
+  });
+
   const fieldError = (field: 'email' | 'phone' | 'joinCode') => {
     if (!error) return null;
     return error.field === field ? error.message : null;
@@ -43,13 +59,16 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
 
   return (
     <YStack gap="$4">
+      {chain.toolbar}
       <FormField
         label="Full name"
         value={name}
         onChangeText={setName}
         placeholder="Your name"
         autoCapitalize="words"
+        autoComplete="name"
         required
+        {...chain.bind('name')}
       />
       <FormField
         label="Email"
@@ -61,6 +80,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         inputMode="email"
         required
         error={fieldError('email')}
+        {...chain.bind('email')}
       />
       <FormField
         label="Phone"
@@ -73,6 +93,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         required
         hint="Used to prevent duplicate accounts"
         error={fieldError('phone')}
+        {...chain.bind('phone')}
       />
       <FormField
         label="Password"
@@ -82,7 +103,9 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         autoCapitalize="none"
         autoCorrect={false}
         secureTextEntry
+        autoComplete="new-password"
         required
+        {...chain.bind('password')}
       />
       <FormField
         label="Gym join code"
@@ -93,25 +116,14 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         autoCorrect={false}
         hint="Leave blank to create your own coaching workspace"
         error={fieldError('joinCode')}
+        {...chain.bind('joinCode')}
       />
       {error && !error.field ? (
         <Body color="$danger" fontSize={12} fontWeight="600" role="alert">
           {error.message}
         </Body>
       ) : null}
-      <PrimaryButton
-        disabled={!canSubmit}
-        onPress={() =>
-          onSubmit({
-            name: name.trim(),
-            email: email.trim(),
-            phone: phone.trim(),
-            password,
-            joinCode: joinCode.trim(),
-          })
-        }
-        width="100%"
-      >
+      <PrimaryButton disabled={!canSubmit} onPress={submit} width="100%">
         {busy ? 'Sending code…' : 'Continue'}
       </PrimaryButton>
     </YStack>

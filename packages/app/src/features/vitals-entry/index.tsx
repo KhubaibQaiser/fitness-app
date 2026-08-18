@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import {
   Body,
@@ -13,6 +13,7 @@ import {
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
+  useFocusChain,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -64,6 +65,13 @@ const VITALS: Field[] = [
   { key: 'bpDiastolic', label: 'BP diastolic', unit: 'mmHg' },
 ];
 
+const FIELD_ORDER: FieldKey[] = [
+  ...BODY.map((field) => field.key),
+  ...MEASURE.map((field) => field.key),
+  ...BILATERAL.flatMap(([left, right]) => [left.key, right.key]),
+  ...VITALS.map((field) => field.key),
+];
+
 /** Fast vitals capture — sectioned, prior values as hints, field-level errors. */
 export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
@@ -72,6 +80,23 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const [values, setValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
+
+  const submit = useCallback(() => {
+    const filled = Object.entries(values).filter(([, v]) => v.trim() !== '');
+    if (filled.length === 0 || record.isPending) return;
+    const next: Record<string, string> = {};
+    for (const [k, v] of filled) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) next[k] = 'Enter a valid number';
+      else if (n <= 0) next[k] = 'Must be greater than zero';
+    }
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
+    const payload = Object.fromEntries(filled.map(([k, v]) => [k, Number(v)]));
+    record.mutate(payload, { onSuccess: () => setSaved(true) });
+  }, [record, values]);
+
+  const chain = useFocusChain(FIELD_ORDER, { onSubmit: submit });
 
   if (vitals.isPending) {
     return <VitalsEntrySkeleton />;
@@ -114,24 +139,6 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
 
   const filled = Object.entries(values).filter(([, v]) => v.trim() !== '');
 
-  const validate = (): boolean => {
-    const next: Record<string, string> = {};
-    for (const [k, v] of filled) {
-      const n = Number(v);
-      if (!Number.isFinite(n)) next[k] = 'Enter a valid number';
-      else if (n <= 0) next[k] = 'Must be greater than zero';
-    }
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const submit = () => {
-    if (filled.length === 0 || record.isPending) return;
-    if (!validate()) return;
-    const payload = Object.fromEntries(filled.map(([k, v]) => [k, Number(v)]));
-    record.mutate(payload, { onSuccess: () => setSaved(true) });
-  };
-
   const renderField = (field: Field) => {
     const prior = priorOf(field.key);
     return (
@@ -151,6 +158,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         inputMode="decimal"
         hint={prior !== null ? `Previous: ${prior} ${field.unit}` : null}
         error={fieldErrors[field.key] ?? null}
+        {...chain.bind(field.key)}
       />
     );
   };
@@ -180,6 +188,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         title="Record vitals"
         subtitle="Fill only what you measured — history is never overwritten."
       />
+      {chain.toolbar}
       <Card gap="$4">
         <FormSection title="Body composition">{renderFields(BODY)}</FormSection>
       </Card>

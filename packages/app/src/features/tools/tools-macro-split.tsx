@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Body, Card, FormField, Muted, Stat, XStack, YStack } from '@gymos/ui';
+import { Body, Card, FormField, Muted, Stat, useFocusChain, XStack, YStack } from '@gymos/ui';
 
 type MacroPreset = {
   id: string;
@@ -43,8 +43,11 @@ export const ToolsMacroSplit = () => {
   const carbG =
     calories !== null ? Math.round((calories * (preset.carbPct / 100)) / KCAL_PER_G.carb) : null;
 
+  const chain = useFocusChain(['kcal']);
+
   return (
     <YStack gap="$4">
+      {chain.toolbar}
       <YStack gap="$2">
         {PRESETS.map((p) => {
           const selected = p.id === preset.id;
@@ -77,6 +80,7 @@ export const ToolsMacroSplit = () => {
         inputMode="numeric"
         unit="kcal"
         hint="Grams use 4 / 9 / 4 kcal per gram for P / F / C"
+        {...chain.bind('kcal')}
       />
 
       <Card>

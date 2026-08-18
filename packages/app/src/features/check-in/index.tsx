@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { type Verdict } from '@gymos/contracts';
 import {
@@ -18,6 +18,7 @@ import {
   Row,
   SectionTitle,
   StickyFormFooter,
+  useFocusChain,
   YStack,
 } from '@gymos/ui';
 import { useApplyAdjustment, useCompleteCheckIn } from '../../api';
@@ -60,7 +61,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   const pctNum = Math.max(0, Math.min(100, Number(adherencePct) || 0));
   const barTone = adherenceBarTone(pctNum);
 
-  const submit = () => {
+  const submit = useCallback(() => {
     if (weight !== '' && !(Number(weight) > 0)) {
       setWeightError('Enter a valid weight');
       return;
@@ -76,7 +77,12 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
       },
       { onSuccess: (data) => setResult({ checkInId: data.checkInId, verdict: data.verdict }) },
     );
-  };
+  }, [adherencePct, complete, notes, weight]);
+
+  const chain = useFocusChain(['weight', 'adherence', 'notes'], {
+    onSubmit: submit,
+    multiline: ['notes'],
+  });
 
   if (result !== null) {
     const copy = VERDICT_COPY[result.verdict.type];
@@ -185,6 +191,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
       }
     >
       <PageHeader title="Weekly check-in" subtitle="Capture → verdict → optional apply" />
+      {chain.toolbar}
       <Card gap="$4">
         <FormField
           label="Today's weight"
@@ -197,6 +204,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           placeholder="e.g. 84.2"
           inputMode="decimal"
           error={weightError}
+          {...chain.bind('weight')}
         />
 
         <YStack gap="$2">
@@ -208,6 +216,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
             placeholder="0–100"
             inputMode="numeric"
             hint="How closely the client followed the plan this week"
+            {...chain.bind('adherence')}
           />
           <YStack
             height={8}
@@ -231,6 +240,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           placeholder="Sleep, stress, travel, injuries…"
           multiline
           numberOfLines={3}
+          {...chain.bind('notes')}
         />
 
         {complete.isError ? (
