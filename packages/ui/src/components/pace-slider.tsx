@@ -2,20 +2,26 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { GestureResponderEvent } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
+import { AlertTriangle, Info } from '../icons';
 import { Badge } from './badge';
+import { HitTarget } from './hit-target';
 import {
   kcalToT,
   nearestTickLabel,
   positionedTicks,
+  snapToTick,
+  statusPillLabel,
+  statusPillTone,
   stepKcal,
   tFromClientX,
   tToKcal,
+  type PaceSliderWarning,
 } from './pace-slider-math';
 import { Muted } from './typography';
 
+export type { PaceSliderWarning };
 export type PaceSliderTone = 'deficit' | 'surplus' | 'neutral';
-export type PaceSliderWarning = 'none' | 'custom' | 'beyond' | 'floor';
 
 export type PaceSliderTick = {
   value: number;
@@ -31,8 +37,10 @@ type Props = {
   suggestedValue?: number;
   tone?: PaceSliderTone;
   hint?: string;
-  helper?: string;
   warning?: PaceSliderWarning;
+  floor?: number;
+  footer?: string;
+  compact?: boolean;
   ariaLabel: string;
   disabled?: boolean;
 };
@@ -56,21 +64,28 @@ type PointerLike = {
   nativeEvent?: { clientX?: number; pageX?: number };
 };
 
-const TRACK_H = 6;
-const THUMB = 22;
+const TRACK_H = 8;
+const THUMB_IDLE = 18;
+const THUMB_DRAG = 22;
 const HIT = 44;
-const LABEL_W = 64;
-
-const helperColor = (warning: PaceSliderWarning): string => {
-  if (warning === 'floor') return '$alertText';
-  if (warning === 'beyond') return '$milestoneText';
-  if (warning === 'custom') return '$accentText';
-  return '$textMuted';
-};
+const MARKER = 28;
+const SNAP_PULSE_MS = 260;
 
 const fillToken = (warning: PaceSliderWarning): string => {
   if (warning === 'floor') return '$alertText';
   if (warning === 'beyond') return '$milestoneFill';
+  return '$accentText';
+};
+
+const valueColor = (warning: PaceSliderWarning): string => {
+  if (warning === 'floor') return '$alertText';
+  if (warning === 'beyond') return '$milestoneText';
+  return '$color';
+};
+
+const captionColor = (warning: PaceSliderWarning): string => {
+  if (warning === 'floor') return '$alertText';
+  if (warning === 'beyond') return '$milestoneText';
   return '$accentText';
 };
 
@@ -94,6 +109,119 @@ const pointerIdFromEvent = (event: Event): number | undefined => {
   return typeof pointerId === 'number' ? pointerId : undefined;
 };
 
+const extremeTickLabel = (ticks: readonly PaceSliderTick[], invert: boolean): string => {
+  const first = ticks[0];
+  if (first === undefined) return '';
+  let best = first;
+  for (const tick of ticks) {
+    if (invert ? tick.value < best.value : tick.value > best.value) best = tick;
+  }
+  return best.label;
+};
+
+const TrackMarker = ({
+  pct,
+  label,
+  sublabel,
+  colorHex,
+  active,
+  pulse,
+  tall,
+  disabled,
+  onActivate,
+}: {
+  pct: number;
+  label: string;
+  sublabel?: string;
+  colorHex: string;
+  active: boolean;
+  pulse: boolean;
+  tall?: boolean;
+  disabled: boolean;
+  onActivate?: () => void;
+}) => {
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const show = hovered || focused || pulse;
+  return (
+    <HitTarget
+      position="absolute"
+      left={`${pct}%`}
+      top="50%"
+      width={MARKER}
+      height={MARKER}
+      marginLeft={-MARKER / 2}
+      marginTop={-MARKER / 2}
+      alignItems="center"
+      justifyContent="center"
+      pointerEvents="auto"
+      cursor={onActivate !== undefined && !disabled ? 'pointer' : 'default'}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label={sublabel !== undefined ? `${label}, ${sublabel}` : label}
+      focusVisibleStyle={{
+        outlineWidth: 2,
+        outlineColor: '$focusRing',
+        outlineStyle: 'solid',
+        outlineOffset: 1,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onPress={() => {
+        if (!disabled) onActivate?.();
+      }}
+    >
+      <YStack
+        width={tall === true ? 3 : 2}
+        height={tall === true ? 16 : 12}
+        borderRadius={999}
+        backgroundColor={colorHex}
+        opacity={tall === true ? 0.55 : active ? 0.95 : 0.6}
+        scale={show ? 1.5 : 1}
+      />
+      {show ? (
+        <XStack
+          position="absolute"
+          bottom="100%"
+          marginBottom={4}
+          paddingHorizontal="$2"
+          paddingVertical="$1"
+          borderRadius={8}
+          backgroundColor="$color"
+          pointerEvents="none"
+          zIndex={10}
+          gap="$1"
+          alignItems="center"
+        >
+          <Text
+            fontFamily="$heading"
+            fontSize={12}
+            lineHeight={16}
+            fontWeight="500"
+            color="$surface"
+          >
+            {label}
+          </Text>
+          {sublabel !== undefined ? (
+            <Text
+              fontFamily="$heading"
+              fontSize={12}
+              lineHeight={16}
+              fontWeight="500"
+              color="$surface"
+              opacity={0.65}
+            >
+              · {sublabel}
+            </Text>
+          ) : null}
+        </XStack>
+      ) : null}
+    </HitTarget>
+  );
+};
+
 export const PaceSlider = ({
   min,
   max,
@@ -103,20 +231,25 @@ export const PaceSlider = ({
   suggestedValue,
   tone = 'deficit',
   hint,
-  helper,
   warning = 'none',
+  floor,
+  footer,
+  compact = false,
   ariaLabel,
   disabled = false,
 }: Props) => {
   const invert = tone === 'deficit';
   const labelId = useId();
+  const theme = useTheme();
   const trackRef = useRef<TrackNode | null>(null);
   const draggingRef = useRef(false);
   const disabledRef = useRef(disabled);
   const applyRef = useRef<(clientX: number) => void>(() => undefined);
   const listenersRef = useRef<{ move: (event: Event) => void; up: () => void } | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [host, setHost] = useState<TrackNode | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [snapPulse, setSnapPulse] = useState<number | null>(null);
   disabledRef.current = disabled;
 
   const t = kcalToT(value, min, max, invert);
@@ -125,19 +258,38 @@ export const PaceSlider = ({
   const fill = fillToken(warning);
   const onSuggested =
     suggestedValue !== undefined && Math.abs(value - suggestedValue) <= 1 && warning === 'none';
-  const recommendedStart = marks[0]?.t;
-  const recommendedEnd = marks[marks.length - 1]?.t;
+  const pill = statusPillLabel(warning, label, onSuggested);
+  const thumb = dragging ? THUMB_DRAG : THUMB_IDLE;
+  const faintHex = String(theme.textFaint?.val ?? '#A1A1AA');
+  const dangerHex = String(theme.alertText?.val ?? '#EF4444');
+  const floorMark =
+    floor !== undefined && floor >= Math.min(min, max) && floor <= Math.max(min, max)
+      ? floor
+      : null;
+  const aggressiveLabel = extremeTickLabel(ticks, invert);
 
   applyRef.current = (clientX: number) => {
+    const commit = (raw: number) => {
+      const next = snapToTick(raw, ticks, min, max);
+      if (ticks.some((tick) => tick.value === next) && next !== value) {
+        if (pulseTimerRef.current !== null) clearTimeout(pulseTimerRef.current);
+        setSnapPulse(next);
+        pulseTimerRef.current = setTimeout(() => {
+          setSnapPulse(null);
+          pulseTimerRef.current = null;
+        }, SNAP_PULSE_MS);
+      }
+      onChange(next);
+    };
     const node = trackRef.current;
     if (node?.getBoundingClientRect !== undefined) {
       const rect = node.getBoundingClientRect();
-      onChange(tToKcal(tFromClientX(clientX, rect.left, rect.width), min, max, invert));
+      commit(tToKcal(tFromClientX(clientX, rect.left, rect.width), min, max, invert));
       return;
     }
     if (node?.measureInWindow !== undefined) {
       node.measureInWindow((x, _y, width) => {
-        onChange(tToKcal(tFromClientX(clientX, x, width), min, max, invert));
+        commit(tToKcal(tFromClientX(clientX, x, width), min, max, invert));
       });
     }
   };
@@ -215,50 +367,75 @@ export const PaceSlider = ({
     };
   }, [host]);
 
-  return (
-    <YStack gap="$3" width="100%" opacity={disabled ? 0.45 : 1} overflow="visible">
-      <YStack alignItems="center" gap="$1.5">
-        <XStack alignItems="center" gap="$2" flexWrap="wrap" justifyContent="center">
-          <Text
-            id={labelId}
-            fontFamily="$heading"
-            fontWeight="600"
-            fontSize={12}
-            lineHeight={16}
-            letterSpacing={0.6}
-            textTransform="uppercase"
-            color={helperColor(warning)}
-          >
-            {label}
-          </Text>
-          {onSuggested ? <Badge tone="accent" label="Suggested" /> : null}
-          {warning === 'beyond' ? <Badge tone="milestone" label="Beyond recommended" /> : null}
-          {warning === 'floor' ? <Badge tone="alert" label="Below calorie floor" /> : null}
-          {warning === 'custom' ? <Badge tone="accent" label="Custom" /> : null}
-        </XStack>
-        <XStack alignItems="baseline" gap="$1.5" justifyContent="center">
-          <Text
-            fontFamily="$mono"
-            fontSize={24}
-            fontWeight="600"
-            lineHeight={28}
-            letterSpacing={-0.4}
-            color={warning === 'floor' ? '$alertText' : '$color'}
-          >
-            {value.toLocaleString()}
-          </Text>
-          <Text fontFamily="$body" fontSize={13} lineHeight={18} color="$textMuted">
-            kcal
-          </Text>
-        </XStack>
-        {hint ? (
-          <Muted fontSize={12} lineHeight={16}>
-            {hint}
-          </Muted>
-        ) : null}
-      </YStack>
+  useEffect(
+    () => () => {
+      if (pulseTimerRef.current !== null) clearTimeout(pulseTimerRef.current);
+    },
+    [],
+  );
 
-      <YStack width="100%" gap="$2">
+  const caption =
+    warning === 'floor'
+      ? floor !== undefined
+        ? `Below the ${floor.toLocaleString()} kcal minimum for this client — not recommended.`
+        : 'Below the calorie minimum for this client — not recommended.'
+      : warning === 'beyond'
+        ? aggressiveLabel === ''
+          ? 'Beyond the recommended pace — review with the client.'
+          : `Beyond the recommended ${aggressiveLabel} pace — review with the client.`
+        : onSuggested
+          ? 'Suggested for this goal.'
+          : null;
+
+  return (
+    <YStack
+      width="100%"
+      backgroundColor="$surface"
+      borderWidth={1}
+      borderColor="$borderColor"
+      borderRadius={16}
+      padding={compact ? '$4' : '$6'}
+      opacity={disabled ? 0.45 : 1}
+      overflow="visible"
+    >
+      <XStack alignItems="center" justifyContent="space-between" gap="$2" marginBottom="$1">
+        <Text
+          id={labelId}
+          fontFamily="$heading"
+          fontWeight="600"
+          fontSize={14}
+          lineHeight={20}
+          color="$color"
+        >
+          Pace
+        </Text>
+        {pill !== '' ? <Badge tone={statusPillTone(warning)} label={pill} /> : null}
+      </XStack>
+
+      <XStack alignItems="baseline" gap="$1.5" marginBottom="$0.5">
+        <Text
+          fontFamily="$mono"
+          fontSize={compact ? 24 : 36}
+          fontWeight={compact ? '600' : '700'}
+          lineHeight={compact ? 28 : 40}
+          letterSpacing={-0.4}
+          color={valueColor(warning)}
+        >
+          {value.toLocaleString()}
+        </Text>
+        <Text fontFamily="$body" fontSize={14} lineHeight={20} color="$textMuted">
+          kcal
+        </Text>
+      </XStack>
+      {hint ? (
+        <Muted fontSize={14} lineHeight={20} marginBottom="$6">
+          {hint}
+        </Muted>
+      ) : (
+        <YStack height={0} marginBottom="$6" />
+      )}
+
+      <YStack width="100%" height={HIT} position="relative" marginBottom="$7" overflow="visible">
         <YStack
           ref={(node: TrackNode | null) => {
             trackRef.current = node;
@@ -275,7 +452,7 @@ export const PaceSlider = ({
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={value}
-          aria-valuetext={`${label}, ${value} kilocalories`}
+          aria-valuetext={`${value.toLocaleString()} kilocalories${hint !== undefined ? `, ${hint}` : ''}`}
           aria-disabled={disabled}
           aria-orientation="horizontal"
           tabIndex={disabled ? -1 : 0}
@@ -305,17 +482,21 @@ export const PaceSlider = ({
             setDragging(false);
             detachWindow();
           }}
-          onKeyDown={(event: { key?: string; shiftKey?: boolean }) => {
+          onKeyDown={(event: { key?: string; shiftKey?: boolean; preventDefault?: () => void }) => {
             if (disabled) return;
             const key = event.key ?? '';
-            const amount = event.shiftKey === true ? 50 : 10;
+            const amount = event.shiftKey === true ? 100 : 25;
             if (key === 'ArrowRight' || key === 'ArrowUp') {
+              event.preventDefault?.();
               onChange(stepKcal(value, min, max, invert, 1, amount));
             } else if (key === 'ArrowLeft' || key === 'ArrowDown') {
+              event.preventDefault?.();
               onChange(stepKcal(value, min, max, invert, -1, amount));
             } else if (key === 'Home') {
+              event.preventDefault?.();
               onChange(invert ? max : min);
             } else if (key === 'End') {
+              event.preventDefault?.();
               onChange(invert ? min : max);
             }
           }}
@@ -329,17 +510,6 @@ export const PaceSlider = ({
             overflow="hidden"
             pointerEvents="none"
           >
-            {recommendedStart !== undefined &&
-            recommendedEnd !== undefined &&
-            recommendedEnd - recommendedStart > 0.02 ? (
-              <YStack
-                position="absolute"
-                left={`${Math.min(recommendedStart, recommendedEnd) * 100}%`}
-                width={`${Math.abs(recommendedEnd - recommendedStart) * 100}%`}
-                height={TRACK_H}
-                backgroundColor="$accentWash"
-              />
-            ) : null}
             <YStack
               position="absolute"
               left={0}
@@ -350,98 +520,106 @@ export const PaceSlider = ({
             />
           </YStack>
 
-          {marks.map((mark) => (
-            <YStack
-              key={`${mark.label}-${mark.value}`}
-              position="absolute"
-              top={(HIT - 12) / 2}
-              left={`${mark.t * 100}%`}
-              width={2}
-              height={12}
-              marginLeft={-1}
-              borderRadius={999}
-              backgroundColor="$borderColor"
-              pointerEvents="none"
-            />
-          ))}
-
-          {suggestedValue !== undefined ? (
-            <YStack
-              position="absolute"
-              top={(HIT - 16) / 2}
-              left={`${kcalToT(suggestedValue, min, max, invert) * 100}%`}
-              width={2}
-              height={16}
-              marginLeft={-1}
-              borderRadius={999}
-              backgroundColor="$accentText"
-              pointerEvents="none"
-            />
-          ) : null}
-
           <YStack
             position="absolute"
-            top={(HIT - THUMB) / 2}
+            top={(HIT - thumb) / 2}
             left={`${t * 100}%`}
-            width={THUMB}
-            height={THUMB}
-            marginLeft={-THUMB / 2}
+            width={thumb}
+            height={thumb}
+            marginLeft={-thumb / 2}
             borderRadius={999}
             backgroundColor="$surface"
             borderWidth={2}
             borderColor={fill}
-            scale={dragging ? 1.06 : 1}
             shadowColor="rgba(15,23,42,0.18)"
             shadowOpacity={1}
             shadowRadius={dragging ? 8 : 4}
             shadowOffset={{ width: 0, height: dragging ? 3 : 1 }}
             pointerEvents="none"
           />
+
+          {dragging ? (
+            <YStack
+              position="absolute"
+              left={`${t * 100}%`}
+              top={-30}
+              x="-50%"
+              paddingHorizontal="$2"
+              paddingVertical="$1"
+              borderRadius={8}
+              backgroundColor={fill}
+              pointerEvents="none"
+            >
+              <Text fontFamily="$mono" fontSize={12} fontWeight="600" color="$primaryFg">
+                {value.toLocaleString()}
+              </Text>
+            </YStack>
+          ) : null}
         </YStack>
 
-        <YStack width="100%" height={20} position="relative">
-          {marks.map((mark) => {
-            const active = nearestTickLabel(value, ticks) === mark.label;
-            return (
-              <YStack
-                key={`label-${mark.label}`}
-                position="absolute"
-                left={`${mark.t * 100}%`}
-                width={LABEL_W}
-                marginLeft={-LABEL_W / 2}
-                alignItems="center"
-                cursor={disabled ? 'default' : 'pointer'}
-                onPress={() => {
-                  if (!disabled) onChange(mark.value);
-                }}
-                hoverStyle={{ opacity: 0.8 }}
-                zIndex={active ? 2 : 1}
-              >
-                <Text
-                  fontFamily="$heading"
-                  fontSize={11}
-                  lineHeight={16}
-                  fontWeight={active ? '600' : '500'}
-                  color={active ? '$accentText' : '$textFaint'}
-                  letterSpacing={0.2}
-                >
-                  {mark.label}
-                </Text>
-              </YStack>
-            );
-          })}
+        <YStack position="absolute" top={0} right={0} bottom={0} left={0} pointerEvents="none">
+          {marks.map((mark) => (
+            <TrackMarker
+              key={`${mark.label}-${mark.value}`}
+              pct={mark.t * 100}
+              label={mark.label}
+              sublabel={
+                suggestedValue !== undefined && Math.abs(mark.value - suggestedValue) <= 1
+                  ? 'Suggested'
+                  : `${mark.value.toLocaleString()} kcal`
+              }
+              colorHex={mark.t <= t ? 'rgba(255,255,255,0.75)' : faintHex}
+              active={value === mark.value}
+              pulse={snapPulse === mark.value}
+              disabled={disabled}
+              onActivate={() => onChange(mark.value)}
+            />
+          ))}
+          {floorMark !== null ? (
+            <TrackMarker
+              pct={kcalToT(floorMark, min, max, invert) * 100}
+              label="Calorie floor"
+              sublabel={`${floorMark.toLocaleString()} kcal minimum`}
+              colorHex={dangerHex}
+              active={false}
+              pulse={false}
+              tall
+              disabled={disabled}
+            />
+          ) : null}
         </YStack>
       </YStack>
 
-      {helper ? (
+      {caption !== null ? (
+        <XStack alignItems="flex-start" gap="$2" marginBottom="$3">
+          {warning === 'none' ? (
+            <Info size={14} color={captionColor(warning)} />
+          ) : (
+            <AlertTriangle size={15} color={captionColor(warning)} />
+          )}
+          <Text
+            fontFamily="$body"
+            fontSize={14}
+            lineHeight={20}
+            color={captionColor(warning)}
+            flex={1}
+          >
+            {caption}
+          </Text>
+        </XStack>
+      ) : null}
+
+      {footer !== undefined && footer !== '' ? (
         <Text
           fontFamily="$body"
           fontSize={12}
-          lineHeight={18}
-          color={helperColor(warning)}
-          textAlign="center"
+          lineHeight={16}
+          color="$textFaint"
+          paddingTop="$3"
+          borderTopWidth={1}
+          borderColor="$borderColor"
         >
-          {helper}
+          {footer}
         </Text>
       ) : null}
     </YStack>

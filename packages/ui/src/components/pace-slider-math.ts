@@ -1,7 +1,58 @@
+export type PaceSliderWarning = 'none' | 'custom' | 'beyond' | 'floor';
+
+export const SNAP_RATIO = 0.018;
+
 export const clampKcal = (value: number, min: number, max: number): number => {
   const lo = Math.min(min, max);
   const hi = Math.max(min, max);
   return Math.min(hi, Math.max(lo, Math.round(value)));
+};
+
+/** Lock to a named tick when the pointer is within `ratio` of the track span. */
+export const snapToTick = (
+  raw: number,
+  ticks: readonly { value: number }[],
+  min: number,
+  max: number,
+  ratio = SNAP_RATIO,
+): number => {
+  const rounded = clampKcal(raw, min, max);
+  const span = Math.abs(max - min);
+  if (span <= 0 || ticks.length === 0) return rounded;
+  const threshold = span * ratio;
+  let best: number | null = null;
+  let bestDist = Infinity;
+  for (const tick of ticks) {
+    const dist = Math.abs(rounded - tick.value);
+    if (dist < threshold && dist < bestDist) {
+      best = tick.value;
+      bestDist = dist;
+    }
+  }
+  return best ?? rounded;
+};
+
+export const statusPillLabel = (
+  warning: PaceSliderWarning,
+  tickLabel: string,
+  onSuggested: boolean,
+): string => {
+  if (warning === 'floor') return 'Below calorie floor';
+  if (warning === 'beyond') {
+    return tickLabel === '' ? 'Beyond recommended' : `${tickLabel} · Beyond recommended`;
+  }
+  if (warning === 'custom') return 'Custom pace';
+  if (onSuggested) return tickLabel === '' ? 'Suggested' : `${tickLabel} · Suggested`;
+  return tickLabel;
+};
+
+export const statusPillTone = (
+  warning: PaceSliderWarning,
+): 'alert' | 'milestone' | 'neutral' | 'accent' => {
+  if (warning === 'floor') return 'alert';
+  if (warning === 'beyond') return 'milestone';
+  if (warning === 'custom') return 'neutral';
+  return 'accent';
 };
 
 /** Map kcal onto 0..1 along the track. `invert` puts higher kcal on the left (deficit). */
