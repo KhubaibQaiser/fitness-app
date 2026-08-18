@@ -39,7 +39,6 @@ type Props = {
   hint?: string;
   warning?: PaceSliderWarning;
   floor?: number;
-  footer?: string;
   compact?: boolean;
   ariaLabel: string;
   disabled?: boolean;
@@ -65,10 +64,11 @@ type PointerLike = {
 };
 
 const TRACK_H = 8;
-const THUMB_IDLE = 18;
-const THUMB_DRAG = 22;
+const THUMB = 20;
 const HIT = 44;
 const MARKER = 28;
+const OVERLAY = 48;
+const CAPTION_MIN = 40;
 
 const fillToken = (warning: PaceSliderWarning): string => {
   if (warning === 'floor') return '$alertText';
@@ -213,39 +213,46 @@ const TrackMarker = ({
       height={tall === true ? 16 : 12}
       borderRadius={999}
       backgroundColor={colorHex}
-      opacity={tall === true ? 0.55 : active ? 0.95 : 0.6}
-      scale={open ? 1.5 : 1}
+      opacity={tall === true ? 0.55 : active || open ? 0.95 : 0.6}
     />
     {open ? (
-      <XStack
+      <YStack
         position="absolute"
+        left="50%"
         bottom="100%"
-        marginBottom={4}
-        paddingHorizontal="$2"
-        paddingVertical="$1"
-        borderRadius={8}
-        backgroundColor="$color"
-        pointerEvents="none"
-        zIndex={10}
-        gap="$1"
+        x="-50%"
+        marginBottom={6}
         alignItems="center"
+        pointerEvents="none"
+        zIndex={20}
       >
-        <Text fontFamily="$heading" fontSize={12} lineHeight={16} fontWeight="500" color="$surface">
-          {label}
-        </Text>
-        {sublabel !== undefined ? (
+        <YStack
+          backgroundColor="$color"
+          paddingHorizontal={10}
+          paddingVertical={6}
+          borderRadius={10}
+          width="max-content"
+          maxWidth={240}
+          shadowColor="rgba(0,0,0,0.18)"
+          shadowOpacity={1}
+          shadowRadius={16}
+          shadowOffset={{ width: 0, height: 8 }}
+        >
           <Text
             fontFamily="$heading"
             fontSize={12}
             lineHeight={16}
-            fontWeight="500"
+            fontWeight="600"
             color="$surface"
-            opacity={0.65}
+            letterSpacing={0.1}
+            whiteSpace="nowrap"
+            numberOfLines={1}
           >
-            · {sublabel}
+            {sublabel !== undefined ? `${label}  ·  ${sublabel}` : label}
           </Text>
-        ) : null}
-      </XStack>
+        </YStack>
+        <YStack width={8} height={8} marginTop={-4} backgroundColor="$color" rotate="45deg" />
+      </YStack>
     ) : null}
   </HitTarget>
 );
@@ -261,7 +268,6 @@ export const PaceSlider = ({
   hint,
   warning = 'none',
   floor,
-  footer,
   compact = false,
   ariaLabel,
   disabled = false,
@@ -311,7 +317,6 @@ export const PaceSlider = ({
   const onSuggested =
     suggestedValue !== undefined && Math.abs(value - suggestedValue) <= 1 && warning === 'none';
   const pill = statusPillLabel(warning, label, onSuggested);
-  const thumb = dragging ? THUMB_DRAG : THUMB_IDLE;
   const faintHex = String(theme.textFaint?.val ?? '#A1A1AA');
   const dangerHex = String(theme.alertText?.val ?? '#EF4444');
   const floorMark =
@@ -462,7 +467,14 @@ export const PaceSlider = ({
         dismissTooltip();
       }}
     >
-      <XStack alignItems="center" justifyContent="space-between" gap="$2" marginBottom="$1">
+      <XStack
+        alignItems="center"
+        justifyContent="space-between"
+        gap="$2"
+        marginBottom="$1"
+        minHeight={28}
+        flexWrap="nowrap"
+      >
         <Text
           id={labelId}
           fontFamily="$heading"
@@ -476,7 +488,7 @@ export const PaceSlider = ({
         {pill !== '' ? <Badge tone={statusPillTone(warning)} label={pill} /> : null}
       </XStack>
 
-      <XStack alignItems="baseline" gap="$1.5" marginBottom="$0.5">
+      <XStack alignItems="baseline" gap="$1.5" minHeight={compact ? 28 : 40} marginBottom="$0.5">
         <Text
           fontFamily="$mono"
           fontSize={compact ? 24 : 36}
@@ -491,15 +503,11 @@ export const PaceSlider = ({
           kcal
         </Text>
       </XStack>
-      {hint ? (
-        <Muted fontSize={14} lineHeight={20} marginBottom="$6">
-          {hint}
-        </Muted>
-      ) : (
-        <YStack height={0} marginBottom="$6" />
-      )}
+      <Muted fontSize={14} lineHeight={20} marginBottom="$5" minHeight={20}>
+        {hint ?? ' '}
+      </Muted>
 
-      <YStack width="100%" height={HIT} position="relative" marginBottom="$7" overflow="visible">
+      <YStack width="100%" height={HIT + OVERLAY} position="relative" marginBottom="$4">
         <YStack
           ref={(node: TrackNode | null) => {
             trackRef.current = node;
@@ -507,6 +515,7 @@ export const PaceSlider = ({
           }}
           width="100%"
           height={HIT}
+          marginTop={OVERLAY}
           justifyContent="center"
           cursor={disabled ? 'default' : dragging ? 'grabbing' : 'grab'}
           userSelect="none"
@@ -586,19 +595,19 @@ export const PaceSlider = ({
 
           <YStack
             position="absolute"
-            top={(HIT - thumb) / 2}
+            top={(HIT - THUMB) / 2}
             left={`${t * 100}%`}
-            width={thumb}
-            height={thumb}
-            marginLeft={-thumb / 2}
+            width={THUMB}
+            height={THUMB}
+            marginLeft={-THUMB / 2}
             borderRadius={999}
             backgroundColor="$surface"
             borderWidth={2}
             borderColor={fill}
             shadowColor="rgba(15,23,42,0.18)"
             shadowOpacity={1}
-            shadowRadius={dragging ? 8 : 4}
-            shadowOffset={{ width: 0, height: dragging ? 3 : 1 }}
+            shadowRadius={4}
+            shadowOffset={{ width: 0, height: 1 }}
             pointerEvents="none"
           />
 
@@ -606,7 +615,7 @@ export const PaceSlider = ({
             <YStack
               position="absolute"
               left={`${t * 100}%`}
-              top={-30}
+              top={-OVERLAY + 4}
               x="-50%"
               paddingHorizontal="$2"
               paddingVertical="$1"
@@ -621,7 +630,14 @@ export const PaceSlider = ({
           ) : null}
         </YStack>
 
-        <YStack position="absolute" top={0} right={0} bottom={0} left={0} pointerEvents="none">
+        <YStack
+          position="absolute"
+          top={OVERLAY}
+          right={0}
+          bottom={0}
+          left={0}
+          pointerEvents="none"
+        >
           {marks.map((mark) => {
             const id = tickTooltipId(mark.value);
             return (
@@ -667,38 +683,26 @@ export const PaceSlider = ({
         </YStack>
       </YStack>
 
-      {caption !== null ? (
-        <XStack alignItems="flex-start" gap="$2" marginBottom="$3">
-          {warning === 'none' ? (
-            <Info size={14} color={captionColor(warning)} />
-          ) : (
-            <AlertTriangle size={15} color={captionColor(warning)} />
-          )}
-          <Text
-            fontFamily="$body"
-            fontSize={14}
-            lineHeight={20}
-            color={captionColor(warning)}
-            flex={1}
-          >
-            {caption}
-          </Text>
-        </XStack>
-      ) : null}
-
-      {footer !== undefined && footer !== '' ? (
-        <Text
-          fontFamily="$body"
-          fontSize={12}
-          lineHeight={16}
-          color="$textFaint"
-          paddingTop="$3"
-          borderTopWidth={1}
-          borderColor="$borderColor"
-        >
-          {footer}
-        </Text>
-      ) : null}
+      <XStack alignItems="flex-start" gap="$2" minHeight={CAPTION_MIN}>
+        {caption !== null ? (
+          <>
+            {warning === 'none' ? (
+              <Info size={14} color={captionColor(warning)} />
+            ) : (
+              <AlertTriangle size={15} color={captionColor(warning)} />
+            )}
+            <Text
+              fontFamily="$body"
+              fontSize={14}
+              lineHeight={20}
+              color={captionColor(warning)}
+              flex={1}
+            >
+              {caption}
+            </Text>
+          </>
+        ) : null}
+      </XStack>
     </YStack>
   );
 };
