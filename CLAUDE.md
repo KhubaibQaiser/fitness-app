@@ -1,5 +1,7 @@
 # GymOS alignment initiative
 
+**Read first:** [docs/core-model.md](docs/core-model.md). That file is the short core contract. Read it before any plan or answer. This file is the alignment/phase prompt.
+
 Locked session answers (do not re-ask; do not silently reverse):
 
 - This file is the final alignment prompt and **wins on conflict** with architecture v4.
