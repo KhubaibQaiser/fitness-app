@@ -141,6 +141,61 @@ const blurActiveElement = (): void => {
   if (active instanceof HTMLElement) active.blur();
 };
 
+const TickTooltip = ({
+  pct,
+  label,
+  sublabel,
+}: {
+  pct: number;
+  label: string;
+  sublabel?: string;
+}) => (
+  <YStack
+    position="absolute"
+    left={`${pct}%`}
+    top={OVERLAY + HIT / 2}
+    x="-50%"
+    alignItems="center"
+    pointerEvents="none"
+    zIndex={20}
+  >
+    <YStack
+      position="absolute"
+      bottom="100%"
+      marginBottom={10}
+      alignItems="center"
+      pointerEvents="none"
+    >
+      <YStack
+        backgroundColor="$color"
+        paddingHorizontal={10}
+        paddingVertical={6}
+        borderRadius={10}
+        width="max-content"
+        maxWidth={240}
+        shadowColor="rgba(0,0,0,0.18)"
+        shadowOpacity={1}
+        shadowRadius={16}
+        shadowOffset={{ width: 0, height: 8 }}
+      >
+        <Text
+          fontFamily="$heading"
+          fontSize={12}
+          lineHeight={16}
+          fontWeight="600"
+          color="$surface"
+          letterSpacing={0.1}
+          whiteSpace="nowrap"
+          numberOfLines={1}
+        >
+          {sublabel !== undefined ? `${label}  ·  ${sublabel}` : label}
+        </Text>
+      </YStack>
+      <YStack width={8} height={8} marginTop={-4} backgroundColor="$color" rotate="45deg" />
+    </YStack>
+  </YStack>
+);
+
 const TrackMarker = ({
   pct,
   label,
@@ -156,6 +211,7 @@ const TrackMarker = ({
   onPin,
   onUnpin,
   onActivate,
+  onSlideStart,
 }: {
   pct: number;
   label: string;
@@ -171,6 +227,7 @@ const TrackMarker = ({
   onPin: () => void;
   onUnpin: () => void;
   onActivate?: () => void;
+  onSlideStart: (clientX: number, pointerId: number | undefined) => void;
 }) => (
   <HitTarget
     id={markerDomId}
@@ -184,6 +241,7 @@ const TrackMarker = ({
     marginTop={-MARKER / 2}
     alignItems="center"
     justifyContent="center"
+    overflow="hidden"
     pointerEvents="auto"
     cursor={onActivate !== undefined && !disabled ? 'pointer' : 'default'}
     role="button"
@@ -199,12 +257,19 @@ const TrackMarker = ({
     onMouseLeave={onClose}
     onFocus={onPin}
     onBlur={onUnpin}
-    onPointerDown={(event: { stopPropagation?: () => void }) => {
-      event.stopPropagation?.();
-      onPin();
+    onStartShouldSetResponder={() => false}
+    onPointerDown={(event: PointerLike) => {
+      const clientX = pointerClientX(event);
+      if (clientX === null) {
+        onPin();
+        return;
+      }
+      event.preventDefault?.();
+      onSlideStart(clientX, event.pointerId);
     }}
     onPress={() => {
-      if (!disabled) onActivate?.();
+      if (disabled) return;
+      onActivate?.();
       onPin();
     }}
   >
@@ -215,45 +280,6 @@ const TrackMarker = ({
       backgroundColor={colorHex}
       opacity={tall === true ? 0.55 : active || open ? 0.95 : 0.6}
     />
-    {open ? (
-      <YStack
-        position="absolute"
-        left="50%"
-        bottom="100%"
-        x="-50%"
-        marginBottom={6}
-        alignItems="center"
-        pointerEvents="none"
-        zIndex={20}
-      >
-        <YStack
-          backgroundColor="$color"
-          paddingHorizontal={10}
-          paddingVertical={6}
-          borderRadius={10}
-          width="max-content"
-          maxWidth={240}
-          shadowColor="rgba(0,0,0,0.18)"
-          shadowOpacity={1}
-          shadowRadius={16}
-          shadowOffset={{ width: 0, height: 8 }}
-        >
-          <Text
-            fontFamily="$heading"
-            fontSize={12}
-            lineHeight={16}
-            fontWeight="600"
-            color="$surface"
-            letterSpacing={0.1}
-            whiteSpace="nowrap"
-            numberOfLines={1}
-          >
-            {sublabel !== undefined ? `${label}  ·  ${sublabel}` : label}
-          </Text>
-        </YStack>
-        <YStack width={8} height={8} marginTop={-4} backgroundColor="$color" rotate="45deg" />
-      </YStack>
-    ) : null}
   </HitTarget>
 );
 
@@ -281,6 +307,7 @@ export const PaceSlider = ({
   const applyRef = useRef<(clientX: number) => void>(() => undefined);
   const listenersRef = useRef<{ move: (event: Event) => void; up: () => void } | null>(null);
   const hoveringTooltipIdRef = useRef<string | null>(null);
+  const skipNextPressRef = useRef(false);
   const [host, setHost] = useState<TrackNode | null>(null);
   const [dragging, setDragging] = useState(false);
   const [tooltipId, setTooltipId] = useState<string | null>(null);
@@ -361,9 +388,7 @@ export const PaceSlider = ({
       applyRef.current(clientX);
     };
     const up = () => {
-      draggingRef.current = false;
-      setDragging(false);
-      detachWindow();
+      endDrag();
     };
     listenersRef.current = { move, up };
     window.addEventListener('pointermove', move);
@@ -378,12 +403,26 @@ export const PaceSlider = ({
   ) => {
     if (disabledRef.current) return;
     draggingRef.current = true;
+    skipNextPressRef.current = true;
     setDragging(true);
     blurActiveElement();
     dismissTooltip();
     applyRef.current(clientX);
     if (pointerId !== undefined) target?.setPointerCapture?.(pointerId);
     attachWindow();
+  };
+
+  const endDrag = () => {
+    draggingRef.current = false;
+    setDragging(false);
+    detachWindow();
+    setTimeout(() => {
+      skipNextPressRef.current = false;
+    }, 0);
+  };
+
+  const startSlideFromMarker = (clientX: number, pointerId: number | undefined) => {
+    beginDrag(clientX, pointerId, trackRef.current ?? undefined);
   };
 
   const onPointerDown = (event: PointerLike) => {
@@ -451,6 +490,29 @@ export const PaceSlider = ({
         : onSuggested
           ? 'Suggested for this goal.'
           : null;
+
+  const tooltipMarker = ((): { pct: number; label: string; sublabel: string } | null => {
+    if (dragging || tooltipId === null) return null;
+    const tick = marks.find((mark) => tickTooltipId(mark.value) === tooltipId);
+    if (tick !== undefined) {
+      return {
+        pct: tick.t * 100,
+        label: tick.label,
+        sublabel:
+          suggestedValue !== undefined && Math.abs(tick.value - suggestedValue) <= 1
+            ? 'Suggested'
+            : `${tick.value.toLocaleString()} kcal`,
+      };
+    }
+    if (floorMark !== null && tooltipId === floorTooltipId(floorMark)) {
+      return {
+        pct: kcalToT(floorMark, min, max, invert) * 100,
+        label: 'Calorie floor',
+        sublabel: `${floorMark.toLocaleString()} kcal minimum`,
+      };
+    }
+    return null;
+  })();
 
   return (
     <YStack
@@ -539,22 +601,14 @@ export const PaceSlider = ({
           onMoveShouldSetResponder={() => draggingRef.current}
           onResponderGrant={onResponderGrant}
           onResponderMove={onResponderMove}
-          onResponderRelease={() => {
-            draggingRef.current = false;
-            setDragging(false);
-            detachWindow();
-          }}
+          onResponderRelease={endDrag}
           onPointerDown={onPointerDown}
           onPointerMove={(event: PointerLike) => {
             if (!draggingRef.current) return;
             const clientX = pointerClientX(event);
             if (clientX !== null) applyRef.current(clientX);
           }}
-          onPointerUp={() => {
-            draggingRef.current = false;
-            setDragging(false);
-            detachWindow();
-          }}
+          onPointerUp={endDrag}
           onKeyDown={(event: { key?: string; shiftKey?: boolean; preventDefault?: () => void }) => {
             if (disabled) return;
             const key = event.key ?? '';
@@ -657,9 +711,16 @@ export const PaceSlider = ({
                 markerDomId={`pace-marker-${id.replace(':', '-')}`}
                 onOpen={() => openTooltip(id)}
                 onClose={() => closeTooltip(id)}
-                onPin={() => pinTooltip(id)}
+                onPin={() => {
+                  if (skipNextPressRef.current) return;
+                  pinTooltip(id);
+                }}
                 onUnpin={() => unpinTooltip(id)}
-                onActivate={() => onChange(mark.value)}
+                onActivate={() => {
+                  if (skipNextPressRef.current) return;
+                  onChange(mark.value);
+                }}
+                onSlideStart={startSlideFromMarker}
               />
             );
           })}
@@ -676,11 +737,22 @@ export const PaceSlider = ({
               markerDomId={`pace-marker-${floorTooltipId(floorMark).replace(':', '-')}`}
               onOpen={() => openTooltip(floorTooltipId(floorMark))}
               onClose={() => closeTooltip(floorTooltipId(floorMark))}
-              onPin={() => pinTooltip(floorTooltipId(floorMark))}
+              onPin={() => {
+                if (skipNextPressRef.current) return;
+                pinTooltip(floorTooltipId(floorMark));
+              }}
               onUnpin={() => unpinTooltip(floorTooltipId(floorMark))}
+              onSlideStart={startSlideFromMarker}
             />
           ) : null}
         </YStack>
+        {tooltipMarker !== null ? (
+          <TickTooltip
+            pct={tooltipMarker.pct}
+            label={tooltipMarker.label}
+            sublabel={tooltipMarker.sublabel}
+          />
+        ) : null}
       </YStack>
 
       <XStack alignItems="flex-start" gap="$2" minHeight={CAPTION_MIN}>
