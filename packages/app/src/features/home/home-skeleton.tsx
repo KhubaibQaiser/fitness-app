@@ -10,7 +10,6 @@ import {
   SkeletonCircle,
   SkeletonRegion,
   Text,
-  WeaveLine,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -57,7 +56,6 @@ export const HomeSkeleton = () => (
     />
 
     <ScreenBody gap="$4">
-      <WeaveLine id="home-loading" mode="loading" height={28} />
       <XStack flexWrap="wrap" gap="$3" width="100%">
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
           <Card padding="$3">
