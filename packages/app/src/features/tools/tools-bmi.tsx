@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { parseWeight } from '@gymos/core/units';
-import { AlertBanner, Card, FormField, Stat, XStack, YStack } from '@gymos/ui';
+import { AlertBanner, Card, FormField, Stat, useFocusChain, XStack, YStack } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
@@ -45,8 +45,15 @@ export const ToolsBmi = () => {
     weightKg !== null && heightM !== null && heightM > 0 ? weightKg / (heightM * heightM) : null;
   const category = bmi !== null ? categorize(bmi) : null;
 
+  const names =
+    prefs.height === 'cm'
+      ? (['weight', 'heightCm'] as const)
+      : (['weight', 'heightFt', 'heightIn'] as const);
+  const chain = useFocusChain(names);
+
   return (
     <YStack gap="$4">
+      {chain.toolbar}
       <XStack gap="$3" flexWrap="wrap">
         <YStack flex={1} minWidth={140}>
           <FormField
@@ -55,6 +62,7 @@ export const ToolsBmi = () => {
             onChangeText={setWeight}
             inputMode="decimal"
             unit={prefs.weight}
+            {...chain.bind('weight')}
           />
         </YStack>
         <YStack flex={1} minWidth={prefs.height === 'cm' ? 140 : 200}>
@@ -66,6 +74,9 @@ export const ToolsBmi = () => {
             onChangeCm={setHeightCmInput}
             onChangeFt={setHeightFt}
             onChangeIn={setHeightIn}
+            cmField={chain.bind('heightCm')}
+            ftField={chain.bind('heightFt')}
+            inField={chain.bind('heightIn')}
           />
         </YStack>
       </XStack>

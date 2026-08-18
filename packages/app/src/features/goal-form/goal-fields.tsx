@@ -2,7 +2,7 @@
 
 import type { GoalPreset, GoalRate } from '@gymos/core/nutrition';
 import type { UnitPrefs } from '@gymos/core/units';
-import { Body, FormField, SegmentedControl, YStack } from '@gymos/ui';
+import { Body, FormField, SegmentedControl, YStack, type FocusChainBind } from '@gymos/ui';
 import { ACTIVITY_LEVELS, type ActivityLevelValue } from '../../lib/activity-levels';
 import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
 
@@ -22,6 +22,7 @@ type Props = {
   startWeightHint?: string;
   onChange: (partial: Partial<GoalFieldsValue>) => void;
   onClearError: (key: string) => void;
+  bind?: (name: 'startWeightKg' | 'targetWeightKg') => FocusChainBind;
 };
 
 export const GoalFields = ({
@@ -32,6 +33,7 @@ export const GoalFields = ({
   startWeightHint,
   onChange,
   onClearError,
+  bind,
 }: Props) => (
   <YStack gap="$4">
     <YStack gap="$2">
@@ -83,6 +85,7 @@ export const GoalFields = ({
       error={errors.startWeightKg ?? null}
       hint={startWeightHint ?? null}
       unit={prefs.weight}
+      {...(bind?.('startWeightKg') ?? {})}
     />
 
     <FormField
@@ -97,6 +100,7 @@ export const GoalFields = ({
       required
       error={errors.targetWeightKg ?? null}
       unit={prefs.weight}
+      {...(bind?.('targetWeightKg') ?? {})}
     />
   </YStack>
 );

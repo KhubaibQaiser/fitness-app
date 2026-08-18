@@ -16,6 +16,7 @@ import {
   Muted,
   SegmentedControl,
   Stat,
+  useFocusChain,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -77,8 +78,15 @@ export const ToolsTdee = () => {
       ? 'at TDEE'
       : `${weeklyDeltaKg !== null && weeklyDeltaKg < 0 ? '−' : '+'}${weeklyDeltaDisplay.value} ${weeklyDeltaDisplay.unit}/week`;
 
+  const names =
+    prefs.height === 'cm'
+      ? (['weight', 'heightCm', 'age'] as const)
+      : (['weight', 'heightFt', 'heightIn', 'age'] as const);
+  const chain = useFocusChain(names);
+
   return (
     <YStack gap="$4">
+      {chain.toolbar}
       <FormSection title="Inputs">
         <XStack gap="$3" flexWrap="wrap">
           <YStack flex={1} minWidth={120}>
@@ -88,6 +96,7 @@ export const ToolsTdee = () => {
               onChangeText={setWeight}
               inputMode="decimal"
               unit={prefs.weight}
+              {...chain.bind('weight')}
             />
           </YStack>
           <YStack flex={1} minWidth={prefs.height === 'cm' ? 120 : 200}>
@@ -99,10 +108,19 @@ export const ToolsTdee = () => {
               onChangeCm={setHeightCmInput}
               onChangeFt={setHeightFt}
               onChangeIn={setHeightIn}
+              cmField={chain.bind('heightCm')}
+              ftField={chain.bind('heightFt')}
+              inField={chain.bind('heightIn')}
             />
           </YStack>
           <YStack flex={1} minWidth={120}>
-            <FormField label="Age" value={age} onChangeText={setAge} inputMode="numeric" />
+            <FormField
+              label="Age"
+              value={age}
+              onChangeText={setAge}
+              inputMode="numeric"
+              {...chain.bind('age')}
+            />
           </YStack>
         </XStack>
 

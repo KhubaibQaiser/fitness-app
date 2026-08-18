@@ -125,6 +125,8 @@ export const RosterScreen = () => {
           fontSize={13}
           paddingHorizontal="$3"
           aria-label="Search clients"
+          returnKeyType="search"
+          enterKeyHint="search"
           focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
         />
         <XStack

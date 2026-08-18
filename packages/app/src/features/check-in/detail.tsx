@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { type Verdict } from '@gymos/contracts';
 import {
@@ -19,6 +19,7 @@ import {
   Row,
   SectionTitle,
   StickyFormFooter,
+  useFocusChain,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -102,25 +103,8 @@ export const CheckInDetailScreen = ({
     setHydrated(true);
   }, [detail.data, hydrated]);
 
-  if (detail.isPending) {
-    return <CheckInDetailSkeleton clientId={clientId} />;
-  }
-  if (detail.isError) {
-    return (
-      <AppScreen>
-        <ErrorState message="Could not load this check-in." retry={() => void detail.refetch()} />
-      </AppScreen>
-    );
-  }
-
-  const checkIn = detail.data;
-  const editable = checkIn.status === 'COMPLETED';
-  const copy = verdict !== null ? VERDICT_COPY[verdict.type] : null;
-  const narrative = verdict?.narrative;
-  const displayTitle = narrative?.title ?? copy?.title ?? null;
-
-  const submit = () => {
-    if (!editable || update.isPending) return;
+  const submit = useCallback(() => {
+    if (detail.data?.status !== 'COMPLETED' || update.isPending) return;
     if (weight !== '' && !(Number(weight) > 0)) {
       setWeightError('Enter a valid weight');
       return;
@@ -143,7 +127,29 @@ export const CheckInDetailScreen = ({
         },
       },
     );
-  };
+  }, [adherencePct, checkInId, detail, notes, update, weight]);
+
+  const chain = useFocusChain(['weight', 'adherence', 'notes'], {
+    onSubmit: submit,
+    multiline: ['notes'],
+  });
+
+  if (detail.isPending) {
+    return <CheckInDetailSkeleton clientId={clientId} />;
+  }
+  if (detail.isError) {
+    return (
+      <AppScreen>
+        <ErrorState message="Could not load this check-in." retry={() => void detail.refetch()} />
+      </AppScreen>
+    );
+  }
+
+  const checkIn = detail.data;
+  const editable = checkIn.status === 'COMPLETED';
+  const copy = verdict !== null ? VERDICT_COPY[verdict.type] : null;
+  const narrative = verdict?.narrative;
+  const displayTitle = narrative?.title ?? copy?.title ?? null;
 
   return (
     <AppScreen
@@ -164,6 +170,7 @@ export const CheckInDetailScreen = ({
         title={`Check-in · ${checkIn.scheduledFor}`}
         subtitle={editable ? 'Edit inputs and re-run the engine' : `${checkIn.status} — view only`}
       />
+      {chain.toolbar}
 
       {copy !== null && verdict !== null && displayTitle !== null ? (
         <Card
@@ -272,6 +279,7 @@ export const CheckInDetailScreen = ({
           inputMode="decimal"
           error={weightError}
           disabled={!editable}
+          {...chain.bind('weight')}
         />
 
         <YStack gap="$3">
@@ -286,6 +294,7 @@ export const CheckInDetailScreen = ({
             placeholder="0–100"
             inputMode="numeric"
             disabled={!editable}
+            {...chain.bind('adherence')}
           />
           <XStack alignItems="center" gap="$3" justifyContent="space-between">
             <ProgressRing
@@ -341,6 +350,7 @@ export const CheckInDetailScreen = ({
           multiline
           numberOfLines={3}
           disabled={!editable}
+          {...chain.bind('notes')}
         />
 
         {update.isError ? (
