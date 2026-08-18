@@ -15,7 +15,6 @@ import {
   ScrollView,
   StatPill,
   Text,
-  WeaveLine,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -81,7 +80,6 @@ export const HomeScreen = () => {
       />
 
       <ScreenBody gap="$4">
-        <WeaveLine id="home-idle" mode="idle" height={28} />
         <XStack flexWrap="wrap" gap="$3" width="100%">
           <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
             <StatPill label="Needs attention" value={atRisk.length} />
