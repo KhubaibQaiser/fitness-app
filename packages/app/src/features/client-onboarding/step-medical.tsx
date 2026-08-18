@@ -18,7 +18,7 @@ export const StepMedical = ({
       placeholder="e.g. hypertension, asthma"
       multiline
       numberOfLines={4}
-      hint="Optional — one per line or comma-separated"
+      hint="Optional: One per line or comma-separated"
     />
 
     <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="$3">

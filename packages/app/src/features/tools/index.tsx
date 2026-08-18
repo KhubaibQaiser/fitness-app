@@ -9,7 +9,7 @@ const TOOLS = [
   {
     href: '/tools/targets' as const,
     title: 'How targets are calculated',
-    subtitle: 'BMR, TDEE, goals, macros, fiber, and safety floors — live from the engine.',
+    subtitle: 'BMR, TDEE, goals, macros, fiber, and safety floors, live from the engine.',
   },
   {
     href: '/tools/meals' as const,

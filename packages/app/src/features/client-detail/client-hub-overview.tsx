@@ -39,7 +39,7 @@ const paceDisplay = (
   goal: Goal | null,
   weightUnit: string,
 ): { value: string; unit?: string; hint: string } => {
-  if (goal === null) return { value: '—', hint: 'No goal' };
+  if (goal === null) return { value: '-', hint: 'No goal' };
   const abs = Math.abs(goal.expectedWeeklyDeltaKg);
   if (abs > 0) {
     const shown = formatWeight(abs, weightUnit === 'lb' ? 'lb' : 'kg', 2);
@@ -117,19 +117,19 @@ export const ClientHubOverview = ({
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
           <StatPill
             label="Current weight"
-            value={currentShown !== null ? String(currentShown.value) : '—'}
+            value={currentShown !== null ? String(currentShown.value) : '-'}
             suffix={currentShown !== null ? ` ${currentShown.unit}` : ''}
           />
         </YStack>
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
           <StatPill
             label="Goal progress"
-            value={goalProgressPct !== null ? String(goalProgressPct) : '—'}
+            value={goalProgressPct !== null ? String(goalProgressPct) : '-'}
             suffix={goalProgressPct !== null ? '%' : ''}
           />
         </YStack>
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
-          <StatPill label="BMI" value={bmi !== null ? bmi.toFixed(1) : '—'} />
+          <StatPill label="BMI" value={bmi !== null ? bmi.toFixed(1) : '-'} />
         </YStack>
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
           <StatPill
@@ -187,13 +187,13 @@ export const ClientHubOverview = ({
               <YStack alignItems="center">
                 <Muted fontSize={11}>Start</Muted>
                 <Text fontFamily="$mono" fontWeight="700">
-                  {startShown !== null ? `${startShown.value} ${startShown.unit}` : '—'}
+                  {startShown !== null ? `${startShown.value} ${startShown.unit}` : '-'}
                 </Text>
               </YStack>
               <YStack alignItems="center">
                 <Muted fontSize={11}>Target</Muted>
                 <Text fontFamily="$mono" fontWeight="700">
-                  {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '—'}
+                  {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '-'}
                 </Text>
               </YStack>
             </XStack>

@@ -73,7 +73,7 @@ export const StepBody = ({
               onPatch({ [key]: t });
               onClearError(key);
             }}
-            placeholder="—"
+            placeholder="-"
             inputMode="decimal"
             error={errors[key] ?? null}
             unit={prefs.length}
@@ -91,7 +91,7 @@ export const StepBody = ({
                     onPatch({ [key]: t });
                     onClearError(key);
                   }}
-                  placeholder="—"
+                  placeholder="-"
                   inputMode="decimal"
                   error={errors[key] ?? null}
                   unit={prefs.length}

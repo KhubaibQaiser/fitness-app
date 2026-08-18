@@ -7,7 +7,7 @@ export const DinnerPanel = () => (
   <YStack gap="$4">
     <PanelHeading
       title="Dinner"
-      subtitle="Protein salad style — no staple carbs and no added fat in the template."
+      subtitle="Protein salad style. No staple carbs and no added fat in the template."
     />
     <Card gap="$2">
       <Body fontWeight="700">Pattern</Body>

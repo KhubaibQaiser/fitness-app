@@ -19,7 +19,7 @@ export const OverviewPanel = () => (
         What this page is
       </Body>
       <Muted lineHeight={20}>
-        Layer 2 builds each day from fixed meal templates — not AI guesses. The coach picks 3, 4, or
+        Layer 2 builds each day from fixed meal templates, not AI guesses. The coach picks 3, 4, or
         5 meals when generating a plan. Food pools are slot-filtered so breakfast stays breakfast.
       </Muted>
     </Card>
@@ -32,7 +32,11 @@ export const OverviewPanel = () => (
     {([3, 4, 5] as const).map((count) => (
       <Card key={count} gap="$3">
         <Body fontFamily="$heading" fontWeight="700">
-          {count === 3 ? '3 meals (default)' : count === 4 ? '4 — one snack' : '5 — two snacks'}
+          {count === 3
+            ? '3 meals (default)'
+            : count === 4
+              ? '4 meals, one snack'
+              : '5 meals, two snacks'}
         </Body>
         <XStack flexWrap="wrap" gap="$2">
           {MEAL_TEMPLATES[count].map((meal, index) => (

@@ -183,17 +183,17 @@ export const ToolsTdee = () => {
         <XStack gap="$4" flexWrap="wrap">
           <Stat
             label="BMR"
-            value={bmrValue !== null ? Math.round(bmrValue).toLocaleString() : '—'}
+            value={bmrValue !== null ? Math.round(bmrValue).toLocaleString() : '-'}
             hint="kcal/day"
           />
           <Stat
             label="TDEE"
-            value={tdeeValue !== null ? Math.round(tdeeValue).toLocaleString() : '—'}
+            value={tdeeValue !== null ? Math.round(tdeeValue).toLocaleString() : '-'}
             hint="kcal/day"
           />
           <Stat
             label="Target"
-            value={targetValue !== null ? targetValue.toLocaleString() : '—'}
+            value={targetValue !== null ? targetValue.toLocaleString() : '-'}
             hint={targetHint}
           />
         </XStack>

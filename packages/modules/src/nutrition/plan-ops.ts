@@ -192,7 +192,7 @@ const applyAdd = async (ctx: ApplyCtx, op: Extract<PlanOp, { op: 'add' }>): Prom
     day: op.day,
     mealIndex: op.mealIndex,
     mealSlot: op.mealSlot,
-    mealName: `${op.mealSlot} — day ${op.day}`,
+    mealName: `${op.mealSlot}, day ${op.day}`,
     foodId: op.foodId,
     portionGrams: op.portionGrams,
     macros: gramsMacros(per100g, op.portionGrams),

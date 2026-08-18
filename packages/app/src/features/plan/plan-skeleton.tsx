@@ -84,7 +84,7 @@ export const PlanSkeleton = ({ clientId }: { clientId: string }) => (
       ))}
 
       <Muted fontSize={12} textAlign="center">
-        General fitness nutrition guidance — not medical advice. PDF matches the locked diet-plan
+        General fitness nutrition guidance, not medical advice. PDF matches the locked diet-plan
         template (Breakfast/Lunch options, Dinner list).
       </Muted>
     </SkeletonRegion>

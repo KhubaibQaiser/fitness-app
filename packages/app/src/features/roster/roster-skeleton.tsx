@@ -67,7 +67,7 @@ const DesktopRow = () => (
       <Skeleton width={88} height={22} borderRadius={999} />
     </YStack>
     <YStack width={COL.progress} flexShrink={0} justifyContent="center">
-      <Muted fontSize={11}>—</Muted>
+      <Muted fontSize={11}>-</Muted>
     </YStack>
   </Card>
 );

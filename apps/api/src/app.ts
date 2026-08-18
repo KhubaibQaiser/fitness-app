@@ -360,7 +360,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     }
     const ip = c.req.header('x-forwarded-for') ?? 'local';
     if (!(await loginLimiter(ip))) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait a minute');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait a minute');
     }
     const result = await loginWithPassword(db, parsed.data.email, parsed.data.password, {
       userAgent: c.req.header('user-agent'),
@@ -393,18 +393,18 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       case 'reuse-grace':
         // Benign race (concurrent request already rotated this token) —
         // fail this one call without tearing down the session.
-        return problemResponse(c, 401, 'REFRESH_RACE', 'Token already rotated — retry');
+        return problemResponse(c, 401, 'REFRESH_RACE', 'Token already rotated. Retry');
       case 'reuse-detected':
         clearAuthCookies(c);
         return problemResponse(
           c,
           401,
           'REUSE_DETECTED',
-          'Refresh token reused — all sessions revoked for safety',
+          'Refresh token reused. All sessions revoked for safety',
         );
       case 'invalid':
         clearAuthCookies(c);
-        return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+        return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired. Please sign in again');
     }
   });
 
@@ -434,7 +434,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       !(await signupIpLimiter(`signup:ip:${ip}`)) ||
       !(await signupEmailLimiter(`signup:email:${emailKey}`))
     ) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await startCoachSignup(db, signupDeps, parsed.data);
     if (!result.ok) {
@@ -457,7 +457,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     }
     const ip = clientIp(c);
     if (!(await confirmIpLimiter(`confirm:ip:${ip}`))) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await confirmCoachSignup(db, otpDeps, parsed.data, {
       userAgent: c.req.header('user-agent'),
@@ -467,12 +467,12 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       const map: Record<string, { status: 400 | 401 | 409; title: string }> = {
         OTP_INVALID: { status: 401, title: 'Invalid verification code' },
         OTP_EXPIRED: { status: 401, title: 'Verification code expired' },
-        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes — request a new one' },
-        OTP_NOT_FOUND: { status: 401, title: 'No pending verification — start signup again' },
+        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes. Request a new one' },
+        OTP_NOT_FOUND: { status: 401, title: 'No pending verification. Start signup again' },
         EMAIL_TAKEN: { status: 409, title: 'An account with this email already exists' },
         PHONE_TAKEN: { status: 409, title: 'An account with this phone already exists' },
         INVALID_JOIN_CODE: { status: 400, title: 'Join code is invalid' },
-        INVALID_PAYLOAD: { status: 400, title: 'Signup data is invalid — start again' },
+        INVALID_PAYLOAD: { status: 400, title: 'Signup data is invalid. Start again' },
       };
       const mapped = map[result.error.reason] ?? {
         status: 401 as const,
@@ -494,7 +494,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       !(await signupIpLimiter(`resend:ip:${ip}`)) ||
       !(await signupEmailLimiter(`resend:email:${emailKey}`))
     ) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await resendCoachSignupOtp(db, signupDeps, parsed.data.email);
     if (!result.ok) {
@@ -502,7 +502,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
         c,
         401,
         'OTP_NOT_FOUND',
-        'No pending verification — start signup again',
+        'No pending verification. Start signup again',
       );
     }
     return c.json({ ok: true });
@@ -519,7 +519,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
       !(await forgotIpLimiter(`forgot:ip:${ip}`)) ||
       !(await forgotEmailLimiter(`forgot:email:${emailKey}`))
     ) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     await requestPasswordReset(db, resetDeps, parsed.data.email);
     return c.json({ ok: true });
@@ -532,15 +532,15 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     }
     const ip = clientIp(c);
     if (!(await confirmIpLimiter(`reset:ip:${ip}`))) {
-      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts — wait and try again');
+      return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await resetPasswordWithOtp(db, otpDeps, parsed.data);
     if (!result.ok) {
       const map: Record<string, { status: 401 | 404; title: string }> = {
         OTP_INVALID: { status: 401, title: 'Invalid verification code' },
         OTP_EXPIRED: { status: 401, title: 'Verification code expired' },
-        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes — request a new one' },
-        OTP_NOT_FOUND: { status: 401, title: 'No pending reset — request a new code' },
+        OTP_LOCKED: { status: 401, title: 'Too many incorrect codes. Request a new one' },
+        OTP_NOT_FOUND: { status: 401, title: 'No pending reset. Request a new code' },
         USER_NOT_FOUND: { status: 404, title: 'Account not found' },
       };
       const mapped = map[result.error.reason] ?? { status: 401 as const, title: 'Reset failed' };
@@ -579,7 +579,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     }
     const claims = await verifyAccessToken(accessToken, env.JWT_ACCESS_SECRET);
     if (claims === null) {
-      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired. Please sign in again');
     }
 
     const sessionLive = await isSessionActive(db, {
@@ -588,7 +588,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     });
     if (!sessionLive) {
       clearAuthCookies(c);
-      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired — please sign in again');
+      return problemResponse(c, 401, 'AUTH_REQUIRED', 'Session expired. Please sign in again');
     }
 
     if (c.req.method !== 'GET') {
@@ -1624,7 +1624,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
           throw new ProblemError(
             422,
             'DRIFT_ACK_REQUIRED',
-            'Day totals are outside tolerance — acknowledge drift to publish',
+            'Day totals are outside tolerance. Acknowledge drift to publish',
             `days=${result.error.days.join(',')}`,
           );
         }

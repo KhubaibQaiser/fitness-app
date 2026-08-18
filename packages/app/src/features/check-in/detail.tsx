@@ -168,7 +168,7 @@ export const CheckInDetailScreen = ({
     >
       <PageHeader
         title={`Check-in · ${checkIn.scheduledFor}`}
-        subtitle={editable ? 'Edit inputs and re-run the engine' : `${checkIn.status} — view only`}
+        subtitle={editable ? 'Edit inputs and re-run the engine' : `${checkIn.status}. View only`}
       />
       {chain.toolbar}
 
@@ -244,7 +244,7 @@ export const CheckInDetailScreen = ({
                         })
                       }
                     >
-                      {apply.isPending ? 'Re-solving plan…' : 'Apply — draft an adjusted plan'}
+                      {apply.isPending ? 'Re-solving plan…' : 'Apply and draft an adjusted plan'}
                     </PrimaryButton>
                     {apply.isError ? (
                       <Body color="$danger" role="alert">

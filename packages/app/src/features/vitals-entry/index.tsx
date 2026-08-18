@@ -120,7 +120,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
             Vitals saved
           </Body>
           <Muted textAlign="center">
-            History was appended — prior readings were not overwritten.
+            History was appended. Prior readings were not overwritten.
           </Muted>
           <PrimaryButton onPress={() => router.back()}>Back</PrimaryButton>
         </YStack>
@@ -154,7 +154,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
             return rest;
           });
         }}
-        placeholder={prior !== null ? `Last: ${prior}` : '—'}
+        placeholder={prior !== null ? `Last: ${prior}` : '-'}
         inputMode="decimal"
         hint={prior !== null ? `Previous: ${prior} ${field.unit}` : null}
         error={fieldErrors[field.key] ?? null}
@@ -186,7 +186,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     >
       <PageHeader
         title="Record vitals"
-        subtitle="Fill only what you measured — history is never overwritten."
+        subtitle="Fill only what you measured. History is never overwritten."
       />
       {chain.toolbar}
       <Card gap="$4">

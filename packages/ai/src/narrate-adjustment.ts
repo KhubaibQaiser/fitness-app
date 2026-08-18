@@ -42,7 +42,7 @@ const TITLE_BY_TYPE: Record<string, string> = {
 const CLIENT_BY_TYPE: Record<string, string> = {
   INSUFFICIENT_DATA: 'Keep logging weigh-ins so we can read your trend.',
   REFER_REVIEW: 'Your coach will review this check-in with you.',
-  HOLD: 'You are tracking well — keep the current plan.',
+  HOLD: 'You are tracking well. Keep the current plan.',
   ADHERENCE_FOCUS: 'Prioritize consistency with the current plan before changing targets.',
   PLATEAU_PROTOCOL: 'Progress has stalled; your coach may suggest a short protocol change.',
   ADJUST_TARGETS: "Your coach may tweak targets based on this week's trend.",
