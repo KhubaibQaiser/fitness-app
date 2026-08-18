@@ -1,0 +1,36 @@
+name: AI live eval
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Narrative live eval
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Offline eval (always)
+        run: pnpm --filter @gymos/ai test
+      - name: Live eval (llama.cpp)
+        env:
+          AI_EVAL_LIVE: '1'
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+        run: |
+          if [ -z "${AI_BASE_URL}" ]; then
+            echo "Skipping live eval: repository secret AI_BASE_URL is not set."
+            exit 0
+          fi
+          pnpm --filter @gymos/ai test
