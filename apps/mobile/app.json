@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#005DB8"
       },
-      "package": "app.gymos.coach"
+      "package": "app.gymos.coach",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "extra": {
       "eas": {

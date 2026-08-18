@@ -1,6 +1,6 @@
 'use client';
 
-import { FormField, YStack } from '@gymos/ui';
+import { FormField, YStack, type FocusChainBind } from '@gymos/ui';
 import { formatPhoneAsYouType, isCountryCode, type CountryCode } from '../../lib/phone';
 
 export const PhoneField = ({
@@ -11,6 +11,7 @@ export const PhoneField = ({
   error = null,
   hint = null,
   required = false,
+  field,
 }: {
   label: string;
   value: string;
@@ -19,6 +20,7 @@ export const PhoneField = ({
   error?: string | null;
   hint?: string | null;
   required?: boolean;
+  field?: FocusChainBind;
 }) => {
   const country: CountryCode = isCountryCode(defaultCountry) ? defaultCountry : 'PK';
 
@@ -33,6 +35,7 @@ export const PhoneField = ({
         required={required}
         error={error}
         hint={hint}
+        {...(field ?? {})}
       />
     </YStack>
   );

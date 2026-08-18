@@ -186,7 +186,13 @@ export const ClientOnboardingScreen = () => {
       ) : (
         <Card gap="$4">
           {stepId === 'identity' ? (
-            <StepIdentity draft={draft} errors={errors} onPatch={patch} onClearError={clearError} />
+            <StepIdentity
+              draft={draft}
+              errors={errors}
+              onPatch={patch}
+              onClearError={clearError}
+              onComplete={goNext}
+            />
           ) : null}
           {stepId === 'height' ? (
             <StepHeight
@@ -195,6 +201,7 @@ export const ClientOnboardingScreen = () => {
               prefs={prefs}
               onPatch={patch}
               onClearError={clearError}
+              onComplete={goNext}
             />
           ) : null}
           {stepId === 'contact' ? (
@@ -204,6 +211,7 @@ export const ClientOnboardingScreen = () => {
               defaultCountry={defaultCountry}
               onPatch={patch}
               onClearError={clearError}
+              onComplete={goNext}
             />
           ) : null}
           {stepId === 'body' ? (
@@ -213,6 +221,7 @@ export const ClientOnboardingScreen = () => {
               prefs={prefs}
               onPatch={patch}
               onClearError={clearError}
+              onComplete={goNext}
             />
           ) : null}
           {stepId === 'goal' ? (
@@ -222,6 +231,7 @@ export const ClientOnboardingScreen = () => {
               prefs={prefs}
               onPatch={patch}
               onClearError={clearError}
+              onComplete={goNext}
             />
           ) : null}
           {stepId === 'medical' ? <StepMedical draft={draft} onPatch={patch} /> : null}
