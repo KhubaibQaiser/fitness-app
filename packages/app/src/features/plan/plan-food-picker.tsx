@@ -26,6 +26,8 @@ export const PlanFoodPicker = ({
         onChangeText={setQuery}
         placeholder="Type at least 2 characters"
         autoCapitalize="none"
+        returnKeyType="search"
+        enterKeyHint="search"
       />
       {foods.isFetching ? <Muted fontSize={12}>Searching…</Muted> : null}
       {(foods.data?.items ?? [])

@@ -14,6 +14,7 @@ import {
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
+  useFocusChain,
 } from '@gymos/ui';
 import { useClientDetail, useMe, usePublicConfig, useSaveActiveGoal } from '../../api';
 import { ACTIVITY_LEVELS, type ActivityLevelValue } from '../../lib/activity-levels';
@@ -131,6 +132,8 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
     );
   };
 
+  const chain = useFocusChain(['startWeightKg', 'targetWeightKg'], { onSubmit: submit });
+
   return (
     <AppScreen
       footer={
@@ -163,12 +166,14 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         </AlertBanner>
       ) : null}
       <Card gap="$4">
+        {chain.toolbar}
         <GoalFields
           value={value}
           errors={errors}
           prefs={prefs}
           onChange={(partial) => setValue((current) => ({ ...current, ...partial }))}
           onClearError={clearError}
+          bind={chain.bind}
         />
 
         {errors.form ? (

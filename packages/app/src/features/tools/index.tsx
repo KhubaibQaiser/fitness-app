@@ -20,7 +20,7 @@ const TOOLS = [
 
 /** Coach tools hub — calculators plus nutrition explainers. */
 export const ToolsScreen = () => (
-  <AppScreen>
+  <AppScreen avoidKeyboard>
     <PageHeader title="Tools" subtitle="Nutrition utility calculators" />
 
     <YStack gap="$3">
