@@ -1,6 +1,6 @@
 'use client';
 
-import { GhostButton, PrimaryButton, StickyFormFooter } from '@gymos/ui';
+import { OutlineButton, PrimaryButton, StickyFormFooter } from '@gymos/ui';
 
 export const OnboardingFooter = ({
   canGoBack,
@@ -19,9 +19,9 @@ export const OnboardingFooter = ({
 }) => (
   <StickyFormFooter>
     {canGoBack ? (
-      <GhostButton flex={1} onPress={onBack} disabled={pending === true}>
+      <OutlineButton flex={1} onPress={onBack} disabled={pending === true}>
         Back
-      </GhostButton>
+      </OutlineButton>
     ) : null}
     <PrimaryButton flex={1} onPress={onNext} disabled={pending === true || nextDisabled === true}>
       {pending === true ? 'Saving…' : isLast ? 'Create client' : 'Continue'}
