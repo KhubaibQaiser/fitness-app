@@ -3,12 +3,13 @@
 import { useEffect, useRef } from 'react';
 import type { ActivityLevel } from '@gymos/core/nutrition';
 import type { UnitPrefs } from '@gymos/core/units';
-import { useFocusChain } from '@gymos/ui';
+import { useFocusChain, YStack } from '@gymos/ui';
 import { usePublicConfig } from '../../api';
 import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { ageYearsFromDob } from '../../lib/goal-preview';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { GoalFields } from '../goal-form/goal-fields';
+import { PaceOverrideBanner } from '../goal-form/pace-field';
 import type { OnboardingDraft } from './onboarding-types';
 import { resolveHeightCm, resolveWeightKg } from './validate-step';
 
@@ -60,7 +61,7 @@ export const StepGoal = ({
       : null;
 
   return (
-    <>
+    <YStack gap="$4">
       {chain.toolbar}
       <GoalFields
         value={draft}
@@ -73,6 +74,12 @@ export const StepGoal = ({
         bind={chain.bind}
         pace={pace}
       />
-    </>
+      {pace !== null ? (
+        <PaceOverrideBanner
+          pace={pace}
+          followUp="You can still create the client — review this on the last step."
+        />
+      ) : null}
+    </YStack>
   );
 };

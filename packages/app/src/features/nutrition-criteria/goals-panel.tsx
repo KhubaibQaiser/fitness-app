@@ -66,20 +66,22 @@ export const GoalsPanel = () => {
       <Card gap="$3">
         <Muted lineHeight={19}>
           {hasTenantOverrides
-            ? 'This tenant may set Lose/Gain as a desired kg/week. Calories are still clamped to safety floors; displayed kg/week is derived from the safe target.'
-            : 'Target calories = TDEE adjusted by a percentage, then clamped to safety floors. Negative = deficit, positive = surplus.'}
+            ? 'This tenant may set Lose/Gain as a desired kg/week. Named ticks (Gentle / Standard / Aggressive) still clamp to the safety band; displayed kg/week is derived from that safe target. Dragging Pace past those ticks warns instead of clamping, including below the sex floor down to 800 kcal.'
+            : 'Named ticks set target calories from TDEE × (1 + adjustment), then clamp to safety floors. Negative = deficit, positive = surplus. Dragging Pace past those ticks warns instead of blocking, down to 800 kcal.'}
         </Muted>
         <FormulaBlock
           lines={
             hasTenantOverrides
               ? [
-                  'intent: round(TDEE + weekly kg × 7700 ÷ 7), then clamp',
-                  'default: round(TDEE × (1 + adjustment)), then clamp',
-                  'displayed kg/week is derived from the clamped kcal',
+                  'named tick: round(TDEE + weekly kg × 7700 ÷ 7), then clamp',
+                  'named tick default: round(TDEE × (1 + adjustment)), then clamp',
+                  'override: coach kcal, warn below sex floor / beyond Aggressive; hard min 800',
+                  'displayed kg/week is derived from the stored target',
                 ]
               : [
-                  'target kcal = clamp(round(TDEE × (1 + adjustment)))',
-                  'displayed kg/week is derived from the clamped kcal',
+                  'named tick: clamp(round(TDEE × (1 + adjustment)))',
+                  'override: coach kcal, warn below sex floor / beyond Aggressive; hard min 800',
+                  'displayed kg/week is derived from the stored target',
                 ]
           }
         />
