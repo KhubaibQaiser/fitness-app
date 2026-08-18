@@ -1,6 +1,6 @@
 'use client';
 
-import type { Client, DietaryProfile, Goal } from '@gymos/contracts';
+import type { Client, DietaryProfile, Goal, Vitals } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import { formatWeight } from '@gymos/core/units';
 import {
@@ -16,6 +16,7 @@ import {
 } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
+import { ClientWeightJourneyChart } from './client-weight-journey-chart';
 
 type Props = {
   client: Client;
@@ -24,6 +25,8 @@ type Props = {
   goalProgressPct: number | null;
   dietaryProfile: DietaryProfile;
   signed: boolean;
+  vitals: Vitals[];
+  vitalsPending?: boolean;
 };
 
 const computeBmi = (heightCm: number | null, weightKg: number | null): number | null => {
@@ -46,7 +49,7 @@ const paceDisplay = (
   return { value: rate, unit: `${weightUnit}/wk`, hint: goal.preset };
 };
 
-/** Overview tab — alerts, stats, and goal ring. */
+/** Overview tab — alerts, stats, weight journey, and goal ring. */
 export const ClientHubOverview = ({
   client,
   goal,
@@ -54,6 +57,8 @@ export const ClientHubOverview = ({
   goalProgressPct,
   dietaryProfile,
   signed,
+  vitals,
+  vitalsPending = false,
 }: Props) => {
   const me = useMe();
   const config = usePublicConfig();
@@ -134,6 +139,14 @@ export const ClientHubOverview = ({
           />
         </YStack>
       </XStack>
+
+      <ClientWeightJourneyChart
+        goal={goal}
+        vitals={vitals}
+        latestWeightKg={latestWeightKg}
+        weightUnit={weightUnit}
+        pending={vitalsPending}
+      />
 
       {goalProgressPct !== null && goal !== null ? (
         <Card gap="$3" padding="$5" alignItems="center">
