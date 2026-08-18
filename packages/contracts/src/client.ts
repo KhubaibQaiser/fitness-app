@@ -329,6 +329,7 @@ export const api = {
         targetDate?: string;
         checkinWeekday?: number;
         bodyFatPct?: number;
+        targetKcal?: number;
       },
     ) => request<T.Goal>('POST', `/v1/clients/${clientId}/goals`, input, { idempotent: true }),
     setStatus: (goalId: string, status: 'ACHIEVED' | 'ABANDONED') =>

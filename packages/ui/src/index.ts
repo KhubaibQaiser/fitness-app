@@ -38,6 +38,8 @@ export { GoalTag } from './components/goal-tag';
 export { MetricHero } from './components/metric-hero';
 export { SegmentedControl, Tabs } from './components/segmented-control';
 export type { SegmentOption, TabItem } from './components/segmented-control';
+export { PaceSlider } from './components/pace-slider';
+export type { PaceSliderTick, PaceSliderTone, PaceSliderWarning } from './components/pace-slider';
 export { AppErrorBoundary } from './components/error-boundary';
 export { WeightChart } from './components/weight-chart';
 export type {

@@ -110,6 +110,7 @@ export const onboardClientBody = z.object({
     targetDate: z.iso.date().optional(),
     checkinWeekday: z.number().int().min(0).max(6).optional(),
     bodyFatPct: z.number().min(2).max(70).optional(),
+    targetKcal: z.number().int().min(800).max(8000).optional(),
   }),
   dietary: z.array(restrictionSchema).max(50).optional(),
 });
@@ -146,6 +147,7 @@ export const createGoalBody = z.object({
   targetDate: z.iso.date().optional(),
   checkinWeekday: z.number().int().min(0).max(6).optional(),
   bodyFatPct: z.number().min(2).max(70).optional(),
+  targetKcal: z.number().int().min(800).max(8000).optional(),
 });
 
 export const saveActiveGoalBody = z.object({
@@ -154,6 +156,7 @@ export const saveActiveGoalBody = z.object({
   rate: z.enum(['CONSERVATIVE', 'STANDARD', 'AGGRESSIVE']),
   startWeightKg: z.number().min(20).max(400),
   targetWeightKg: z.number().min(20).max(400),
+  targetKcal: z.number().int().min(800).max(8000).optional(),
 });
 
 export const goalStatusBody = z.object({ status: z.enum(['ACHIEVED', 'ABANDONED']) });

@@ -24,6 +24,7 @@ export type OnboardingDraft = {
   goalRate: GoalRate;
   startWeightKg: string;
   targetWeightKg: string;
+  targetKcal: number | null;
   medicalConditions: string;
   physicianClearanceRequired: boolean;
   pregnant: boolean;
@@ -53,6 +54,7 @@ export const INITIAL_DRAFT: OnboardingDraft = {
   goalRate: 'STANDARD',
   startWeightKg: '',
   targetWeightKg: '',
+  targetKcal: null,
   medicalConditions: '',
   physicianClearanceRequired: false,
   pregnant: false,

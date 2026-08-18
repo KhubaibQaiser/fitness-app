@@ -25,6 +25,7 @@ export type GoalPreviewInput = {
   rate: GoalRate;
   startWeightKg: number;
   targetWeightKg: number | null;
+  targetKcal?: number;
   config?: PublicConfig;
   today?: Date;
 };
@@ -54,6 +55,11 @@ export type GoalPreview = {
   estimatedTargetDate: string | null;
   safetyIssue: GoalSafetyIssue | null;
   paceAdjustment: GoalPaceAdjustment | null;
+  recommendedKcal: number;
+  kcalOverridden: boolean;
+  beyondRecommended: boolean;
+  belowSexFloor: boolean;
+  macrosDegraded: boolean;
 };
 
 export const ageYearsFromDob = (dob: string | null | undefined, today = new Date()): number => {
@@ -171,12 +177,10 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
   } as const;
   const rawTdee = tdee(physiology);
   const weeklyOverride = weeklyDeltaKgFromPublicConfig(input.config, input.preset, input.rate);
-  const computation = computeTargets(
-    physiology,
-    input.preset,
-    input.rate,
-    weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : undefined,
-  );
+  const computation = computeTargets(physiology, input.preset, input.rate, {
+    ...(weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : {}),
+    ...(input.targetKcal !== undefined ? { targetKcal: input.targetKcal } : {}),
+  });
 
   const energy = computation.ok
     ? {
@@ -186,12 +190,18 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
         requestedKcal: computation.value.requestedKcal,
         expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
         clampReasons: computation.value.clampReasons,
+        recommendedKcal: computation.value.recommendedKcal,
+        kcalOverridden: computation.value.kcalOverridden,
+        beyondRecommended: computation.value.beyondRecommended,
+        belowSexFloor: computation.value.belowSexFloor,
+        macrosDegraded: computation.value.macrosDegraded,
       }
     : (() => {
         const paced = resolvePaceEnergy(rawTdee, input.preset, input.rate, {
           sex: input.sex,
           weightKg: input.weightKg,
           ...(weeklyOverride !== undefined ? { weeklyDeltaKg: weeklyOverride } : {}),
+          ...(input.targetKcal !== undefined ? { targetKcal: input.targetKcal } : {}),
         });
         return {
           bmrKcal: Math.round(bmr(physiology)),
@@ -200,6 +210,11 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
           requestedKcal: paced.requestedKcal,
           expectedWeeklyDeltaKg: paced.expectedWeeklyDeltaKg,
           clampReasons: paced.clampReasons,
+          recommendedKcal: paced.recommendedKcal,
+          kcalOverridden: paced.kcalOverridden,
+          beyondRecommended: paced.beyondRecommended,
+          belowSexFloor: paced.belowSexFloor,
+          macrosDegraded: false,
         };
       })();
 
@@ -237,5 +252,10 @@ export const buildGoalPreview = (input: GoalPreviewInput): GoalPreview => {
       energy.targetKcal,
       energy.expectedWeeklyDeltaKg,
     ),
+    recommendedKcal: energy.recommendedKcal,
+    kcalOverridden: energy.kcalOverridden,
+    beyondRecommended: energy.beyondRecommended,
+    belowSexFloor: energy.belowSexFloor,
+    macrosDegraded: energy.macrosDegraded,
   };
 };
