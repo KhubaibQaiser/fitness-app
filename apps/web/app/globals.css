@@ -12,12 +12,27 @@ body {
   height: 100%;
   margin: 0;
   background: #f5f8ff;
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]),
+  html:not([data-theme]) body {
+    background: #0b1220;
+    color-scheme: dark;
+  }
+}
+
+html[data-theme='light'],
+html[data-theme='light'] body {
+  background: #f5f8ff;
+  color-scheme: light;
 }
 
 html[data-theme='dark'],
 html[data-theme='dark'] body {
   background: #0b1220;
+  color-scheme: dark;
 }
 
 *:focus-visible {
