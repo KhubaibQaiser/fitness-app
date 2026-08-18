@@ -44,9 +44,9 @@ export const SettingsScreen = () => {
     );
   }
 
-  const saving = updateMe.isPending || me.isPending;
+  const saving = updateMe.isPending;
   const dark = mode === 'dark';
-  const prefs = me.data?.unitPrefs ?? { weight: 'kg', height: 'cm', length: 'cm' };
+  const prefs = me.data?.unitPrefs;
 
   return (
     <AppScreen>
@@ -73,51 +73,70 @@ export const SettingsScreen = () => {
         <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
           Units
         </Text>
-        <YStack gap="$2" width="100%">
-          <Body fontWeight="700">Weight</Body>
-          <SegmentedControl
-            ariaLabel="Weight unit"
-            value={prefs.weight}
-            onChange={(weight: WeightUnit) => {
-              if (weight === prefs.weight || saving) return;
-              updateMe.mutate({ unitPrefs: { ...prefs, weight } });
-            }}
-            options={[
-              { value: 'kg', label: 'kg' },
-              { value: 'lb', label: 'lb' },
-            ]}
-          />
-        </YStack>
-        <YStack gap="$2" width="100%">
-          <Body fontWeight="700">Height</Body>
-          <SegmentedControl
-            ariaLabel="Height unit"
-            value={prefs.height}
-            onChange={(height: HeightUnit) => {
-              if (height === prefs.height || saving) return;
-              updateMe.mutate({ unitPrefs: { ...prefs, height } });
-            }}
-            options={[
-              { value: 'cm', label: 'cm' },
-              { value: 'ft_in', label: 'ft / in' },
-            ]}
-          />
-        </YStack>
-        <YStack gap="$2" width="100%">
-          <Body fontWeight="700">Measurements</Body>
-          <SegmentedControl
-            ariaLabel="Length unit"
-            value={prefs.length}
-            onChange={(length: LengthUnit) => {
-              if (length === prefs.length || saving) return;
-              updateMe.mutate({ unitPrefs: { ...prefs, length } });
-            }}
-            options={[
-              { value: 'cm', label: 'cm' },
-              { value: 'in', label: 'in' },
-            ]}
-          />
-        </YStack>
+        {prefs === undefined ? (
+          <YStack gap="$4" width="100%">
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Weight</Body>
+              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+            </YStack>
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Height</Body>
+              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+            </YStack>
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Measurements</Body>
+              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+            </YStack>
+          </YStack>
+        ) : (
+          <>
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Weight</Body>
+              <SegmentedControl
+                ariaLabel="Weight unit"
+                value={prefs.weight}
+                onChange={(weight: WeightUnit) => {
+                  if (weight === prefs.weight || saving) return;
+                  updateMe.mutate({ unitPrefs: { ...prefs, weight } });
+                }}
+                options={[
+                  { value: 'kg', label: 'kg' },
+                  { value: 'lb', label: 'lb' },
+                ]}
+              />
+            </YStack>
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Height</Body>
+              <SegmentedControl
+                ariaLabel="Height unit"
+                value={prefs.height}
+                onChange={(height: HeightUnit) => {
+                  if (height === prefs.height || saving) return;
+                  updateMe.mutate({ unitPrefs: { ...prefs, height } });
+                }}
+                options={[
+                  { value: 'cm', label: 'cm' },
+                  { value: 'ft_in', label: 'ft / in' },
+                ]}
+              />
+            </YStack>
+            <YStack gap="$2" width="100%">
+              <Body fontWeight="700">Measurements</Body>
+              <SegmentedControl
+                ariaLabel="Length unit"
+                value={prefs.length}
+                onChange={(length: LengthUnit) => {
+                  if (length === prefs.length || saving) return;
+                  updateMe.mutate({ unitPrefs: { ...prefs, length } });
+                }}
+                options={[
+                  { value: 'cm', label: 'cm' },
+                  { value: 'in', label: 'in' },
+                ]}
+              />
+            </YStack>
+          </>
+        )}
         {updateMe.isError ? (
           <Body color="$danger" role="alert" fontSize={13}>
             {updateMe.error.message}

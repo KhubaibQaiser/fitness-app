@@ -1,6 +1,11 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  HydrationBoundary,
+  QueryClient,
+  QueryClientProvider,
+  type DehydratedState,
+} from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { getSessionPresence, subscribeSessionPresence } from '../features/shell/session-presence';
 
@@ -8,7 +13,13 @@ import { getSessionPresence, subscribeSessionPresence } from '../features/shell/
  * App-level providers (Tamagui's provider lives in the platform shell —
  * apps/web wraps it with the Next SSR insertion hook).
  */
-export const AppProviders = ({ children }: { children: ReactNode }) => {
+export const AppProviders = ({
+  children,
+  dehydratedState,
+}: {
+  children: ReactNode;
+  dehydratedState?: DehydratedState;
+}) => {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -34,5 +45,9 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
     [queryClient],
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HydrationBoundary state={dehydratedState}>{children}</HydrationBoundary>
+    </QueryClientProvider>
+  );
 };
