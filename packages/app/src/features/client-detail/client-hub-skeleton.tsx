@@ -170,15 +170,21 @@ export const ClientHubJourneySkeleton = () => (
             <SkeletonCircle size={JOURNEY_MARKER_SIZE} />
           </YStack>
           <Card flex={1} minWidth={0} gap="$3" padding="$4">
-            <XStack alignItems="center" justifyContent="space-between" gap="$3">
-              <YStack gap="$1" flex={1} minWidth={0}>
+            <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
+              <YStack gap="$1.5" flex={1} minWidth={0}>
                 <Skeleton width="48%" height={18} />
-                <Skeleton width={96} height={14} />
+                <XStack alignItems="center" gap="$2">
+                  <Skeleton width={96} height={14} />
+                  <Skeleton width={72} height={18} borderRadius={999} />
+                </XStack>
               </YStack>
-              <SkeletonCircle size={48} />
+              <YStack alignItems="center" gap={2}>
+                <SkeletonCircle size={52} />
+                <Skeleton width={56} height={10} />
+              </YStack>
             </XStack>
-            <Skeleton width={72} height={24} />
-            <Skeleton width="90%" height={16} />
+            <Skeleton width="100%" height={56} borderRadius={12} />
+            <Skeleton width="70%" height={16} />
           </Card>
         </XStack>
       ))}
