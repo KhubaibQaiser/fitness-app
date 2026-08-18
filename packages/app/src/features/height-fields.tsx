@@ -1,7 +1,7 @@
 'use client';
 
 import type { HeightUnit } from '@gymos/core/units';
-import { FormField, XStack, YStack } from '@gymos/ui';
+import { FormField, XStack, YStack, type FocusChainBind } from '@gymos/ui';
 
 type HeightFieldsProps = {
   unit: HeightUnit;
@@ -13,6 +13,9 @@ type HeightFieldsProps = {
   onChangeIn: (text: string) => void;
   error?: string | null;
   required?: boolean;
+  cmField?: FocusChainBind;
+  ftField?: FocusChainBind;
+  inField?: FocusChainBind;
 };
 
 /** Prefs-driven height input — cm field, or ft/in side-by-side. Shared by tools + onboarding. */
@@ -26,6 +29,9 @@ export const HeightFields = ({
   onChangeIn,
   error = null,
   required = false,
+  cmField,
+  ftField,
+  inField,
 }: HeightFieldsProps) => {
   if (unit === 'cm') {
     return (
@@ -37,6 +43,7 @@ export const HeightFields = ({
         unit="cm"
         required={required}
         error={error}
+        {...(cmField ?? {})}
       />
     );
   }
@@ -52,6 +59,7 @@ export const HeightFields = ({
           unit="ft"
           required={required}
           error={error}
+          {...(ftField ?? {})}
         />
       </YStack>
       <YStack flex={1}>
@@ -61,6 +69,7 @@ export const HeightFields = ({
           onChangeText={onChangeIn}
           inputMode="decimal"
           unit="in"
+          {...(inField ?? {})}
         />
       </YStack>
     </XStack>

@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { AppErrorBoundary, Card, Muted, Screen, Text, YStack } from '@gymos/ui';
+import { AppErrorBoundary, Card, FormKeyboardRoot, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
 import { setSessionPresence } from '../shell/session-presence';
 import {
@@ -112,49 +112,51 @@ export const SignupScreen = () => {
 
   return (
     <AppErrorBoundary>
-      <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
-        <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
-          <YStack gap="$2" alignItems="center">
-            <Text
-              fontFamily="$heading"
-              fontWeight="800"
-              fontSize={28}
-              color="$color"
-              letterSpacing={-0.5}
-            >
-              GymOS
-            </Text>
-            <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
-              Coach signup
-            </Muted>
-            <Muted textAlign="center" fontSize={13} marginTop="$2">
-              {step === 'details'
-                ? 'Create your coaching workspace'
-                : `Enter the code sent to ${email}`}
-            </Muted>
+      <FormKeyboardRoot>
+        <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
+          <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
+            <YStack gap="$2" alignItems="center">
+              <Text
+                fontFamily="$heading"
+                fontWeight="800"
+                fontSize={28}
+                color="$color"
+                letterSpacing={-0.5}
+              >
+                GymOS
+              </Text>
+              <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
+                Coach signup
+              </Muted>
+              <Muted textAlign="center" fontSize={13} marginTop="$2">
+                {step === 'details'
+                  ? 'Create your coaching workspace'
+                  : `Enter the code sent to ${email}`}
+              </Muted>
+            </YStack>
+            <Card padding="$6" gap="$4">
+              {step === 'details' ? (
+                <SignupDetailsForm busy={busy} error={error} onSubmit={(v) => void start(v)} />
+              ) : (
+                <SignupOtpStep
+                  code={code}
+                  onChangeCode={setCode}
+                  busy={busy}
+                  error={error?.message ?? null}
+                  onConfirm={() => void confirm()}
+                  onResend={() => void resend()}
+                  resendBusy={resendBusy}
+                />
+              )}
+            </Card>
+            <Link href="/login">
+              <Muted fontSize={13} textAlign="center" color="$accent">
+                Already have an account? Sign in
+              </Muted>
+            </Link>
           </YStack>
-          <Card padding="$6" gap="$4">
-            {step === 'details' ? (
-              <SignupDetailsForm busy={busy} error={error} onSubmit={(v) => void start(v)} />
-            ) : (
-              <SignupOtpStep
-                code={code}
-                onChangeCode={setCode}
-                busy={busy}
-                error={error?.message ?? null}
-                onConfirm={() => void confirm()}
-                onResend={() => void resend()}
-                resendBusy={resendBusy}
-              />
-            )}
-          </Card>
-          <Link href="/login">
-            <Muted fontSize={13} textAlign="center" color="$accent">
-              Already have an account? Sign in
-            </Muted>
-          </Link>
-        </YStack>
-      </Screen>
+        </Screen>
+      </FormKeyboardRoot>
     </AppErrorBoundary>
   );
 };

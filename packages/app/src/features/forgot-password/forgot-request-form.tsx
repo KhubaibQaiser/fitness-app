@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FormField, PrimaryButton, YStack } from '@gymos/ui';
+import { FormField, PrimaryButton, useFocusChain, YStack } from '@gymos/ui';
 
 type ForgotRequestFormProps = {
   busy: boolean;
@@ -13,8 +13,16 @@ export const ForgotRequestForm = ({ busy, error, onSubmit }: ForgotRequestFormPr
   const [email, setEmail] = useState('');
   const canSubmit = email.trim().length > 3 && !busy;
 
+  const submit = () => {
+    if (!canSubmit) return;
+    onSubmit(email.trim());
+  };
+
+  const chain = useFocusChain(['email'], { onSubmit: submit, submitKey: 'go' });
+
   return (
     <YStack gap="$4">
+      {chain.toolbar}
       <FormField
         label="Email"
         value={email}
@@ -25,11 +33,9 @@ export const ForgotRequestForm = ({ busy, error, onSubmit }: ForgotRequestFormPr
         inputMode="email"
         required
         error={error}
-        onSubmitEditing={() => {
-          if (canSubmit) onSubmit(email.trim());
-        }}
+        {...chain.bind('email')}
       />
-      <PrimaryButton disabled={!canSubmit} onPress={() => onSubmit(email.trim())} width="100%">
+      <PrimaryButton disabled={!canSubmit} onPress={submit} width="100%">
         {busy ? 'Sending…' : 'Send code'}
       </PrimaryButton>
     </YStack>

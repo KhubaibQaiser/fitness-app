@@ -1,12 +1,13 @@
 'use client';
 
-import { FormField } from '@gymos/ui';
+import { FormField, type FocusChainBind } from '@gymos/ui';
 
 type OtpCodeFieldProps = {
   value: string;
   onChangeText: (text: string) => void;
   error?: string | null;
   onSubmitEditing?: () => void;
+  field?: FocusChainBind;
 };
 
 export const OtpCodeField = ({
@@ -14,6 +15,7 @@ export const OtpCodeField = ({
   onChangeText,
   error = null,
   onSubmitEditing,
+  field,
 }: OtpCodeFieldProps) => (
   <FormField
     label="Verification code"
@@ -23,8 +25,11 @@ export const OtpCodeField = ({
     autoCapitalize="none"
     autoCorrect={false}
     inputMode="numeric"
+    autoComplete="one-time-code"
+    maxLength={6}
     required
     error={error}
     {...(onSubmitEditing !== undefined ? { onSubmitEditing } : {})}
+    {...(field ?? {})}
   />
 );
