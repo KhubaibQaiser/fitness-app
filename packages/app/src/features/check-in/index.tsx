@@ -155,7 +155,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
                     })
                   }
                 >
-                  {apply.isPending ? 'Re-solving plan…' : 'Apply — draft an adjusted plan'}
+                  {apply.isPending ? 'Re-solving plan…' : 'Apply and draft an adjusted plan'}
                 </PrimaryButton>
                 {apply.isError ? (
                   <Body color="$danger" role="alert">

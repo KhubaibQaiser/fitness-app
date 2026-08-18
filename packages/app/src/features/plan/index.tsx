@@ -94,7 +94,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
         />
         {detail.data.goal === null ? (
           <Card gap="$3">
-            <Body>Set a goal first — the plan is generated from its targets.</Body>
+            <Body>Set a goal first. The plan is generated from its targets.</Body>
             <Link href={`/clients/${clientId}/goal/new`}>
               <PrimaryButton>Set a goal</PrimaryButton>
             </Link>
@@ -103,7 +103,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
           <YStack gap="$3">
             <Card gap="$3">
               <Body>
-                Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '—'} kcal
+                Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '-'} kcal
                 honoring every dietary restriction.
               </Body>
               <YStack gap="$2">

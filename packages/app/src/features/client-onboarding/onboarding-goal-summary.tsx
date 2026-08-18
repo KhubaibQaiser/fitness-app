@@ -53,11 +53,11 @@ export const OnboardingGoalSummary = ({
             },
             {
               label: 'Starting weight',
-              value: start !== null ? `${start.value} ${start.unit}` : '—',
+              value: start !== null ? `${start.value} ${start.unit}` : '-',
             },
             {
               label: 'Target weight',
-              value: target !== null ? `${target.value} ${target.unit}` : '—',
+              value: target !== null ? `${target.value} ${target.unit}` : '-',
             },
             {
               label: 'Estimated duration',

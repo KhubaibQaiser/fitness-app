@@ -442,12 +442,12 @@ export const PaceSlider = ({
   const caption =
     warning === 'floor'
       ? floor !== undefined
-        ? `Below the ${floor.toLocaleString()} kcal minimum for this client — not recommended.`
-        : 'Below the calorie minimum for this client — not recommended.'
+        ? `Below the ${floor.toLocaleString()} kcal minimum for this client. Not recommended.`
+        : 'Below the calorie minimum for this client. Not recommended.'
       : warning === 'beyond'
         ? aggressiveLabel === ''
-          ? 'Beyond the recommended pace — review with the client.'
-          : `Beyond the recommended ${aggressiveLabel} pace — review with the client.`
+          ? 'Beyond the recommended pace. Review with the client.'
+          : `Beyond the recommended ${aggressiveLabel} pace. Review with the client.`
         : onSuggested
           ? 'Suggested for this goal.'
           : null;

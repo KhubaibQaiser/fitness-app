@@ -261,7 +261,7 @@ export const WeightChart = ({
   const yTicks = [maxW, (maxW + minW) / 2, minW];
   const startLabel = actual[0] ?? expected[0];
   const endLabel = expected[expected.length - 1] ?? actual[actual.length - 1];
-  const a11yStart = startLabel?.weightKg.toFixed(1) ?? '—';
+  const a11yStart = startLabel?.weightKg.toFixed(1) ?? '-';
   const a11yCurrent = (layout.current ?? lastActual)?.weightKg.toFixed(1) ?? a11yStart;
   const a11yGoal = goalWeightKg !== null ? goalWeightKg.toFixed(1) : 'none';
 

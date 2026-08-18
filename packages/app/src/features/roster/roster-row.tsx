@@ -33,7 +33,7 @@ type Props = {
 export const RosterRow = ({ client, desktop }: Props) => {
   const attention = isAttention(client.attentionReasons);
   const neu = isNew(client.attentionReasons);
-  const goalText = client.goalPreset ? (GOAL_LABEL[client.goalPreset] ?? client.goalPreset) : '—';
+  const goalText = client.goalPreset ? (GOAL_LABEL[client.goalPreset] ?? client.goalPreset) : '-';
 
   if (!desktop) {
     return (
@@ -128,13 +128,13 @@ export const RosterRow = ({ client, desktop }: Props) => {
               <Muted fontSize={12}>kg</Muted>
             </>
           ) : (
-            <Muted fontSize={13}>—</Muted>
+            <Muted fontSize={13}>-</Muted>
           )}
         </XStack>
 
         {/* Goal — fixed 100 */}
         <YStack width={COL.goal} flexShrink={0}>
-          {client.goalPreset ? <GoalTag goal={goalText} /> : <Muted fontSize={12}>—</Muted>}
+          {client.goalPreset ? <GoalTag goal={goalText} /> : <Muted fontSize={12}>-</Muted>}
         </YStack>
 
         {/* Status — fixed 160 */}
@@ -146,7 +146,7 @@ export const RosterRow = ({ client, desktop }: Props) => {
 
         {/* Progress placeholder — fixed 100 (list API has no start/target) */}
         <YStack width={COL.progress} flexShrink={0} justifyContent="center">
-          <Muted fontSize={11}>—</Muted>
+          <Muted fontSize={11}>-</Muted>
         </YStack>
       </Card>
     </Link>

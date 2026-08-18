@@ -50,7 +50,7 @@ const LoginForm = () => {
       setSessionPresence(false);
       setError(
         e instanceof ApiError && e.status === 429
-          ? 'Too many attempts — wait a minute and try again.'
+          ? 'Too many attempts. Wait a minute and try again.'
           : 'Email or password is incorrect.',
       );
     } finally {

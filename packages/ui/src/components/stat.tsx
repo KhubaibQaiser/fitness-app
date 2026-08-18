@@ -78,7 +78,7 @@ export const DeltaChip = ({
   unit: string;
 }) => {
   const isGood = goodDirection === 'down' ? delta <= 0 : delta >= 0;
-  const arrow = delta === 0 ? '—' : delta > 0 ? '▲' : '▼';
+  const arrow = delta === 0 ? '-' : delta > 0 ? '▲' : '▼';
   return (
     <XStack
       alignSelf="flex-start"

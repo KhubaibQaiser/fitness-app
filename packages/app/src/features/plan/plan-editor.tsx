@@ -184,7 +184,7 @@ export const PlanEditor = ({
           />
           <Muted fontSize={12}>
             {plans.find((p) => p.id === planId)?.status ?? status}
-            {status === 'SUPERSEDED' ? ' — superseded by a newer published plan' : ''}
+            {status === 'SUPERSEDED' ? '. Superseded by a newer published plan' : ''}
             {` · v${version}`}
           </Muted>
         </YStack>
@@ -193,7 +193,7 @@ export const PlanEditor = ({
       {status === 'NEEDS_REVIEW' ? (
         <Card tone="danger">
           <Body color="$danger" fontWeight="700">
-            Dietary profile changed. Do not follow this plan — review and re-publish (or regenerate)
+            Dietary profile changed. Do not follow this plan. Review and re-publish (or regenerate)
             first.
           </Body>
         </Card>
@@ -201,7 +201,7 @@ export const PlanEditor = ({
 
       {editable ? (
         <Card tone="accent" gap="$2">
-          <Body fontWeight="800">AI suggestion — review before publish</Body>
+          <Body fontWeight="800">AI suggestion. Review before publish</Body>
           <Muted>
             Same meals every day by default. Edit any day, or apply one day to the whole week.
             Publish only after you have reviewed the plan.
@@ -395,7 +395,7 @@ export const PlanEditor = ({
         </Body>
       ) : null}
       <Muted fontSize={12} textAlign="center">
-        General fitness nutrition guidance — not medical advice. PDF matches the locked diet-plan
+        General fitness nutrition guidance, not medical advice. PDF matches the locked diet-plan
         template (Breakfast/Lunch options, Dinner list).
       </Muted>
     </AppScreen>

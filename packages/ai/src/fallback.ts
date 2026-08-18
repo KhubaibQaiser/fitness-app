@@ -31,7 +31,7 @@ export const fallbackNarrative = (input: NarrativeInput): NarrativeOutput => ({
       const tail = names.length > 2 ? ` & ${names[names.length - 1] ?? ''}` : '';
       const slotLabel = (isUr(input.locale) ? SLOT_LABEL_UR : SLOT_LABEL_EN)[meal.slot];
       return {
-        name: `${head}${tail} — ${slotLabel}`.slice(0, 60),
+        name: `${head}${tail} · ${slotLabel}`.slice(0, 60),
         prepNotes: '',
       };
     }),

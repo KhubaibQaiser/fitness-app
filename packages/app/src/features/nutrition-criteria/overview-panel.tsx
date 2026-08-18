@@ -12,7 +12,7 @@ const STEPS = [
   {
     title: 'BMR (resting burn)',
     detail:
-      'Calories the body uses at rest — Mifflin–St Jeor, or Katch–McArdle if body fat is known.',
+      'Calories the body uses at rest. Mifflin–St Jeor, or Katch–McArdle if body fat is known.',
   },
   {
     title: 'TDEE (daily burn)',
@@ -37,7 +37,7 @@ export const OverviewPanel = () => (
         What this page is
       </Body>
       <Muted lineHeight={20}>
-        GymOS sets calorie and macro targets with fixed formulas — not AI guesses. Use the tabs to
+        GymOS sets calorie and macro targets with fixed formulas, not AI guesses. Use the tabs to
         inspect each step. Numbers on this screen come straight from the engine code.
       </Muted>
     </Card>
@@ -57,8 +57,8 @@ export const OverviewPanel = () => (
 
     <Card gap="$2">
       <Muted fontSize={12} lineHeight={18}>
-        GymOS provides general fitness nutrition guidance — not medical advice. Use clinical
-        judgment for clients with medical conditions.
+        GymOS provides general fitness nutrition guidance, not medical advice. Use clinical judgment
+        for clients with medical conditions.
       </Muted>
     </Card>
   </YStack>

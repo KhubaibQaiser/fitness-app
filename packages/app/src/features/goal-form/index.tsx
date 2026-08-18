@@ -186,7 +186,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
       />
       {medicalSummary !== null ? (
         <AlertBanner tone="warning" title="Medical flags on file">
-          {medicalSummary}. Use clinical judgment — GymOS is not medical advice.
+          {medicalSummary}. Use clinical judgment. GymOS is not medical advice.
         </AlertBanner>
       ) : null}
       <Card gap="$4">

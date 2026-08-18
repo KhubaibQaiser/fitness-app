@@ -118,7 +118,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
       {put.data?.planFlagged ? (
         <AlertBanner tone="danger" title="The published plan violates the new restrictions.">
           <Body fontSize={12.5}>
-            It has been blocked (NEEDS_REVIEW) and flagged — regenerate or edit it before the client
+            It has been blocked (NEEDS_REVIEW) and flagged. Regenerate or edit it before the client
             follows it further.
           </Body>
           <Badge tone="danger" label="Plan blocked" />

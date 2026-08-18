@@ -126,7 +126,7 @@ export const MacrosPanel = () => (
       >
         <Muted fontSize={12} lineHeight={18}>
           Fiber is set as a goal target. Plan item totals still show calories, protein, fat, and
-          carbs only — food fiber is stored but not summed in tracking yet.
+          carbs only. Food fiber is stored but not summed in tracking yet.
         </Muted>
       </YStack>
     </Card>

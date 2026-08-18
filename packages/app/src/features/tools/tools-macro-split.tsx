@@ -87,17 +87,17 @@ export const ToolsMacroSplit = () => {
         <XStack gap="$4" flexWrap="wrap">
           <Stat
             label="Protein"
-            value={proteinG !== null ? String(proteinG) : '—'}
+            value={proteinG !== null ? String(proteinG) : '-'}
             hint={`${preset.proteinPct}% · g`}
           />
           <Stat
             label="Fat"
-            value={fatG !== null ? String(fatG) : '—'}
+            value={fatG !== null ? String(fatG) : '-'}
             hint={`${preset.fatPct}% · g`}
           />
           <Stat
             label="Carbs"
-            value={carbG !== null ? String(carbG) : '—'}
+            value={carbG !== null ? String(carbG) : '-'}
             hint={`${preset.carbPct}% · g`}
           />
         </XStack>

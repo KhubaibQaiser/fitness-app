@@ -84,7 +84,7 @@ export const ToolsBmi = () => {
       <Card>
         <Stat
           label="BMI"
-          value={bmi !== null ? bmi.toFixed(1) : '—'}
+          value={bmi !== null ? bmi.toFixed(1) : '-'}
           {...(category
             ? { hint: category.label, tone: category.tone }
             : { hint: 'Enter weight and height' })}

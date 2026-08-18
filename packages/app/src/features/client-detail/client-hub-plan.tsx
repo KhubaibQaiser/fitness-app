@@ -75,7 +75,7 @@ export const ClientHubPlan = ({
     <YStack gap="$4">
       {goal === null ? (
         <Card gap="$3">
-          <Body>Set a goal first — targets and plans are computed from it.</Body>
+          <Body>Set a goal first. Targets and plans are computed from it.</Body>
           <Link href={`/clients/${clientId}/goal/new`}>
             <PrimaryButton>Set a goal</PrimaryButton>
           </Link>
@@ -107,16 +107,16 @@ export const ClientHubPlan = ({
                   value:
                     client.activityLevel != null
                       ? (ACTIVITY_LABEL[client.activityLevel] ?? String(client.activityLevel))
-                      : '—',
+                      : '-',
                 },
                 { label: 'Start weight', value: `${goal.startWeightKg} kg` },
                 {
                   label: 'Target weight',
-                  value: goal.targetWeightKg != null ? `${goal.targetWeightKg} kg` : '—',
+                  value: goal.targetWeightKg != null ? `${goal.targetWeightKg} kg` : '-',
                 },
                 {
                   label: 'Remaining',
-                  value: remaining !== null ? `${remaining.toFixed(1)} kg` : '—',
+                  value: remaining !== null ? `${remaining.toFixed(1)} kg` : '-',
                 },
               ] as const
             ).map((row) => (
@@ -144,7 +144,7 @@ export const ClientHubPlan = ({
         {severe.length > 0 ? (
           <YStack gap="$2">
             <Muted fontSize={11} fontWeight="700" color="$danger" textTransform="uppercase">
-              Severe allergens — excluded from all plans
+              Severe allergens, excluded from all plans
             </Muted>
             <XStack gap="$2" flexWrap="wrap">
               {severe.map((r) => (
@@ -177,7 +177,7 @@ export const ClientHubPlan = ({
 
         {dietaryProfile === null || dietaryProfile.restrictions.length === 0 ? (
           <Link href={`/clients/${clientId}/dietary`}>
-            <Body>No restrictions recorded — tap to add.</Body>
+            <Body>No restrictions recorded. Tap to add.</Body>
           </Link>
         ) : null}
       </Card>
@@ -239,7 +239,7 @@ export const ClientHubPlan = ({
 
             {currentPlan.status === 'NEEDS_REVIEW' ? (
               <AlertBanner tone="danger" title="Plan needs review">
-                Dietary profile changed — plan blocked pending your review.
+                Dietary profile changed. Plan blocked pending your review.
               </AlertBanner>
             ) : null}
           </Card>

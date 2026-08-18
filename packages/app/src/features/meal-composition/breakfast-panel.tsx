@@ -8,7 +8,7 @@ export const BreakfastPanel = () => (
   <YStack gap="$4">
     <PanelHeading
       title="Breakfast only"
-      subtitle="Hard allowlist — chicken, beef, and other lunch proteins never appear here."
+      subtitle="Hard allowlist. Chicken, beef, and other lunch proteins never appear here."
     />
     <Card gap="$2">
       <Muted fontSize={13}>Pattern: protein + staple + beverage (drink is a fixed 1 cup).</Muted>

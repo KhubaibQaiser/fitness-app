@@ -307,7 +307,7 @@ export const generatePlan = async (
     { cache: llmCache, expectedMealCount: templateDay.meals.length },
   );
   const templateMealNames = templateDay.meals.map(
-    (meal, mealIdx) => narrative.output.days[0]?.meals[mealIdx]?.name ?? `${meal.slot} — day 1`,
+    (meal, mealIdx) => narrative.output.days[0]?.meals[mealIdx]?.name ?? `${meal.slot}, day 1`,
   );
 
   // 6. Persist plan + items + audit trail atomically.
@@ -339,7 +339,7 @@ export const generatePlan = async (
           day: day.day,
           mealIndex: meal.mealIndex,
           mealSlot: meal.slot,
-          mealName: templateMealNames[mealIdx] ?? `${meal.slot} — day ${day.day}`,
+          mealName: templateMealNames[mealIdx] ?? `${meal.slot}, day ${day.day}`,
           foodId: item.foodId,
           portionGrams: item.portionGrams,
           macros: item.macros,

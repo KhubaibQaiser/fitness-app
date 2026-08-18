@@ -28,8 +28,8 @@ export const OverridePrompt = ({
         Safety gate: {detail || 'this client requires a coach override'}
       </Body>
       <Muted>
-        Auto-generation is blocked (under-16 / pregnancy / medical restriction). Provide a reason —
-        it is permanently logged and a physician disclaimer attaches to the plan.
+        Auto-generation is blocked (under-16 / pregnancy / medical restriction). Provide a reason.
+        It is permanently logged and a physician disclaimer attaches to the plan.
       </Muted>
       <FormField
         label="Override reason"
