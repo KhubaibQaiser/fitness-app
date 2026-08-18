@@ -9,8 +9,8 @@ import {
   Body,
   Card,
   ErrorState,
-  GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
@@ -78,9 +78,9 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton flex={1} disabled={put.isPending} onPress={save}>
             {put.isPending ? 'Saving & re-validating…' : 'Save profile'}
           </PrimaryButton>
