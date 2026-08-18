@@ -10,6 +10,7 @@ import {
   SkeletonCircle,
   SkeletonRegion,
   Text,
+  WeaveLine,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -46,41 +47,17 @@ const AttentionRowSkeleton = () => (
 );
 
 /** Structural twin of HomeScreen — greeting, compact stats, attention strip, due list. */
-export const HomeSkeleton = ({
-  dateStr,
-  greeting,
-  firstName,
-}: {
-  dateStr: string;
-  greeting: string;
-  firstName?: string;
-}) => (
+export const HomeSkeleton = () => (
   <SkeletonRegion label="Loading home">
     <PageHeader
       strip
-      eyebrow={dateStr}
-      title={
-        firstName !== undefined ? (
-          `${greeting}, ${firstName}`
-        ) : (
-          <XStack alignItems="center" gap="$2" flexWrap="wrap">
-            <Text
-              fontFamily="$heading"
-              fontWeight="700"
-              fontSize={22}
-              color="$color"
-              letterSpacing={-0.3}
-            >
-              {greeting},
-            </Text>
-            <Skeleton width={96} height={22} />
-          </XStack>
-        )
-      }
+      eyebrow={<Skeleton width={140} height={12} />}
+      title={<Skeleton width={220} height={22} />}
       subtitle={<Skeleton width="70%" height={18} />}
     />
 
     <ScreenBody gap="$4">
+      <WeaveLine id="home-loading" mode="loading" height={28} />
       <XStack flexWrap="wrap" gap="$3" width="100%">
         <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
           <Card padding="$3">

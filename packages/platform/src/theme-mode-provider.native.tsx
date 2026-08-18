@@ -4,8 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { Appearance } from 'react-native';
 import { Theme } from 'tamagui';
 import { storage } from './storage';
+import { parseThemeMode, THEME_MODE_KEY, type ThemeMode } from './theme-mode';
 
-export type ThemeMode = 'light' | 'dark';
+export type { ThemeMode } from './theme-mode';
 
 type ThemeModeContextValue = {
   mode: ThemeMode;
@@ -14,22 +15,24 @@ type ThemeModeContextValue = {
 };
 
 const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);
-const KEY = 'gymos.themeMode';
 
-const readStored = (): ThemeMode | null => {
-  const value = storage.getItem(KEY);
-  return value === 'light' || value === 'dark' ? value : null;
-};
+const readStored = (): ThemeMode | null => parseThemeMode(storage.getItem(THEME_MODE_KEY));
 
 /** Persisted light/dark mode for native — no `document` / CSS color-scheme. */
-export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
+export const ThemeModeProvider = ({
+  children,
+}: {
+  children: ReactNode;
+  /** Web-only cookie seed; ignored on native. */
+  initialMode?: ThemeMode;
+}) => {
   const [mode, setModeState] = useState<ThemeMode>(
     () => readStored() ?? (Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'),
   );
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
-    storage.setItem(KEY, next);
+    storage.setItem(THEME_MODE_KEY, next);
   }, []);
 
   useEffect(() => {

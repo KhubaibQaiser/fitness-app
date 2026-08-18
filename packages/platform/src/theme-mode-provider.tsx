@@ -1,10 +1,22 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Theme } from 'tamagui';
-import { storage } from './storage';
+import {
+  applyThemeToDocument,
+  parseThemeMode,
+  persistThemeModeCookie,
+  type ThemeMode,
+} from './theme-mode';
 
-export type ThemeMode = 'light' | 'dark';
+export type { ThemeMode } from './theme-mode';
 
 type ThemeModeContextValue = {
   mode: ThemeMode;
@@ -13,45 +25,36 @@ type ThemeModeContextValue = {
 };
 
 const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);
-const KEY = 'gymos.themeMode';
 
-const preferDark = (): boolean => {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-};
-
-const readStored = (): ThemeMode | null => {
-  const value = storage.getItem(KEY);
-  return value === 'light' || value === 'dark' ? value : null;
+const persist = (mode: ThemeMode): void => {
+  persistThemeModeCookie(mode);
+  applyThemeToDocument(mode);
 };
 
 /**
- * Persisted light/dark mode. Wraps Tamagui `Theme` so all `$token` colors flip.
- * Lives in platform so storage never leaks into packages/ui.
+ * Cookie-seeded light/dark mode. Wraps Tamagui `Theme` so `$token` colors match
+ * the blocking first-paint script. No localStorage-after-mount flip.
  */
-export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setModeState] = useState<ThemeMode>('dark');
-  const [ready, setReady] = useState(false);
+export const ThemeModeProvider = ({
+  children,
+  initialMode,
+}: {
+  children: ReactNode;
+  initialMode?: ThemeMode;
+}) => {
+  const [mode, setModeState] = useState<ThemeMode>(initialMode ?? 'light');
 
-  useEffect(() => {
-    setModeState(readStored() ?? (preferDark() ? 'dark' : 'light'));
-    setReady(true);
+  useLayoutEffect(() => {
+    const fromDom = parseThemeMode(document.documentElement.dataset.theme);
+    if (fromDom === null) return;
+    setModeState(fromDom);
+    persist(fromDom);
   }, []);
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
-    storage.setItem(KEY, next);
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = next;
-      document.documentElement.style.colorScheme = next;
-    }
+    persist(next);
   }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    document.documentElement.dataset.theme = mode;
-    document.documentElement.style.colorScheme = mode;
-  }, [mode, ready]);
 
   const toggle = useCallback(() => {
     setMode(mode === 'light' ? 'dark' : 'light');
