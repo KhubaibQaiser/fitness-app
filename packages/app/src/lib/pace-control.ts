@@ -118,7 +118,7 @@ export const buildPaceControlView = (input: PaceControlInput): PaceControlView =
     ticks,
     suggestedValue,
     tone: bounds.tone,
-    hint: `${value.toLocaleString()} kcal · ${formatPaceKgPerWeek(energy.expectedWeeklyDeltaKg)}`,
+    hint: formatPaceKgPerWeek(energy.expectedWeeklyDeltaKg),
     helper,
     warning,
     nearestRate,
