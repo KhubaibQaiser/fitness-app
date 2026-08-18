@@ -4,6 +4,9 @@ import {
   kcalToT,
   nearestTickLabel,
   positionedTicks,
+  snapToTick,
+  statusPillLabel,
+  statusPillTone,
   stepKcal,
   tFromClientX,
   tToKcal,
@@ -81,5 +84,31 @@ describe('pace slider math', () => {
     expect(collapsed).toEqual([
       { value: 2500, label: 'Standard', t: kcalToT(2500, 2300, 2700, false) },
     ]);
+  });
+
+  it('snaps onto a tick within 1.8% of the track span', () => {
+    const ticks = [
+      { value: 2200, label: 'Gentle' },
+      { value: 2000, label: 'Standard' },
+      { value: 1800, label: 'Aggressive' },
+    ];
+    // span 1400 → threshold 25.2
+    expect(snapToTick(2010, ticks, 800, 2200)).toBe(2000);
+    expect(snapToTick(1810, ticks, 800, 2200)).toBe(1800);
+    expect(snapToTick(1900, ticks, 800, 2200)).toBe(1900);
+    expect(snapToTick(700, ticks, 800, 2200)).toBe(800);
+    expect(snapToTick(2010, [], 800, 2200)).toBe(2010);
+  });
+
+  it('builds a single status-pill label from warning + tick', () => {
+    expect(statusPillLabel('floor', 'Aggressive', false)).toBe('Below calorie floor');
+    expect(statusPillLabel('beyond', 'Aggressive', false)).toBe('Aggressive · Beyond recommended');
+    expect(statusPillLabel('custom', 'Standard', false)).toBe('Custom pace');
+    expect(statusPillLabel('none', 'Standard', true)).toBe('Standard · Suggested');
+    expect(statusPillLabel('none', 'Gentle', false)).toBe('Gentle');
+    expect(statusPillTone('floor')).toBe('alert');
+    expect(statusPillTone('beyond')).toBe('milestone');
+    expect(statusPillTone('custom')).toBe('neutral');
+    expect(statusPillTone('none')).toBe('accent');
   });
 });
