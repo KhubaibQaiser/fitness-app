@@ -18,6 +18,7 @@ const goal: Goal = {
   targetWeightKg: 70,
   targetDate: null,
   expectedWeeklyDeltaKg: -0.5,
+  targetKcal: null,
   initialTargets: null,
   tdeeEstimate: 2500,
   checkinWeekday: 1,

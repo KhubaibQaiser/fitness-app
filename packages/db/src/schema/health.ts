@@ -117,6 +117,8 @@ export const clientGoals = pgTable(
       fiberG: number;
     }>(),
     tdeeEstimate: integer('tdee_estimate'),
+    /** Coach-resolved daily kcal. Null on rows created before ADR-0014. */
+    targetKcal: integer('target_kcal'),
     /** 0 = Sunday … 6 = Saturday, in the outlet's timezone. */
     checkinWeekday: smallint('checkin_weekday').notNull().default(1),
     status: goalStatusEnum('status').notNull().default('ACTIVE'),

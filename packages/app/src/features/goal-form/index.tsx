@@ -18,6 +18,9 @@ import {
 } from '@gymos/ui';
 import { useClientDetail, useMe, usePublicConfig, useSaveActiveGoal } from '../../api';
 import { ACTIVITY_LEVELS, type ActivityLevelValue } from '../../lib/activity-levels';
+import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
+import { ageYearsFromDob } from '../../lib/goal-preview';
+import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { resolveWeightKg } from '../client-onboarding/validate-step';
 import { AppScreen } from '../shell/app-screen';
@@ -41,6 +44,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
     goalRate: 'STANDARD',
     startWeightKg: '',
     targetWeightKg: '',
+    targetKcal: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,6 +73,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         goal?.targetWeightKg !== null && goal?.targetWeightKg !== undefined
           ? String(formatWeight(goal.targetWeightKg, prefs.weight).value)
           : '',
+      targetKcal: goal?.targetKcal ?? goal?.initialTargets?.kcal ?? null,
     });
     initialized.current = true;
   }, [config.data, detail.data, me.data, prefs.weight]);
@@ -115,6 +120,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         rate: value.goalRate,
         startWeightKg,
         targetWeightKg,
+        ...(value.targetKcal !== null ? { targetKcal: value.targetKcal } : {}),
       },
       {
         onSuccess: () => router.replace(`/clients/${clientId}`),
@@ -133,6 +139,24 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   };
 
   const chain = useFocusChain(['startWeightKg', 'targetWeightKg'], { onSubmit: submit });
+
+  const client = detail.data?.client;
+  const startKg = resolveWeightKg(value.startWeightKg, prefs);
+  const pace =
+    client?.heightCm != null && startKg !== null
+      ? buildPaceControlView({
+          sex: client.sex,
+          ageYears: ageYearsFromDob(client.dob),
+          heightCm: client.heightCm,
+          weightKg: startKg,
+          activity: Number(value.activityLevel) as 1.2 | 1.375 | 1.55 | 1.725 | 1.9,
+          preset: value.goalPreset,
+          rate: value.goalRate,
+          ...(value.targetKcal !== null ? { targetKcal: value.targetKcal } : {}),
+          weeklyDeltaForRate: (rate) =>
+            weeklyDeltaKgFromPublicConfig(config.data, value.goalPreset, rate),
+        })
+      : null;
 
   return (
     <AppScreen
@@ -153,7 +177,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
     >
       <PageHeader
         title={isEditing ? 'Edit goal' : 'Set goal'}
-        subtitle="Targets come from Mifflin–St Jeor with hard floors"
+        subtitle="Named paces stay inside the safety band. A manual calorie override warns instead of blocking."
         action={
           <Link href="/settings/nutrition">
             <GhostButton>How it works</GhostButton>
@@ -165,6 +189,18 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           {medicalSummary}. Use clinical judgment — GymOS is not medical advice.
         </AlertBanner>
       ) : null}
+      {pace !== null && (pace.beyondRecommended || pace.belowSexFloor) ? (
+        <AlertBanner
+          tone={pace.belowSexFloor ? 'danger' : 'warning'}
+          title={
+            pace.belowSexFloor
+              ? 'Calorie target is below the sex floor'
+              : 'Calorie target is beyond the recommended pace'
+          }
+        >
+          {pace.helper} You can still save — review at the next check-in.
+        </AlertBanner>
+      ) : null}
       <Card gap="$4">
         {chain.toolbar}
         <GoalFields
@@ -174,6 +210,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           onChange={(partial) => setValue((current) => ({ ...current, ...partial }))}
           onClearError={clearError}
           bind={chain.bind}
+          pace={pace}
         />
 
         {errors.form ? (

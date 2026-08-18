@@ -5,9 +5,12 @@ import {
   bmr,
   computeTargets,
   goalDeltaFraction,
+  nearestGoalRate,
+  paceSliderBounds,
   resolvePaceEnergy,
   resolveWeeklyDeltaKg,
   splitMacros,
+  splitMacrosForOverride,
   tdee,
 } from './layer1';
 import { ACTIVITY_LEVELS, GOAL_PRESETS, GOAL_RATES, type PhysiologyInput } from './types';
@@ -278,6 +281,103 @@ describe('computeTargets', () => {
     const result = computeTargets(heavy, 'LOSE', 'AGGRESSIVE');
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('MACROS_INFEASIBLE');
+  });
+
+  it('persists a coach override below the sex floor and past the 25% cap', () => {
+    const energy = resolvePaceEnergy(2270, 'LOSE', 'STANDARD', {
+      sex: 'M',
+      weightKg: 95,
+      targetKcal: 1100,
+    });
+    expect(energy.targetKcal).toBe(1100);
+    expect(energy.belowSexFloor).toBe(true);
+    expect(energy.beyondRecommended).toBe(true);
+    expect(energy.kcalOverridden).toBe(true);
+    expect(energy.overrideWarnings).toEqual(
+      expect.arrayContaining(['KCAL_OVERRIDDEN', 'BEYOND_RECOMMENDED', 'BELOW_SEX_FLOOR']),
+    );
+  });
+
+  it('does not let a coach override drop below 800 kcal', () => {
+    const energy = resolvePaceEnergy(2270, 'LOSE', 'AGGRESSIVE', {
+      sex: 'M',
+      weightKg: 95,
+      targetKcal: 70,
+    });
+    expect(energy.requestedKcal).toBe(70);
+    expect(energy.targetKcal).toBe(800);
+    expect(energy.clamped).toBe(true);
+    expect(energy.belowSexFloor).toBe(true);
+  });
+
+  it('creates targets for a sub-floor override instead of refusing macros', () => {
+    const result = computeTargets(male30, 'LOSE', 'STANDARD', { targetKcal: 1100 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.targets.kcal).toBe(1100);
+    expect(result.value.belowSexFloor).toBe(true);
+    expect(result.value.kcalOverridden).toBe(true);
+  });
+
+  it('maps kcal below the aggressive tick to AGGRESSIVE', () => {
+    expect(nearestGoalRate(2270, 'LOSE', 900, { sex: 'M', weightKg: 95 })).toBe('AGGRESSIVE');
+    expect(nearestGoalRate(2759, 'LOSE', 2500, { sex: 'M', weightKg: 80 })).toBe('CONSERVATIVE');
+    expect(nearestGoalRate(2759, 'LOSE', 2207, { sex: 'M', weightKg: 80 })).toBe('STANDARD');
+    expect(nearestGoalRate(2759, 'MAINTAIN', 2000, { sex: 'M', weightKg: 80 })).toBe('STANDARD');
+    expect(nearestGoalRate(2759, 'GAIN', 4000, { sex: 'M', weightKg: 80 })).toBe('AGGRESSIVE');
+    expect(nearestGoalRate(2759, 'GAIN', 2760, { sex: 'M', weightKg: 80 })).toBe('CONSERVATIVE');
+    expect(nearestGoalRate(2759, 'GAIN', 3040, { sex: 'M', weightKg: 80 })).toBe('STANDARD');
+  });
+
+  it('warns on a maintain override without clamping named ticks', () => {
+    const energy = resolvePaceEnergy(2000, 'MAINTAIN', 'STANDARD', {
+      sex: 'M',
+      weightKg: 80,
+      targetKcal: 1800,
+    });
+    expect(energy.targetKcal).toBe(1800);
+    expect(energy.beyondRecommended).toBe(true);
+    expect(energy.kcalOverridden).toBe(true);
+  });
+
+  it('warns when a gain override exceeds the aggressive surplus tick', () => {
+    const energy = resolvePaceEnergy(2000, 'GAIN', 'STANDARD', {
+      sex: 'M',
+      weightKg: 80,
+      targetKcal: 2500,
+    });
+    expect(energy.beyondRecommended).toBe(true);
+    expect(energy.belowSexFloor).toBe(false);
+  });
+
+  it('returns slider bounds for each preset', () => {
+    expect(paceSliderBounds(2000, 'LOSE')).toEqual({ min: 800, max: 2000, tone: 'deficit' });
+    expect(paceSliderBounds(2000, 'GAIN').tone).toBe('surplus');
+    expect(paceSliderBounds(2000, 'GAIN').min).toBe(2000);
+    expect(paceSliderBounds(2000, 'MAINTAIN').tone).toBe('neutral');
+    expect(paceSliderBounds(2000, 'RECOMP').tone).toBe('deficit');
+    expect(paceSliderBounds(0, 'LOSE').max).toBe(1);
+  });
+
+  it('degrades macros for an override that cannot fit protein and fat', () => {
+    const split = splitMacrosForOverride(800, 100, 'LOSE');
+    expect(split.degraded).toBe(true);
+    expect(split.split.carbsG).toBe(0);
+  });
+
+  it('computes override targets with degraded macros instead of refusing', () => {
+    const heavy: PhysiologyInput = {
+      sex: 'F',
+      ageYears: 60,
+      heightCm: 150,
+      weightKg: 200,
+      activity: 1.2,
+    };
+    const result = computeTargets(heavy, 'LOSE', 'AGGRESSIVE', { targetKcal: 900 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.macrosDegraded).toBe(true);
+    expect(result.value.overrideWarnings).toContain('MACROS_DEGRADED');
   });
 
   it('never emits unsafe targets across the whole input space (property)', () => {

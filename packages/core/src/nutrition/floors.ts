@@ -4,6 +4,13 @@ import { type NutritionRefusal, type PaceClampReason, type Sex } from './types';
 /** Hard safety floors — never behind a model, never configurable downward. */
 export const CALORIE_FLOOR_KCAL: Record<Sex, number> = { F: 1200, M: 1500 };
 
+/**
+ * Absolute minimum a coach override may request. Below both sex floors so the
+ * slider can pass 1,200 / 1,500 with a warning, but high enough that 70 kcal
+ * (the old −2 kg/week bug) cannot be stored.
+ */
+export const COACH_OVERRIDE_KCAL_MIN = 800;
+
 /** Maximum allowed deficit as a fraction of TDEE. */
 export const MAX_DEFICIT_FRACTION = 0.25;
 

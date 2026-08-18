@@ -8,12 +8,13 @@ import {
   type GoalRate,
   type Sex,
 } from '@gymos/core/nutrition';
-import { formatWeight, parseWeight } from '@gymos/core/units';
+import { parseWeight } from '@gymos/core/units';
 import {
   Card,
   FormField,
   FormSection,
   Muted,
+  PaceSlider,
   SegmentedControl,
   Stat,
   useFocusChain,
@@ -23,8 +24,9 @@ import {
 import { useMe, usePublicConfig } from '../../api';
 import { ACTIVITY_OPTIONS } from '../../lib/activity-levels';
 import { GOAL_PRESET_OPTIONS, GOAL_RATE_OPTIONS } from '../../lib/goal-options';
-import { targetKcalFromPace } from '../../lib/goal-pace';
+import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { parsePositive, resolveHeightCmInput } from '../../lib/height-units';
+import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { HeightFields } from '../height-fields';
 
@@ -45,6 +47,7 @@ export const ToolsTdee = () => {
   const [activity, setActivity] = useState<Activity>(1.55);
   const [goalPreset, setGoalPreset] = useState<GoalPreset>('MAINTAIN');
   const [goalRate, setGoalRate] = useState<GoalRate>('STANDARD');
+  const [targetKcal, setTargetKcal] = useState<number | null>(null);
 
   const w = parsePositive(weight);
   const weightKg = w !== null ? parseWeight(w, prefs.weight) : null;
@@ -61,22 +64,21 @@ export const ToolsTdee = () => {
   const bmrValue = valid ? calcBmr({ sex, ageYears, heightCm, weightKg, activity }) : null;
   const tdeeValue = valid ? calcTdee({ sex, ageYears, heightCm, weightKg, activity }) : null;
 
-  const paced =
-    tdeeValue !== null && weightKg !== null
-      ? targetKcalFromPace(tdeeValue, goalPreset, goalRate, {
-          sex,
-          weightKg,
-          ...(config.data !== undefined ? { config: config.data } : {}),
-        })
-      : null;
-  const targetValue = paced?.targetKcal ?? null;
-  const weeklyDeltaKg = paced?.weeklyDeltaKg ?? null;
-  const weeklyDeltaDisplay =
-    weeklyDeltaKg !== null ? formatWeight(Math.abs(weeklyDeltaKg), prefs.weight, 2) : null;
-  const targetHint =
-    weeklyDeltaDisplay === null || weeklyDeltaDisplay.value === 0
-      ? 'at TDEE'
-      : `${weeklyDeltaKg !== null && weeklyDeltaKg < 0 ? '−' : '+'}${weeklyDeltaDisplay.value} ${weeklyDeltaDisplay.unit}/week`;
+  const pace = valid
+    ? buildPaceControlView({
+        sex,
+        ageYears,
+        heightCm,
+        weightKg,
+        activity,
+        preset: goalPreset,
+        rate: goalRate,
+        ...(targetKcal !== null ? { targetKcal } : {}),
+        weeklyDeltaForRate: (rate) => weeklyDeltaKgFromPublicConfig(config.data, goalPreset, rate),
+      })
+    : null;
+  const targetValue = pace?.value ?? null;
+  const targetHint = pace === null ? 'at TDEE' : pace.hint;
 
   const names =
     prefs.height === 'cm'
@@ -158,7 +160,11 @@ export const ToolsTdee = () => {
           <SegmentedControl
             ariaLabel="Goal"
             value={goalPreset}
-            onChange={setGoalPreset}
+            onChange={(next) => {
+              setGoalPreset(next);
+              setGoalRate('STANDARD');
+              setTargetKcal(null);
+            }}
             options={GOAL_PRESET_OPTIONS}
           />
         </YStack>
@@ -167,12 +173,38 @@ export const ToolsTdee = () => {
           <Muted fontSize={12} fontWeight="600">
             Pace
           </Muted>
-          <SegmentedControl
-            ariaLabel="Pace"
-            value={goalRate}
-            onChange={setGoalRate}
-            options={GOAL_RATE_OPTIONS}
-          />
+          {pace !== null ? (
+            <PaceSlider
+              ariaLabel="Target calories"
+              min={pace.min}
+              max={pace.max}
+              value={pace.value}
+              ticks={pace.ticks}
+              suggestedValue={pace.suggestedValue}
+              tone={pace.tone}
+              hint={pace.hint}
+              helper={pace.helper}
+              warning={pace.warning}
+              onChange={(kcal) => {
+                const unique = new Set(pace.ticks.map((tick) => tick.value));
+                if (unique.size === 1) {
+                  setTargetKcal(kcal);
+                  setGoalRate('STANDARD');
+                  return;
+                }
+                const nearest = pace.ticks.reduce((best, tick) =>
+                  Math.abs(tick.value - kcal) < Math.abs(best.value - kcal) ? tick : best,
+                );
+                const rate =
+                  GOAL_RATE_OPTIONS.find((option) => option.label === nearest.label)?.value ??
+                  'AGGRESSIVE';
+                setTargetKcal(kcal);
+                setGoalRate(rate);
+              }}
+            />
+          ) : (
+            <Muted>Enter weight, height and age to set a calorie target.</Muted>
+          )}
         </YStack>
       </FormSection>
 

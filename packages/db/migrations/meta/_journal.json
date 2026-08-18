@@ -99,6 +99,13 @@
       "when": 1787300000000,
       "tag": "0013_vitals_laterality",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787400000000,
+      "tag": "0014_goal_target_kcal",
+      "breakpoints": true
     }
   ]
 }

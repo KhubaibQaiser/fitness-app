@@ -29,6 +29,7 @@ export type CreateGoalInput = {
   targetDate?: string | undefined;
   checkinWeekday?: number | undefined;
   bodyFatPct?: number | undefined;
+  targetKcal?: number | undefined;
 };
 
 export type SaveActiveGoalInput = {
@@ -37,6 +38,7 @@ export type SaveActiveGoalInput = {
   rate: GoalRate;
   startWeightKg: number;
   targetWeightKg: number;
+  targetKcal?: number | undefined;
 };
 
 export type GoalError =
@@ -59,6 +61,7 @@ const computeGoalTargets = (
     startWeightKg: number;
     activityLevel: 1.2 | 1.375 | 1.55 | 1.725 | 1.9;
     bodyFatPct?: number | undefined;
+    targetKcal?: number | undefined;
   },
   manifest: TenantManifest | undefined,
 ) => {
@@ -74,7 +77,10 @@ const computeGoalTargets = (
     },
     input.preset,
     input.rate,
-    weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : undefined,
+    {
+      ...(weeklyDeltaKg !== undefined ? { weeklyDeltaKg } : {}),
+      ...(input.targetKcal !== undefined ? { targetKcal: input.targetKcal } : {}),
+    },
   );
 };
 
@@ -98,6 +104,7 @@ export const createGoalTx = async (
       startWeightKg: input.startWeightKg,
       activityLevel: activity,
       ...(input.bodyFatPct !== undefined ? { bodyFatPct: input.bodyFatPct } : {}),
+      ...(input.targetKcal !== undefined ? { targetKcal: input.targetKcal } : {}),
     },
     manifest,
   );
@@ -127,6 +134,7 @@ export const createGoalTx = async (
       expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
       initialTargets: computation.value.targets,
       tdeeEstimate: computation.value.tdee,
+      targetKcal: computation.value.targets.kcal,
       checkinWeekday: weekday,
       status: 'ACTIVE',
     })
@@ -157,6 +165,10 @@ export const createGoalTx = async (
       preset: input.preset,
       rate: input.rate,
       targets: computation.value.targets,
+      targetKcal: computation.value.targets.kcal,
+      kcalOverridden: computation.value.kcalOverridden,
+      beyondRecommended: computation.value.beyondRecommended,
+      belowSexFloor: computation.value.belowSexFloor,
     },
   });
 
@@ -201,6 +213,7 @@ export const saveActiveGoal = async (
       rate: input.rate,
       startWeightKg: input.startWeightKg,
       activityLevel: input.activityLevel,
+      ...(input.targetKcal !== undefined ? { targetKcal: input.targetKcal } : {}),
     },
     manifest,
   );
@@ -228,6 +241,7 @@ export const saveActiveGoal = async (
         expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
         initialTargets: computation.value.targets,
         tdeeEstimate: computation.value.tdee,
+        targetKcal: computation.value.targets.kcal,
       })
       .where(and(eq(s.clientGoals.id, activeGoal.id), eq(s.clientGoals.status, 'ACTIVE')))
       .returning();
@@ -254,6 +268,10 @@ export const saveActiveGoal = async (
         startWeightKg: updated.startWeightKg,
         targetWeightKg: updated.targetWeightKg,
         targets: updated.initialTargets,
+        targetKcal: updated.targetKcal,
+        kcalOverridden: computation.value.kcalOverridden,
+        beyondRecommended: computation.value.beyondRecommended,
+        belowSexFloor: computation.value.belowSexFloor,
       },
     });
 
