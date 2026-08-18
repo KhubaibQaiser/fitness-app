@@ -117,7 +117,7 @@ export const ClientHubOverviewSkeleton = () => (
 );
 
 export const ClientHubJourneySkeleton = () => (
-  <YStack width="100%" maxWidth={760} alignSelf="flex-start" gap="$3">
+  <YStack width="100%" maxWidth={760} alignSelf="center" gap="$3">
     <Skeleton width="72%" height={22} />
     <YStack width="100%" position="relative">
       <YStack
