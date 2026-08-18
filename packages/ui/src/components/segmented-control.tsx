@@ -114,8 +114,8 @@ export const Tabs = ({
           borderBottomColor={selected ? '$primary' : 'transparent'}
           marginBottom={-1}
           cursor="pointer"
-          hoverStyle={{ opacity: 0.85 }}
-          pressStyle={{ opacity: 0.75 }}
+          hoverStyle={{ opacity: 0.88 }}
+          pressStyle={{ opacity: 0.88 }}
           focusVisibleStyle={{
             outlineWidth: 2,
             outlineColor: '$focusRing',

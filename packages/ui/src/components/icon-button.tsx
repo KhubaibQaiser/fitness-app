@@ -34,7 +34,7 @@ export const IconButton = styled(Button, {
   fontWeight: '700',
   fontSize: 20,
   hoverStyle: { backgroundColor: '$elevatedBg', opacity: 1 },
-  pressStyle: { opacity: 0.85, scale: 0.97 },
+  pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
   focusVisibleStyle: focusRing,
   disabledStyle: { opacity: 0.4 },
 
@@ -44,6 +44,7 @@ export const IconButton = styled(Button, {
         borderWidth: 1,
         borderColor: '$borderColor',
         hoverStyle: { backgroundColor: '$elevatedBg', borderColor: '$borderColorHover' },
+        pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
       },
       bare: {
         borderWidth: 0,
@@ -53,7 +54,8 @@ export const IconButton = styled(Button, {
       true: {
         backgroundColor: '$primaryMuted',
         color: '$primary',
-        hoverStyle: { backgroundColor: '$primaryMuted', opacity: 0.9 },
+        hoverStyle: { backgroundColor: '$primaryMuted', opacity: 1 },
+        pressStyle: { backgroundColor: '$primaryMuted', opacity: 0.92, scale: 1 },
       },
       false: {},
     },
