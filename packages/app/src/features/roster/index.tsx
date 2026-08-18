@@ -13,7 +13,6 @@ import {
   PrimaryButton,
   Skeleton,
   Text,
-  useMedia,
   XStack,
   YStack,
 } from '@gymos/ui';
@@ -52,8 +51,6 @@ export const RosterScreen = () => {
   const debouncedQ = useDebouncedValue(q.trim(), SEARCH_DEBOUNCE_MS);
   const [filter, setFilter] = useState<FilterId>('all');
   const clients = useClients(debouncedQ === '' ? undefined : debouncedQ);
-  const media = useMedia();
-  const isDesktop = Boolean(media.md);
 
   const items = clients.data?.items ?? [];
   const counts = useMemo(() => {
@@ -203,7 +200,12 @@ export const RosterScreen = () => {
         />
       ) : (
         <YStack gap="$1.5" width="100%">
-          {isDesktop ? (
+          <YStack width="100%" display="flex" $md={{ display: 'none' }} gap="$1.5">
+            {filtered.map((client) => (
+              <RosterRow key={client.id} client={client} desktop={false} />
+            ))}
+          </YStack>
+          <YStack width="100%" display="none" $md={{ display: 'flex' }}>
             <Card padding={0} gap={0} overflow="hidden">
               <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
                 <Text flex={1} fontSize={13} fontWeight="500" color="$textMuted">
@@ -250,9 +252,7 @@ export const RosterScreen = () => {
                 <RosterRow key={client.id} client={client} desktop />
               ))}
             </Card>
-          ) : (
-            filtered.map((client) => <RosterRow key={client.id} client={client} desktop={false} />)
-          )}
+          </YStack>
         </YStack>
       )}
     </AppScreen>

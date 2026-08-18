@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Link } from 'solito/link';
 import {
   Avatar,
@@ -9,11 +10,9 @@ import {
   ChevronRight,
   EmptyState,
   ErrorState,
-  FadeIn,
   Muted,
   PageHeader,
   ScrollView,
-  StaggerItem,
   StatPill,
   Text,
   WeaveLine,
@@ -23,6 +22,7 @@ import {
 import { useClients, useDueCheckIns, useMe, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
+import { formatCoachDate, formatCoachTitle } from './coach-greeting';
 import { HomeSkeleton } from './home-skeleton';
 
 /** Coach home: due today, needs attention. */
@@ -31,25 +31,17 @@ export const HomeScreen = () => {
   const due = useDueCheckIns();
   const clients = useClients();
   const notifications = useNotifications();
-
-  const now = new Date();
-  const greeting =
-    now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
-  const dateStr = now.toLocaleDateString('en-PK', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
   const firstName = me.data?.name.split(' ')[0];
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
 
   if (due.isPending || clients.isPending) {
     return (
       <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
-        <HomeSkeleton
-          dateStr={dateStr}
-          greeting={greeting}
-          {...(firstName !== undefined ? { firstName } : {})}
-        />
+        <HomeSkeleton />
       </AppScreen>
     );
   }
@@ -73,13 +65,14 @@ export const HomeScreen = () => {
     (n) => n.priority === 'HIGH' && n.readAt === null,
   ).length;
   const displayName = firstName ?? 'Coach';
+  const title = now === null ? `Hello, ${displayName}` : formatCoachTitle(now, displayName);
 
   return (
     <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
       <PageHeader
         strip
-        eyebrow={dateStr}
-        title={`${greeting}, ${displayName}`}
+        eyebrow={now === null ? '\u00a0' : formatCoachDate(now)}
+        title={title}
         subtitle={
           atRisk.length > 0
             ? `${atRisk.length} client${atRisk.length > 1 ? 's' : ''} need your attention today.`
@@ -125,37 +118,35 @@ export const HomeScreen = () => {
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <XStack gap="$3">
-                  {atRisk.map((client, i) => (
-                    <FadeIn key={client.id} delay={i * 35}>
-                      <Link href={`/clients/${client.id}`}>
-                        <Card interactive padding="$4" minWidth={240}>
-                          <XStack alignItems="flex-start" gap="$3">
-                            <Avatar name={client.name} size={40} />
-                            <YStack flex={1} minWidth={0} gap="$1.5">
-                              <Text
-                                fontFamily="$heading"
-                                fontWeight="600"
-                                fontSize={13.5}
-                                color="$color"
-                                numberOfLines={1}
-                              >
-                                {client.name}
-                              </Text>
-                              <XStack gap="$1" flexWrap="wrap">
-                                {client.attentionReasons.map((r) => (
-                                  <Badge
-                                    key={r.code}
-                                    tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
-                                    label={r.code.replaceAll('_', ' ')}
-                                  />
-                                ))}
-                              </XStack>
-                            </YStack>
-                            <ChevronRight size={14} color="$textMuted" />
-                          </XStack>
-                        </Card>
-                      </Link>
-                    </FadeIn>
+                  {atRisk.map((client) => (
+                    <Link key={client.id} href={`/clients/${client.id}`}>
+                      <Card interactive padding="$4" minWidth={240}>
+                        <XStack alignItems="flex-start" gap="$3">
+                          <Avatar name={client.name} size={40} />
+                          <YStack flex={1} minWidth={0} gap="$1.5">
+                            <Text
+                              fontFamily="$heading"
+                              fontWeight="600"
+                              fontSize={13.5}
+                              color="$color"
+                              numberOfLines={1}
+                            >
+                              {client.name}
+                            </Text>
+                            <XStack gap="$1" flexWrap="wrap">
+                              {client.attentionReasons.map((r) => (
+                                <Badge
+                                  key={r.code}
+                                  tone={r.code === 'RED_FLAG' ? 'danger' : 'warning'}
+                                  label={r.code.replaceAll('_', ' ')}
+                                />
+                              ))}
+                            </XStack>
+                          </YStack>
+                          <ChevronRight size={14} color="$textMuted" />
+                        </XStack>
+                      </Card>
+                    </Link>
                   ))}
                 </XStack>
               </ScrollView>
@@ -189,34 +180,32 @@ export const HomeScreen = () => {
                 }
               />
             ) : (
-              dueItems.map((item, i) => (
-                <StaggerItem key={item.id} index={i}>
-                  <Link href={`/clients/${item.clientId}/check-in`}>
-                    <Card interactive padding="$3.5">
-                      <XStack alignItems="center" gap="$3">
-                        <Avatar name={item.clientName} size={40} />
-                        <YStack flex={1} minWidth={0} gap={2}>
-                          <Text
-                            fontFamily="$heading"
-                            fontWeight="600"
-                            fontSize={13.5}
-                            color="$color"
-                            numberOfLines={1}
-                          >
-                            {item.clientName}
-                          </Text>
-                          <Muted fontSize={12}>Weekly check-in · {item.scheduledFor}</Muted>
-                        </YStack>
-                        {item.overdueDays > 0 ? (
-                          <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
-                        ) : (
-                          <Badge tone="warning" label="Due today" />
-                        )}
-                        <ChevronRight size={14} color="$textMuted" />
-                      </XStack>
-                    </Card>
-                  </Link>
-                </StaggerItem>
+              dueItems.map((item) => (
+                <Link key={item.id} href={`/clients/${item.clientId}/check-in`}>
+                  <Card interactive padding="$3.5">
+                    <XStack alignItems="center" gap="$3">
+                      <Avatar name={item.clientName} size={40} />
+                      <YStack flex={1} minWidth={0} gap={2}>
+                        <Text
+                          fontFamily="$heading"
+                          fontWeight="600"
+                          fontSize={13.5}
+                          color="$color"
+                          numberOfLines={1}
+                        >
+                          {item.clientName}
+                        </Text>
+                        <Muted fontSize={12}>Weekly check-in · {item.scheduledFor}</Muted>
+                      </YStack>
+                      {item.overdueDays > 0 ? (
+                        <Badge tone="danger" label={`${item.overdueDays}d overdue`} />
+                      ) : (
+                        <Badge tone="warning" label="Due today" />
+                      )}
+                      <ChevronRight size={14} color="$textMuted" />
+                    </XStack>
+                  </Card>
+                </Link>
               ))
             )}
           </YStack>
