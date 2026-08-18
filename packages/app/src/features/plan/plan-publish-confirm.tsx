@@ -47,7 +47,7 @@ export const PlanPublishConfirm = ({
         </Card>
       ) : (
         <PrimaryButton disabled={busy} onPress={() => onPublish({ reviewed: true })}>
-          {busy ? 'Publishing…' : 'I reviewed this plan — publish'}
+          {busy ? 'Publishing…' : 'I reviewed this plan. Publish'}
         </PrimaryButton>
       )}
       <GhostButton disabled={busy} onPress={() => setOpen(false)}>

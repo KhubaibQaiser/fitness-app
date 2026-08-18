@@ -34,8 +34,8 @@ const input: NarrativeInput = {
 describe('fallbackNarrative', () => {
   it('names meals from their items deterministically', () => {
     const out = fallbackNarrative(input);
-    expect(out.days[0]?.meals[0]?.name).toBe('Chicken breast, Roti & Kachumber salad — Lunch');
-    expect(out.days[0]?.meals[1]?.name).toBe('Banana — Snack');
+    expect(out.days[0]?.meals[0]?.name).toBe('Chicken breast, Roti & Kachumber salad · Lunch');
+    expect(out.days[0]?.meals[1]?.name).toBe('Banana · Snack');
     expect(fallbackNarrative(input)).toEqual(out);
   });
 

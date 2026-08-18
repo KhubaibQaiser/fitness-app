@@ -44,8 +44,8 @@ export const SafetyPanel = () => (
         What happens if a target is unsafe?
       </Body>
       <Muted lineHeight={19}>
-        Named ticks (Gentle / Standard / Aggressive) are clamped into the safe band — sex floors,
-        25% deficit cap, 15% surplus cap, 1% body-weight/week. Only infeasible macros are refused.
+        Named ticks (Gentle / Standard / Aggressive) are clamped into the safe band: sex floors, 25%
+        deficit cap, 15% surplus cap, 1% body-weight/week. Only infeasible macros are refused.
         Dragging Pace past those ticks warns instead of clamping. Create and save stay enabled. The
         only hard bound on an override is 800 kcal, so a 70 kcal target cannot be stored. Weekly
         check-in suggestions still clamp; a stored override is the current target until the coach

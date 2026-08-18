@@ -84,7 +84,7 @@ export const VitalsEntrySkeleton = () => {
       <SkeletonRegion label="Loading vitals" gap="$4">
         <PageHeader
           title="Record vitals"
-          subtitle="Fill only what you measured — history is never overwritten."
+          subtitle="Fill only what you measured. History is never overwritten."
         />
         <Card gap="$4">
           <FormSection title="Body composition">

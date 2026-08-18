@@ -66,7 +66,7 @@ export const StepIdentity = ({
         maxDate={todayCalendarDate()}
         minDate={calendarDateYearsAgo(120)}
         error={errors.dob ?? null}
-        hint="Optional — age 30 assumed for targets until set"
+        hint="Optional: Age 30 assumed for targets until set"
       />
     </YStack>
   );

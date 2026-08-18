@@ -24,7 +24,7 @@ export const StepDiet = ({
   return (
     <YStack gap="$4">
       <Body fontSize={13} color="$textMuted">
-        Optional — severe allergies hard-block foods in the meal engine.
+        Optional: Severe allergies hard-block foods in the meal engine.
       </Body>
       <YStack gap="$2">
         <SectionTitle>Severe allergies</SectionTitle>

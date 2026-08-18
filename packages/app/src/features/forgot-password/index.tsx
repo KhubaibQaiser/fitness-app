@@ -36,7 +36,7 @@ export const ForgotPasswordScreen = () => {
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
-          ? 'Too many attempts — wait and try again.'
+          ? 'Too many attempts. Wait and try again.'
           : 'Could not start reset. Try again.',
       );
     } finally {
@@ -59,7 +59,7 @@ export const ForgotPasswordScreen = () => {
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
-          ? 'Too many attempts — wait and try again.'
+          ? 'Too many attempts. Wait and try again.'
           : 'Invalid or expired code. Request a new one.',
       );
     } finally {

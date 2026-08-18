@@ -27,7 +27,7 @@ const PRESET_COPY: Record<GoalPreset, { title: string; blurb: string }> = {
   },
   RECOMP: {
     title: 'Recomp',
-    blurb: 'Mild deficit — lose fat while keeping or building muscle.',
+    blurb: 'Mild deficit. Lose fat while keeping or building muscle.',
   },
   MAINTAIN: {
     title: 'Maintain',

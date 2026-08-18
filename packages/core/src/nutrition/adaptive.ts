@@ -280,7 +280,7 @@ export const evaluateProgress = (input: AdaptiveInput): AdjustmentRecommendation
       type: 'PLATEAU_PROTOCOL',
       ...base,
       reasons: [
-        `trend moved ${round2(trendChangeKg)} kg over ${round2(spanDays)} days with adherence ${meanAdherence} — diet-break/refeed protocol suggested`,
+        `trend moved ${round2(trendChangeKg)} kg over ${round2(spanDays)} days with adherence ${meanAdherence}. Diet-break/refeed protocol suggested`,
       ],
     };
   }
@@ -291,7 +291,7 @@ export const evaluateProgress = (input: AdaptiveInput): AdjustmentRecommendation
       meanAdherence,
       ...base,
       reasons: [
-        `off track but mean adherence ${meanAdherence} < ${ADAPTIVE.adherenceFocusBelow} — changing targets a client isn't following helps nobody`,
+        `off track but mean adherence ${meanAdherence} < ${ADAPTIVE.adherenceFocusBelow}. Changing targets a client isn't following helps nobody`,
       ],
     };
   }

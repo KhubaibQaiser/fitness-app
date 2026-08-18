@@ -158,7 +158,7 @@ const projectedNodes = ({
     date: isoDate(addWeeks(fromDate, totalWeeks)),
     weightKg: projection.targetWeightKg,
     projected: true,
-    detail: 'Estimated date — progress and adherence can move this.',
+    detail: 'Estimated date. Progress and adherence can move this.',
   });
   return nodes;
 };

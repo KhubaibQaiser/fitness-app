@@ -69,7 +69,7 @@ describe('contracts client — refresh mutex', () => {
       const path = String(url);
       if (path.endsWith('/v1/auth/refresh')) {
         return Promise.resolve(
-          jsonResponse({ code: 'REFRESH_RACE', title: 'Token already rotated — retry' }, 401),
+          jsonResponse({ code: 'REFRESH_RACE', title: 'Token already rotated. Retry' }, 401),
         );
       }
       return Promise.resolve(

@@ -222,7 +222,7 @@ export const SettingsScreen = () => {
           audit-logged.
         </Body>
         <Muted fontSize={12}>
-          GymOS provides general fitness nutrition guidance — not medical advice.
+          GymOS provides general fitness nutrition guidance, not medical advice.
         </Muted>
       </Card>
     </AppScreen>

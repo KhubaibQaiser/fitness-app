@@ -29,7 +29,7 @@ export const SignupScreen = () => {
   const mapStartError = (e: unknown): NonNullable<SignupDetailsError> => {
     if (!(e instanceof ApiError)) return { message: 'Could not start signup. Try again.' };
     if (e.status === 429) {
-      return { message: 'Too many attempts — wait a few minutes and try again.' };
+      return { message: 'Too many attempts. Wait a few minutes and try again.' };
     }
     if (e.code === 'EMAIL_TAKEN') {
       return { field: 'email', message: 'An account with this email already exists.' };
@@ -82,7 +82,7 @@ export const SignupScreen = () => {
       setError({
         message:
           e instanceof ApiError && e.status === 429
-            ? 'Too many attempts — wait and try again.'
+            ? 'Too many attempts. Wait and try again.'
             : e instanceof ApiError
               ? 'Invalid or expired code. Try again or resend.'
               : 'Could not verify. Try again.',
@@ -102,7 +102,7 @@ export const SignupScreen = () => {
       setError({
         message:
           e instanceof ApiError && e.status === 429
-            ? 'Too many attempts — wait and try again.'
+            ? 'Too many attempts. Wait and try again.'
             : 'Could not resend code. Start signup again.',
       });
     } finally {
