@@ -6,6 +6,7 @@ import {
   Card,
   GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   Skeleton,
@@ -38,9 +39,9 @@ export const DietarySkeleton = () => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton flex={1} disabled>
             Save profile
           </PrimaryButton>

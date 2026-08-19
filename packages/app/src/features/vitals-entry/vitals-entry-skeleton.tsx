@@ -4,8 +4,8 @@ import { useRouter } from 'solito/navigation';
 import {
   Card,
   FormSection,
-  GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   Skeleton,
@@ -72,9 +72,9 @@ export const VitalsEntrySkeleton = () => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton flex={1} disabled>
             Save measurements
           </PrimaryButton>

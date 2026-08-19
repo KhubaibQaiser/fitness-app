@@ -13,6 +13,7 @@ import {
   FormField,
   GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   Row,
@@ -181,9 +182,9 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton flex={1} disabled={complete.isPending} onPress={submit}>
             {complete.isPending ? 'Analyzing…' : 'Submit'}
           </PrimaryButton>

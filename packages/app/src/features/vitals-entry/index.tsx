@@ -8,8 +8,8 @@ import {
   Check,
   FormField,
   FormSection,
-  GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   StickyFormFooter,
@@ -169,9 +169,9 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
-          </GhostButton>
+          </OutlineButton>
           <PrimaryButton
             flex={1}
             disabled={filled.length === 0 || record.isPending}

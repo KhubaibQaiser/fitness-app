@@ -12,8 +12,8 @@ import {
   ClipboardList,
   ErrorState,
   FormField,
-  GhostButton,
   Muted,
+  OutlineButton,
   PageHeader,
   PrimaryButton,
   Row,
@@ -155,9 +155,9 @@ export const CheckInDetailScreen = ({
     <AppScreen
       footer={
         <StickyFormFooter>
-          <GhostButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
+          <OutlineButton flex={1} onPress={() => router.replace(`/clients/${clientId}`)}>
             {editable ? 'Cancel' : 'Back'}
-          </GhostButton>
+          </OutlineButton>
           {editable ? (
             <PrimaryButton flex={1} disabled={update.isPending} onPress={submit}>
               {update.isPending ? 'Re-running…' : 'Save & re-run'}
