@@ -6,7 +6,10 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { nowIso, schema as s, seed, type Db, type SeedResult } from '@gymos/db';
-import { listCheckIns, updateAndRerunCheckIn } from './checkins';
+import { completeCheckIn, listCheckIns, updateAndRerunCheckIn } from './checkins';
+import { createClient } from './clients';
+import { createGoal } from './goals';
+import { recordVitals } from './vitals';
 
 const migrationsFolder = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -119,5 +122,86 @@ describe('listCheckIns', () => {
     expect(due?.weightKg).toBeNull();
     expect(due?.vitalsId).toBeNull();
     expect(unlinkedCompleted?.weightKg).toBeNull();
+  });
+});
+
+describe('adaptive engine data sufficiency', () => {
+  const principal = () => ({
+    userId: seeded.coachUserId,
+    coachId: seeded.coachId,
+    outletId: seeded.outletId,
+  });
+
+  it('dates catch-up check-ins by scheduled week so later weeks are not INSUFFICIENT_DATA', async () => {
+    const client = await createClient(db, principal(), {
+      name: 'Catch-up Client',
+      sex: 'M',
+      dob: '1994-05-01',
+      heightCm: 178,
+      activityLevel: 1.55,
+    });
+    await recordVitals(db, principal(), client.id, { weightKg: 90 });
+    const goal = await createGoal(db, principal(), client.id, {
+      preset: 'LOSE',
+      rate: 'CONSERVATIVE',
+      startWeightKg: 90,
+      targetWeightKg: 82,
+    });
+    expect(goal.ok).toBe(true);
+
+    const types: string[] = [];
+    for (let week = 0; week < 5; week += 1) {
+      const result = await completeCheckIn(db, principal(), client.id, {
+        vitals: { weightKg: 90 - week * 0.4 },
+        adherenceRating: 4,
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      types.push(result.value.verdict.type);
+    }
+
+    const later = types.slice(2);
+    expect(later.length).toBeGreaterThan(0);
+    for (const type of later) {
+      expect(type).not.toBe('INSUFFICIENT_DATA');
+    }
+  });
+
+  it('re-running every seeded completed check-in keeps later weeks off INSUFFICIENT_DATA', async () => {
+    const completed = await db
+      .select()
+      .from(s.checkIns)
+      .where(and(eq(s.checkIns.clientId, seeded.demoClientId), eq(s.checkIns.status, 'COMPLETED')))
+      .orderBy(s.checkIns.scheduledFor);
+
+    const verdicts: { scheduledFor: string; type: string; reasons: readonly string[] }[] = [];
+    for (const row of completed) {
+      const result = await updateAndRerunCheckIn(db, principal(), row.id, {});
+      expect(result.ok).toBe(true);
+      if (!result.ok) continue;
+      verdicts.push({
+        scheduledFor: row.scheduledFor,
+        type: result.value.verdict.type,
+        reasons: result.value.verdict.reasons,
+      });
+    }
+
+    const later = verdicts.slice(2);
+    expect(later.length).toBeGreaterThan(0);
+    for (const row of later) {
+      expect(row.type, JSON.stringify(row)).not.toBe('INSUFFICIENT_DATA');
+    }
+  });
+
+  it('does not return INSUFFICIENT_DATA for the seeded client due check-in', async () => {
+    const result = await completeCheckIn(db, principal(), seeded.demoClientId, {
+      vitals: { weightKg: 84.0 },
+      adherenceRating: 4,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.verdict.type, JSON.stringify(result.value.verdict)).not.toBe(
+      'INSUFFICIENT_DATA',
+    );
   });
 });
