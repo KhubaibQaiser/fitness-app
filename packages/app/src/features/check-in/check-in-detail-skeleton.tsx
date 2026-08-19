@@ -4,7 +4,6 @@ import { useRouter } from 'solito/navigation';
 import {
   Card,
   GhostButton,
-  Muted,
   PageHeader,
   PrimaryButton,
   Skeleton,
@@ -97,21 +96,7 @@ export const CheckInDetailSkeleton = ({ clientId }: { clientId: string }) => {
           <FieldBone label="Weight" unit="kg" />
           <YStack gap="$3">
             <FieldBone label="Plan adherence" unit="%" />
-            <XStack alignItems="center" gap="$3" justifyContent="space-between">
-              <SkeletonCircle size={88} />
-              <YStack flex={1} minWidth={0}>
-                <YStack
-                  height={8}
-                  width="100%"
-                  backgroundColor="$elevatedBg"
-                  borderRadius={999}
-                  overflow="hidden"
-                />
-                <Muted fontSize={11} marginTop="$2">
-                  {'\u00a0'}
-                </Muted>
-              </YStack>
-            </XStack>
+            <SkeletonCircle size={88} />
           </YStack>
           <YStack gap="$1.5" width="100%">
             <Text
