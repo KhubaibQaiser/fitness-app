@@ -1,0 +1,15 @@
+---
+description: Critically review planned changes; implement minimal, surgical diffs only
+alwaysApply: true
+---
+
+# Surgical changes (minimal scope)
+
+Before writing code, pause: what is the smallest change that satisfies the requirement? Leave unrelated refactors, renames, and formatting drive-bys untouched.
+
+- Edit only files and lines required for the task.
+- Match existing naming, types, patterns, and import style.
+- Reuse existing functions and components. Do not add a parallel utility.
+- One concern per change set unless the user asked for all of them.
+- No new dependencies without a concrete reason in the PR.
+- `type` keyword for TypeScript types, never `interface` (avoids declaration merging). Never `any`.

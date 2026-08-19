@@ -1,0 +1,6 @@
+# Agents may propose; these paths need an explicit human review.
+* @KhubaibQaiser
+
+/packages/core/ @KhubaibQaiser
+/packages/ai/ @KhubaibQaiser
+/infra/ @KhubaibQaiser
