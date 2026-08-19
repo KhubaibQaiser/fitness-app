@@ -1,7 +1,8 @@
 /**
- * Hand-maintained response/request types mirroring the server DTOs.
- * TODO(pilot-hardening): replace with hey-api codegen from openapi.v1.json
- * with a CI drift gate (plan §9); the transport below already matches it.
+ * Hand-maintained request/response DTOs for the typed client.
+ * OpenAPI is generated from Zod and drift-checked in CI. Do not replace this
+ * file with hey-api / openapi-typescript until response schemas are real
+ * (see docs/specs/openapi-codegen.md).
  */
 
 import { type ClientIntake, type SignedClientIntake } from '@gymos/core';

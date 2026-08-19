@@ -9,6 +9,14 @@ export type JourneyNodeKind =
 
 export type JourneyNodeState = 'past' | 'current' | 'future' | 'skipped';
 export type JourneyTrackStatus = 'ahead' | 'on-track' | 'behind';
+export type JourneyVerdictType = NonNullable<CheckIn['engineOutput']>['type'];
+export type JourneyVerdictTone = 'success' | 'warning' | 'danger' | 'neutral';
+
+export type JourneyVerdictPresentation = {
+  label: string;
+  hint: string;
+  tone: JourneyVerdictTone;
+};
 
 export type JourneyNode = {
   id: string;
@@ -24,6 +32,7 @@ export type JourneyNode = {
   expectedWeeklyDeltaKg?: number;
   actualWeeklyDeltaKg?: number;
   trackStatus?: JourneyTrackStatus;
+  verdictType?: JourneyVerdictType;
 };
 
 export type JourneyProjectionInput = {
@@ -57,6 +66,39 @@ export const adherenceScoreTone = (score: number): 'danger' | 'warning' | 'succe
   if (score <= 6) return 'warning';
   return 'success';
 };
+
+const VERDICT_PRESENTATION: Record<JourneyVerdictType, JourneyVerdictPresentation> = {
+  HOLD: { label: 'On track', hint: 'Hold the current plan.', tone: 'success' },
+  INSUFFICIENT_DATA: {
+    label: 'Need more data',
+    hint: 'Log a few more weigh-ins to read the trend.',
+    tone: 'neutral',
+  },
+  ADHERENCE_FOCUS: {
+    label: 'Adherence',
+    hint: 'Focus on consistency before changing targets.',
+    tone: 'warning',
+  },
+  PLATEAU_PROTOCOL: {
+    label: 'Plateau',
+    hint: 'Progress has stalled. Review before changing targets.',
+    tone: 'warning',
+  },
+  ADJUST_TARGETS: {
+    label: 'Adjust',
+    hint: 'The engine suggested a target change.',
+    tone: 'warning',
+  },
+  REFER_REVIEW: {
+    label: 'Needs review',
+    hint: 'Review this check-in before changing the plan.',
+    tone: 'danger',
+  },
+};
+
+/** Coach-facing verdict chip + hint for a journey check-in card. */
+export const journeyVerdictPresentation = (type: JourneyVerdictType): JourneyVerdictPresentation =>
+  VERDICT_PRESENTATION[type];
 
 export const expectedWeightAt = (projection: JourneyProjectionInput, at: Date): number | null => {
   const start = parseDate(projection.startDate);
@@ -188,6 +230,9 @@ export const buildPreviewJourney = (
 const checkInNode = (clientId: string, checkIn: CheckIn): JourneyNode => {
   const score = adherenceRatingToScore(checkIn.adherenceRating);
   const completed = checkIn.status === 'COMPLETED';
+  const notes = checkIn.coachNotes?.trim();
+  const verdictType = checkIn.engineOutput?.type;
+  const presentation = verdictType !== undefined ? journeyVerdictPresentation(verdictType) : null;
   return {
     id: checkIn.id,
     kind: 'CHECK_IN',
@@ -196,12 +241,10 @@ const checkInNode = (clientId: string, checkIn: CheckIn): JourneyNode => {
     date: checkIn.completedAt?.slice(0, 10) ?? checkIn.scheduledFor,
     weightKg: checkIn.weightKg ?? null,
     projected: false,
-    detail:
-      checkIn.engineOutput?.narrative?.coachSummary ??
-      checkIn.coachNotes ??
-      (completed ? (checkIn.engineOutput?.type.replaceAll('_', ' ') ?? null) : null),
+    detail: notes !== undefined && notes.length > 0 ? notes : (presentation?.hint ?? null),
     ...(completed ? { href: `/clients/${clientId}/check-ins/${checkIn.id}` } : {}),
     ...(score !== null ? { adherenceScore: score } : {}),
+    ...(verdictType !== undefined ? { verdictType } : {}),
     ...(checkIn.engineOutput?.expectedWeeklyDeltaKg !== undefined
       ? { expectedWeeklyDeltaKg: checkIn.engineOutput.expectedWeeklyDeltaKg }
       : {}),
