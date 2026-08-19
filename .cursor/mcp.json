@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gymos-openapi": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "packages/contracts/openapi"]
+    }
+  }
+}

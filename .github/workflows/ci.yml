@@ -53,10 +53,19 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
+      - name: OpenAPI drift check
+        run: |
+          pnpm --filter @gymos/api openapi:generate
+          pnpm exec prettier --write packages/contracts/openapi/openapi.v1.json
+          git diff --exit-code packages/contracts/openapi/openapi.v1.json
       - name: Test
         run: pnpm test
       - name: Build (web)
         run: pnpm --filter @gymos/web build
+      - name: Install Playwright Chromium
+        run: pnpm --filter @gymos/web exec playwright install --with-deps chromium
+      - name: Playwright smoke (login screen)
+        run: pnpm --filter @gymos/web e2e
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
 

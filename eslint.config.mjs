@@ -23,6 +23,8 @@ export default tseslint.config(
       '**/coverage/',
       'packages/contracts/generated/',
       '**/*.d.ts',
+      'apps/web/e2e/',
+      '**/playwright.config.ts',
     ],
   },
 
@@ -59,6 +61,10 @@ export default tseslint.config(
     plugins: { boundaries },
     settings: {
       'boundaries/include': ['apps/**/*', 'packages/**/*'],
+      // Pre-declared for CLAUDE.md phases P2–P4 (packages/charts, i18n,
+      // app-client, app-admin, and client/admin app shells do not exist yet).
+      // Remove an entry here only when its phase is explicitly descoped, not
+      // when the package is simply not built yet.
       'boundaries/elements': [
         { type: 'core', pattern: 'packages/core' },
         { type: 'contracts', pattern: 'packages/contracts' },

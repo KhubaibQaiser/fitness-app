@@ -27,6 +27,21 @@ Open `http://localhost:3000/login` and sign in as `coach@pilot.local` with
 `pilot-coach-change-me`).
 Production pilot: `https://gymos-pilot.duckdns.org`.
 
+## CI merge gates
+
+Every PR runs `.github/workflows/ci.yml`:
+
+- Secret scan (gitleaks, full history)
+- Format, lint (including module boundaries), typecheck
+- OpenAPI drift (`openapi:generate` then `git diff --exit-code`)
+- Unit and API integration tests (`pnpm test`)
+- Web production build
+- Playwright smoke: `/login` renders (no API)
+- Production dependency audit (`pnpm audit --prod --audit-level high`)
+- Mobile Metro bundle (`expo export --platform ios`)
+
+Not in CI: Maestro device flows (`apps/mobile/maestro/`), Lighthouse, authenticated roster e2e. Nightly Layer-3 live eval is `.github/workflows/ai-eval.yml` when `AI_BASE_URL` is set.
+
 ## Security policy (non-negotiable)
 
 - **No secrets in this repo, ever.** `.env.example` holds placeholders only. Secret scanning (gitleaks) runs pre-commit (staged), pre-push (history), and in CI on every PR — a finding fails the pipeline.
