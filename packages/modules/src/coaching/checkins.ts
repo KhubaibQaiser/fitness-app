@@ -8,7 +8,15 @@ import {
   type MacroTargets,
   type WeighIn,
 } from '@gymos/core/nutrition';
-import { dbTimestampToMillis, isoDate, nowIso, schema as s, type Db, type Tx } from '@gymos/db';
+import {
+  dbTimestampToMillis,
+  iso,
+  isoDate,
+  nowIso,
+  schema as s,
+  type Db,
+  type Tx,
+} from '@gymos/db';
 import { hasMedicalFlags } from '@gymos/db/schema';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
@@ -46,6 +54,73 @@ const DEFAULT_TARGETS: MacroTargets = {
   carbsG: 180,
   fiberG: 28,
 };
+
+/** Check-in calendar day as a UTC instant (noon so the date is unambiguous). */
+const checkInAsOf = (scheduledFor: string): DateTime =>
+  DateTime.fromISO(scheduledFor, { zone: 'utc' }).plus({ hours: 12 });
+
+type VitalSample = {
+  id: string;
+  recordedAt: string;
+  weightKg: number | null;
+  restingHr: number | null;
+};
+
+type CheckInWeight = {
+  scheduledFor: string;
+  vitalsId: string | null;
+  weightKg: number | null;
+};
+
+/**
+ * Weekly check-in weights are observations of that scheduled week, even if the
+ * coach submitted several catch-up check-ins in one sitting (wall-clock
+ * `recordedAt` then collapses onto a single day and the engine reports
+ * INSUFFICIENT_DATA for lack of span). Unlinked vitals keep their own timestamps.
+ */
+const assembleWeighIns = (
+  vitals: readonly VitalSample[],
+  completedCheckIns: readonly CheckInWeight[],
+  asOfMs: number,
+): WeighIn[] => {
+  const linkedIds = new Set(
+    completedCheckIns.flatMap((row) => (row.vitalsId === null ? [] : [row.vitalsId])),
+  );
+  const fromCheckIns = completedCheckIns.flatMap((row) => {
+    if (row.weightKg === null) return [];
+    const t = checkInAsOf(row.scheduledFor).toMillis();
+    return t <= asOfMs ? [{ t, weightKg: row.weightKg }] : [];
+  });
+  const fromVitals = vitals.flatMap((row) => {
+    if (row.weightKg === null || linkedIds.has(row.id)) return [];
+    const t = dbTimestampToMillis(row.recordedAt);
+    return t <= asOfMs ? [{ t, weightKg: row.weightKg }] : [];
+  });
+  return [...fromVitals, ...fromCheckIns];
+};
+
+const loadVitalSamples = (db: Db, clientId: string) =>
+  db
+    .select({
+      id: s.vitals.id,
+      recordedAt: s.vitals.recordedAt,
+      weightKg: s.vitals.weightKg,
+      restingHr: s.vitals.restingHr,
+    })
+    .from(s.vitals)
+    .where(eq(s.vitals.clientId, clientId))
+    .orderBy(s.vitals.recordedAt);
+
+const loadCompletedCheckInWeights = (db: Db, clientId: string) =>
+  db
+    .select({
+      scheduledFor: s.checkIns.scheduledFor,
+      vitalsId: s.checkIns.vitalsId,
+      weightKg: s.vitals.weightKg,
+    })
+    .from(s.checkIns)
+    .leftJoin(s.vitals, eq(s.checkIns.vitalsId, s.vitals.id))
+    .where(and(eq(s.checkIns.clientId, clientId), eq(s.checkIns.status, 'COMPLETED')));
 
 const attentionReasonsFor = (verdict: AdjustmentRecommendation) =>
   verdict.type === 'REFER_REVIEW'
@@ -95,25 +170,30 @@ export const completeCheckIn = async (
   if (!goal) return err({ code: 'NO_ACTIVE_GOAL' });
 
   // 1. Record the new vitals (if provided) so they join the analysis window.
+  // Stamp at the check-in date, not wall-clock now — catch-up submissions
+  // would otherwise collapse onto one day and fail minSpanDays.
+  const asOf = checkInAsOf(due.scheduledFor);
   let vitalsId: string | null = null;
   if (input.vitals) {
-    const row = await recordVitals(db, principal, clientId, input.vitals);
+    const row = await recordVitals(db, principal, clientId, {
+      ...input.vitals,
+      recordedAt: input.vitals.recordedAt ?? iso(asOf),
+    });
     vitalsId = row.id;
   }
 
   // 2. Assemble the adaptive-engine input.
-  const history = await db
-    .select({
-      recordedAt: s.vitals.recordedAt,
-      weightKg: s.vitals.weightKg,
-      restingHr: s.vitals.restingHr,
-    })
-    .from(s.vitals)
-    .where(eq(s.vitals.clientId, clientId))
-    .orderBy(s.vitals.recordedAt);
-
-  const weighIns: WeighIn[] = history.flatMap((v) =>
-    v.weightKg === null ? [] : [{ t: dbTimestampToMillis(v.recordedAt), weightKg: v.weightKg }],
+  const history = await loadVitalSamples(db, clientId);
+  const completedWeights = await loadCompletedCheckInWeights(db, clientId);
+  const weighIns = assembleWeighIns(
+    history,
+    [
+      ...completedWeights,
+      ...(input.vitals?.weightKg !== undefined
+        ? [{ scheduledFor: due.scheduledFor, vitalsId, weightKg: input.vitals.weightKg }]
+        : []),
+    ],
+    asOf.toMillis(),
   );
   const baselineRestingHr = history.find((v) => v.restingHr !== null)?.restingHr ?? undefined;
 
@@ -164,7 +244,7 @@ export const completeCheckIn = async (
           },
         }
       : {}),
-    now: DateTime.utc().toMillis(),
+    now: asOf.toMillis(),
   });
 
   const narrative = narrateAdjustment(verdict, { mode: 'fallback', verbosity: 'terse' });
@@ -247,39 +327,37 @@ export const updateAndRerunCheckIn = async (
     .limit(1);
   if (!goal) return err({ code: 'NO_ACTIVE_GOAL' });
 
-  const cutoffIso = checkIn.completedAt ?? nowIso();
-  const cutoffMs = dbTimestampToMillis(cutoffIso);
+  const asOf = checkInAsOf(checkIn.scheduledFor);
+  const asOfMs = asOf.toMillis();
 
   let vitalsId = checkIn.vitalsId;
   if (input.vitals) {
-    // Stamp at original completion so the weigh-in stays inside the analysis window.
     const row = await recordVitals(db, principal, clientId, {
       ...input.vitals,
-      recordedAt: cutoffIso,
+      recordedAt: input.vitals.recordedAt ?? iso(asOf),
     });
     vitalsId = row.id;
   }
 
-  const history = await db
-    .select({
-      recordedAt: s.vitals.recordedAt,
-      weightKg: s.vitals.weightKg,
-      restingHr: s.vitals.restingHr,
-    })
-    .from(s.vitals)
-    .where(eq(s.vitals.clientId, clientId))
-    .orderBy(s.vitals.recordedAt);
-
-  const weighIns: WeighIn[] = history.flatMap((v) => {
-    if (v.weightKg === null) return [];
-    const t = dbTimestampToMillis(v.recordedAt);
-    if (t > cutoffMs) return [];
-    return [{ t, weightKg: v.weightKg }];
-  });
+  const history = await loadVitalSamples(db, clientId);
+  const completedWeights = await loadCompletedCheckInWeights(db, clientId);
+  const effectiveWeight =
+    input.vitals?.weightKg ??
+    completedWeights.find((row) => row.scheduledFor === checkIn.scheduledFor)?.weightKg ??
+    null;
+  const weighIns = assembleWeighIns(
+    history,
+    completedWeights.map((row) =>
+      row.scheduledFor === checkIn.scheduledFor
+        ? { scheduledFor: row.scheduledFor, vitalsId, weightKg: effectiveWeight }
+        : row,
+    ),
+    asOfMs,
+  );
   const baselineRestingHr =
     history.find((v) => {
       if (v.restingHr === null) return false;
-      return dbTimestampToMillis(v.recordedAt) <= cutoffMs;
+      return dbTimestampToMillis(v.recordedAt) <= asOfMs;
     })?.restingHr ?? undefined;
 
   const adherenceRating = input.adherenceRating ?? checkIn.adherenceRating ?? undefined;
@@ -338,7 +416,7 @@ export const updateAndRerunCheckIn = async (
           },
         }
       : {}),
-    now: cutoffMs,
+    now: asOfMs,
   });
 
   const narrative = narrateAdjustment(verdict, { mode: 'fallback', verbosity: 'terse' });
