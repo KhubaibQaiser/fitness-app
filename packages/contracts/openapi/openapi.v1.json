@@ -581,6 +581,11 @@
                         "type": "number",
                         "minimum": 2,
                         "maximum": 70
+                      },
+                      "targetKcal": {
+                        "type": "integer",
+                        "minimum": 800,
+                        "maximum": 8000
                       }
                     },
                     "required": ["preset", "rate", "startWeightKg", "targetWeightKg"]
@@ -1289,6 +1294,11 @@
                     "type": "number",
                     "minimum": 20,
                     "maximum": 400
+                  },
+                  "targetKcal": {
+                    "type": "integer",
+                    "minimum": 800,
+                    "maximum": 8000
                   }
                 },
                 "required": ["activityLevel", "preset", "rate", "startWeightKg", "targetWeightKg"]
@@ -1420,6 +1430,11 @@
                     "type": "number",
                     "minimum": 2,
                     "maximum": 70
+                  },
+                  "targetKcal": {
+                    "type": "integer",
+                    "minimum": 800,
+                    "maximum": 8000
                   }
                 },
                 "required": ["preset", "rate", "startWeightKg"]
