@@ -7,6 +7,7 @@ import {
   buildPreviewJourney,
   expectedWeightAt,
   journeyTrackStatus,
+  journeyVerdictPresentation,
 } from './client-journey';
 
 const goal: Goal = {
@@ -26,6 +27,15 @@ const goal: Goal = {
 };
 
 describe('client journey', () => {
+  it('maps engine verdicts to a short coach-facing chip', () => {
+    expect(journeyVerdictPresentation('INSUFFICIENT_DATA')).toMatchObject({
+      label: 'Need more data',
+      tone: 'neutral',
+    });
+    expect(journeyVerdictPresentation('HOLD').label).toBe('On track');
+    expect(journeyVerdictPresentation('REFER_REVIEW').tone).toBe('danger');
+  });
+
   it('maps adherence to a visible 2–10 score and tone', () => {
     expect(adherenceRatingToScore(1)).toBe(2);
     expect(adherenceRatingToScore(5)).toBe(10);
@@ -190,6 +200,8 @@ describe('client journey', () => {
     expect(nodes.find((node) => node.id === 'done')).toMatchObject({
       adherenceScore: 8,
       weightKg: 79.4,
+      verdictType: 'HOLD',
+      detail: 'Strong week',
     });
     expect(nodes.find((node) => node.kind === 'CURRENT')).toMatchObject({
       trackStatus: 'on-track',
@@ -231,5 +243,45 @@ describe('client journey', () => {
     expect(nodes.find((node) => node.id === 'overdue')).toMatchObject({
       title: 'Check-in overdue',
     });
+  });
+
+  it('shows a readable verdict on check-in cards instead of digit-stripped engine copy', () => {
+    const checkIn: CheckIn = {
+      id: 'thin-data',
+      clientId: 'client-1',
+      goalId: goal.id,
+      scheduledFor: '2026-08-08',
+      completedAt: '2026-08-08T10:00:00Z',
+      vitalsId: 'vital-1',
+      adherenceRating: 4,
+      coachNotes: null,
+      engineOutput: {
+        type: 'INSUFFICIENT_DATA',
+        confidence: 0.2,
+        reasons: ['need ≥4 weigh-ins over ≥10 days; have 2 over 3'],
+        narrative: {
+          title: 'Need more data',
+          coachSummary: 'Need more data. need ≥ weigh-ins over ≥ days; have over .',
+          clientSummary: 'Keep logging weigh-ins so we can read your trend.',
+        },
+      },
+      status: 'COMPLETED',
+      weightKg: 97,
+    };
+    const nodes = buildLiveJourney({
+      clientId: 'client-1',
+      goal,
+      checkIns: [checkIn],
+      vitals: [],
+      latestWeightKg: 97,
+      today: new Date('2026-08-15T00:00:00Z'),
+    });
+    const card = nodes.find((node) => node.id === 'thin-data');
+    expect(card).toMatchObject({
+      kind: 'CHECK_IN',
+      verdictType: 'INSUFFICIENT_DATA',
+      detail: 'Log a few more weigh-ins to read the trend.',
+    });
+    expect(card?.detail).not.toMatch(/have over/);
   });
 });

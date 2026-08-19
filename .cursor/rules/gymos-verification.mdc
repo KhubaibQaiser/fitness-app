@@ -1,0 +1,16 @@
+---
+description: Verification expected after code changes in this monorepo
+alwaysApply: true
+---
+
+# Verification
+
+After substantive TS/TSX or config edits:
+
+1. `pnpm format:check` (or format the touched files)
+2. `pnpm lint` (includes module boundaries)
+3. `pnpm typecheck`
+4. `pnpm test` scoped to the package when types/contracts are unchanged; full workspace when `packages/contracts` or shared types change
+5. `pnpm --filter @gymos/web build` when web/app/ui/platform change
+
+Do not call work merge-ready if typecheck or the required tests were skipped without saying why.

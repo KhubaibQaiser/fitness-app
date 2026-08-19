@@ -1,0 +1,13 @@
+---
+description: GymOS module boundaries, banned patterns, and tenant rules
+alwaysApply: true
+---
+
+# GymOS boundaries
+
+- Feature UI lives in `packages/app` using Tamagui / RN primitives. No raw `<div>`, no raw `fetch`, no `Platform.OS`.
+- Domain writes go through `packages/modules` public `index.ts` exports. Apps may compose; they must not invent a second auth or tenancy model.
+- `packages/core` is pure TypeScript: nutrition math, money (bigint minor units), units, `can(actor, action, resource)`.
+- Never fork per customer. Config or data, never `if (tenant === ...)`.
+- Persistence paths use Luxon, not `new Date()`.
+- ESLint `eslint-plugin-boundaries` is the mechanical enforcer. Do not weaken it to land a change.
