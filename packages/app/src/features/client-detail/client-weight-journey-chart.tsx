@@ -75,14 +75,14 @@ export const ClientWeightJourneyChart = ({
     <Card padding="$4" gap="$3" width="100%">
       <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
         <YStack gap="$1.5" flex={1} minWidth={0}>
-          <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
+          <Muted fontSize={12} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
             Weight journey
           </Muted>
           <XStack alignItems="baseline" gap="$2" flexWrap="wrap">
             <Text
               fontFamily="$mono"
-              fontSize={18}
-              lineHeight={24}
+              fontSize={20}
+              lineHeight={26}
               fontWeight="600"
               color="$color"
               letterSpacing={-0.3}
