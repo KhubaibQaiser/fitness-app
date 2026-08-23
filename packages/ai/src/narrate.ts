@@ -183,10 +183,11 @@ const callOpenAiCompatible = async (
 ): Promise<unknown> => {
   if (!config.baseUrl) throw new Error('AI_BASE_URL not configured');
   const pack = resolvePromptPack(config.promptPackId);
-  const system =
-    pack.systemAddendum.length > 0
-      ? `${MEAL_NARRATIVE_SYSTEM} ${pack.systemAddendum}`
-      : MEAL_NARRATIVE_SYSTEM;
+  // Coach addendum appended last (highest precedence on conflict) — never
+  // prepended, so it can't reorder MEAL_NARRATIVE_SYSTEM's core constraints.
+  const system = [MEAL_NARRATIVE_SYSTEM, pack.systemAddendum, config.coachAddendum]
+    .filter((part): part is string => typeof part === 'string' && part.length > 0)
+    .join(' ');
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {

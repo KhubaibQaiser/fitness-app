@@ -65,7 +65,10 @@ export const ClientHubPlan = ({
   currentPlan,
 }: Props) => {
   const severe = (dietaryProfile?.restrictions ?? []).filter((r) => r.type === 'ALLERGY_SEVERE');
-  const other = (dietaryProfile?.restrictions ?? []).filter((r) => r.type !== 'ALLERGY_SEVERE');
+  const preferred = (dietaryProfile?.restrictions ?? []).filter((r) => r.type === 'PREFERRED');
+  const other = (dietaryProfile?.restrictions ?? []).filter(
+    (r) => r.type !== 'ALLERGY_SEVERE' && r.type !== 'PREFERRED',
+  );
   const remaining =
     goal?.targetWeightKg != null && latestWeightKg !== null
       ? Math.abs(latestWeightKg - goal.targetWeightKg)
@@ -169,6 +172,23 @@ export const ClientHubPlan = ({
                   key={`${r.type}:${r.code}`}
                   tone="neutral"
                   label={formatRestrictionLabel(r.code)}
+                />
+              ))}
+            </XStack>
+          </YStack>
+        ) : null}
+
+        {preferred.length > 0 ? (
+          <YStack gap="$2">
+            <Muted fontSize={11} fontWeight="600">
+              Preferred foods
+            </Muted>
+            <XStack gap="$2" flexWrap="wrap">
+              {preferred.map((r) => (
+                <Badge
+                  key={`${r.type}:${r.code}`}
+                  tone="success"
+                  label={r.note ?? formatRestrictionLabel(r.code)}
                 />
               ))}
             </XStack>

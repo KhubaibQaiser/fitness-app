@@ -123,6 +123,8 @@ const defaultCoachManifest = (slug: string, name: string): TenantManifest => ({
     mealCount: 3,
     kcalTolerancePct: 5,
     macroTolerancePct: 10,
+    weekMode: 'daily_template',
+    weekTemplateCount: 3,
     budgetTier: 2,
     prepTimeCeilingMin: 45,
     verbosity: 'standard',

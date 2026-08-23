@@ -79,6 +79,20 @@ export type UpdateMeInput = {
   defaultCountry?: string;
 };
 
+/** Coach-scoped Layer-3 narration override (ADR-0015 D2). */
+export type CoachMealInstructions = {
+  id: string;
+  version: number;
+  richText: string;
+  plainText: string;
+};
+
+export type SavedCoachMealInstructions = CoachMealInstructions & {
+  previousPlainText: string | null;
+  changed: boolean;
+  numericClaimWarning: boolean;
+};
+
 export type AttentionReason = { code: string; weight: number; since: string };
 
 export type ClientListItem = {
@@ -221,7 +235,9 @@ export type Restriction = {
     | 'DISLIKE'
     | 'RELIGIOUS'
     | 'ETHICAL'
-    | 'MEDICAL';
+    | 'MEDICAL'
+    // The one non-exclusion type (ADR-0015 D6) — boosts rank, never excludes.
+    | 'PREFERRED';
   code: string;
   note?: string | null;
 };

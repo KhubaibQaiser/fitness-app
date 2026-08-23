@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { hashNarrativeInput } from './cache';
 import { CIRCUIT, isCircuitOpen, recordCircuitFailure, resetCircuit } from './circuit';
 import { assertDeidentified } from './deidentify';
@@ -243,5 +243,75 @@ describe('narrate', () => {
     );
     expect(hit.cacheHit).toBe(true);
     expect(hit.fellBack).toBe(false);
+  });
+});
+
+describe('D2 smoke test — coach addendum appended last, after sanitization', () => {
+  beforeEach(() => resetCircuit());
+  afterEach(() => vi.restoreAllMocks());
+
+  it('includes the coach instructions in the outgoing system message, after the base prompt', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  days: [{ meals: [{ name: 'Egg & Roti', prepNotes: '' }] }],
+                }),
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    await narrate(
+      input,
+      {
+        mode: 'local',
+        baseUrl: 'http://llm.local',
+        model: 'test-model',
+        verbosity: 'standard',
+        // Already sanitized by saveInstructions before it ever reaches this call.
+        coachAddendum: 'Prefer high-protein breakfasts. Keep prep under 10 minutes.',
+      },
+      { expectedMealCount: 2 },
+    );
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {
+      messages: { role: string; content: string }[];
+    };
+    const system = body.messages.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toContain('Prefer high-protein breakfasts');
+    // The coach's words come after the base "JSON only / never emit numbers" instructions, never before.
+    expect(system.indexOf(MEAL_NARRATIVE_SYSTEM)).toBeLessThan(
+      system.indexOf('Prefer high-protein breakfasts'),
+    );
+  });
+
+  it('omits the coach addendum entirely when unset — no stray separators or empty segments', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: JSON.stringify({ days: [{ meals: [] }] }) } }],
+        }),
+      ),
+    );
+
+    await narrate(
+      input,
+      { mode: 'local', baseUrl: 'http://llm.local', model: 'test-model', verbosity: 'standard' },
+      { expectedMealCount: 2 },
+    );
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {
+      messages: { role: string; content: string }[];
+    };
+    const system = body.messages.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toBe(MEAL_NARRATIVE_SYSTEM);
   });
 });

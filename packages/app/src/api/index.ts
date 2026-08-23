@@ -11,6 +11,7 @@ import { api, type PlanOp, type Restriction } from '@gymos/contracts';
 /** Query-key factory — the single vocabulary for cache identity. */
 export const qk = {
   me: ['me'] as const,
+  mealInstructions: ['me', 'meal-instructions'] as const,
   config: ['config'] as const,
   clients: (q?: string) => ['clients', q ?? ''] as const,
   clientDetail: (id: string) => ['clients', 'detail', id] as const,
@@ -46,6 +47,19 @@ export const useUpdateMe = () => {
     mutationFn: api.me.update,
     onSuccess: (data) => {
       queryClient.setQueryData(qk.me, data);
+    },
+  });
+};
+
+export const useMealInstructions = () =>
+  useQuery({ queryKey: qk.mealInstructions, queryFn: api.me.mealInstructions.get });
+
+export const useSaveMealInstructions = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => api.me.mealInstructions.put(text),
+    onSuccess: (data) => {
+      queryClient.setQueryData(qk.mealInstructions, { instructions: data.instructions });
     },
   });
 };
@@ -227,6 +241,18 @@ export const usePublishPlan = (planId: string, clientId: string) => {
       api.plans.publish(planId, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.plan(planId) });
+      invalidateClient(queryClient, clientId);
+    },
+  });
+};
+
+export const useRegenerateMeal = (planId: string, clientId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ day, mealIndex }: { day: number; mealIndex: number }) =>
+      api.plans.regenerateMeal(planId, day, mealIndex),
+    onSuccess: (data) => {
+      queryClient.setQueryData(qk.plan(planId), data);
       invalidateClient(queryClient, clientId);
     },
   });

@@ -265,6 +265,17 @@ export const api = {
   me: {
     get: () => request<T.Me>('GET', '/v1/me'),
     update: (input: T.UpdateMeInput) => request<T.Me>('PATCH', '/v1/me', input),
+    mealInstructions: {
+      get: () =>
+        request<{ instructions: T.CoachMealInstructions | null }>(
+          'GET',
+          '/v1/me/meal-instructions',
+        ),
+      put: (text: string) =>
+        request<{ instructions: T.SavedCoachMealInstructions }>('PUT', '/v1/me/meal-instructions', {
+          text,
+        }),
+    },
   },
 
   clients: {
@@ -399,6 +410,13 @@ export const api = {
       request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, body, {
         idempotent: true,
       }),
+    regenerateMeal: (planId: string, day: number, mealIndex: number) =>
+      request<T.PlanWithItems>(
+        'POST',
+        `/v1/meal-plans/${planId}/days/${day}/meals/${mealIndex}/regenerate`,
+        {},
+        { idempotent: true },
+      ),
     dietPlanPdf: (planId: string): Promise<Blob> =>
       requestBlob(`/v1/meal-plans/${planId}/diet-plan.pdf`),
   },

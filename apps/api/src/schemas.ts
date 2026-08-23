@@ -66,6 +66,8 @@ export const restrictionSchema = z.object({
     'RELIGIOUS',
     'ETHICAL',
     'MEDICAL',
+    // The one non-exclusion type (ADR-0015 D6) — boosts rank, never excludes.
+    'PREFERRED',
   ]),
   code: z.string().min(1).max(80),
   note: z.string().max(500).nullish(),
@@ -217,6 +219,16 @@ export const patchPlanBody = z.object({ ops: z.array(planOpSchema).min(1).max(50
 export const publishBody = z.object({
   reviewed: z.literal(true),
   acknowledgeDrift: z.boolean().optional(),
+});
+
+export const putMealInstructionsBody = z.object({
+  text: z.string().max(20000), // sanitize+cap happens server-side (saveInstructions); this bounds request size only
+});
+
+export const regenerateMealParam = z.object({
+  id: z.uuid(),
+  day: z.coerce.number().int().min(1).max(7),
+  mealIndex: z.coerce.number().int().min(0).max(4),
 });
 
 export const noteBody = z.object({ body: z.string().min(1).max(4000) });
