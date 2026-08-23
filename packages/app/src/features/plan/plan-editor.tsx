@@ -13,6 +13,7 @@ import {
   IconButton,
   Muted,
   PrimaryButton,
+  Row,
   SectionTitle,
   SegmentedControl,
   Text,
@@ -26,6 +27,7 @@ import { PlanFoodPicker } from './plan-food-picker';
 import { PlanItemCard } from './plan-item-card';
 import { PlanPublishConfirm } from './plan-publish-confirm';
 import { PlanTitleHeader } from './plan-title-header';
+import { mealKcal } from './plan-totals';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Mon' },
@@ -330,7 +332,12 @@ export const PlanEditor = ({
 
       {meals.map(([mealIndex, mealSlot]) => (
         <YStack key={mealIndex} gap="$2">
-          <SectionTitle>{SLOT_LABEL[mealSlot]}</SectionTitle>
+          <Row>
+            <SectionTitle>{SLOT_LABEL[mealSlot]}</SectionTitle>
+            <Muted fontSize={12} fontFamily="$mono">
+              {Math.round(mealKcal(dayItems, mealIndex))} kcal
+            </Muted>
+          </Row>
           {dayItems
             .filter((i) => i.mealIndex === mealIndex)
             .map((item) => (
