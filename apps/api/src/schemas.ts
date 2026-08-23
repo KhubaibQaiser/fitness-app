@@ -66,6 +66,8 @@ export const restrictionSchema = z.object({
     'RELIGIOUS',
     'ETHICAL',
     'MEDICAL',
+    // The one non-exclusion type (ADR-0015 D6) — boosts rank, never excludes.
+    'PREFERRED',
   ]),
   code: z.string().min(1).max(80),
   note: z.string().max(500).nullish(),

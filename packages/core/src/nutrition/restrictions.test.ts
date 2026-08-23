@@ -15,7 +15,7 @@ describe('restriction registries', () => {
     expect(ALLERGENS).toContain('wheat_gluten');
   });
 
-  it('exposes the seven restriction types from the spec', () => {
+  it('exposes the seven exclusion types from the spec plus PREFERRED (ADR-0015 D6)', () => {
     expect(RESTRICTION_TYPES).toEqual([
       'ALLERGY_SEVERE',
       'ALLERGY_MILD',
@@ -24,6 +24,7 @@ describe('restriction registries', () => {
       'RELIGIOUS',
       'ETHICAL',
       'MEDICAL',
+      'PREFERRED',
     ]);
   });
 

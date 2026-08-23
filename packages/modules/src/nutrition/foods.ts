@@ -112,13 +112,24 @@ export const candidatesForRestrictions = async (
       sql`coalesce((${s.foods.dietaryFlags}->>'containsAlcohol')::boolean, false) = false`,
     );
   }
-  // Explicit dislike codes: dislike:<foodUuid>
+  // Explicit dislike codes: dislike:<foodUuid> — hard exclusion.
   for (const code of codes) {
     if (code.startsWith('dislike:')) {
       const foodId = code.slice('dislike:'.length);
       if (foodId.length > 0) {
         conditions.push(sql`${s.foods.id} <> ${foodId}::uuid`);
       }
+    }
+  }
+
+  // Explicit preferred codes: preferred:<foodUuid> — rank boost only, never
+  // a bypass of the exclusions above (ADR-0015 D6). The exact mirror of the
+  // `dislike:` convention, opposite polarity.
+  const preferredFoodIds = new Set<string>();
+  for (const code of codes) {
+    if (code.startsWith('preferred:')) {
+      const foodId = code.slice('preferred:'.length);
+      if (foodId.length > 0) preferredFoodIds.add(foodId);
     }
   }
 
@@ -140,18 +151,25 @@ export const candidatesForRestrictions = async (
     rows.map((r) => r.id),
   );
 
-  const rankByFood = new Map<string, number>();
+  // Slot-aware: `food_rankings` is keyed (foodId, slot, goal) precisely
+  // because a food can rank differently at breakfast vs. dinner — carry
+  // that dimension through instead of collapsing it with Math.max
+  // (ADR-0015 D6's bundled bug fix; `pickCandidate` already receives `slot`
+  // and can now actually use it via `effectiveRank`).
+  const rankBySlotByFood = new Map<string, Partial<Record<MealSlot, number>>>();
   if (opts?.goalPreset) {
     const rankings = await db
       .select({
         foodId: s.foodRankings.foodId,
+        slot: s.foodRankings.slot,
         score: s.foodRankings.score,
       })
       .from(s.foodRankings)
       .where(eq(s.foodRankings.goal, opts.goalPreset));
     for (const row of rankings) {
-      const prev = rankByFood.get(row.foodId) ?? 1;
-      rankByFood.set(row.foodId, Math.max(prev, row.score));
+      const bySlot = rankBySlotByFood.get(row.foodId) ?? {};
+      bySlot[row.slot] = row.score;
+      rankBySlotByFood.set(row.foodId, bySlot);
     }
   }
 
@@ -186,11 +204,33 @@ export const candidatesForRestrictions = async (
     }
   }
 
+  // A coach/client preference boosts a food's odds of being picked when it's
+  // otherwise eligible — it never bypasses an allergen or hard exclusion,
+  // since the SQL conditions above already ran before any row reaches here.
+  const PREFERRED_RANK_BOOST = 1.5;
+
   return rows.map((r) => {
-    const learned = rankByFood.get(r.id);
+    const slotRanks = rankBySlotByFood.get(r.id);
+    const learnedMax = slotRanks ? Math.max(...Object.values(slotRanks)) : undefined;
     const oliveBoost = r.name === 'Olive oil' ? 3 : 1;
-    let rankScore = Math.max(learned ?? 1, oliveBoost);
-    if (recentFoodIds.has(r.id)) rankScore *= 0.55;
+    // Order of operations, deliberate: hard filters (SQL, above) → slot-aware
+    // base rank → preference boost → variety penalty.
+    const scoreFor = (base: number): number => {
+      let score = Math.max(base, oliveBoost);
+      if (preferredFoodIds.has(r.id)) score *= PREFERRED_RANK_BOOST;
+      if (recentFoodIds.has(r.id)) score *= 0.55;
+      return score;
+    };
+
+    const rankBySlot = slotRanks
+      ? (Object.fromEntries(
+          (Object.entries(slotRanks) as [MealSlot, number][]).map(([slot, score]) => [
+            slot,
+            scoreFor(score),
+          ]),
+        ) as Partial<Record<MealSlot, number>>)
+      : undefined;
+
     return {
       id: r.id,
       name: r.name,
@@ -199,7 +239,8 @@ export const candidatesForRestrictions = async (
       allergenTags: r.allergenTags,
       allowedSlots: r.allowedSlots as MealSlot[],
       servingUnits: units.get(r.id) ?? [],
-      rankScore,
+      rankScore: scoreFor(learnedMax ?? 1),
+      ...(rankBySlot ? { rankBySlot } : {}),
       ...(r.maxUnits !== null ? { maxUnits: r.maxUnits } : {}),
     };
   });

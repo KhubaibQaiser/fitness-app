@@ -30,8 +30,15 @@ export type CandidateFood = {
   readonly servingUnits: readonly { name: string; grams: number }[];
   /** Slots this food may appear in. Empty = never selected. */
   readonly allowedSlots: readonly MealSlot[];
-  /** Layer-4 ranking seam — higher ranks earlier. Default 1. */
+  /** Layer-4 ranking seam — higher ranks earlier. Default 1. Slot-agnostic fallback for `rankBySlot`. */
   readonly rankScore?: number;
+  /**
+   * Slot-aware ranking (ADR-0015 D6) — `food_rankings` is keyed
+   * `(foodId, slot, goal)` because a food can rank differently at breakfast
+   * vs. dinner; `effectiveRank` prefers this for the slot actually being
+   * filled, falling back to `rankScore` when a slot has no learned score.
+   */
+  readonly rankBySlot?: Partial<Record<MealSlot, number>>;
   /**
    * Realistic single-item serving ceiling, in native serving units
    * (`servingUnits[0]`) — e.g. 3 for an egg (piece = 50g ⇒ 150g ceiling).
@@ -310,8 +317,8 @@ const optimizePortions = (
 const allowedForSlot = (food: CandidateFood, slot: MealSlot): boolean =>
   food.allowedSlots.includes(slot);
 
-const effectiveRank = (food: CandidateFood, group: FoodGroup): number => {
-  const base = food.rankScore ?? 1;
+const effectiveRank = (food: CandidateFood, group: FoodGroup, slot: MealSlot): number => {
+  const base = food.rankBySlot?.[slot] ?? food.rankScore ?? 1;
   if (group === 'fat' && food.name === OLIVE_OIL_NAME) return base + 2;
   return base;
 };
@@ -328,7 +335,9 @@ const pickCandidate = (
   for (const g of groups) {
     const inGroup = slotPool
       .filter((f) => f.foodGroup === g)
-      .sort((a, b) => effectiveRank(b, g) - effectiveRank(a, g) || a.id.localeCompare(b.id));
+      .sort(
+        (a, b) => effectiveRank(b, g, slot) - effectiveRank(a, g, slot) || a.id.localeCompare(b.id),
+      );
     if (inGroup.length === 0) continue;
     const fresh = inGroup.filter((f) => !used.has(f.id));
     const pickFrom = fresh.length > 0 ? fresh : inGroup;

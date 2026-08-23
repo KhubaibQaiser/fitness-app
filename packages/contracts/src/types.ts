@@ -221,7 +221,9 @@ export type Restriction = {
     | 'DISLIKE'
     | 'RELIGIOUS'
     | 'ETHICAL'
-    | 'MEDICAL';
+    | 'MEDICAL'
+    // The one non-exclusion type (ADR-0015 D6) — boosts rank, never excludes.
+    | 'PREFERRED';
   code: string;
   note?: string | null;
 };
