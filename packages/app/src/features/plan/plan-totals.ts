@@ -8,3 +8,7 @@ import type { PlanItem } from '@gymos/contracts';
  */
 export const mealKcal = (items: readonly PlanItem[], mealIndex: number): number =>
   items.filter((i) => i.mealIndex === mealIndex).reduce((sum, i) => sum + i.macros.kcal, 0);
+
+/** Target kcal for one meal given the day's target and that meal's share. */
+export const mealTargetKcal = (dailyKcal: number, share: number): number =>
+  Math.round(dailyKcal * share);

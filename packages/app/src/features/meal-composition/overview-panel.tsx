@@ -19,8 +19,9 @@ export const OverviewPanel = () => (
         What this page is
       </Body>
       <Muted lineHeight={20}>
-        Layer 2 builds each day from fixed meal templates, not AI guesses. The coach picks 3, 4, or
-        5 meals when generating a plan. Food pools are slot-filtered so breakfast stays breakfast.
+        Layer 2 builds each day from meal templates, not AI guesses. The coach picks 3, 4, or 5
+        meals when generating a plan. Default calorie shares are shown below; override them in
+        Settings → Meal AI Planner. Food pools are slot-filtered so breakfast stays breakfast.
       </Muted>
     </Card>
 

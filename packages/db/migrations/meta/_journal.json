@@ -134,6 +134,13 @@
       "when": 1787800000000,
       "tag": "0018_coach_meal_instructions",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1787900000000,
+      "tag": "0019_coach_meal_share_overrides",
+      "breakpoints": true
     }
   ]
 }

@@ -705,6 +705,49 @@ describe('the pilot core loop', () => {
     expect(validation?.promptLayers?.coach).toBe(true);
   });
 
+  it('ADR-0015 D7: a 10% breakfast share is persisted and honored on the next generation', async () => {
+    const saved = await req('/v1/me/meal-instructions', {
+      method: 'PUT',
+      json: { text: 'Keep prep notes short.', mealShares: { breakfast: 0.1 } },
+    });
+    expect(saved.status).toBe(200);
+    const savedBody = (await saved.json()) as {
+      instructions: { mealShares: { breakfast?: number } | null };
+    };
+    expect(savedBody.instructions.mealShares?.breakfast).toBe(0.1);
+
+    const fetched = await req('/v1/me/meal-instructions');
+    const fetchedBody = (await fetched.json()) as {
+      instructions: { mealShares: { breakfast?: number } | null };
+    };
+    expect(fetchedBody.instructions?.mealShares?.breakfast).toBe(0.1);
+
+    const generated = await req(`/v1/clients/${demoClientId}/meal-plans/generate`, {
+      method: 'POST',
+      json: { mealCount: 3 },
+    });
+    expect(generated.status).toBe(200);
+    const body = (await generated.json()) as {
+      plan: { id: string; targets: { kcal: number } };
+      generationId: string;
+      items: { day: number; mealIndex: number; mealSlot?: string; macros: { kcal: number } }[];
+    };
+
+    const [generationRow] = await db
+      .select({ config: schema.planGenerations.config })
+      .from(schema.planGenerations)
+      .where(eq(schema.planGenerations.id, body.generationId));
+    const config = generationRow?.config as { mealShares?: { breakfast?: number } } | null;
+    expect(config?.mealShares?.breakfast).toBe(0.1);
+
+    const breakfastKcal = body.items
+      .filter((i) => i.day === 1 && i.mealIndex === 0)
+      .reduce((sum, i) => sum + i.macros.kcal, 0);
+    const breakfastTarget = body.plan.targets.kcal * 0.1;
+    // The reported 759-on-2000 case (≈38%) fails this: 10% ± 5% relative.
+    expect(Math.abs(breakfastKcal - breakfastTarget) / breakfastTarget).toBeLessThanOrEqual(0.05);
+  });
+
   it('onboards a client atomically and serves a credentials PDF', async () => {
     const signaturePngBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';

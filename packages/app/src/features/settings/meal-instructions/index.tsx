@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
+import { resolveMealTemplate } from '@gymos/core/nutrition';
 import {
   Body,
   Card,
@@ -15,10 +16,19 @@ import {
   SectionTitle,
   StickyFormFooter,
   XStack,
+  YStack,
 } from '@gymos/ui';
 import { useMealInstructions, useSaveMealInstructions } from '../../../api';
 import { AppScreen } from '../../shell/app-screen';
 import { MarkdownSubsetPreview } from './markdown-preview';
+import {
+  draftToShares,
+  emptyShareDraft,
+  SHARE_SLOTS,
+  sharesToDraft,
+  type ShareDraft,
+  type ShareSlot,
+} from './share-draft';
 
 /** Insert-shortcut toolbar: appends a markdown-subset template a coach can then edit in place. */
 const TOOLBAR: { label: string; snippet: (draft: string) => string }[] = [
@@ -28,15 +38,32 @@ const TOOLBAR: { label: string; snippet: (draft: string) => string }[] = [
   { label: 'Bullet', snippet: (d) => `${d}${d.length > 0 ? '\n' : ''}- List item` },
 ];
 
+const SHARE_LABEL: Record<ShareSlot, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+  snack: 'Snack',
+};
+
+const formatResolvedShares = (draft: ShareDraft, mealCount: 3 | 4 | 5): string => {
+  const parsed = draftToShares(draft);
+  if (parsed.error) return parsed.error;
+  return resolveMealTemplate(mealCount, parsed.shares ?? undefined)
+    .map((meal) => `${SHARE_LABEL[meal.slot]} ${Math.round(meal.share * 100)}%`)
+    .join(' · ');
+};
+
 /**
- * Coach-scoped Layer-3 narration override editor (ADR-0015 D2). Shows only
- * this coach's own text — never the global prompt or tenant pack.
+ * Coach-scoped Meal AI Planner (ADR-0015 D2 + D7). Shows only this coach's
+ * own calorie split and narration text — never the global prompt or tenant pack.
  */
 export const MealInstructionsScreen = () => {
   const router = useRouter();
   const query = useMealInstructions();
   const save = useSaveMealInstructions();
   const [draft, setDraft] = useState('');
+  const [shareDraft, setShareDraft] = useState<ShareDraft>(emptyShareDraft);
+  const [shareError, setShareError] = useState<string | null>(null);
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
 
   useEffect(() => {
@@ -44,6 +71,8 @@ export const MealInstructionsScreen = () => {
     const version = query.data.instructions?.version ?? 0;
     if (loadedVersion === version) return;
     setDraft(query.data.instructions?.richText ?? '');
+    setShareDraft(sharesToDraft(query.data.instructions?.mealShares));
+    setShareError(null);
     setLoadedVersion(version);
   }, [query.data, loadedVersion]);
 
@@ -51,7 +80,7 @@ export const MealInstructionsScreen = () => {
     return (
       <AppScreen>
         <ErrorState
-          message="Could not load meal instructions."
+          message="Could not load meal planner settings."
           retry={() => void query.refetch()}
         />
       </AppScreen>
@@ -60,6 +89,16 @@ export const MealInstructionsScreen = () => {
 
   const savedResult = save.data?.instructions;
 
+  const onSave = () => {
+    const parsed = draftToShares(shareDraft);
+    if (parsed.error) {
+      setShareError(parsed.error);
+      return;
+    }
+    setShareError(null);
+    save.mutate({ text: draft, mealShares: parsed.shares });
+  };
+
   return (
     <AppScreen
       footer={
@@ -67,7 +106,7 @@ export const MealInstructionsScreen = () => {
           <OutlineButton flex={1} onPress={() => router.back()}>
             Cancel
           </OutlineButton>
-          <PrimaryButton flex={1} disabled={save.isPending} onPress={() => save.mutate(draft)}>
+          <PrimaryButton flex={1} disabled={save.isPending} onPress={onSave}>
             {save.isPending ? 'Saving…' : 'Save'}
           </PrimaryButton>
         </StickyFormFooter>
@@ -75,15 +114,50 @@ export const MealInstructionsScreen = () => {
     >
       <PageHeader
         title="Meal AI Planner"
-        subtitle="Your own instructions for how the AI names and describes meals — never portions or macros"
+        subtitle="Calorie split the solver uses, plus how meals are named and described"
       />
+
+      <Card gap="$3">
+        <SectionTitle>Calorie split</SectionTitle>
+        <Muted fontSize={12}>
+          This is what Layer 2 actually uses when it sizes each meal. Writing a percentage in the
+          instructions box below will not change portions — only these fields will. Leave a meal
+          blank to keep its default; unset meals share the remaining calories.
+        </Muted>
+        <XStack gap="$2" flexWrap="wrap">
+          {SHARE_SLOTS.map((slot) => (
+            <YStack key={slot} flex={1} minWidth={120}>
+              <FormField
+                label={SHARE_LABEL[slot]}
+                value={shareDraft[slot]}
+                onChangeText={(value) => {
+                  setShareDraft((current) => ({ ...current, [slot]: value }));
+                  setShareError(null);
+                }}
+                inputMode="numeric"
+                placeholder={slot === 'snack' ? 'default' : slot === 'breakfast' ? '28' : ''}
+                unit="%"
+              />
+            </YStack>
+          ))}
+        </XStack>
+        {shareError ? (
+          <Body color="$danger" role="alert">
+            {shareError}
+          </Body>
+        ) : (
+          <Muted fontSize={12}>
+            3 meals: {formatResolvedShares(shareDraft, 3)}. Snack applies when you generate with 4
+            or 5 meals.
+          </Muted>
+        )}
+      </Card>
 
       <Card gap="$3">
         <SectionTitle>Instructions</SectionTitle>
         <Muted fontSize={12}>
-          Applies to your generated plans only, taking precedence over any workspace defaults. Never
-          affects calories, macros, or which foods are picked — only how meals are named and
-          described.
+          Applies to your generated plans only, taking precedence over any workspace defaults. Names
+          and prep notes only — never calories, macros, or which foods are picked.
         </Muted>
         <XStack gap="$2" flexWrap="wrap">
           {TOOLBAR.map((tool) => (
@@ -130,12 +204,11 @@ export const MealInstructionsScreen = () => {
           {savedResult.changed ? (
             <Muted fontSize={12.5}>
               Applies starting with each client's next generated or regenerated plan. Existing
-              draft/published plans keep their current narration until then — bulk-regenerating
-              every client's plan at once isn't available yet; regenerate individual plans from each
-              client's plan screen.
+              draft/published plans keep their current split and narration until then — regenerate
+              individual plans from each client's plan screen.
             </Muted>
           ) : (
-            <Muted fontSize={12.5}>No change from your previous instructions.</Muted>
+            <Muted fontSize={12.5}>No change from your previous settings.</Muted>
           )}
         </Card>
       ) : null}

@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NUMERIC_CLAIM_PATTERN } from '@gymos/ai';
+import { normalizeMealShareOverrides, type MealShareOverrides } from '@gymos/core/nutrition';
 import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
 
@@ -61,6 +62,7 @@ export type CoachInstructions = {
   version: number;
   richText: string;
   plainText: string;
+  mealShares: MealShareOverrides | null;
 };
 
 export const getActiveInstructions = async (
@@ -80,6 +82,7 @@ export const getActiveInstructions = async (
     version: row.version,
     richText: row.richText,
     plainText: row.plainText,
+    mealShares: normalizeMealShareOverrides(row.mealShareOverrides) ?? null,
   };
 };
 
@@ -103,10 +106,17 @@ export const saveInstructions = async (
   db: Db,
   principal: { userId: string; coachId: string },
   rawText: string,
+  mealShares?: MealShareOverrides | null,
 ): Promise<SaveInstructionsResult> => {
   const richText = sanitizeInstructionsText(rawText);
   const plainText = deriveInstructionsPlainText(richText);
   const previous = await getActiveInstructions(db, principal.coachId);
+  // Omit → keep the previously saved split. `null` or `{}` → clear back to
+  // template defaults. A populated object → replace.
+  const nextShares =
+    mealShares === undefined
+      ? (previous?.mealShares ?? null)
+      : (normalizeMealShareOverrides(mealShares) ?? null);
 
   const created = await db.transaction(async (tx) => {
     if (previous) {
@@ -123,6 +133,7 @@ export const saveInstructions = async (
         isActive: true,
         richText,
         plainText,
+        mealShareOverrides: nextShares,
         createdBy: principal.userId,
       })
       .returning();
@@ -133,19 +144,22 @@ export const saveInstructions = async (
       action: 'coach_meal_instructions.update',
       resourceType: 'coach_meal_instructions',
       resourceId: row.id,
-      before: { plainText: previous?.plainText ?? null },
-      after: { plainText: row.plainText },
+      before: { plainText: previous?.plainText ?? null, mealShares: previous?.mealShares ?? null },
+      after: { plainText: row.plainText, mealShares: nextShares },
     });
     return row;
   });
+
+  const sharesEqual = JSON.stringify(previous?.mealShares ?? null) === JSON.stringify(nextShares);
 
   return {
     id: created.id,
     version: created.version,
     richText: created.richText,
     plainText: created.plainText,
+    mealShares: nextShares,
     previousPlainText: previous?.plainText ?? null,
-    changed: (previous?.plainText ?? '') !== plainText,
+    changed: (previous?.plainText ?? '') !== plainText || !sharesEqual,
     numericClaimWarning: NUMERIC_CLAIM_PATTERN.test(plainText),
   };
 };

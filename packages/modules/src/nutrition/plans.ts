@@ -11,7 +11,7 @@ import { err, ok, type Result } from '@gymos/core';
 import {
   assertNoRestrictedFoods,
   computeTargets,
-  MEAL_TEMPLATES,
+  resolveMealTemplate,
   solveMeal,
   solveWeek,
   type MacroTargets,
@@ -129,6 +129,7 @@ export const generatePlan = async (
   const profile = await getActiveProfile(db, clientId);
   const restrictions = profile?.restrictions ?? [];
   const mealCount = options.mealCount ?? manifest.aiConfig.mealCount;
+  const coachInstructions = await getActiveInstructions(db, principal.coachId);
 
   // 1. Safety gates — blocked unless an explicit, logged coach override exists.
   const gateReasons = safetyGateReasons(client, restrictions);
@@ -221,6 +222,7 @@ export const generatePlan = async (
         aiMode: options.ai.mode,
         weekMode: manifest.aiConfig.weekMode,
         weekTemplateCount: manifest.aiConfig.weekTemplateCount,
+        mealShares: coachInstructions?.mealShares ?? null,
         promptVersion: options.ai.promptVersion ?? null,
         adapterVersion: options.ai.adapterVersion ?? null,
         idempotencyKey: options.idempotencyKey ?? null,
@@ -255,6 +257,7 @@ export const generatePlan = async (
       kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
       macroTolerancePct: manifest.aiConfig.macroTolerancePct,
       seed: generation.id,
+      ...(coachInstructions?.mealShares ? { mealShares: coachInstructions.mealShares } : {}),
     },
     manifest.aiConfig.weekMode,
     manifest.aiConfig.weekTemplateCount,
@@ -304,9 +307,8 @@ export const generatePlan = async (
     },
   };
 
-  // Coach-level narration override (ADR-0015 D2) — highest precedence,
-  // resolved fresh on every generation rather than cached on the plan.
-  const coachInstructions = await getActiveInstructions(db, principal.coachId);
+  // Coach-level narration override (ADR-0015 D2) — already resolved above
+  // so Layer 2 could read the calorie-split overrides from the same row.
   const aiWithCoachAddendum: AiConfig = {
     ...options.ai,
     ...(coachInstructions ? { coachAddendum: coachInstructions.plainText } : {}),
@@ -649,7 +651,10 @@ export const regenerateMeal = async (
   if (mealItems.length === 0 || mealCount === null) {
     return err({ code: 'MEAL_NOT_FOUND', day, mealIndex });
   }
-  const template = MEAL_TEMPLATES[mealCount][mealIndex];
+  const coachInstructions = await getActiveInstructions(db, principal.coachId);
+  const template = resolveMealTemplate(mealCount, coachInstructions?.mealShares ?? undefined)[
+    mealIndex
+  ];
   if (!template) return err({ code: 'MEAL_NOT_FOUND', day, mealIndex });
 
   const profile = await getActiveProfile(db, existing.plan.clientId);
@@ -708,8 +713,6 @@ export const regenerateMeal = async (
     });
   }
 
-  // Coach-level narration override (ADR-0015 D2) — same precedence rule as generatePlan.
-  const coachInstructions = await getActiveInstructions(db, principal.coachId);
   const aiWithCoachAddendum: AiConfig = {
     ...ai,
     ...(coachInstructions ? { coachAddendum: coachInstructions.plainText } : {}),

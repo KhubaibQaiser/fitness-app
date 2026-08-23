@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   assertNoRestrictedFoods,
   DEFAULT_SOLVER_CONFIG,
+  MAX_MEAL_SHARE,
   MEAL_TEMPLATES,
+  MIN_MEAL_SHARE,
+  normalizeMealShareOverrides,
+  resolveMealTemplate,
   seededRandom,
   solveDay,
   solveMeal,
@@ -250,6 +254,19 @@ describe('solveDay', () => {
         expect(item.portionGrams).toBeGreaterThan(0);
         expect(item.portionLabel).toMatch(/\d/);
       }
+    }
+  });
+
+  it('keeps every meal inside its own kcal share, not just the day total', () => {
+    const result = solveDay(1, { ...TARGETS, kcal: 2000 }, CANDIDATES, config({ mealCount: 3 }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const template = MEAL_TEMPLATES[3];
+    for (const meal of result.value.meals) {
+      const entry = template[meal.mealIndex];
+      if (!entry) throw new Error('fixture error: missing template entry');
+      const mealTarget = 2000 * entry.share;
+      expect(Math.abs(meal.totals.kcal - mealTarget) / mealTarget).toBeLessThanOrEqual(0.05);
     }
   });
 
@@ -877,5 +894,75 @@ describe('assertNoRestrictedFoods (independent second allergen check)', () => {
   it('rejects unknown foods outright (fail closed)', () => {
     const result = assertNoRestrictedFoods([{ foodId: 'mystery' }], foodsById, []);
     expect(result.ok).toBe(false);
+  });
+});
+
+describe('ADR-0015 D7 — meal-share overrides and enforcement', () => {
+  it('normalizeMealShareOverrides drops empty/non-finite values and clamps the rest', () => {
+    expect(normalizeMealShareOverrides(undefined)).toBeUndefined();
+    expect(normalizeMealShareOverrides(null)).toBeUndefined();
+    expect(normalizeMealShareOverrides({})).toBeUndefined();
+    expect(normalizeMealShareOverrides({ breakfast: Number.NaN })).toBeUndefined();
+    const clamped = normalizeMealShareOverrides({ breakfast: 0.01, lunch: 0.95, dinner: 0.2 });
+    expect(clamped).toEqual({
+      breakfast: MIN_MEAL_SHARE,
+      lunch: MAX_MEAL_SHARE,
+      dinner: 0.2,
+    });
+  });
+
+  it('resolveMealTemplate leaves the hardcoded template alone when nothing is set', () => {
+    expect(resolveMealTemplate(3)).toBe(MEAL_TEMPLATES[3]);
+    expect(resolveMealTemplate(3, {})).toBe(MEAL_TEMPLATES[3]);
+    // snack is not in the 3-meal template — an override for it is a no-op
+    expect(resolveMealTemplate(3, { snack: 0.1 })).toBe(MEAL_TEMPLATES[3]);
+  });
+
+  it('resolveMealTemplate keeps a 10% breakfast and redistributes the rest', () => {
+    const resolved = resolveMealTemplate(3, { breakfast: 0.1 });
+    const breakfast = resolved.find((m) => m.slot === 'breakfast');
+    const lunch = resolved.find((m) => m.slot === 'lunch');
+    const dinner = resolved.find((m) => m.slot === 'dinner');
+    expect(breakfast?.share).toBeCloseTo(0.1, 5);
+    expect(lunch && dinner).toBeTruthy();
+    if (!lunch || !dinner) return;
+    expect(lunch.share + dinner.share).toBeCloseTo(0.9, 5);
+    expect(lunch.share / dinner.share).toBeCloseTo(
+      MEAL_TEMPLATES[3][1]!.share / MEAL_TEMPLATES[3][2]!.share,
+      5,
+    );
+    expect(resolved.reduce((sum, m) => sum + m.share, 0)).toBeCloseTo(1, 5);
+  });
+
+  it('resolveMealTemplate normalizes when every slot in the template is set', () => {
+    const resolved = resolveMealTemplate(3, { breakfast: 0.2, lunch: 0.2, dinner: 0.2 });
+    for (const meal of resolved) {
+      expect(meal.share).toBeCloseTo(1 / 3, 5);
+    }
+  });
+
+  it('resolveMealTemplate reserves a floor for unset slots when overrides already sum to 1+', () => {
+    const resolved = resolveMealTemplate(3, { breakfast: 0.6, lunch: 0.6 });
+    const dinner = resolved.find((m) => m.slot === 'dinner');
+    expect(dinner?.share).toBe(MIN_MEAL_SHARE);
+    expect(resolved.reduce((sum, m) => sum + m.share, 0)).toBeCloseTo(1, 5);
+  });
+
+  it('honors a coach-set 10% breakfast on a 2000 kcal day', () => {
+    const daily = { ...TARGETS, kcal: 2000 };
+    const result = solveDay(
+      1,
+      daily,
+      CANDIDATES,
+      config({ mealCount: 3, seed: 'd7-breakfast-10', mealShares: { breakfast: 0.1 } }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const breakfast = result.value.meals.find((m) => m.slot === 'breakfast');
+    expect(breakfast).toBeDefined();
+    // 10% of 2000 = 200; ±5% → 190–210. The reported 759 kcal breakfast
+    // would fail this assertion.
+    expect(Math.abs((breakfast?.totals.kcal ?? 0) - 200) / 200).toBeLessThanOrEqual(0.05);
+    expect(Math.abs(result.value.totals.kcal - 2000) / 2000).toBeLessThanOrEqual(0.05);
   });
 });

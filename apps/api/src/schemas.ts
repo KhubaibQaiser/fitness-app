@@ -221,8 +221,26 @@ export const publishBody = z.object({
   acknowledgeDrift: z.boolean().optional(),
 });
 
+const mealShareSlot = z.number().min(0.05).max(0.8);
+export const mealSharesSchema = z
+  .object({
+    breakfast: mealShareSlot.optional(),
+    lunch: mealShareSlot.optional(),
+    dinner: mealShareSlot.optional(),
+    snack: mealShareSlot.optional(),
+  })
+  .strict()
+  .refine(
+    (shares) =>
+      (shares.breakfast ?? 0) + (shares.lunch ?? 0) + (shares.dinner ?? 0) + (shares.snack ?? 0) <=
+      1 + 1e-9,
+    { message: 'Meal shares cannot sum to more than 100%' },
+  );
+
 export const putMealInstructionsBody = z.object({
   text: z.string().max(20000), // sanitize+cap happens server-side (saveInstructions); this bounds request size only
+  /** Fractions 0–1. Omit to keep the previously saved split; `null` or `{}` clears it. */
+  mealShares: mealSharesSchema.nullable().optional(),
 });
 
 export const regenerateMealParam = z.object({

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'solito/link';
 import { ApiError, type PlanItem, type PlanSummary } from '@gymos/contracts';
+import { resolveMealTemplate } from '@gymos/core/nutrition';
 import { downloadBlob } from '@gymos/platform';
 import {
   ArrowLeft,
@@ -20,14 +21,20 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
-import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan, useRegenerateMeal } from '../../api';
+import {
+  useDownloadDietPlanPdf,
+  useMealInstructions,
+  usePatchPlan,
+  usePublishPlan,
+  useRegenerateMeal,
+} from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanFoodPicker } from './plan-food-picker';
 import { PlanItemCard } from './plan-item-card';
 import { PlanPublishConfirm } from './plan-publish-confirm';
 import { PlanTitleHeader } from './plan-title-header';
-import { mealKcal } from './plan-totals';
+import { mealKcal, mealTargetKcal } from './plan-totals';
 
 const DAY_OPTIONS = [
   { value: 1, label: 'Mon' },
@@ -117,6 +124,11 @@ export const PlanEditor = ({
   const publish = usePublishPlan(planId, clientId);
   const regenerateMeal = useRegenerateMeal(planId, clientId);
   const downloadPdf = useDownloadDietPlanPdf(planId);
+  const mealInstructions = useMealInstructions();
+  const mealTemplate = resolveMealTemplate(
+    mealCount,
+    mealInstructions.data?.instructions?.mealShares ?? undefined,
+  );
   const [regenOpen, setRegenOpen] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [addMealIndex, setAddMealIndex] = useState<number | null>(null);
@@ -336,7 +348,8 @@ export const PlanEditor = ({
           <Row>
             <SectionTitle>{SLOT_LABEL[mealSlot]}</SectionTitle>
             <Muted fontSize={12} fontFamily="$mono">
-              {Math.round(mealKcal(dayItems, mealIndex))} kcal
+              {Math.round(mealKcal(dayItems, mealIndex))}/
+              {mealTargetKcal(targets.kcal, mealTemplate[mealIndex]?.share ?? 0)} kcal
             </Muted>
           </Row>
           {dayItems

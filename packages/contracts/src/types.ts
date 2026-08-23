@@ -79,12 +79,21 @@ export type UpdateMeInput = {
   defaultCountry?: string;
 };
 
-/** Coach-scoped Layer-3 narration override (ADR-0015 D2). */
+/** Coach-set fraction of daily kcal per slot (ADR-0015 D7). Unset slots use the template default. */
+export type MealShareOverrides = {
+  breakfast?: number;
+  lunch?: number;
+  dinner?: number;
+  snack?: number;
+};
+
+/** Coach-scoped Layer-3 narration override (ADR-0015 D2) plus D7 calorie split. */
 export type CoachMealInstructions = {
   id: string;
   version: number;
   richText: string;
   plainText: string;
+  mealShares: MealShareOverrides | null;
 };
 
 export type SavedCoachMealInstructions = CoachMealInstructions & {

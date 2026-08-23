@@ -6,7 +6,7 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { api, type PlanOp, type Restriction } from '@gymos/contracts';
+import { api, type MealShareOverrides, type PlanOp, type Restriction } from '@gymos/contracts';
 
 /** Query-key factory — the single vocabulary for cache identity. */
 export const qk = {
@@ -57,7 +57,8 @@ export const useMealInstructions = () =>
 export const useSaveMealInstructions = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => api.me.mealInstructions.put(text),
+    mutationFn: (input: { text: string; mealShares?: MealShareOverrides | null }) =>
+      api.me.mealInstructions.put(input),
     onSuccess: (data) => {
       queryClient.setQueryData(qk.mealInstructions, { instructions: data.instructions });
     },

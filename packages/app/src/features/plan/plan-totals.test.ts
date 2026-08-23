@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanItem } from '@gymos/contracts';
-import { mealKcal } from './plan-totals';
+import { mealKcal, mealTargetKcal } from './plan-totals';
 
 const item = (mealIndex: number, kcal: number): PlanItem => ({
   id: `i-${mealIndex}-${kcal}`,
@@ -26,5 +26,11 @@ describe('D4 smoke test — mealKcal', () => {
 
   it('returns 0 for a meal with no items rather than throwing', () => {
     expect(mealKcal([], 0)).toBe(0);
+  });
+});
+
+describe('ADR-0015 D7 — mealTargetKcal', () => {
+  it('rounds 10% of 2000 to 200', () => {
+    expect(mealTargetKcal(2000, 0.1)).toBe(200);
   });
 });

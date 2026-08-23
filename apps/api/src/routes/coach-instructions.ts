@@ -38,8 +38,8 @@ export const registerCoachInstructionsRoutes = (app: GymosApp, bind: RouteBind):
     }),
     async (c) => {
       const principal = asCoach(c.get('principal'));
-      const { text } = c.req.valid('json');
-      const result = await saveInstructions(db, principal, text);
+      const { text, mealShares } = c.req.valid('json');
+      const result = await saveInstructions(db, principal, text, mealShares);
       return c.json({ instructions: result });
     },
   );

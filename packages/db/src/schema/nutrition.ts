@@ -76,6 +76,14 @@ export const coachMealInstructions = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     richText: text('rich_text').notNull(),
     plainText: text('plain_text').notNull(),
+    /**
+     * Coach-set kcal split (ADR-0015 D7) — fractions 0–1 keyed by meal slot.
+     * Null means "use the hardcoded `MEAL_TEMPLATES` defaults."
+     */
+    mealShareOverrides:
+      jsonb('meal_share_overrides').$type<
+        Partial<Record<'breakfast' | 'lunch' | 'dinner' | 'snack', number>>
+      >(),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id),

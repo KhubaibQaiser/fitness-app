@@ -171,7 +171,7 @@ export const SettingsScreen = () => {
             <YStack flex={1} gap={2} minWidth={0}>
               <Body fontWeight="700">Meal AI Planner</Body>
               <Muted fontSize={12}>
-                Your own instructions for how meals are named and described.
+                Calorie split per meal, plus how meals are named and described.
               </Muted>
             </YStack>
             <ChevronRight size={20} color="$textMuted" />

@@ -271,9 +271,10 @@ export const api = {
           'GET',
           '/v1/me/meal-instructions',
         ),
-      put: (text: string) =>
+      put: (input: { text: string; mealShares?: T.MealShareOverrides | null }) =>
         request<{ instructions: T.SavedCoachMealInstructions }>('PUT', '/v1/me/meal-instructions', {
-          text,
+          text: input.text,
+          ...(input.mealShares !== undefined ? { mealShares: input.mealShares } : {}),
         }),
     },
   },
