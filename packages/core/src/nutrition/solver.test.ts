@@ -404,6 +404,50 @@ describe('solveDay', () => {
     }
   });
 
+  it('expansion falls back to a 100g default unit for a food with no serving units', () => {
+    const noUnitsProtein = food(
+      'no-units-protein',
+      'protein',
+      { kcal: 150, proteinG: 20, fatG: 5, carbsG: 0, fiberG: 0 },
+      { servingUnits: [], allowedSlots: slots('breakfast') },
+    );
+    const staple = food(
+      'roti',
+      'staple',
+      { kcal: 264, proteinG: 9, fatG: 4, carbsG: 51, fiberG: 7 },
+      { servingUnits: [{ name: 'roti', grams: 40 }], allowedSlots: slots('breakfast') },
+    );
+    const beverage = food(
+      'coffee',
+      'beverage',
+      { kcal: 2, proteinG: 0.1, fatG: 0, carbsG: 0, fiberG: 0 },
+      { servingUnits: [{ name: 'cup', grams: 240 }], allowedSlots: slots('breakfast') },
+    );
+    const breakfastTemplate = MEAL_TEMPLATES[3][0];
+    if (!breakfastTemplate) throw new Error('fixture error: breakfast template missing');
+    const denseTarget: MacroTargets = {
+      kcal: 4000,
+      proteinG: 240,
+      fatG: 140,
+      carbsG: 360,
+      fiberG: 35,
+    };
+    const result = solveMeal(
+      0,
+      breakfastTemplate,
+      denseTarget,
+      [noUnitsProtein, staple, beverage],
+      config({ seed: 'expand-no-units', macroTolerancePct: 60, kcalTolerancePct: 15 }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const proteinItems = result.value.items.filter((i) => i.foodId === 'no-units-protein');
+    expect(proteinItems.length).toBeGreaterThan(1); // expansion actually fired, not just the initial pick
+    for (const item of proteinItems) {
+      expect(item.portionLabel).toContain('g'); // fell back to the default { name: 'g', grams: 100 } unit
+    }
+  });
+
   it('handles foods without serving units and zero-kcal foods', () => {
     const withOddities: CandidateFood[] = [
       ...CANDIDATES,
@@ -419,6 +463,75 @@ describe('solveDay', () => {
     ];
     const result = solveDay(2, TARGETS, withOddities, config({ seed: 'oddity', mealCount: 3 }));
     expect(result.ok).toBe(true);
+  });
+});
+
+describe('effectiveRank — slot-aware ranking (ADR-0015 D6 bug fix)', () => {
+  it('prefers a food with a higher rankBySlot score for the slot actually being filled', () => {
+    // 'zpreferred' ties with 3 other proteins on the flat rankScore (all
+    // default to 1) but sorts alphabetically LAST among them — so on an
+    // untouched tie (broken by id ascending), it would be the one candidate
+    // always excluded from the top-3 pool pickCandidate draws from, never
+    // selectable no matter the seed. rankBySlot.lunch must override that.
+    const tiedProtein = (id: string) =>
+      food(
+        id,
+        'protein',
+        { kcal: 150, proteinG: 25, fatG: 5, carbsG: 0, fiberG: 0 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      );
+    const favored = food(
+      'zpreferred',
+      'protein',
+      { kcal: 150, proteinG: 25, fatG: 5, carbsG: 0, fiberG: 0 },
+      { allowedSlots: slots('lunch', 'dinner'), rankBySlot: { lunch: 5 } },
+    );
+    const staple = food(
+      'rice',
+      'staple',
+      { kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, fiberG: 0.4 },
+      { allowedSlots: slots('lunch') },
+    );
+    const vegetable = food(
+      'salad',
+      'vegetable',
+      { kcal: 25, proteinG: 1, fatG: 0.2, carbsG: 5, fiberG: 1.5 },
+      { allowedSlots: slots('lunch', 'dinner') },
+    );
+    const fat = food(
+      'oil',
+      'fat',
+      { kcal: 884, proteinG: 0, fatG: 100, carbsG: 0, fiberG: 0 },
+      { servingUnits: [{ name: 'tbsp', grams: 13.5 }], allowedSlots: slots('lunch') },
+    );
+    const candidates = [
+      tiedProtein('filler1'),
+      tiedProtein('filler2'),
+      tiedProtein('plain'),
+      favored,
+      staple,
+      vegetable,
+      fat,
+    ];
+    const lunchTemplate = MEAL_TEMPLATES[3][1]; // lunch
+    if (!lunchTemplate) throw new Error('fixture error: lunch template missing');
+
+    let sawFavored = 0;
+    const trials = 20;
+    for (let seed = 0; seed < trials; seed += 1) {
+      const result = solveMeal(
+        1,
+        lunchTemplate,
+        TARGETS,
+        candidates,
+        config({ seed: `rbs-${seed}`, macroTolerancePct: 60 }),
+      );
+      if (result.ok && result.value.items.some((i) => i.foodId === 'zpreferred')) sawFavored += 1;
+    }
+    // Without rankBySlot, alphabetical tie-breaking would exclude
+    // 'zpreferred' from the top-3 pool on every single seed (0/20) — it can
+    // only ever be picked because rankBySlot.lunch pulls it to the top.
+    expect(sawFavored).toBeGreaterThan(0);
   });
 });
 
@@ -556,6 +669,50 @@ describe('solveMeal', () => {
     if (!result.ok) return;
     expect(result.value.items.some((i) => i.foodId === 'chicken')).toBe(false);
   });
+
+  it('errors NO_CANDIDATES when a group and all fallbacks are missing', () => {
+    const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
+    const result = solveMeal(1, meal, TARGETS, onlyProtein, config({ seed: 'meal-no-candidates' }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
+  });
+
+  it('errors SOLVER_INFEASIBLE when portions cannot reach the meal share of the targets', () => {
+    const sparse: CandidateFood[] = [
+      food(
+        'lettuce',
+        'protein',
+        { kcal: 15, proteinG: 1.4, fatG: 0.2, carbsG: 2.9, fiberG: 1.3 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      ),
+      food(
+        'cucumber',
+        'staple',
+        { kcal: 16, proteinG: 0.7, fatG: 0.1, carbsG: 3.6, fiberG: 0.5 },
+        { allowedSlots: slots('lunch') },
+      ),
+      food(
+        'celery',
+        'vegetable',
+        { kcal: 14, proteinG: 0.7, fatG: 0.2, carbsG: 3, fiberG: 1.6 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      ),
+      food(
+        'sprouts',
+        'fat',
+        { kcal: 23, proteinG: 3, fatG: 0.2, carbsG: 2.1, fiberG: 1.9 },
+        { allowedSlots: slots('lunch') },
+      ),
+    ];
+    const result = solveMeal(1, meal, TARGETS, sparse, config({ seed: 'meal-infeasible' }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('SOLVER_INFEASIBLE');
+      if (result.error.code === 'SOLVER_INFEASIBLE') {
+        expect(result.error.bestErrorPct).toBeGreaterThan(0);
+      }
+    }
+  });
 });
 
 describe('solveWeek', () => {
@@ -631,6 +788,19 @@ describe('solveWeek', () => {
   it('propagates NO_CANDIDATES without recovery retries', () => {
     const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
     const result = solveWeek(TARGETS, onlyProtein, config({ mealCount: 3 }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
+  });
+
+  it('rotating_template: propagates NO_CANDIDATES from any template attempt', () => {
+    const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
+    const result = solveWeek(
+      TARGETS,
+      onlyProtein,
+      config({ mealCount: 3 }),
+      'rotating_template',
+      3,
+    );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
   });

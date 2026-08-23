@@ -221,6 +221,10 @@ export const publishBody = z.object({
   acknowledgeDrift: z.boolean().optional(),
 });
 
+export const putMealInstructionsBody = z.object({
+  text: z.string().max(20000), // sanitize+cap happens server-side (saveInstructions); this bounds request size only
+});
+
 export const regenerateMealParam = z.object({
   id: z.uuid(),
   day: z.coerce.number().int().min(1).max(7),

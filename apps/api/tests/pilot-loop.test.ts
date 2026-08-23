@@ -661,6 +661,50 @@ describe('the pilot core loop', () => {
     expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
   });
 
+  it('ADR-0015 D2: saves sanitized coach instructions and threads them into the next generation', async () => {
+    const dirty = 'Prefer <img src=x onerror="steal()"> high-protein breakfasts.\u200B';
+    const saved = await req('/v1/me/meal-instructions', { method: 'PUT', json: { text: dirty } });
+    expect(saved.status).toBe(200);
+    const savedBody = (await saved.json()) as {
+      instructions: {
+        richText: string;
+        plainText: string;
+        previousPlainText: string | null;
+        changed: boolean;
+      };
+    };
+    expect(savedBody.instructions.richText).not.toMatch(/[<>]/);
+    expect(savedBody.instructions.plainText).toContain('high-protein breakfasts');
+    expect(savedBody.instructions.changed).toBe(true);
+
+    const fetched = await req('/v1/me/meal-instructions');
+    expect(fetched.status).toBe(200);
+    const fetchedBody = (await fetched.json()) as {
+      instructions: { plainText: string } | null;
+    };
+    expect(fetchedBody.instructions?.plainText).toBe(savedBody.instructions.plainText);
+
+    // Saving again with unchanged (post-sanitization) text reports changed: false.
+    const resaved = await req('/v1/me/meal-instructions', { method: 'PUT', json: { text: dirty } });
+    const resavedBody = (await resaved.json()) as { instructions: { changed: boolean } };
+    expect(resavedBody.instructions.changed).toBe(false);
+
+    // Threaded into the next generation, even in AI_MODE=fallback (the coach
+    // layer's presence is recorded before narrate() is ever called).
+    const generated = await req(`/v1/clients/${demoClientId}/meal-plans/generate`, {
+      method: 'POST',
+      json: {},
+    });
+    expect(generated.status).toBe(200);
+    const generatedBody = (await generated.json()) as { generationId: string };
+    const [generationRow] = await db
+      .select({ validation: schema.planGenerations.validation })
+      .from(schema.planGenerations)
+      .where(eq(schema.planGenerations.id, generatedBody.generationId));
+    const validation = generationRow?.validation as { promptLayers?: { coach?: boolean } } | null;
+    expect(validation?.promptLayers?.coach).toBe(true);
+  });
+
   it('onboards a client atomically and serves a credentials PDF', async () => {
     const signaturePngBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';

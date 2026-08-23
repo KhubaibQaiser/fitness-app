@@ -443,6 +443,7 @@ const expandInfeasibleItems = (
     const atCeiling = items.find((item) => {
       if (item.fixedPortion) return false;
       const itemMeal = mealByIndex.get(item.mealIndex);
+      /* v8 ignore next -- unreachable: every item's mealIndex comes from mealByIndex's own keys */
       if (!itemMeal) return false;
       const mealItemCount = items.filter((i) => i.mealIndex === item.mealIndex).length;
       if (mealItemCount >= itemMeal.pattern.length + MAX_EXPANSION_ITEMS_PER_MEAL) return false;
@@ -451,8 +452,10 @@ const expandInfeasibleItems = (
     if (!atCeiling) return; // nothing left that expansion could help
 
     const meal = mealByIndex.get(atCeiling.mealIndex);
+    /* v8 ignore next -- unreachable: atCeiling.find already proved this same lookup truthy */
     if (!meal) return;
     const newFood = pickCandidate(candidates, atCeiling.food.foodGroup, meal.slot, rand, used);
+    /* v8 ignore next -- unreachable: atCeiling.food already matches this exact group+slot */
     if (!newFood) return;
     used.add(newFood.id);
     const unit = newFood.servingUnits[0] ?? { name: 'g', grams: 100 };
@@ -583,6 +586,8 @@ export const solveMeal = (
     attempt += 1
   ) {
     const retry = attemptSolve(attempt);
+    /* v8 ignore next 2 -- NO_CANDIDATES is deterministic per candidate pool:
+       if attempt 0 built successfully, every retry builds too. */
     if (!retry.ok) return retry;
     const score = errorScore(currentTotals(retry.value), mealTargets);
     if (score < best.score) best = { items: retry.value, score };
@@ -688,7 +693,7 @@ const solveRotatingTemplateWeek = (
   const days: SolvedDay[] = [];
   for (let day = 1; day <= 7; day += 1) {
     const template = templates[(day - 1) % count];
-    /* v8 ignore next -- unreachable: count is clamped >=1 and templates has exactly `count` entries */
+    /* v8 ignore next 6 -- unreachable: count is clamped >=1 and templates has exactly `count` entries */
     if (!template)
       return err({
         code: 'SOLVER_INFEASIBLE',

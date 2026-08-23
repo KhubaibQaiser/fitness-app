@@ -1,6 +1,12 @@
 import { and, asc, count, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
-import { narrate, narrativeOutputSchema, type AiConfig, type NarrativeOutput } from '@gymos/ai';
+import {
+  narrate,
+  narrativeOutputSchema,
+  resolvePromptPack,
+  type AiConfig,
+  type NarrativeOutput,
+} from '@gymos/ai';
 import { err, ok, type Result } from '@gymos/core';
 import {
   assertNoRestrictedFoods,
@@ -17,6 +23,7 @@ import { iso, nowIso, schema as s, type Db } from '@gymos/db';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
 import { weeklyDeltaKgFromManifest, type TenantManifest } from '../tenancy';
+import { getActiveInstructions } from './coach-instructions';
 import { getActiveProfile, restrictedAllergenCodes } from './dietary';
 import { candidatesForRestrictions, foodsById } from './foods';
 import { applyPlanOps, PatchFoodMissing, type PlanOp } from './plan-ops';
@@ -297,6 +304,14 @@ export const generatePlan = async (
     },
   };
 
+  // Coach-level narration override (ADR-0015 D2) — highest precedence,
+  // resolved fresh on every generation rather than cached on the plan.
+  const coachInstructions = await getActiveInstructions(db, principal.coachId);
+  const aiWithCoachAddendum: AiConfig = {
+    ...options.ai,
+    ...(coachInstructions ? { coachAddendum: coachInstructions.plainText } : {}),
+  };
+
   const narrative = await narrate(
     {
       locale: manifest.locales.default,
@@ -312,7 +327,7 @@ export const generatePlan = async (
         },
       ],
     },
-    options.ai,
+    aiWithCoachAddendum,
     { cache: llmCache, expectedMealCount: templateDay.meals.length },
   );
   const templateMealNames = templateDay.meals.map(
@@ -381,6 +396,18 @@ export const generatePlan = async (
           /** Day-1 narrative snapshot for online edit_distance vs published names. */
           templateMealNames,
           templatePrepNotes: templateDay.meals.map(() => ''),
+          /**
+           * Which of the three narration layers actually contributed
+           * non-empty text (ADR-0015 D2) — prompt composition now has three
+           * layers to reason about (global → tenant pack → coach); this
+           * makes prompt-quality regressions attributable to a specific
+           * layer instead of only "the narrative changed."
+           */
+          promptLayers: {
+            base: true,
+            tenantPack: resolvePromptPack(manifest.aiConfig.promptPackId).systemAddendum.length > 0,
+            coach: coachInstructions !== null && coachInstructions.plainText.length > 0,
+          },
         },
       })
       .where(eq(s.planGenerations.id, generation.id));
@@ -681,6 +708,13 @@ export const regenerateMeal = async (
     });
   }
 
+  // Coach-level narration override (ADR-0015 D2) — same precedence rule as generatePlan.
+  const coachInstructions = await getActiveInstructions(db, principal.coachId);
+  const aiWithCoachAddendum: AiConfig = {
+    ...ai,
+    ...(coachInstructions ? { coachAddendum: coachInstructions.plainText } : {}),
+  };
+
   // Layer 3 — name only this one meal; never touches portions/macros.
   const narrative = await narrate(
     {
@@ -702,7 +736,7 @@ export const regenerateMeal = async (
         },
       ],
     },
-    ai,
+    aiWithCoachAddendum,
     { expectedMealCount: 1 },
   );
   const mealName = narrative.output.days[0]?.meals[0]?.name ?? `${solved.value.slot}, day ${day}`;
