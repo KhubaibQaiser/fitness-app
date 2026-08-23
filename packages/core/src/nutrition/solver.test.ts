@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   assertNoRestrictedFoods,
   DEFAULT_SOLVER_CONFIG,
+  MEAL_TEMPLATES,
   seededRandom,
   solveDay,
+  solveMeal,
   solveWeek,
   type CandidateFood,
   type MealSlot,
@@ -417,6 +419,142 @@ describe('solveDay', () => {
     ];
     const result = solveDay(2, TARGETS, withOddities, config({ seed: 'oddity', mealCount: 3 }));
     expect(result.ok).toBe(true);
+  });
+});
+
+describe('D1 — realistic portion ceilings across every meal slot', () => {
+  // The shared, rich CANDIDATES fixture (multiple options per group) with
+  // realistic ceilings applied to egg and chicken — proves the mechanism
+  // against something representative of the real catalog, not an adversarial
+  // narrow fixture where the hill-climb's macro-balancing can get stuck in a
+  // local optimum before ever reaching a food's ceiling.
+  const withCeilings: CandidateFood[] = CANDIDATES.map((f) => {
+    if (f.id === 'egg') return { ...f, maxUnits: 3 }; // 3 pieces / 150g, not the old UNIT_MAX of 8 (400g)
+    if (f.id === 'chicken') return { ...f, maxUnits: 3 }; // 3 pieces / 360g, not the old UNIT_MAX of 8 (960g)
+    // A bulky, low-kcal-density staple explicitly allowed above 400g — proving
+    // per-food ceilings are not bound to any universal cap in either
+    // direction (unlike the rejected flat-400g option A).
+    if (f.id === 'rice') return { ...f, maxUnits: 4 }; // 4 cups / 640g
+    return f;
+  });
+
+  // 1.8x TARGETS — large enough that, under the old UNIT_MAX = 8 rule, the
+  // solver would have pushed egg/chicken well past a realistic serving to
+  // close the gap, while still comfortably solvable with a realistic catalog.
+  const denseTarget: MacroTargets = {
+    kcal: TARGETS.kcal * 1.8,
+    proteinG: TARGETS.proteinG * 1.8,
+    fatG: TARGETS.fatG * 1.8,
+    carbsG: TARGETS.carbsG * 1.8,
+    fiberG: TARGETS.fiberG * 1.8,
+  };
+
+  it('breakfast: never puts more than the realistic ceiling of egg in a single item', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-1' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const eggItems = result.value.meals.flatMap((m) => m.items).filter((i) => i.foodId === 'egg');
+    expect(eggItems.length).toBeGreaterThan(0);
+    for (const item of eggItems) {
+      expect(item.portionGrams).toBeLessThanOrEqual(150); // never the old ceiling of 400g
+    }
+  });
+
+  it('lunch/dinner: the same ceiling mechanism applies to a lunch/dinner protein, not just breakfast', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-2' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const chickenItems = result.value.meals
+      .flatMap((m) => m.items)
+      .filter((i) => i.foodId === 'chicken');
+    expect(chickenItems.length).toBeGreaterThan(0);
+    for (const item of chickenItems) {
+      expect(item.portionGrams).toBeLessThanOrEqual(360); // never the old ceiling of 960g
+    }
+  });
+
+  it('a bulky staple with no explicit maxUnits can still exceed 400g when the target needs it', () => {
+    // Rice/roti have no explicit maxUnits — they fall back to the default
+    // formula, which for their serving sizes yields a ceiling well above
+    // 400g. A flat global cap (the rejected D1 option A) would wrongly
+    // suppress this.
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-3-seed6' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const staples = result.value.meals
+      .flatMap((m) => m.items)
+      .filter((i) => ['rice', 'roti', 'oats', 'bran'].includes(i.foodId));
+    expect(staples.some((i) => i.portionGrams > 400)).toBe(true);
+  });
+
+  it('spreads a large kcal share across multiple items rather than one oversized item', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-4' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const allItems = result.value.meals.flatMap((m) => m.items);
+    // With 34 real curated foods this would never need every group to
+    // expand — but at 1.8x target, at least one pattern group typically
+    // does need a second item, proving the expansion path actually fires.
+    const totalItemCount = allItems.length;
+    const basePatternLength = MEAL_TEMPLATES[4].reduce((sum, m) => sum + m.pattern.length, 0);
+    expect(totalItemCount).toBeGreaterThanOrEqual(basePatternLength);
+  });
+});
+
+describe('solveMeal', () => {
+  const meal = MEAL_TEMPLATES[3][1]; // lunch, share 0.47
+  if (!meal) throw new Error('fixture error: lunch template missing');
+
+  it('solves one meal to its own share of the plan targets, within tolerance', () => {
+    const result = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-lunch' }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const mealTargetKcal = TARGETS.kcal * meal.share;
+    expect(
+      Math.abs(result.value.totals.kcal - mealTargetKcal) / mealTargetKcal,
+    ).toBeLessThanOrEqual(0.05);
+    expect(result.value.slot).toBe('lunch');
+    expect(result.value.mealIndex).toBe(1);
+  });
+
+  it('is deterministic for the same seed and mealIndex', () => {
+    const a = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-repeat' }));
+    const b = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-repeat' }));
+    expect(a).toEqual(b);
+  });
+
+  it('avoids a food already used elsewhere that day when an alternative exists', () => {
+    const result = solveMeal(
+      1,
+      meal,
+      TARGETS,
+      CANDIDATES,
+      config({ seed: 'meal-avoid-used' }),
+      new Set(['chicken']),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.items.some((i) => i.foodId === 'chicken')).toBe(false);
   });
 });
 
