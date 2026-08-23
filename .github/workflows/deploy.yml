@@ -3,6 +3,11 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # Skip image builds when the commit is docs / PR-template only.
+    # Code + markdown in the same commit still deploys. workflow_dispatch is unfiltered.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
