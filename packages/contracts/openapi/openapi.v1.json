@@ -604,7 +604,8 @@
                             "DISLIKE",
                             "RELIGIOUS",
                             "ETHICAL",
-                            "MEDICAL"
+                            "MEDICAL",
+                            "PREFERRED"
                           ]
                         },
                         "code": {
@@ -1184,7 +1185,8 @@
                             "DISLIKE",
                             "RELIGIOUS",
                             "ETHICAL",
-                            "MEDICAL"
+                            "MEDICAL",
+                            "PREFERRED"
                           ]
                         },
                         "code": {
@@ -2550,6 +2552,77 @@
         }
       }
     },
+    "/v1/meal-plans/{id}/days/{day}/meals/{mealIndex}/regenerate": {
+      "post": {
+        "operationId": "regenerateMeal",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "required": true,
+            "name": "day",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": ["integer", "null"],
+              "minimum": 0,
+              "maximum": 4
+            },
+            "required": false,
+            "name": "mealIndex",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan with the regenerated meal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/meal-plans/{id}/publish": {
       "post": {
         "operationId": "publishPlan",
@@ -2608,6 +2681,56 @@
           },
           "422": {
             "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/meal-instructions": {
+      "get": {
+        "operationId": "getMealInstructions",
+        "responses": {
+          "200": {
+            "description": "Active coach meal instructions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "putMealInstructions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 20000
+                  }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved coach meal instructions",
             "content": {
               "application/json": {
                 "schema": {

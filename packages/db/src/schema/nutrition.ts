@@ -56,6 +56,39 @@ export const clientDietaryProfiles = pgTable(
   ],
 );
 
+/**
+ * Coach-scoped Layer-3 narration override (ADR-0015 D2) — versioned,
+ * one active row per coach, mirroring `clientDietaryProfiles` above exactly.
+ * `richText` stores the raw markdown-subset string a coach typed (not a
+ * bespoke JSON doc — there is no separate document model to keep in sync);
+ * `plainText` is the sanitized, markdown-stripped string actually threaded
+ * into `narrate.ts` as `AiConfig.coachAddendum`. Both are written only by
+ * `saveInstructions`, already sanitized — never re-sanitized on read.
+ */
+export const coachMealInstructions = pgTable(
+  'coach_meal_instructions',
+  {
+    id: id(),
+    coachId: uuid('coach_id')
+      .notNull()
+      .references(() => coaches.id),
+    version: integer('version').notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    richText: text('rich_text').notNull(),
+    plainText: text('plain_text').notNull(),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('coach_meal_instructions_coach_version_uq').on(t.coachId, t.version),
+    uniqueIndex('coach_meal_instructions_one_active_uq')
+      .on(t.coachId)
+      .where(sql`${t.isActive} = true`),
+  ],
+);
+
 export const dietaryRestrictions = pgTable(
   'dietary_restrictions',
   {
@@ -109,6 +142,13 @@ export const foods = pgTable(
     per100g: jsonb('per_100g').$type<Per100g>().notNull(),
     costTier: smallint('cost_tier').notNull().default(1),
     prepTimeMin: smallint('prep_time_min').notNull().default(15),
+    /**
+     * Realistic single-item serving ceiling, in native serving units
+     * (`food_serving_units` first row) — per-food, never a global gram cap
+     * (ADR-0015 D1). Null falls back to a conservative default the solver
+     * derives from the food's own serving size.
+     */
+    maxUnits: numeric('max_units', { precision: 4, scale: 1, mode: 'number' }),
     verified: boolean('verified').notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

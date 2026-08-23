@@ -106,6 +106,34 @@
       "when": 1787400000000,
       "tag": "0014_goal_target_kcal",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1787500000000,
+      "tag": "0015_food_max_units",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1787600000000,
+      "tag": "0016_restriction_type_preferred",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787700000000,
+      "tag": "0017_regenerate_meal_feedback_kind",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787800000000,
+      "tag": "0018_coach_meal_instructions",
+      "breakpoints": true
     }
   ]
 }
