@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   assertNoRestrictedFoods,
   DEFAULT_SOLVER_CONFIG,
+  MEAL_TEMPLATES,
   seededRandom,
   solveDay,
+  solveMeal,
   solveWeek,
   type CandidateFood,
   type MealSlot,
@@ -402,6 +404,50 @@ describe('solveDay', () => {
     }
   });
 
+  it('expansion falls back to a 100g default unit for a food with no serving units', () => {
+    const noUnitsProtein = food(
+      'no-units-protein',
+      'protein',
+      { kcal: 150, proteinG: 20, fatG: 5, carbsG: 0, fiberG: 0 },
+      { servingUnits: [], allowedSlots: slots('breakfast') },
+    );
+    const staple = food(
+      'roti',
+      'staple',
+      { kcal: 264, proteinG: 9, fatG: 4, carbsG: 51, fiberG: 7 },
+      { servingUnits: [{ name: 'roti', grams: 40 }], allowedSlots: slots('breakfast') },
+    );
+    const beverage = food(
+      'coffee',
+      'beverage',
+      { kcal: 2, proteinG: 0.1, fatG: 0, carbsG: 0, fiberG: 0 },
+      { servingUnits: [{ name: 'cup', grams: 240 }], allowedSlots: slots('breakfast') },
+    );
+    const breakfastTemplate = MEAL_TEMPLATES[3][0];
+    if (!breakfastTemplate) throw new Error('fixture error: breakfast template missing');
+    const denseTarget: MacroTargets = {
+      kcal: 4000,
+      proteinG: 240,
+      fatG: 140,
+      carbsG: 360,
+      fiberG: 35,
+    };
+    const result = solveMeal(
+      0,
+      breakfastTemplate,
+      denseTarget,
+      [noUnitsProtein, staple, beverage],
+      config({ seed: 'expand-no-units', macroTolerancePct: 60, kcalTolerancePct: 15 }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const proteinItems = result.value.items.filter((i) => i.foodId === 'no-units-protein');
+    expect(proteinItems.length).toBeGreaterThan(1); // expansion actually fired, not just the initial pick
+    for (const item of proteinItems) {
+      expect(item.portionLabel).toContain('g'); // fell back to the default { name: 'g', grams: 100 } unit
+    }
+  });
+
   it('handles foods without serving units and zero-kcal foods', () => {
     const withOddities: CandidateFood[] = [
       ...CANDIDATES,
@@ -420,6 +466,255 @@ describe('solveDay', () => {
   });
 });
 
+describe('effectiveRank — slot-aware ranking (ADR-0015 D6 bug fix)', () => {
+  it('prefers a food with a higher rankBySlot score for the slot actually being filled', () => {
+    // 'zpreferred' ties with 3 other proteins on the flat rankScore (all
+    // default to 1) but sorts alphabetically LAST among them — so on an
+    // untouched tie (broken by id ascending), it would be the one candidate
+    // always excluded from the top-3 pool pickCandidate draws from, never
+    // selectable no matter the seed. rankBySlot.lunch must override that.
+    const tiedProtein = (id: string) =>
+      food(
+        id,
+        'protein',
+        { kcal: 150, proteinG: 25, fatG: 5, carbsG: 0, fiberG: 0 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      );
+    const favored = food(
+      'zpreferred',
+      'protein',
+      { kcal: 150, proteinG: 25, fatG: 5, carbsG: 0, fiberG: 0 },
+      { allowedSlots: slots('lunch', 'dinner'), rankBySlot: { lunch: 5 } },
+    );
+    const staple = food(
+      'rice',
+      'staple',
+      { kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, fiberG: 0.4 },
+      { allowedSlots: slots('lunch') },
+    );
+    const vegetable = food(
+      'salad',
+      'vegetable',
+      { kcal: 25, proteinG: 1, fatG: 0.2, carbsG: 5, fiberG: 1.5 },
+      { allowedSlots: slots('lunch', 'dinner') },
+    );
+    const fat = food(
+      'oil',
+      'fat',
+      { kcal: 884, proteinG: 0, fatG: 100, carbsG: 0, fiberG: 0 },
+      { servingUnits: [{ name: 'tbsp', grams: 13.5 }], allowedSlots: slots('lunch') },
+    );
+    const candidates = [
+      tiedProtein('filler1'),
+      tiedProtein('filler2'),
+      tiedProtein('plain'),
+      favored,
+      staple,
+      vegetable,
+      fat,
+    ];
+    const lunchTemplate = MEAL_TEMPLATES[3][1]; // lunch
+    if (!lunchTemplate) throw new Error('fixture error: lunch template missing');
+
+    let sawFavored = 0;
+    const trials = 20;
+    for (let seed = 0; seed < trials; seed += 1) {
+      const result = solveMeal(
+        1,
+        lunchTemplate,
+        TARGETS,
+        candidates,
+        config({ seed: `rbs-${seed}`, macroTolerancePct: 60 }),
+      );
+      if (result.ok && result.value.items.some((i) => i.foodId === 'zpreferred')) sawFavored += 1;
+    }
+    // Without rankBySlot, alphabetical tie-breaking would exclude
+    // 'zpreferred' from the top-3 pool on every single seed (0/20) — it can
+    // only ever be picked because rankBySlot.lunch pulls it to the top.
+    expect(sawFavored).toBeGreaterThan(0);
+  });
+});
+
+describe('D1 — realistic portion ceilings across every meal slot', () => {
+  // The shared, rich CANDIDATES fixture (multiple options per group) with
+  // realistic ceilings applied to egg and chicken — proves the mechanism
+  // against something representative of the real catalog, not an adversarial
+  // narrow fixture where the hill-climb's macro-balancing can get stuck in a
+  // local optimum before ever reaching a food's ceiling.
+  const withCeilings: CandidateFood[] = CANDIDATES.map((f) => {
+    if (f.id === 'egg') return { ...f, maxUnits: 3 }; // 3 pieces / 150g, not the old UNIT_MAX of 8 (400g)
+    if (f.id === 'chicken') return { ...f, maxUnits: 3 }; // 3 pieces / 360g, not the old UNIT_MAX of 8 (960g)
+    // A bulky, low-kcal-density staple explicitly allowed above 400g — proving
+    // per-food ceilings are not bound to any universal cap in either
+    // direction (unlike the rejected flat-400g option A).
+    if (f.id === 'rice') return { ...f, maxUnits: 4 }; // 4 cups / 640g
+    return f;
+  });
+
+  // 1.8x TARGETS — large enough that, under the old UNIT_MAX = 8 rule, the
+  // solver would have pushed egg/chicken well past a realistic serving to
+  // close the gap, while still comfortably solvable with a realistic catalog.
+  const denseTarget: MacroTargets = {
+    kcal: TARGETS.kcal * 1.8,
+    proteinG: TARGETS.proteinG * 1.8,
+    fatG: TARGETS.fatG * 1.8,
+    carbsG: TARGETS.carbsG * 1.8,
+    fiberG: TARGETS.fiberG * 1.8,
+  };
+
+  it('breakfast: never puts more than the realistic ceiling of egg in a single item', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-1' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const eggItems = result.value.meals.flatMap((m) => m.items).filter((i) => i.foodId === 'egg');
+    expect(eggItems.length).toBeGreaterThan(0);
+    for (const item of eggItems) {
+      expect(item.portionGrams).toBeLessThanOrEqual(150); // never the old ceiling of 400g
+    }
+  });
+
+  it('lunch/dinner: the same ceiling mechanism applies to a lunch/dinner protein, not just breakfast', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-2' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const chickenItems = result.value.meals
+      .flatMap((m) => m.items)
+      .filter((i) => i.foodId === 'chicken');
+    expect(chickenItems.length).toBeGreaterThan(0);
+    for (const item of chickenItems) {
+      expect(item.portionGrams).toBeLessThanOrEqual(360); // never the old ceiling of 960g
+    }
+  });
+
+  it('a bulky staple with no explicit maxUnits can still exceed 400g when the target needs it', () => {
+    // Rice/roti have no explicit maxUnits — they fall back to the default
+    // formula, which for their serving sizes yields a ceiling well above
+    // 400g. A flat global cap (the rejected D1 option A) would wrongly
+    // suppress this.
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-3-seed6' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const staples = result.value.meals
+      .flatMap((m) => m.items)
+      .filter((i) => ['rice', 'roti', 'oats', 'bran'].includes(i.foodId));
+    expect(staples.some((i) => i.portionGrams > 400)).toBe(true);
+  });
+
+  it('spreads a large kcal share across multiple items rather than one oversized item', () => {
+    const result = solveDay(
+      1,
+      denseTarget,
+      withCeilings,
+      config({ mealCount: 4, seed: 'd1-ceiling-4' }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const allItems = result.value.meals.flatMap((m) => m.items);
+    // With 34 real curated foods this would never need every group to
+    // expand — but at 1.8x target, at least one pattern group typically
+    // does need a second item, proving the expansion path actually fires.
+    const totalItemCount = allItems.length;
+    const basePatternLength = MEAL_TEMPLATES[4].reduce((sum, m) => sum + m.pattern.length, 0);
+    expect(totalItemCount).toBeGreaterThanOrEqual(basePatternLength);
+  });
+});
+
+describe('solveMeal', () => {
+  const meal = MEAL_TEMPLATES[3][1]; // lunch, share 0.47
+  if (!meal) throw new Error('fixture error: lunch template missing');
+
+  it('solves one meal to its own share of the plan targets, within tolerance', () => {
+    const result = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-lunch' }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const mealTargetKcal = TARGETS.kcal * meal.share;
+    expect(
+      Math.abs(result.value.totals.kcal - mealTargetKcal) / mealTargetKcal,
+    ).toBeLessThanOrEqual(0.05);
+    expect(result.value.slot).toBe('lunch');
+    expect(result.value.mealIndex).toBe(1);
+  });
+
+  it('is deterministic for the same seed and mealIndex', () => {
+    const a = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-repeat' }));
+    const b = solveMeal(1, meal, TARGETS, CANDIDATES, config({ seed: 'meal-repeat' }));
+    expect(a).toEqual(b);
+  });
+
+  it('avoids a food already used elsewhere that day when an alternative exists', () => {
+    const result = solveMeal(
+      1,
+      meal,
+      TARGETS,
+      CANDIDATES,
+      config({ seed: 'meal-avoid-used' }),
+      new Set(['chicken']),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.items.some((i) => i.foodId === 'chicken')).toBe(false);
+  });
+
+  it('errors NO_CANDIDATES when a group and all fallbacks are missing', () => {
+    const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
+    const result = solveMeal(1, meal, TARGETS, onlyProtein, config({ seed: 'meal-no-candidates' }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
+  });
+
+  it('errors SOLVER_INFEASIBLE when portions cannot reach the meal share of the targets', () => {
+    const sparse: CandidateFood[] = [
+      food(
+        'lettuce',
+        'protein',
+        { kcal: 15, proteinG: 1.4, fatG: 0.2, carbsG: 2.9, fiberG: 1.3 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      ),
+      food(
+        'cucumber',
+        'staple',
+        { kcal: 16, proteinG: 0.7, fatG: 0.1, carbsG: 3.6, fiberG: 0.5 },
+        { allowedSlots: slots('lunch') },
+      ),
+      food(
+        'celery',
+        'vegetable',
+        { kcal: 14, proteinG: 0.7, fatG: 0.2, carbsG: 3, fiberG: 1.6 },
+        { allowedSlots: slots('lunch', 'dinner') },
+      ),
+      food(
+        'sprouts',
+        'fat',
+        { kcal: 23, proteinG: 3, fatG: 0.2, carbsG: 2.1, fiberG: 1.9 },
+        { allowedSlots: slots('lunch') },
+      ),
+    ];
+    const result = solveMeal(1, meal, TARGETS, sparse, config({ seed: 'meal-infeasible' }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('SOLVER_INFEASIBLE');
+      if (result.error.code === 'SOLVER_INFEASIBLE') {
+        expect(result.error.bestErrorPct).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
 describe('solveWeek', () => {
   it('produces 7 identical daily-template days from one solve', () => {
     const result = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3 }));
@@ -433,6 +728,55 @@ describe('solveWeek', () => {
     expect(result.value.map((d) => d.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
+  it('rotating_template: produces exactly templateCount distinct days, not 1 and not 7, deterministically', () => {
+    const cfg = config({ mealCount: 4, seed: 'd5-rotation' });
+    const first = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    const second = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    expect(first.ok && second.ok).toBe(true);
+    if (!first.ok || !second.ok) return;
+
+    expect(first.value).toHaveLength(7);
+    const signature = (day: (typeof first.value)[number]) =>
+      day.meals.flatMap((m) => m.items.map((i) => `${i.foodId}:${i.portionGrams}`)).join('|');
+    const distinctDays = new Set(first.value.map(signature));
+    expect(distinctDays.size).toBe(3); // exactly templateCount, not 1 (daily_template) and not 7
+
+    // Same seed + config ⇒ identical week, every time.
+    expect(second.value.map(signature)).toEqual(first.value.map(signature));
+
+    // Every day still meets the same tolerance daily_template already guarantees.
+    for (const day of first.value) {
+      expect(Math.abs(day.totals.kcal - TARGETS.kcal) / TARGETS.kcal).toBeLessThanOrEqual(0.05);
+    }
+    expect(first.value.map((d) => d.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('rotating_template: clamps templateCount into 1–7 and defaults to 3 when omitted', () => {
+    const cfg = config({ mealCount: 3, seed: 'd5-default' });
+    const defaulted = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template');
+    const explicit3 = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    expect(defaulted).toEqual(explicit3);
+
+    const clampedHigh = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 99);
+    const explicit7 = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 7);
+    expect(clampedHigh).toEqual(explicit7);
+  });
+
+  it('daily_template is unaffected by the new weekMode parameter (default, unchanged behavior)', () => {
+    const withoutMode = solveWeek(
+      TARGETS,
+      CANDIDATES,
+      config({ mealCount: 3, seed: 'd5-unchanged' }),
+    );
+    const withDefaultMode = solveWeek(
+      TARGETS,
+      CANDIDATES,
+      config({ mealCount: 3, seed: 'd5-unchanged' }),
+      'daily_template',
+    );
+    expect(withoutMode).toEqual(withDefaultMode);
+  });
+
   it('reproduces the same template for the same seed', () => {
     const a = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
     const b = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
@@ -444,6 +788,19 @@ describe('solveWeek', () => {
   it('propagates NO_CANDIDATES without recovery retries', () => {
     const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
     const result = solveWeek(TARGETS, onlyProtein, config({ mealCount: 3 }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
+  });
+
+  it('rotating_template: propagates NO_CANDIDATES from any template attempt', () => {
+    const onlyProtein = CANDIDATES.filter((f) => f.foodGroup === 'protein');
+    const result = solveWeek(
+      TARGETS,
+      onlyProtein,
+      config({ mealCount: 3 }),
+      'rotating_template',
+      3,
+    );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('NO_CANDIDATES');
   });

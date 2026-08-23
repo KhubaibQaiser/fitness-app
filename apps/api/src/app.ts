@@ -25,6 +25,7 @@ import { type RouteBind } from './route-bind';
 import { registerAuthRoutes } from './routes/auth';
 import { registerCheckInRoutes } from './routes/check-ins';
 import { registerClientRoutes } from './routes/clients';
+import { registerCoachInstructionsRoutes } from './routes/coach-instructions';
 import { registerMeRoutes } from './routes/me';
 import { registerNotificationRoutes } from './routes/notifications';
 import { registerPlanRoutes } from './routes/plans';
@@ -317,6 +318,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   registerVitalsGoalRoutes(app, bind);
   registerCheckInRoutes(app, bind);
   registerPlanRoutes(app, bind);
+  registerCoachInstructionsRoutes(app, bind);
 
   app.doc('/openapi.json', {
     openapi: '3.1.0',

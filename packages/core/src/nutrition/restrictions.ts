@@ -36,6 +36,13 @@ export const RESTRICTION_TYPES = [
   'RELIGIOUS',
   'ETHICAL',
   'MEDICAL',
+  /**
+   * The one non-exclusion type (ADR-0015 D6) — boosts a food's rank instead
+   * of removing it from consideration. Paired with a `preferred:<foodId>`
+   * code, the exact mirror of the existing `dislike:<foodId>` convention.
+   * Never bypasses an allergen or other hard exclusion for the same food.
+   */
+  'PREFERRED',
 ] as const;
 export type RestrictionType = (typeof RESTRICTION_TYPES)[number];
 

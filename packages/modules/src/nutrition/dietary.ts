@@ -1,18 +1,11 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { assertNoRestrictedFoods } from '@gymos/core/nutrition';
+import { assertNoRestrictedFoods, type RestrictionType } from '@gymos/core/nutrition';
 import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { notify } from '../notifications';
 import { writeAudit } from '../shared/audit';
 
 export type RestrictionInput = {
-  type:
-    | 'ALLERGY_SEVERE'
-    | 'ALLERGY_MILD'
-    | 'INTOLERANCE'
-    | 'DISLIKE'
-    | 'RELIGIOUS'
-    | 'ETHICAL'
-    | 'MEDICAL';
+  type: RestrictionType;
   code: string;
   note?: string | null | undefined;
 };

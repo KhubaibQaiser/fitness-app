@@ -14,6 +14,14 @@ export type AiConfig = {
   readonly adapterVersion?: string;
   /** Tenant prompt/cuisine pack id (see prompts/packs.ts). */
   readonly promptPackId?: string;
+  /**
+   * Coach-scoped narration override (ADR-0015 D2) — already sanitized by
+   * `saveInstructions` before it ever reaches this call. Appended last, after
+   * `MEAL_NARRATIVE_SYSTEM` and the tenant pack's `systemAddendum`, so it
+   * takes precedence on conflict but can never reorder the base "JSON only /
+   * never emit numbers" instructions ahead of itself.
+   */
+  readonly coachAddendum?: string;
 };
 
 /** De-identified Layer-3 input — food names and grams only, never PII. */

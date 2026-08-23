@@ -28,6 +28,7 @@
     "./features/dietary": "./src/features/dietary/index.tsx",
     "./features/notifications": "./src/features/notifications/index.tsx",
     "./features/settings": "./src/features/settings/index.tsx",
+    "./features/settings/meal-instructions": "./src/features/settings/meal-instructions/index.tsx",
     "./features/nutrition-criteria": "./src/features/nutrition-criteria/index.tsx",
     "./features/tools": "./src/features/tools/index.tsx",
     "./features/meal-composition": "./src/features/meal-composition/index.tsx"

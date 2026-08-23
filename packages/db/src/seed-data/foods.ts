@@ -14,6 +14,16 @@ export type FoodSeed = {
   costTier: 1 | 2 | 3;
   prepTimeMin: number;
   servingUnits: { name: string; grams: number }[];
+  /**
+   * Realistic single-item serving ceiling, in native `servingUnits[0]` units
+   * (ADR-0015 D1) — e.g. 3 for an egg (piece = 50g ⇒ 150g ceiling). Omitted
+   * foods fall back to the solver's conservative default; explicit values
+   * below are a first pass for the foods called out by the reported
+   * complaint, not a full nutrition-literate catalog review (that review is
+   * a tracked follow-up, not something to silently skip — see ADR-0015's
+   * blocking issue #2).
+   */
+  maxUnits?: number;
 };
 
 const halal = (extra: Partial<DietaryFlags> = {}): DietaryFlags => ({
@@ -39,6 +49,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 2,
     prepTimeMin: 20,
     servingUnits: [{ name: 'piece', grams: 120 }],
+    maxUnits: 3, // 3 pieces / 360g — a realistic single-meal chicken serving
   },
   {
     name: 'Beef qeema (lean, cooked)',
@@ -52,6 +63,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 2,
     prepTimeMin: 30,
     servingUnits: [{ name: 'cup', grams: 150 }],
+    maxUnits: 3, // 3 cups / 450g — can legitimately approach this for a large-surplus dinner
   },
   {
     name: 'Daal masoor (cooked)',
@@ -104,6 +116,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 1,
     prepTimeMin: 15,
     servingUnits: [{ name: 'cup', grams: 160 }],
+    maxUnits: 3, // 3 cups / 480g — a bulky, low-kcal-density staple can exceed 400g for a large lunch
   },
   {
     name: 'Brown rice (cooked)',
@@ -129,6 +142,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 1,
     prepTimeMin: 10,
     servingUnits: [{ name: 'piece', grams: 50 }],
+    maxUnits: 3, // 3 pieces / 150g — the original reported case (was ballooning to 8 = 400g)
   },
   {
     name: 'Egg scrambled',
@@ -409,6 +423,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 2,
     prepTimeMin: 0,
     servingUnits: [{ name: 'tbsp', grams: 13.5 }],
+    maxUnits: 2, // 2 tbsp / 27g — a food this calorie-dense has a real ceiling far below 400g
   },
   {
     name: 'Desi ghee',
@@ -422,6 +437,7 @@ export const FOOD_SEED: FoodSeed[] = [
     costTier: 2,
     prepTimeMin: 0,
     servingUnits: [{ name: 'tsp', grams: 4.2 }],
+    maxUnits: 2, // 2 tsp / 8.4g — same calorie-density reasoning as olive oil
   },
   {
     name: 'Oats (dry)',

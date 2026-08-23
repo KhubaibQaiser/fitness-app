@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { Link } from 'solito/link';
 import type { HeightUnit, LengthUnit, WeightUnit } from '@gymos/contracts';
 import { useThemeMode } from '@gymos/platform';
 import {
   Body,
   Card,
+  ChevronRight,
   DangerButton,
   ErrorState,
   GhostButton,
@@ -158,6 +160,23 @@ export const SettingsScreen = () => {
           <Body>Email</Body>
           {me.data ? <Muted>{me.data.email}</Muted> : <Skeleton width={168} height={18} />}
         </Row>
+      </Card>
+
+      <Card>
+        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color" marginBottom="$2">
+          AI meal planner
+        </Text>
+        <Link href="/settings/meal-planner">
+          <Row minHeight={48}>
+            <YStack flex={1} gap={2} minWidth={0}>
+              <Body fontWeight="700">Meal AI Planner</Body>
+              <Muted fontSize={12}>
+                Your own instructions for how meals are named and described.
+              </Muted>
+            </YStack>
+            <ChevronRight size={20} color="$textMuted" />
+          </Row>
+        </Link>
       </Card>
 
       <Card gap="$3">

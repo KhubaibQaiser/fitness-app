@@ -63,6 +63,18 @@ export const tenantManifestSchema = z
       mealCount: z.union([z.literal(3), z.literal(4), z.literal(5)]).default(3),
       kcalTolerancePct: z.number().min(1).max(10).default(5),
       macroTolerancePct: z.number().min(5).max(20).default(10),
+      /**
+       * Week-level generation mode (ADR-0015 D5). `daily_template` (default,
+       * unchanged behavior) solves one day and clones it to the rest of the
+       * week. `rotating_template` solves `weekTemplateCount` distinct days
+       * and rotates them across the week for visible variety while keeping
+       * shopping/prep to a bounded number of distinct meal sets. Changing
+       * the default for an already-onboarded tenant is a deliberate rollout
+       * decision, not something this field flips silently.
+       */
+      weekMode: z.enum(['daily_template', 'rotating_template']).default('daily_template'),
+      /** Only meaningful when `weekMode: 'rotating_template'`; clamped 1–7 by the solver. */
+      weekTemplateCount: z.number().int().min(1).max(7).default(3),
       budgetTier: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),
       prepTimeCeilingMin: z.number().int().positive().default(45),
       verbosity: z.enum(['terse', 'standard']).default('standard'),

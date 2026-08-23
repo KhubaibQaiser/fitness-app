@@ -7,6 +7,7 @@ import {
   listPlans,
   patchPlan,
   publishPlan,
+  regenerateMeal,
 } from '@gymos/modules/nutrition';
 import { dietPlanFilename, renderDietPlanPdf } from '../diet-plan-pdf';
 import { json, problemDocs, type GymosApp } from '../http';
@@ -187,6 +188,50 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
           422,
           result.error.code,
           'Plan edit rejected',
+          JSON.stringify(result.error),
+        );
+      }
+      return c.json(result.value);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/v1/meal-plans/{id}/days/{day}/meals/{mealIndex}/regenerate',
+      operationId: 'regenerateMeal',
+      request: { params: dto.regenerateMealParam },
+      responses: {
+        200: { description: 'Plan with the regenerated meal', ...json(dto.anyObject) },
+        ...problemDocs(404, 422),
+      },
+    }),
+    async (c) => {
+      const { id, day, mealIndex } = c.req.valid('param');
+      const existing = await getPlanWithItems(db, id);
+      if (!existing) throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
+      authorize(c, 'plan.edit', { clientId: existing.plan.clientId });
+      const tenant = await resolveTenantManifest(c.get('principal'));
+      const result = await regenerateMeal(
+        db,
+        asCoach(c.get('principal')),
+        tenant,
+        resolveAiConfig(tenant),
+        id,
+        day,
+        mealIndex,
+      );
+      if (!result.ok) {
+        if (result.error.code === 'PLAN_NOT_FOUND') {
+          throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
+        }
+        if (result.error.code === 'MEAL_NOT_FOUND') {
+          throw new ProblemError(404, 'NOT_FOUND', 'Meal not found on this day');
+        }
+        throw new ProblemError(
+          422,
+          result.error.code,
+          'Meal regeneration failed',
           JSON.stringify(result.error),
         );
       }
