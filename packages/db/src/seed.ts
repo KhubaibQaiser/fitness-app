@@ -112,6 +112,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
         per100g: food.per100g,
         costTier: food.costTier,
         prepTimeMin: food.prepTimeMin,
+        maxUnits: food.maxUnits ?? null,
         verified: false,
       })
       .returning();

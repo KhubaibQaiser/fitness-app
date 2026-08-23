@@ -109,6 +109,13 @@ export const foods = pgTable(
     per100g: jsonb('per_100g').$type<Per100g>().notNull(),
     costTier: smallint('cost_tier').notNull().default(1),
     prepTimeMin: smallint('prep_time_min').notNull().default(15),
+    /**
+     * Realistic single-item serving ceiling, in native serving units
+     * (`food_serving_units` first row) — per-food, never a global gram cap
+     * (ADR-0015 D1). Null falls back to a conservative default the solver
+     * derives from the food's own serving size.
+     */
+    maxUnits: numeric('max_units', { precision: 4, scale: 1, mode: 'number' }),
     verified: boolean('verified').notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

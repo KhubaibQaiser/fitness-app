@@ -130,6 +130,7 @@ export const candidatesForRestrictions = async (
       per100g: s.foods.per100g,
       allergenTags: s.foods.allergenTags,
       allowedSlots: s.foods.allowedSlots,
+      maxUnits: s.foods.maxUnits,
     })
     .from(s.foods)
     .where(and(...conditions));
@@ -199,6 +200,7 @@ export const candidatesForRestrictions = async (
       allowedSlots: r.allowedSlots as MealSlot[],
       servingUnits: units.get(r.id) ?? [],
       rankScore,
+      ...(r.maxUnits !== null ? { maxUnits: r.maxUnits } : {}),
     };
   });
 };
