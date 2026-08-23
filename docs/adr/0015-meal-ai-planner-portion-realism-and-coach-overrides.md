@@ -1,10 +1,11 @@
 # ADR-0015: Meal-plan portion realism, coach-level generation instructions, and per-meal regeneration
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-08-23
+- **Approved**: 2026-08-23 — the recommended options (D1-E, D2-D + rich-text-C, D3-C) are confirmed as written. This revision adds the engineering-principles rationale ("Design principles applied") and concrete smoke-test specifications ("Smoke tests") requested at approval; it does not change which option was chosen in any decision.
 - **Phase**: AI-native nutrition track ([ADR-0001](0001-hybrid-ai-nutrition.md) lineage), not a `CLAUDE.md` P1–P4 alignment phase. The one net-new UI surface this introduces (Settings → Meal AI Planner) must still consume the P1 token/component set — it is new functionality, not a re-skin, so it does not belong to P1 itself.
 
-This is a planning ADR. No source files change in this PR. It sequences three follow-on implementation PRs, each scoped to its own review gate.
+This is a planning ADR — the architecture is accepted for implementation as written. No source files change in *this* PR; it sequences three follow-on implementation PRs, each scoped to its own CODEOWNERS review gate, and each is expected to ship with the smoke test(s) specified for it below, not just the `docs/specs/` acceptance criteria.
 
 ## Context
 
@@ -14,7 +15,7 @@ Three coach-reported problems, all rooted in the Layer 2 solver and the coach-fa
 2. **No coach-level fine-tuning of meal narration.** [ADR-0001](0001-hybrid-ai-nutrition.md) fixed the global system prompt as a versioned code artifact (`MEAL_NARRATIVE_SYSTEM`, `packages/ai/src/prompts/meal-narrative.v1.ts:7-12`) plus an optional tenant-wide cuisine pack (`packages/ai/src/prompts/packs.ts`, `resolvePromptPack`). Neither is coach-scoped. Individual coaches have preferences the global prompt should not encode (protein-forward breakfasts, specific prep styles, phrasing tone) and today the only way to express them is editing the shared code prompt or the tenant manifest — both wrong-grained and both requiring an engineering change per preference.
 3. **No single-meal regeneration.** `generatePlan` (`packages/modules/src/nutrition/plans.ts:65-401`) always solves and narrates the full week from a fresh day-1 template (`solveWeek`, `solver.ts:431-459`). The only per-item control today is `patchPlan` → `applyPlanOps` (`packages/modules/src/nutrition/plan-ops.ts`) — manual `set-portion` / `swap` / `add` / `remove`, one item at a time. A coach who dislikes just breakfast on day 2 has no faster path than editing every item by hand or regenerating the entire week (`plan-editor.tsx:223-272`) and losing every other edit.
 
-All three land in code owned by `packages/core` and/or `packages/ai`, which `CODEOWNERS` requires a human (`@KhubaibQaiser`) to review — this ADR proposes, it does not pre-approve.
+All three land in code owned by `packages/core` and/or `packages/ai`, which `CODEOWNERS` requires a human (`@KhubaibQaiser`) to review. Approving this ADR accepts the *architecture* below; it does not substitute for that CODEOWNERS review on the actual implementation PRs, which still happens per PR as normal.
 
 ## Decision
 
@@ -23,6 +24,19 @@ Ship as three independently reviewable PRs, in this order (2 is not blocked by 1
 - **D1** — Solver: realistic per-food serving ceilings + dynamic item-count expansion (`packages/core`).
 - **D2** — Coach-level generation instructions, stored per-coach, layered under the global/tenant prompt, surfaced at Settings → Meal AI Planner (`packages/db`, `packages/modules`, `apps/api`, `packages/app`).
 - **D3** — Per-meal regenerate action, reusing D1's solver entry point and D2's effective prompt (`packages/core`, `packages/modules`, `apps/api`, `packages/app`).
+
+### Design principles applied
+
+Each decision below was already screened against these before being marked "Chosen" — this section names the principle explicitly so the rationale doesn't have to be re-derived from the comparison tables during review:
+
+- **DRY.** D1's `solveMeal` extraction is consumed by both the full-week solver (`solveDay`'s loop) and D3's single-meal regenerate path — one portion-solving implementation, not two that could drift apart. D2's coach addendum reuses the exact `MEAL_NARRATIVE_SYSTEM` / `pack.systemAddendum` join pattern already in `narrate.ts`, and its safety checks reuse the existing `containsNumericClaim` / `assertDeidentified` guardrails rather than duplicating that pattern-matching logic a third time.
+- **KISS.** D1 rejects the LP/knapsack re-solve (option C) — a bounded-expansion rule over the existing deterministic hill-climb solves the actual defect without a new dependency or a new class of non-determinism to reason about. D2 rejects a DOM rich-text library (option A) for an ~80-line first-party markdown-subset stripper — the simplest mechanism that satisfies "good formatting" and "parses to plain text" without taking on an HTML-sanitization surface to maintain. D3 is scoped to exactly one meal, not a generalized "regenerate any subset of a plan" abstraction nobody asked for.
+- **SOLID:**
+  - *Single Responsibility* — `solveMeal` only sizes portions; `narrate()` only names meals and writes prep notes; `coach-instructions.ts` only owns the coach's override text and its lifecycle. RBAC/authorization stays entirely in the route layer, never inside `packages/core` or `packages/ai`. No decision here merges two of those responsibilities into one function.
+  - *Open/Closed* — the coach addendum is *appended* onto the existing prompt-composition pipeline in `narrate.ts`, not a rewrite of `MEAL_NARRATIVE_SYSTEM` or a new conditional branch inside it; `NarrateOptions`/`AiConfig` gain an additive optional field, so every existing caller keeps compiling and behaving identically without modification.
+  - *Liskov substitution* (no literal class hierarchy here, but the same discipline applies to the refactor) — extracting `buildItems`/`optimizePortions` into `solveMeal` must keep `solveDay`'s existing callers (`solveWeek`, `generatePlan`) working against the exact same return shape and tolerance contract; `solver.test.ts`'s current assertions passing unmodified is the regression check for that substitutability.
+  - *Interface segregation* — coach instructions get their own module (`coach-instructions.ts`) and route file, instead of growing `plans.ts` / `foods.ts` into a wider surface a caller has to pull in fully just to reach one narrow capability.
+  - *Dependency inversion* — `packages/ai`'s `narrate()` depends on a plain `coachAddendum: string | null` value passed into it, not on `packages/db`/`packages/modules` to go fetch it itself. The module layer (`generatePlan`, D3's `regenerateMeal`) owns resolving that dependency and injects it, keeping `packages/ai` free of any database or tenancy import — the same boundary that already holds today for tenant packs.
 
 ---
 
@@ -141,9 +155,170 @@ Captured per-decision above (D1/D2/D3 comparison tables) rather than duplicated 
 | D2 only | `packages/db` (new table + migration), `packages/modules/src/nutrition`, `apps/api/src/routes/coach-instructions.ts`, `packages/ai/src/narrate.ts` (thread-through only, no prompt-shape change), `packages/app/src/features/settings/meal-instructions/`, new web route | D1 not required, but ships more usefully after D1 (coach instructions are about narration quality; portion realism is the more visible fix) |
 | D3 only | `packages/core` (solver extraction — do this *as* D1's refactor, not twice), `packages/modules`, `apps/api/src/routes/plans.ts`, OpenAPI spec update, `packages/app/src/features/plan/plan-editor.tsx` | **Blocked on D1's `solveMeal` extraction** — do not implement D3's regenerate path against the current monolithic `buildItems`/`optimizePortions` loop and refactor later; extract once, in D1, and have D3 consume it. |
 
-**Required outputs for each implementation PR** (per `AGENTS.md`): a `docs/specs/` entry (e.g. `fr-c10-meal-portion-realism.md`, `fr-c11-coach-meal-instructions.md`, `fr-c12-meal-regenerate.md` — numbered continuing from the existing `fr-c*` spec series) with Given/When/Then acceptance criteria, a test that fails before the change, and scoped `pnpm lint` / `pnpm typecheck` / `pnpm test` for every touched package (full workspace run if `packages/contracts` changes, which D3 requires). For D2 specifically, the acceptance criteria must include save-time sanitization cases: a submitted instruction containing raw HTML/script-like markup, zero-width or control Unicode characters, or a string past the length cap is neutralized/truncated before it is persisted and before it can reach `narrate.ts` — proven by a test that saves an adversarial input and asserts on the stored `plain_text`/`rich_text`, not just on final LLM output.
+**Required outputs for each implementation PR** (per `AGENTS.md`): a `docs/specs/` entry (e.g. `fr-c10-meal-portion-realism.md`, `fr-c11-coach-meal-instructions.md`, `fr-c12-meal-regenerate.md` — numbered continuing from the existing `fr-c*` spec series) with Given/When/Then acceptance criteria, a test that fails before the change, and scoped `pnpm lint` / `pnpm typecheck` / `pnpm test` for every touched package (full workspace run if `packages/contracts` changes, which D3 requires). For D2 specifically, the acceptance criteria must include save-time sanitization cases: a submitted instruction containing raw HTML/script-like markup, zero-width or control Unicode characters, or a string past the length cap is neutralized/truncated before it is persisted and before it can reach `narrate.ts` — proven by a test that saves an adversarial input and asserts on the stored `plain_text`/`rich_text`, not just on final LLM output. The concrete smoke test for each decision, verifying the user-visible behavior end-to-end rather than an internal implementation detail, is specified below.
 
-**Blocking issues to resolve before implementation starts:**
+## Smoke tests
+
+One smoke test per decision, each written against real conventions already in the repo (`vitest`, the `food()` fixture helper in `solver.test.ts`, the PGlite + `buildApp` harness in `apps/api/tests/pilot-loop.test.ts` / `tenant-isolation.test.ts`). These are the target tests for the implementing PR to add — not retrofits of existing passing tests — and each asserts on observable behavior a coach would notice, not on an internal code path, so a reviewer can tell the feature actually works without reading the implementation.
+
+### D1 — a high-kcal breakfast never puts an unrealistic amount of one food in a single item
+
+Add to `packages/core/src/nutrition/solver.test.ts`:
+
+```ts
+describe('D1 smoke test — realistic portion ceilings', () => {
+  const staple = food(
+    'roti',
+    'staple',
+    { kcal: 264, proteinG: 9, fatG: 4, carbsG: 51, fiberG: 7 },
+    { servingUnits: [{ name: 'roti', grams: 40 }], allowedSlots: slots('breakfast', 'lunch') },
+  );
+  const beverage = food(
+    'coffee',
+    'beverage',
+    { kcal: 2, proteinG: 0.1, fatG: 0, carbsG: 0, fiberG: 0 },
+    { servingUnits: [{ name: 'cup', grams: 240 }], allowedSlots: slots('breakfast') },
+  );
+  const eggWithCeiling = food(
+    'egg',
+    'protein',
+    { kcal: 155, proteinG: 13, fatG: 11, carbsG: 1.1, fiberG: 0 },
+    {
+      servingUnits: [{ name: 'piece', grams: 50 }],
+      allowedSlots: slots('breakfast'),
+      name: 'Egg (whole, boiled)',
+      maxUnits: 3, // this ADR's realistic ceiling — 3 pieces / 150g, not UNIT_MAX's 8
+    },
+  );
+
+  it('spreads a large breakfast kcal share across multiple eggs instead of one oversized item', () => {
+    // A bulking-phase target large enough that, under today's UNIT_MAX = 8 rule,
+    // the solver would push a single egg item to 8 × 50g = 400g.
+    const denseTarget: MacroTargets = { kcal: 4800, proteinG: 260, fatG: 160, carbsG: 420, fiberG: 40 };
+    const result = solveDay(1, denseTarget, [eggWithCeiling, staple, beverage], {
+      ...DEFAULT_SOLVER_CONFIG,
+      mealCount: 3,
+      seed: 'smoke-d1-portion-ceiling',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const breakfast = result.value.meals.find((m) => m.slot === 'breakfast');
+    const eggItems = breakfast?.items.filter((i) => i.foodId === 'egg') ?? [];
+    expect(eggItems.length).toBeGreaterThan(0);
+    for (const item of eggItems) {
+      // Never one oversized item — this is the whole point of D1.
+      expect(item.portionGrams).toBeLessThanOrEqual(150);
+    }
+  });
+});
+```
+
+### D2 — coach instructions are sanitized before they ever reach the model, and take precedence over the tenant pack
+
+Two smoke tests: the sanitizer in isolation (`packages/modules/src/nutrition/coach-instructions.test.ts`), and prompt composition in isolation (`packages/ai/src/narrate.test.ts` or alongside `ai.test.ts`).
+
+```ts
+// packages/modules/src/nutrition/coach-instructions.test.ts
+import { describe, expect, it } from 'vitest';
+import { sanitizeInstructionsText } from './coach-instructions';
+
+describe('D2 smoke test — sanitizeInstructionsText', () => {
+  it('strips HTML tags and event-handler attributes', () => {
+    const dirty = 'Prefer <img src=x onerror="steal()"> high-protein breakfasts';
+    expect(sanitizeInstructionsText(dirty)).not.toMatch(/[<>]/);
+    expect(sanitizeInstructionsText(dirty)).toContain('high-protein breakfasts');
+  });
+
+  it('strips zero-width and control characters used to hide text', () => {
+    const dirty = 'Focus on lean\u200B\u0000 proteins';
+    expect(sanitizeInstructionsText(dirty)).toBe('Focus on lean proteins');
+  });
+
+  it('hard-caps length so one bad input cannot balloon prompt cost', () => {
+    expect(sanitizeInstructionsText('a'.repeat(5000)).length).toBeLessThanOrEqual(2000);
+  });
+});
+```
+
+```ts
+// packages/ai/src/narrate.test.ts (new case)
+import { describe, expect, it, vi } from 'vitest';
+import { narrate } from './narrate';
+
+describe('D2 smoke test — coach addendum appended last, after sanitization', () => {
+  it('includes the coach instructions in the outgoing system message, after the base prompt', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            { message: { content: JSON.stringify({ days: [{ meals: [{ name: 'Egg & Roti', prepNotes: '' }] }] }) } },
+          ],
+        }),
+      ),
+    );
+
+    await narrate(
+      {
+        locale: 'en',
+        cuisineContext: 'pakistani',
+        verbosity: 'standard',
+        days: [{ day: 1, meals: [{ slot: 'breakfast', items: [{ foodName: 'Egg', grams: 100 }] }] }],
+      },
+      {
+        mode: 'local',
+        baseUrl: 'http://llm.local',
+        model: 'test-model',
+        // Already sanitized by saveInstructions before it ever reaches this call — see coach-instructions.ts.
+        coachAddendum: 'Prefer high-protein breakfasts. Keep prep under 10 minutes.',
+      },
+      { expectedMealCount: 1 },
+    );
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as { messages: { role: string; content: string }[] };
+    const system = body.messages.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toContain('Prefer high-protein breakfasts');
+    // The coach's words come after the base "JSON only / never emit numbers" instructions, never before.
+    expect(system.indexOf('Respond with JSON only')).toBeLessThan(system.indexOf('Prefer high-protein breakfasts'));
+  });
+});
+```
+
+### D3 — regenerating one meal never touches any other meal, day, or plan
+
+Add to (or alongside) `apps/api/tests/pilot-loop.test.ts`'s harness, after a plan already exists for the seeded demo client:
+
+```ts
+describe('D3 smoke test — regenerate one meal in isolation', () => {
+  it('changes only the targeted day/meal and logs REGENERATE_MEAL', async () => {
+    const before = await req(`/v1/meal-plans/${planId}`);
+    const beforeItems = ((await before.json()) as { items: PlanItem[] }).items;
+    const untouchedBefore = beforeItems.filter((i) => !(i.day === 2 && i.mealIndex === 0));
+
+    const res = await req(`/v1/meal-plans/${planId}/days/2/meals/0/regenerate`, { method: 'POST' });
+    expect(res.status).toBe(200);
+
+    const after = await req(`/v1/meal-plans/${planId}`);
+    const afterItems = ((await after.json()) as { items: PlanItem[] }).items;
+    const untouchedAfter = afterItems.filter((i) => !(i.day === 2 && i.mealIndex === 0));
+
+    // Every other day/meal is byte-identical — a coach's other edits are never touched.
+    expect(untouchedAfter).toEqual(untouchedBefore);
+
+    const regenerated = afterItems.filter((i) => i.day === 2 && i.mealIndex === 0);
+    expect(regenerated.length).toBeGreaterThan(0);
+
+    const events = await db
+      .select()
+      .from(schema.aiFeedbackEvents)
+      .where(eq(schema.aiFeedbackEvents.planId, planId));
+    expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
+  });
+});
+```
+
+## Blocking issues to resolve before implementation starts
 
 1. D2's "regenerate all plans" bulk action needs a real job/worker decision (synchronous fan-out is not acceptable past a handful of clients) — resolve against whatever the nightly `learning.ranking-refresh` job runs on, before building the UI's "Regenerate all" path.
 2. D1's default `maxUnits` backfill needs a nutrition-literate pass over the seed catalog (the seed data is already flagged in-repo as needing exactly this kind of review: `packages/db/src/seed-data/foods.ts:24-28`) — do not ship silent, guessed per-food ceilings as the permanent values without that review.
