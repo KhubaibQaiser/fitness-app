@@ -11,7 +11,7 @@ This is a planning ADR — the architecture is accepted for implementation as wr
 
 Three coach-reported problems, all rooted in the Layer 2 solver and the coach-facing plan workflow:
 
-1. **Unrealistic single-item portions.** The solver (`packages/core/src/nutrition/solver.ts`) sizes each pattern slot independently: it takes the meal's kcal share, divides by the number of adjustable pattern groups, and converts to serving units, clamped only by `UNIT_MAX = 8` native servings per item (`solver.ts:217-219`, `solver.ts:329-341`). There is no ceiling tied to what a food realistically looks like on a plate. For "Egg (whole, boiled)" (`servingUnits: [{ name: 'piece', grams: 50 }]`, `packages/db/src/seed-data/foods.ts:121-131`), 8 units is 8 whole eggs — 400g — in a single breakfast slot, and the post-build hill-climb (`optimizePortions`, `solver.ts:247-276`) can push any adjustable item to that ceiling if it is the cheapest way to close a kcal gap. The mechanism generalizes: any food with a small per-100g kcal density and a request that pushes `perItemKcal` (`targets.kcal * meal.share / adjustableCount`) high gets one oversized item instead of the meal being composed of more items. This is a Layer 2 defect, not a Layer 3 one — Layer 3 (`packages/ai`) only names meals and writes prep notes and never sees or emits portion numbers (`packages/ai/src/prompts/meal-narrative.v1.ts:7-12`, `packages/ai/src/types.ts:38-55`); fixing it anywhere in Layer 3 would violate [ADR-0001](0001-hybrid-ai-nutrition.md)'s hard boundary and is not on the table.
+1. **Unrealistic single-item portions — every meal slot, not a breakfast-only bug.** The solver (`packages/core/src/nutrition/solver.ts`) sizes each pattern slot independently, and the same `buildItems`/`optimizePortions` code path runs for every entry in `MEAL_TEMPLATES` (`solver.ts:106-125`) — breakfast, lunch, dinner, and snack alike: it takes that meal's kcal share, divides by the number of adjustable pattern groups, and converts to serving units, clamped only by `UNIT_MAX = 8` native servings per item (`solver.ts:217-219`, `solver.ts:329-341`). There is no ceiling tied to what a food realistically looks like on a plate, in any slot. "Egg (whole, boiled)" at breakfast (`servingUnits: [{ name: 'piece', grams: 50 }]`, `packages/db/src/seed-data/foods.ts:121-131`) ballooning to 8 units — 400g, 8 whole eggs — in a single slot is the reported symptom, but the identical mechanism applies to lunch's `protein`/`staple`/`vegetable`/`fat` pattern and dinner's `protein`/`vegetable` pattern (`MEAL_TEMPLATES`, `solver.ts:106-125`) — e.g. "Chicken breast (skinless, cooked)" at lunch (`servingUnits: [{ name: 'piece', grams: 120 }]`) can equally be pushed to 8 pieces (960g) if that closes lunch's kcal gap cheapest. The post-build hill-climb (`optimizePortions`, `solver.ts:247-276`) pushes *any* adjustable item in *any* slot to that ceiling if it is the cheapest way to close a kcal gap; any food with a small per-100g kcal density relative to `perItemKcal` (`targets.kcal * meal.share / adjustableCount`) is at risk, regardless of which meal it is in. D1's fix below is therefore scoped to the shared solver mechanism, not to breakfast or to eggs specifically — the illustrative numbers throughout this ADR (eggs, breakfast) are the reported case, and every example is re-run against a lunch/dinner protein below to keep that generality explicit rather than assumed. This is a Layer 2 defect, not a Layer 3 one — Layer 3 (`packages/ai`) only names meals and writes prep notes and never sees or emits portion numbers (`packages/ai/src/prompts/meal-narrative.v1.ts:7-12`, `packages/ai/src/types.ts:38-55`); fixing it anywhere in Layer 3 would violate [ADR-0001](0001-hybrid-ai-nutrition.md)'s hard boundary and is not on the table.
 2. **No coach-level fine-tuning of meal narration.** [ADR-0001](0001-hybrid-ai-nutrition.md) fixed the global system prompt as a versioned code artifact (`MEAL_NARRATIVE_SYSTEM`, `packages/ai/src/prompts/meal-narrative.v1.ts:7-12`) plus an optional tenant-wide cuisine pack (`packages/ai/src/prompts/packs.ts`, `resolvePromptPack`). Neither is coach-scoped. Individual coaches have preferences the global prompt should not encode (protein-forward breakfasts, specific prep styles, phrasing tone) and today the only way to express them is editing the shared code prompt or the tenant manifest — both wrong-grained and both requiring an engineering change per preference.
 3. **No single-meal regeneration.** `generatePlan` (`packages/modules/src/nutrition/plans.ts:65-401`) always solves and narrates the full week from a fresh day-1 template (`solveWeek`, `solver.ts:431-459`). The only per-item control today is `patchPlan` → `applyPlanOps` (`packages/modules/src/nutrition/plan-ops.ts`) — manual `set-portion` / `swap` / `add` / `remove`, one item at a time. A coach who dislikes just breakfast on day 2 has no faster path than editing every item by hand or regenerating the entire week (`plan-editor.tsx:223-272`) and losing every other edit.
 
@@ -54,10 +54,10 @@ Each decision below was already screened against these before being marked "Chos
 
 **Decision detail (E):**
 
-- Add `foods.max_units numeric` (nullable; solver falls back to a conservative default, e.g. `min(UNIT_MAX, round(250 / unitGrams))`, when unset) via a new migration in `packages/db/migrations/`, seeded explicitly for foods where the default would be wrong (eggs → 3 pieces / 150g; not 8).
-- `buildItems`/`optimizePortions` clamp each item's `units` to `min(UNIT_MAX, food.maxUnits ?? defaultFor(food))` instead of `UNIT_MAX` alone.
-- Cap items-per-slot at a small constant (e.g. 3) so a breakfast doesn't silently grow to 6 foods; when the group is already at that count and every item is at its ceiling, the day falls through to the existing `ATTEMPTS_PER_DAY` retry-with-different-seed path, and ultimately to the existing `SOLVER_INFEASIBLE` error if truly infeasible — no new failure mode, just a tighter one.
-- `solver.test.ts` gets new cases: a high-kcal target that would have produced a >maxUnits single item today must produce ≥2 items in that slot instead, still within the existing kcal/macro tolerance.
+- Add `foods.max_units numeric` (nullable; solver falls back to a conservative default, e.g. `min(UNIT_MAX, round(250 / unitGrams))`, when unset) via a new migration in `packages/db/migrations/`, seeded explicitly for foods where the default would be wrong — eggs at breakfast → 3 pieces / 150g; chicken breast/qeema/karahi at lunch or dinner → similarly capped to a realistic per-plate serving, not 8.
+- `buildItems`/`optimizePortions` clamp each item's `units` to `min(UNIT_MAX, food.maxUnits ?? defaultFor(food))` instead of `UNIT_MAX` alone — applied identically regardless of which `MealTemplateEntry`/slot the item belongs to; there is no slot-specific branch, by design, because the defect is not slot-specific.
+- Cap items-per-slot at a small constant (e.g. 3) so no meal — breakfast, lunch, dinner, or snack — silently grows past a realistic number of components; when the group is already at that count and every item is at its ceiling, the day falls through to the existing `ATTEMPTS_PER_DAY` retry-with-different-seed path, and ultimately to the existing `SOLVER_INFEASIBLE` error if truly infeasible — no new failure mode, just a tighter one.
+- `solver.test.ts` gets new cases covering more than the reported breakfast/egg symptom: a high-kcal target that would have produced a >maxUnits single item today must produce ≥2 items in that slot instead, still within the existing kcal/macro tolerance — asserted for at least one breakfast case and one lunch-or-dinner case, so the fix is proven generic rather than only regression-tested against the specific complaint that triggered it.
 - This is a `packages/core` change — CODEOWNERS review is mandatory, no exception.
 
 ---
@@ -86,6 +86,7 @@ Each decision below was already screened against these before being marked "Chos
   3. **Collapse runs of blank lines/excess whitespace.**
   4. **Hard-cap length** (e.g. 2,000 characters) — bounds prompt-token cost and limits the blast radius of any single bad input, on top of the existing per-field `maxLength` validation the form already needs.
   Sanitization runs once, at the single write path (`saveInstructions`); `getActiveInstructions` and `narrate.ts` read already-clean data, so `narrate.ts` keeps only its existing `assertDeidentified` check rather than gaining a redundant second sanitize pass.
+- **Scope of coach authority, confirmed: narration only, never portions or macros.** The coach is the final authority over how a plan reads and feels — meal names, phrasing, prep-note style, cuisine tone — and D2's override instructions are exactly that authority made concrete and durable instead of a one-off editing request. That authority does not extend to *how much* of a food appears or *which numbers* a plan targets: D1's per-food serving ceiling is a deterministic, engine-owned correctness floor applied identically for every coach and every plan, not a preference exposed through the instructions text box, and it cannot be loosened or overridden by anything a coach writes there. This is the same split [ADR-0001](0001-hybrid-ai-nutrition.md) already draws between Layers 1–2 (numbers, never learn, never take free-text input) and Layer 3 (language, coach-tunable) — D2 does not renegotiate that boundary, it is the sanctioned instance of it for narration. A coach's *food-selection* preferences (e.g. "avoid organ meats," "prefer fish over red meat") already have a real, safety-appropriate channel today — dietary dislike codes and Layer-4 food rankings (`candidatesForRestrictions`, `packages/modules/src/nutrition/foods.ts:75-204`) — plus direct manual edits via `patchPlan`. If a future ask wants the coach to tune *portioning behavior itself* (e.g. a per-coach default toward smaller, more frequent items), that is a new, structured, numeric preference — not free text — and would need its own ADR; this one does not smuggle it in as a side effect of D2's addendum.
 - **Prompt injection is a related but distinct risk, and sanitization alone does not close it.** Because the coach addendum is concatenated into the LLM system message, a coach (or anyone who compromises a coach's session) could type "ignore all prior instructions and…"-style text. Sanitization above removes obfuscation vectors and caps size, but the actual boundary against that risk is unchanged from [ADR-0001](0001-hybrid-ai-nutrition.md) and was never meant to depend on prompt hygiene alone: the addendum is appended *after* `MEAL_NARRATIVE_SYSTEM`, never prepended, so the core "JSON only / never emit numbers / only reference listed foods" instructions are not reorderable by coach input; `response_format: json_schema` with `strict: true` (`narrate.ts:205-211`) constrains decoding regardless of what the system prompt contains; and the existing output guardrails (`schema`, `numeric_claim`, `shape_mismatch`, `ungrounded` — `packages/ai/src/guardrails.ts`) still gate every response and fall back to `fallbackNarrative` on any failure. A successful injection attempt still cannot produce a schema-violating or numeric-bearing output. This ADR narrows the attack surface; it does not claim the LLM boundary becomes injection-proof, because that boundary was already designed not to rely on prompt hygiene in the first place.
 - **Settings UI** (`packages/app/src/features/settings/`, new sub-feature `meal-instructions/`; route `apps/web/app/(coach)/settings/meal-planner/page.tsx` following the existing `settings/nutrition/page.tsx` sub-route convention): a button on the flat `SettingsScreen` ("Meal AI Planner →") navigates to the sub-route. That screen:
   - Shows only the coach's own override text — never the global prompt or tenant pack, per the requirement that this surface is coach-scoped only.
@@ -161,12 +162,12 @@ Captured per-decision above (D1/D2/D3 comparison tables) rather than duplicated 
 
 One smoke test per decision, each written against real conventions already in the repo (`vitest`, the `food()` fixture helper in `solver.test.ts`, the PGlite + `buildApp` harness in `apps/api/tests/pilot-loop.test.ts` / `tenant-isolation.test.ts`). These are the target tests for the implementing PR to add — not retrofits of existing passing tests — and each asserts on observable behavior a coach would notice, not on an internal code path, so a reviewer can tell the feature actually works without reading the implementation.
 
-### D1 — a high-kcal breakfast never puts an unrealistic amount of one food in a single item
+### D1 — no meal, in any slot, puts an unrealistic amount of one food in a single item
 
-Add to `packages/core/src/nutrition/solver.test.ts`:
+Deliberately covers breakfast **and** lunch/dinner in the same test file, so the fix is proven against the general mechanism (every `MEAL_TEMPLATES` slot shares the same `buildItems`/`optimizePortions` code path), not re-litigated only against the specific breakfast/egg complaint that surfaced it. Add to `packages/core/src/nutrition/solver.test.ts`:
 
 ```ts
-describe('D1 smoke test — realistic portion ceilings', () => {
+describe('D1 smoke test — realistic portion ceilings across every meal slot', () => {
   const staple = food(
     'roti',
     'staple',
@@ -179,6 +180,12 @@ describe('D1 smoke test — realistic portion ceilings', () => {
     { kcal: 2, proteinG: 0.1, fatG: 0, carbsG: 0, fiberG: 0 },
     { servingUnits: [{ name: 'cup', grams: 240 }], allowedSlots: slots('breakfast') },
   );
+  const vegetable = food(
+    'palak',
+    'vegetable',
+    { kcal: 41, proteinG: 2.9, fatG: 0.4, carbsG: 6.8, fiberG: 2.4 },
+    { servingUnits: [{ name: 'serving', grams: 150 }], allowedSlots: slots('lunch', 'dinner') },
+  );
   const eggWithCeiling = food(
     'egg',
     'protein',
@@ -190,25 +197,49 @@ describe('D1 smoke test — realistic portion ceilings', () => {
       maxUnits: 3, // this ADR's realistic ceiling — 3 pieces / 150g, not UNIT_MAX's 8
     },
   );
+  const chickenWithCeiling = food(
+    'chicken',
+    'protein',
+    { kcal: 165, proteinG: 31, fatG: 3.6, carbsG: 0, fiberG: 0 },
+    {
+      servingUnits: [{ name: 'piece', grams: 120 }],
+      allowedSlots: slots('lunch', 'dinner'),
+      name: 'Chicken breast (skinless, cooked)',
+      maxUnits: 3, // 3 pieces / 360g, not UNIT_MAX's 8 (960g)
+    },
+  );
 
-  it('spreads a large breakfast kcal share across multiple eggs instead of one oversized item', () => {
-    // A bulking-phase target large enough that, under today's UNIT_MAX = 8 rule,
-    // the solver would push a single egg item to 8 × 50g = 400g.
-    const denseTarget: MacroTargets = { kcal: 4800, proteinG: 260, fatG: 160, carbsG: 420, fiberG: 40 };
-    const result = solveDay(1, denseTarget, [eggWithCeiling, staple, beverage], {
+  const denseTarget: MacroTargets = { kcal: 4800, proteinG: 260, fatG: 160, carbsG: 420, fiberG: 40 };
+
+  it('breakfast: spreads a large kcal share across multiple eggs instead of one oversized item', () => {
+    const result = solveDay(1, denseTarget, [eggWithCeiling, staple, beverage, chickenWithCeiling, vegetable], {
       ...DEFAULT_SOLVER_CONFIG,
       mealCount: 3,
-      seed: 'smoke-d1-portion-ceiling',
+      seed: 'smoke-d1-portion-ceiling-breakfast',
     });
-
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const breakfast = result.value.meals.find((m) => m.slot === 'breakfast');
     const eggItems = breakfast?.items.filter((i) => i.foodId === 'egg') ?? [];
     expect(eggItems.length).toBeGreaterThan(0);
     for (const item of eggItems) {
-      // Never one oversized item — this is the whole point of D1.
-      expect(item.portionGrams).toBeLessThanOrEqual(150);
+      expect(item.portionGrams).toBeLessThanOrEqual(150); // never the old UNIT_MAX ceiling of 400g
+    }
+  });
+
+  it('lunch: the same ceiling mechanism applies to a lunch protein, not just breakfast', () => {
+    const result = solveDay(1, denseTarget, [eggWithCeiling, staple, beverage, chickenWithCeiling, vegetable], {
+      ...DEFAULT_SOLVER_CONFIG,
+      mealCount: 3,
+      seed: 'smoke-d1-portion-ceiling-lunch',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const lunch = result.value.meals.find((m) => m.slot === 'lunch');
+    const chickenItems = lunch?.items.filter((i) => i.foodId === 'chicken') ?? [];
+    expect(chickenItems.length).toBeGreaterThan(0);
+    for (const item of chickenItems) {
+      expect(item.portionGrams).toBeLessThanOrEqual(360); // never the old UNIT_MAX ceiling of 960g
     }
   });
 });
