@@ -399,6 +399,13 @@ export const api = {
       request<T.PlanSummary>('POST', `/v1/meal-plans/${planId}/publish`, body, {
         idempotent: true,
       }),
+    regenerateMeal: (planId: string, day: number, mealIndex: number) =>
+      request<T.PlanWithItems>(
+        'POST',
+        `/v1/meal-plans/${planId}/days/${day}/meals/${mealIndex}/regenerate`,
+        {},
+        { idempotent: true },
+      ),
     dietPlanPdf: (planId: string): Promise<Blob> =>
       requestBlob(`/v1/meal-plans/${planId}/diet-plan.pdf`),
   },

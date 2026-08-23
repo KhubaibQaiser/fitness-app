@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -600,6 +601,64 @@ describe('the pilot core loop', () => {
       json: { weightKg: 99 },
     });
     expect(conflict.status).toBe(409);
+  });
+
+  it('ADR-0015 D3: regenerates one meal without touching any other meal, day, or plan', async () => {
+    const create = await req('/v1/clients', {
+      method: 'POST',
+      json: {
+        name: 'Regenerate Meal Client',
+        sex: 'M',
+        dob: '1990-01-01',
+        heightCm: 178,
+        activityLevel: 1.55,
+      },
+    });
+    const client = (await create.json()) as { id: string };
+    await req(`/v1/clients/${client.id}/vitals`, { method: 'POST', json: { weightKg: 80 } });
+    await req(`/v1/clients/${client.id}/goals`, {
+      method: 'POST',
+      json: { preset: 'MAINTAIN', rate: 'STANDARD', startWeightKg: 80 },
+    });
+
+    const generated = await req(`/v1/clients/${client.id}/meal-plans/generate`, {
+      method: 'POST',
+      json: { mealCount: 3 },
+    });
+    expect(generated.status).toBe(200);
+    const generatedBody = (await generated.json()) as { plan: { id: string } };
+    const planId = generatedBody.plan.id;
+
+    // Fetch "before" via the same getPlanWithItems-backed shape the regenerate
+    // response uses, so the comparison below isn't skewed by response-shape
+    // differences between the generate and regenerate endpoints.
+    const beforeDetail = await req(`/v1/meal-plans/${planId}`);
+    const before = (await beforeDetail.json()) as {
+      items: { id: string; day: number; mealIndex: number; mealName: string }[];
+    };
+    const untouchedBefore = before.items.filter((i) => !(i.day === 2 && i.mealIndex === 0));
+
+    const res = await req(`/v1/meal-plans/${planId}/days/2/meals/0/regenerate`, {
+      method: 'POST',
+      json: {},
+    });
+    expect(res.status).toBe(200);
+    const after = (await res.json()) as {
+      items: { id: string; day: number; mealIndex: number; mealName: string }[];
+    };
+    const untouchedAfter = after.items.filter((i) => !(i.day === 2 && i.mealIndex === 0));
+
+    // Every other day/meal is byte-identical — a coach's other edits are never touched.
+    expect(untouchedAfter).toEqual(untouchedBefore);
+
+    const regenerated = after.items.filter((i) => i.day === 2 && i.mealIndex === 0);
+    expect(regenerated.length).toBeGreaterThan(0);
+
+    const events = await db
+      .select()
+      .from(schema.aiFeedbackEvents)
+      .where(eq(schema.aiFeedbackEvents.planId, planId));
+    expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
   });
 
   it('onboards a client atomically and serves a credentials PDF', async () => {

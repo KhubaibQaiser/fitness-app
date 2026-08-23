@@ -20,7 +20,7 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
-import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan } from '../../api';
+import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan, useRegenerateMeal } from '../../api';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanFoodPicker } from './plan-food-picker';
@@ -115,6 +115,7 @@ export const PlanEditor = ({
 }) => {
   const patch = usePatchPlan(planId, clientId);
   const publish = usePublishPlan(planId, clientId);
+  const regenerateMeal = useRegenerateMeal(planId, clientId);
   const downloadPdf = useDownloadDietPlanPdf(planId);
   const [regenOpen, setRegenOpen] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -351,14 +352,26 @@ export const PlanEditor = ({
             ))}
           {editable ? (
             <YStack gap="$2">
-              <GhostButton
-                disabled={patch.isPending}
-                onPress={() =>
-                  setAddMealIndex((current) => (current === mealIndex ? null : mealIndex))
-                }
-              >
-                {addMealIndex === mealIndex ? 'Cancel add' : 'Add food'}
-              </GhostButton>
+              <XStack gap="$2" flexWrap="wrap">
+                <GhostButton
+                  flex={1}
+                  minWidth={140}
+                  disabled={patch.isPending}
+                  onPress={() =>
+                    setAddMealIndex((current) => (current === mealIndex ? null : mealIndex))
+                  }
+                >
+                  {addMealIndex === mealIndex ? 'Cancel add' : 'Add food'}
+                </GhostButton>
+                <GhostButton
+                  flex={1}
+                  minWidth={140}
+                  disabled={regenerateMeal.isPending}
+                  onPress={() => regenerateMeal.mutate({ day, mealIndex })}
+                >
+                  {regenerateMeal.isPending ? 'Regenerating…' : 'Regenerate meal'}
+                </GhostButton>
+              </XStack>
               {addMealIndex === mealIndex ? (
                 <PlanFoodPicker
                   busy={patch.isPending}
@@ -385,6 +398,12 @@ export const PlanEditor = ({
       {patch.isError ? (
         <Body color="$danger" role="alert">
           {patch.error.message}
+        </Body>
+      ) : null}
+
+      {regenerateMeal.isError ? (
+        <Body color="$danger" role="alert">
+          {regenerateMeal.error.message}
         </Body>
       ) : null}
 

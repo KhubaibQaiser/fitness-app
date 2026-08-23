@@ -232,6 +232,18 @@ export const usePublishPlan = (planId: string, clientId: string) => {
   });
 };
 
+export const useRegenerateMeal = (planId: string, clientId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ day, mealIndex }: { day: number; mealIndex: number }) =>
+      api.plans.regenerateMeal(planId, day, mealIndex),
+    onSuccess: (data) => {
+      queryClient.setQueryData(qk.plan(planId), data);
+      invalidateClient(queryClient, clientId);
+    },
+  });
+};
+
 export const useDownloadDietPlanPdf = (planId: string) =>
   useMutation({
     mutationFn: () => api.plans.dietPlanPdf(planId),

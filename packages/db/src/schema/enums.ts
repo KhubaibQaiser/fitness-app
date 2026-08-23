@@ -68,6 +68,9 @@ export const feedbackKindEnum = pgEnum('feedback_kind', [
   'EDIT',
   'SWAP',
   'REGENERATE',
+  // Single-meal regenerate (ADR-0015 D3) — distinct from plan-level
+  // REGENERATE so Layer-4 learning/reporting can tell the two apart.
+  'REGENERATE_MEAL',
   'PUBLISH_UNCHANGED',
   'ADJUSTMENT_ACCEPTED',
   'ADJUSTMENT_MODIFIED',

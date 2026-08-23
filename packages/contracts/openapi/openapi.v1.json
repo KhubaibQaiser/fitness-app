@@ -604,7 +604,8 @@
                             "DISLIKE",
                             "RELIGIOUS",
                             "ETHICAL",
-                            "MEDICAL"
+                            "MEDICAL",
+                            "PREFERRED"
                           ]
                         },
                         "code": {
@@ -1184,7 +1185,8 @@
                             "DISLIKE",
                             "RELIGIOUS",
                             "ETHICAL",
-                            "MEDICAL"
+                            "MEDICAL",
+                            "PREFERRED"
                           ]
                         },
                         "code": {
@@ -2537,6 +2539,77 @@
             "description": "Diet plan PDF (Day-1 template)"
           },
           "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meal-plans/{id}/days/{day}/meals/{mealIndex}/regenerate": {
+      "post": {
+        "operationId": "regenerateMeal",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "required": true,
+            "name": "day",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": ["integer", "null"],
+              "minimum": 0,
+              "maximum": 4
+            },
+            "required": false,
+            "name": "mealIndex",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan with the regenerated meal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Problem details",
             "content": {
               "application/json": {

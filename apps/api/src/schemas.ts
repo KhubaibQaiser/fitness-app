@@ -221,6 +221,12 @@ export const publishBody = z.object({
   acknowledgeDrift: z.boolean().optional(),
 });
 
+export const regenerateMealParam = z.object({
+  id: z.uuid(),
+  day: z.coerce.number().int().min(1).max(7),
+  mealIndex: z.coerce.number().int().min(0).max(4),
+});
+
 export const noteBody = z.object({ body: z.string().min(1).max(4000) });
 
 export const enterBody = z.object({ key: z.string().min(8).max(200) });

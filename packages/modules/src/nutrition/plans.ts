@@ -5,6 +5,8 @@ import { err, ok, type Result } from '@gymos/core';
 import {
   assertNoRestrictedFoods,
   computeTargets,
+  MEAL_TEMPLATES,
+  solveMeal,
   solveWeek,
   type MacroTargets,
   type NutritionRefusal,
@@ -573,6 +575,178 @@ export const patchPlan = async (
     }
     throw error;
   }
+
+  const updated = await getPlanWithItems(db, planId);
+  if (!updated) return err({ code: 'PLAN_NOT_FOUND' });
+  return ok(updated);
+};
+
+export type RegenerateMealError =
+  | { code: 'PLAN_NOT_FOUND' }
+  | { code: 'PLAN_NOT_EDITABLE'; status: string }
+  | { code: 'MEAL_NOT_FOUND'; day: number; mealIndex: number }
+  | { code: 'SOLVER_FAILED'; error: SolverError }
+  | { code: 'ALLERGEN_POSTCHECK_FAILED'; foodId: string; allergen: string };
+
+const mealCountFromDay = (itemsForDay: readonly { mealIndex: number }[]): 3 | 4 | 5 | null => {
+  const distinct = new Set(itemsForDay.map((i) => i.mealIndex)).size;
+  return distinct === 3 || distinct === 4 || distinct === 5 ? distinct : null;
+};
+
+/**
+ * Regenerate a single meal in isolation — no other meal, day, or plan is
+ * touched (ADR-0015 D3). Reuses D1's `solveMeal` entry point and the exact
+ * same Layer 2 candidate pool / allergen post-check `generatePlan` uses,
+ * scoped to one meal instead of a full week.
+ */
+export const regenerateMeal = async (
+  db: Db,
+  principal: { userId: string; coachId: string },
+  manifest: TenantManifest,
+  ai: AiConfig,
+  planId: string,
+  day: number,
+  mealIndex: number,
+): Promise<
+  Result<NonNullable<Awaited<ReturnType<typeof getPlanWithItems>>>, RegenerateMealError>
+> => {
+  const existing = await getPlanWithItems(db, planId);
+  if (!existing) return err({ code: 'PLAN_NOT_FOUND' });
+  if (existing.plan.status !== 'DRAFT' && existing.plan.status !== 'NEEDS_REVIEW') {
+    return err({ code: 'PLAN_NOT_EDITABLE', status: existing.plan.status });
+  }
+
+  const dayItems = existing.items.filter((i) => i.day === day);
+  const mealItems = dayItems.filter((i) => i.mealIndex === mealIndex);
+  const mealCount = mealCountFromDay(dayItems);
+  if (mealItems.length === 0 || mealCount === null) {
+    return err({ code: 'MEAL_NOT_FOUND', day, mealIndex });
+  }
+  const template = MEAL_TEMPLATES[mealCount][mealIndex];
+  if (!template) return err({ code: 'MEAL_NOT_FOUND', day, mealIndex });
+
+  const profile = await getActiveProfile(db, existing.plan.clientId);
+  const restrictions = profile?.restrictions ?? [];
+  const [goal] = await db
+    .select({ preset: s.clientGoals.preset })
+    .from(s.clientGoals)
+    .where(
+      and(eq(s.clientGoals.clientId, existing.plan.clientId), eq(s.clientGoals.status, 'ACTIVE')),
+    )
+    .limit(1);
+
+  const candidates = await candidatesForRestrictions(db, restrictions, manifest, {
+    ...(goal ? { goalPreset: goal.preset } : {}),
+    clientId: existing.plan.clientId,
+    varietyLookback: 3,
+  });
+
+  // Never duplicate a food already placed in another meal that day.
+  const usedElsewhereThatDay = new Set(
+    dayItems.filter((i) => i.mealIndex !== mealIndex).map((i) => i.foodId),
+  );
+
+  // Fresh sub-seed per call: repeated regenerates of the same meal are
+  // reproducible per attempt (same seed twice ⇒ same result) but not
+  // identical to the last regenerate, since the sequence component changes.
+  const seed = `${existing.plan.generationId ?? planId}:regen:${day}:${mealIndex}:${Date.now()}`;
+  const solved = solveMeal(
+    mealIndex,
+    template,
+    existing.plan.targets,
+    candidates,
+    {
+      mealCount,
+      kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
+      macroTolerancePct: manifest.aiConfig.macroTolerancePct,
+      seed,
+    },
+    usedElsewhereThatDay,
+  );
+  if (!solved.ok) return err({ code: 'SOLVER_FAILED', error: solved.error });
+
+  // Independent second allergen check on the regenerated composition, same
+  // as generatePlan — never delegated, never skipped for a smaller-scoped op.
+  const foodMap = await foodsById(db, [...new Set(solved.value.items.map((i) => i.foodId))]);
+  const postCheck = assertNoRestrictedFoods(
+    solved.value.items,
+    foodMap,
+    restrictedAllergenCodes(restrictions),
+  );
+  if (!postCheck.ok) {
+    return err({
+      code: 'ALLERGEN_POSTCHECK_FAILED',
+      foodId: postCheck.error.foodId,
+      allergen: postCheck.error.allergen,
+    });
+  }
+
+  // Layer 3 — name only this one meal; never touches portions/macros.
+  const narrative = await narrate(
+    {
+      locale: manifest.locales.default,
+      cuisineContext: manifest.aiConfig.cuisineContext,
+      verbosity: manifest.aiConfig.verbosity,
+      days: [
+        {
+          day: 1,
+          meals: [
+            {
+              slot: solved.value.slot,
+              items: solved.value.items.map((i) => ({
+                foodName: i.foodName,
+                grams: i.portionGrams,
+              })),
+            },
+          ],
+        },
+      ],
+    },
+    ai,
+    { expectedMealCount: 1 },
+  );
+  const mealName = narrative.output.days[0]?.meals[0]?.name ?? `${solved.value.slot}, day ${day}`;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(s.mealPlanItems)
+      .where(
+        and(
+          eq(s.mealPlanItems.planId, planId),
+          eq(s.mealPlanItems.day, day),
+          eq(s.mealPlanItems.mealIndex, mealIndex),
+        ),
+      );
+    await tx.insert(s.mealPlanItems).values(
+      solved.value.items.map((item, position) => ({
+        planId,
+        day,
+        mealIndex,
+        mealSlot: solved.value.slot,
+        mealName,
+        foodId: item.foodId,
+        portionGrams: item.portionGrams,
+        macros: item.macros,
+        macrosSource: 'food_db' as const,
+        prepNotes: null,
+        position,
+      })),
+    );
+    await tx.insert(s.aiFeedbackEvents).values({
+      planId,
+      coachId: principal.coachId,
+      kind: 'REGENERATE_MEAL',
+      payload: { day, mealIndex, mealSlot: solved.value.slot },
+    });
+    await writeAudit(tx, {
+      actorUserId: principal.userId,
+      actorRole: 'COACH',
+      action: 'plan.regenerate_meal',
+      resourceType: 'meal_plan',
+      resourceId: planId,
+      after: { day, mealIndex, mealSlot: solved.value.slot },
+    });
+  });
 
   const updated = await getPlanWithItems(db, planId);
   if (!updated) return err({ code: 'PLAN_NOT_FOUND' });
