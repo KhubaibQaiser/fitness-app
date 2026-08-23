@@ -53,6 +53,13 @@ export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 /** Coach-set fraction of daily kcal per slot (ADR-0015 D7). Unset slots keep the template default. */
 export type MealShareOverrides = Partial<Record<MealSlot, number>>;
 
+/**
+ * Incoming override bag before normalize. Wider than `MealShareOverrides`
+ * so Zod-inferred PUT bodies (`{ breakfast?: number | undefined }`) pass
+ * under `exactOptionalPropertyTypes`.
+ */
+export type MealShareOverrideInput = Partial<Record<MealSlot, number | undefined>>;
+
 export type MealTemplateEntry = {
   readonly slot: MealSlot;
   readonly share: number;
@@ -62,6 +69,14 @@ export type MealTemplateEntry = {
 /** Inclusive floor/ceiling for a single slot override — 5% / 80% of daily kcal. */
 export const MIN_MEAL_SHARE = 0.05;
 export const MAX_MEAL_SHARE = 0.8;
+/**
+ * How close a meal must stay to its own share during the day-level
+ * hill-climb. Wider than the day-level `kcalTolerancePct` (5% of an 8%
+ * snack is a 9 kcal window — smaller than one 0.5-unit step of almonds).
+ * 15% of a 10% breakfast on 2000 kcal is 30 kcal; 759 vs 200 is 280% and
+ * is still rejected.
+ */
+export const MEAL_SHARE_TOLERANCE_PCT = 15;
 const MEAL_SHARE_SLOTS: readonly MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export type SolvedItem = {
@@ -158,7 +173,7 @@ export const MEAL_TEMPLATES: Record<3 | 4 | 5, readonly MealTemplateEntry[]> = {
  * default" — the same signal an empty object produces.
  */
 export const normalizeMealShareOverrides = (
-  raw: MealShareOverrides | null | undefined,
+  raw: MealShareOverrideInput | null | undefined,
 ): MealShareOverrides | undefined => {
   if (raw == null) return undefined;
   const out: MealShareOverrides = {};
@@ -190,39 +205,32 @@ export const resolveMealTemplate = (
   const setSlots = [...slotsInTemplate].filter((slot) => applied[slot] !== undefined);
   if (setSlots.length === 0) return base;
 
-  const appliedSum = setSlots.reduce((sum, slot) => sum + (applied[slot] ?? 0), 0);
+  /* v8 ignore next -- setSlots is already filtered to defined applied[slot] */
+  const shareOf = (slot: MealSlot): number => applied[slot] ?? 0;
+  const appliedSum = setSlots.reduce((sum, slot) => sum + shareOf(slot), 0);
   const unset = base.filter((meal) => applied[meal.slot] === undefined);
 
   if (unset.length === 0) {
-    return base.map((meal) => ({
-      ...meal,
-      /* v8 ignore next -- appliedSum is ≥ MIN_MEAL_SHARE after normalize */
-      share: appliedSum > 0 ? (applied[meal.slot] ?? meal.share) / appliedSum : meal.share,
-    }));
+    return base.map((meal) => ({ ...meal, share: shareOf(meal.slot) / appliedSum }));
   }
 
   if (appliedSum >= 1) {
     const reserved = MIN_MEAL_SHARE * unset.length;
-    /* v8 ignore next -- appliedSum is ≥ 1 in this branch */
-    const scale = appliedSum > 0 ? (1 - reserved) / appliedSum : 0;
-    return base.map((meal) =>
-      applied[meal.slot] !== undefined
-        ? { ...meal, share: (applied[meal.slot] ?? 0) * scale }
-        : { ...meal, share: MIN_MEAL_SHARE },
-    );
+    const scale = (1 - reserved) / appliedSum;
+    return base.map((meal) => {
+      const setShare = applied[meal.slot];
+      return setShare !== undefined
+        ? { ...meal, share: setShare * scale }
+        : { ...meal, share: MIN_MEAL_SHARE };
+    });
   }
 
   const remaining = 1 - appliedSum;
   const unsetDefaultSum = unset.reduce((sum, meal) => sum + meal.share, 0);
   return base.map((meal) => {
-    if (applied[meal.slot] !== undefined)
-      return { ...meal, share: applied[meal.slot] ?? meal.share };
-    const share =
-      unsetDefaultSum > 0
-        ? (meal.share / unsetDefaultSum) * remaining
-        : /* v8 ignore next -- every template slot has a positive default share */
-          remaining / unset.length;
-    return { ...meal, share };
+    const setShare = applied[meal.slot];
+    if (setShare !== undefined) return { ...meal, share: setShare };
+    return { ...meal, share: (meal.share / unsetDefaultSum) * remaining };
   });
 };
 
@@ -383,7 +391,9 @@ const worstMealShareRelErr = (
   const actual = mealKcalMap(items);
   let worst = 0;
   for (const [mealIndex, budget] of budgetByMeal) {
-    worst = Math.max(worst, Math.abs((actual.get(mealIndex) ?? 0) - budget) / budget);
+    const actualKcal = actual.get(mealIndex);
+    /* v8 ignore next -- every budgeted mealIndex has at least the pattern items */
+    worst = Math.max(worst, Math.abs((actualKcal ?? 0) - budget) / budget);
   }
   return worst;
 };
@@ -393,10 +403,11 @@ const worstMealShareRelErr = (
  * most reduces the weighted error, until tolerance is met or no move helps.
  * Deterministic given item order. Fixed-portion items (beverages) are skipped.
  *
- * When `budgetByMeal` is set (the full-day path), meal-share error is part of
- * the score and a move that would push an in-band meal *out* of its kcal
- * share is rejected — this is what stops breakfast drifting to ~38% of the
- * day while the day total still lands inside ±5% (ADR-0015 D7).
+ * When `budgetByMeal` is set (the full-day path), a move that would push an
+ * in-band meal *out* of its kcal share is rejected — this is what stops
+ * breakfast drifting to ~38% of the day while the day total still lands
+ * inside ±5% (ADR-0015 D7). Day-level score is unchanged so macro
+ * balancing is not starved by the share constraint.
  */
 const optimizePortions = (
   items: MutableItem[],
@@ -404,19 +415,13 @@ const optimizePortions = (
   config: SolverConfig,
   budgetByMeal?: ReadonlyMap<number, number>,
 ): void => {
-  const tol = config.kcalTolerancePct / 100;
-  const scoreOf = (): number => {
-    const day = errorScore(currentTotals(items), targets);
-    if (budgetByMeal === undefined) return day;
-    return day + 8 * worstMealShareRelErr(items, budgetByMeal);
-  };
+  const tol = Math.max(config.kcalTolerancePct, MEAL_SHARE_TOLERANCE_PCT) / 100;
   while (true) {
     const totals = currentTotals(items);
-    const mealsOk = budgetByMeal === undefined || worstMealShareRelErr(items, budgetByMeal) <= tol;
-    if (withinTolerance(totals, targets, config) && mealsOk) return;
+    if (withinTolerance(totals, targets, config)) return;
     let bestItem: MutableItem | null = null;
     let bestDelta = 0;
-    let bestScore = scoreOf();
+    let bestScore = errorScore(totals, targets);
     const currentMealErr = budgetByMeal ? worstMealShareRelErr(items, budgetByMeal) : 0;
     for (const item of items) {
       if (item.fixedPortion) continue;
@@ -425,9 +430,9 @@ const optimizePortions = (
         if (next < UNIT_MIN || next > unitCeiling(item.food, item.unitGrams)) continue;
         item.units = next;
         const nextMealErr = budgetByMeal ? worstMealShareRelErr(items, budgetByMeal) : 0;
-        const score = scoreOf();
+        const score = errorScore(currentTotals(items), targets);
         item.units = next - delta;
-        if (budgetByMeal && currentMealErr <= tol && nextMealErr > tol) continue;
+        if (budgetByMeal && nextMealErr > tol && nextMealErr > currentMealErr + 1e-9) continue;
         if (score < bestScore - 1e-9) {
           bestScore = score;
           bestItem = item;
@@ -562,27 +567,14 @@ const expandInfeasibleItems = (
   used: Set<string>,
   budgetByMeal?: ReadonlyMap<number, number>,
 ): void => {
-  const tol = config.kcalTolerancePct / 100;
   for (let expansion = 0; expansion < MAX_EXPANSIONS_PER_ATTEMPT; expansion += 1) {
     const totals = currentTotals(items);
-    const mealsOk = budgetByMeal === undefined || worstMealShareRelErr(items, budgetByMeal) <= tol;
-    if (withinTolerance(totals, targets, config) && mealsOk) return;
-
-    let shortMealIndex: number | undefined;
-    if (budgetByMeal !== undefined) {
-      const actual = mealKcalMap(items);
-      const short = [...budgetByMeal.entries()]
-        .filter(([idx, budget]) => (actual.get(idx) ?? 0) < budget * (1 - tol))
-        .sort((a, b) => b[1] - (actual.get(b[0]) ?? 0) - (a[1] - (actual.get(a[0]) ?? 0)));
-      shortMealIndex = short[0]?.[0];
-      if (shortMealIndex === undefined) return; // meals are in band; expansion cannot fix macros
-    } else if (totals.kcal >= targets.kcal) {
-      return; // expansion only helps when short of the (meal- or day-level) target
-    }
+    if (withinTolerance(totals, targets, config)) return;
+    /* v8 ignore next -- expansion cannot close a macro gap when kcal is already at/over target */
+    if (totals.kcal >= targets.kcal) return;
 
     const atCeiling = items.find((item) => {
       if (item.fixedPortion) return false;
-      if (shortMealIndex !== undefined && item.mealIndex !== shortMealIndex) return false;
       const itemMeal = mealByIndex.get(item.mealIndex);
       /* v8 ignore next -- unreachable: every item's mealIndex comes from mealByIndex's own keys */
       if (!itemMeal) return false;
@@ -630,10 +622,8 @@ export const solveDay = (
   const budgetByMeal = new Map(
     template.map((meal, mealIndex) => [mealIndex, targets.kcal * meal.share] as const),
   );
-  const tol = config.kcalTolerancePct / 100;
   const dayOk = (items: readonly MutableItem[]): boolean =>
-    withinTolerance(currentTotals(items), targets, config) &&
-    worstMealShareRelErr(items, budgetByMeal) <= tol;
+    withinTolerance(currentTotals(items), targets, config);
 
   const attemptSolve = (attempt: number): Result<MutableItem[], SolverError> => {
     const rand = seededRandom(`${config.seed}:day:${day}:attempt:${attempt}`);
@@ -658,9 +648,7 @@ export const solveDay = (
   if (!firstAttempt.ok) return firstAttempt;
   let best = {
     items: firstAttempt.value,
-    score:
-      errorScore(currentTotals(firstAttempt.value), targets) +
-      8 * worstMealShareRelErr(firstAttempt.value, budgetByMeal),
+    score: errorScore(currentTotals(firstAttempt.value), targets),
   };
 
   for (let attempt = 1; attempt < ATTEMPTS_PER_DAY && !dayOk(best.items); attempt += 1) {
@@ -668,9 +656,7 @@ export const solveDay = (
     /* v8 ignore next 2 -- NO_CANDIDATES is deterministic per candidate pool:
        if attempt 0 built successfully, every retry builds too. */
     if (!retry.ok) return retry;
-    const score =
-      errorScore(currentTotals(retry.value), targets) +
-      8 * worstMealShareRelErr(retry.value, budgetByMeal);
+    const score = errorScore(currentTotals(retry.value), targets);
     /* v8 ignore next -- seed-dependent whether a later attempt improves the score */
     if (score < best.score) best = { items: retry.value, score };
   }
@@ -750,6 +736,7 @@ export const solveMeal = (
        if attempt 0 built successfully, every retry builds too. */
     if (!retry.ok) return retry;
     const score = errorScore(currentTotals(retry.value), mealTargets);
+    /* v8 ignore next -- seed-dependent whether a later attempt improves the score */
     if (score < best.score) best = { items: retry.value, score };
   }
 

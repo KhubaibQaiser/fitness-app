@@ -1,6 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { NUMERIC_CLAIM_PATTERN } from '@gymos/ai';
-import { normalizeMealShareOverrides, type MealShareOverrides } from '@gymos/core/nutrition';
+import {
+  normalizeMealShareOverrides,
+  type MealShareOverrideInput,
+  type MealShareOverrides,
+} from '@gymos/core/nutrition';
 import { schema as s, type Db, type DbOrTx } from '@gymos/db';
 import { writeAudit } from '../shared/audit';
 
@@ -106,7 +110,7 @@ export const saveInstructions = async (
   db: Db,
   principal: { userId: string; coachId: string },
   rawText: string,
-  mealShares?: MealShareOverrides | null,
+  mealShares?: MealShareOverrideInput | null,
 ): Promise<SaveInstructionsResult> => {
   const richText = sanitizeInstructionsText(rawText);
   const plainText = deriveInstructionsPlainText(richText);

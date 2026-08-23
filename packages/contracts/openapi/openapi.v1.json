@@ -21,10 +21,7 @@
           },
           "heightDisplayUnit": {
             "type": "string",
-            "enum": [
-              "cm",
-              "ft_in"
-            ]
+            "enum": ["cm", "ft_in"]
           }
         }
       },
@@ -43,16 +40,10 @@
           },
           "heightDisplayUnit": {
             "type": "string",
-            "enum": [
-              "cm",
-              "ft_in"
-            ]
+            "enum": ["cm", "ft_in"]
           }
         },
-        "required": [
-          "signaturePngBase64",
-          "signedAt"
-        ]
+        "required": ["signaturePngBase64", "signedAt"]
       }
     },
     "parameters": {}
@@ -85,52 +76,29 @@
                 "properties": {
                   "locale": {
                     "type": "string",
-                    "enum": [
-                      "en",
-                      "ur"
-                    ]
+                    "enum": ["en", "ur"]
                   },
                   "currencyPref": {
                     "type": "string",
-                    "enum": [
-                      "PKR",
-                      "USD",
-                      "EUR",
-                      "GBP",
-                      "AED",
-                      "SAR"
-                    ]
+                    "enum": ["PKR", "USD", "EUR", "GBP", "AED", "SAR"]
                   },
                   "unitPrefs": {
                     "type": "object",
                     "properties": {
                       "weight": {
                         "type": "string",
-                        "enum": [
-                          "kg",
-                          "lb"
-                        ]
+                        "enum": ["kg", "lb"]
                       },
                       "height": {
                         "type": "string",
-                        "enum": [
-                          "cm",
-                          "ft_in"
-                        ]
+                        "enum": ["cm", "ft_in"]
                       },
                       "length": {
                         "type": "string",
-                        "enum": [
-                          "cm",
-                          "in"
-                        ]
+                        "enum": ["cm", "in"]
                       }
                     },
-                    "required": [
-                      "weight",
-                      "height",
-                      "length"
-                    ]
+                    "required": ["weight", "height", "length"]
                   },
                   "defaultCountry": {
                     "type": "string",
@@ -188,9 +156,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -213,9 +179,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "count"
-                  ]
+                  "required": ["count"]
                 }
               }
             }
@@ -249,9 +213,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "ok"
-                  ]
+                  "required": ["ok"]
                 }
               }
             }
@@ -274,9 +236,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "ok"
-                  ]
+                  "required": ["ok"]
                 }
               }
             }
@@ -299,10 +259,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "archived"
-              ]
+              "enum": ["active", "archived"]
             },
             "required": false,
             "name": "status",
@@ -325,9 +282,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -349,10 +304,7 @@
                   },
                   "sex": {
                     "type": "string",
-                    "enum": [
-                      "F",
-                      "M"
-                    ]
+                    "enum": ["F", "M"]
                   },
                   "dob": {
                     "type": "string",
@@ -376,33 +328,23 @@
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          1.2
-                        ]
+                        "enum": [1.2]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.375
-                        ]
+                        "enum": [1.375]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.55
-                        ]
+                        "enum": [1.55]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.725
-                        ]
+                        "enum": [1.725]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.9
-                        ]
+                        "enum": [1.9]
                       }
                     ]
                   },
@@ -427,10 +369,7 @@
                     "$ref": "#/components/schemas/ClientIntake"
                   }
                 },
-                "required": [
-                  "name",
-                  "sex"
-                ]
+                "required": ["name", "sex"]
               }
             }
           }
@@ -480,10 +419,7 @@
                       },
                       "sex": {
                         "type": "string",
-                        "enum": [
-                          "F",
-                          "M"
-                        ]
+                        "enum": ["F", "M"]
                       },
                       "dob": {
                         "type": "string",
@@ -507,33 +443,23 @@
                         "anyOf": [
                           {
                             "type": "number",
-                            "enum": [
-                              1.2
-                            ]
+                            "enum": [1.2]
                           },
                           {
                             "type": "number",
-                            "enum": [
-                              1.375
-                            ]
+                            "enum": [1.375]
                           },
                           {
                             "type": "number",
-                            "enum": [
-                              1.55
-                            ]
+                            "enum": [1.55]
                           },
                           {
                             "type": "number",
-                            "enum": [
-                              1.725
-                            ]
+                            "enum": [1.725]
                           },
                           {
                             "type": "number",
-                            "enum": [
-                              1.9
-                            ]
+                            "enum": [1.9]
                           }
                         ]
                       },
@@ -558,13 +484,7 @@
                         "$ref": "#/components/schemas/SignedClientIntake"
                       }
                     },
-                    "required": [
-                      "name",
-                      "sex",
-                      "heightCm",
-                      "activityLevel",
-                      "intake"
-                    ]
+                    "required": ["name", "sex", "heightCm", "activityLevel", "intake"]
                   },
                   "vitals": {
                     "type": "object",
@@ -625,29 +545,18 @@
                         "maximum": 120
                       }
                     },
-                    "required": [
-                      "weightKg"
-                    ]
+                    "required": ["weightKg"]
                   },
                   "goal": {
                     "type": "object",
                     "properties": {
                       "preset": {
                         "type": "string",
-                        "enum": [
-                          "LOSE",
-                          "GAIN",
-                          "MAINTAIN",
-                          "RECOMP"
-                        ]
+                        "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP"]
                       },
                       "rate": {
                         "type": "string",
-                        "enum": [
-                          "CONSERVATIVE",
-                          "STANDARD",
-                          "AGGRESSIVE"
-                        ]
+                        "enum": ["CONSERVATIVE", "STANDARD", "AGGRESSIVE"]
                       },
                       "startWeightKg": {
                         "type": "number",
@@ -679,12 +588,7 @@
                         "maximum": 8000
                       }
                     },
-                    "required": [
-                      "preset",
-                      "rate",
-                      "startWeightKg",
-                      "targetWeightKg"
-                    ]
+                    "required": ["preset", "rate", "startWeightKg", "targetWeightKg"]
                   },
                   "dietary": {
                     "type": "array",
@@ -710,26 +614,16 @@
                           "maxLength": 80
                         },
                         "note": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
+                          "type": ["string", "null"],
                           "maxLength": 500
                         }
                       },
-                      "required": [
-                        "type",
-                        "code"
-                      ]
+                      "required": ["type", "code"]
                     },
                     "maxItems": 50
                   }
                 },
-                "required": [
-                  "client",
-                  "vitals",
-                  "goal"
-                ]
+                "required": ["client", "vitals", "goal"]
               }
             }
           }
@@ -868,10 +762,7 @@
                   },
                   "sex": {
                     "type": "string",
-                    "enum": [
-                      "F",
-                      "M"
-                    ]
+                    "enum": ["F", "M"]
                   },
                   "dob": {
                     "type": "string",
@@ -895,33 +786,23 @@
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          1.2
-                        ]
+                        "enum": [1.2]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.375
-                        ]
+                        "enum": [1.375]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.55
-                        ]
+                        "enum": [1.55]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.725
-                        ]
+                        "enum": [1.725]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.9
-                        ]
+                        "enum": [1.9]
                       }
                     ]
                   },
@@ -947,10 +828,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "active",
-                      "archived"
-                    ]
+                    "enum": ["active", "archived"]
                   }
                 }
               }
@@ -1024,9 +902,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -1058,9 +934,7 @@
                     "maxLength": 4000
                   }
                 },
-                "required": [
-                  "body"
-                ]
+                "required": ["body"]
               }
             }
           }
@@ -1110,9 +984,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -1323,24 +1195,16 @@
                           "maxLength": 80
                         },
                         "note": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
+                          "type": ["string", "null"],
                           "maxLength": 500
                         }
                       },
-                      "required": [
-                        "type",
-                        "code"
-                      ]
+                      "required": ["type", "code"]
                     },
                     "maxItems": 50
                   }
                 },
-                "required": [
-                  "restrictions"
-                ]
+                "required": ["restrictions"]
               }
             }
           }
@@ -1395,52 +1259,33 @@
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          1.2
-                        ]
+                        "enum": [1.2]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.375
-                        ]
+                        "enum": [1.375]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.55
-                        ]
+                        "enum": [1.55]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.725
-                        ]
+                        "enum": [1.725]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          1.9
-                        ]
+                        "enum": [1.9]
                       }
                     ]
                   },
                   "preset": {
                     "type": "string",
-                    "enum": [
-                      "LOSE",
-                      "GAIN",
-                      "MAINTAIN",
-                      "RECOMP"
-                    ]
+                    "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP"]
                   },
                   "rate": {
                     "type": "string",
-                    "enum": [
-                      "CONSERVATIVE",
-                      "STANDARD",
-                      "AGGRESSIVE"
-                    ]
+                    "enum": ["CONSERVATIVE", "STANDARD", "AGGRESSIVE"]
                   },
                   "startWeightKg": {
                     "type": "number",
@@ -1458,13 +1303,7 @@
                     "maximum": 8000
                   }
                 },
-                "required": [
-                  "activityLevel",
-                  "preset",
-                  "rate",
-                  "startWeightKg",
-                  "targetWeightKg"
-                ]
+                "required": ["activityLevel", "preset", "rate", "startWeightKg", "targetWeightKg"]
               }
             }
           }
@@ -1536,9 +1375,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -1566,20 +1403,11 @@
                 "properties": {
                   "preset": {
                     "type": "string",
-                    "enum": [
-                      "LOSE",
-                      "GAIN",
-                      "MAINTAIN",
-                      "RECOMP"
-                    ]
+                    "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP"]
                   },
                   "rate": {
                     "type": "string",
-                    "enum": [
-                      "CONSERVATIVE",
-                      "STANDARD",
-                      "AGGRESSIVE"
-                    ]
+                    "enum": ["CONSERVATIVE", "STANDARD", "AGGRESSIVE"]
                   },
                   "startWeightKg": {
                     "type": "number",
@@ -1611,11 +1439,7 @@
                     "maximum": 8000
                   }
                 },
-                "required": [
-                  "preset",
-                  "rate",
-                  "startWeightKg"
-                ]
+                "required": ["preset", "rate", "startWeightKg"]
               }
             }
           }
@@ -1679,15 +1503,10 @@
                 "properties": {
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "ACHIEVED",
-                      "ABANDONED"
-                    ]
+                    "enum": ["ACHIEVED", "ABANDONED"]
                   }
                 },
-                "required": [
-                  "status"
-                ]
+                "required": ["status"]
               }
             }
           }
@@ -1737,9 +1556,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -1777,9 +1594,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -1897,33 +1712,23 @@
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          1
-                        ]
+                        "enum": [1]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          2
-                        ]
+                        "enum": [2]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          3
-                        ]
+                        "enum": [3]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          4
-                        ]
+                        "enum": [4]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          5
-                        ]
+                        "enum": [5]
                       }
                     ]
                   },
@@ -2123,33 +1928,23 @@
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          1
-                        ]
+                        "enum": [1]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          2
-                        ]
+                        "enum": [2]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          3
-                        ]
+                        "enum": [3]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          4
-                        ]
+                        "enum": [4]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          5
-                        ]
+                        "enum": [5]
                       }
                     ]
                   },
@@ -2287,9 +2082,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -2327,9 +2120,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "items"
-                  ]
+                  "required": ["items"]
                 }
               }
             }
@@ -2404,9 +2195,7 @@
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "set-portion"
-                              ]
+                              "enum": ["set-portion"]
                             },
                             "itemId": {
                               "type": "string",
@@ -2418,20 +2207,14 @@
                               "maximum": 3000
                             }
                           },
-                          "required": [
-                            "op",
-                            "itemId",
-                            "portionGrams"
-                          ]
+                          "required": ["op", "itemId", "portionGrams"]
                         },
                         {
                           "type": "object",
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "swap"
-                              ]
+                              "enum": ["swap"]
                             },
                             "itemId": {
                               "type": "string",
@@ -2442,39 +2225,28 @@
                               "format": "uuid"
                             }
                           },
-                          "required": [
-                            "op",
-                            "itemId",
-                            "foodId"
-                          ]
+                          "required": ["op", "itemId", "foodId"]
                         },
                         {
                           "type": "object",
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "remove"
-                              ]
+                              "enum": ["remove"]
                             },
                             "itemId": {
                               "type": "string",
                               "format": "uuid"
                             }
                           },
-                          "required": [
-                            "op",
-                            "itemId"
-                          ]
+                          "required": ["op", "itemId"]
                         },
                         {
                           "type": "object",
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "add"
-                              ]
+                              "enum": ["add"]
                             },
                             "day": {
                               "type": "integer",
@@ -2488,12 +2260,7 @@
                             },
                             "mealSlot": {
                               "type": "string",
-                              "enum": [
-                                "breakfast",
-                                "lunch",
-                                "dinner",
-                                "snack"
-                              ]
+                              "enum": ["breakfast", "lunch", "dinner", "snack"]
                             },
                             "foodId": {
                               "type": "string",
@@ -2519,9 +2286,7 @@
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "override-macros"
-                              ]
+                              "enum": ["override-macros"]
                             },
                             "itemId": {
                               "type": "string",
@@ -2551,12 +2316,7 @@
                                   "maximum": 1000
                                 }
                               },
-                              "required": [
-                                "kcal",
-                                "proteinG",
-                                "fatG",
-                                "carbsG"
-                              ]
+                              "required": ["kcal", "proteinG", "fatG", "carbsG"]
                             },
                             "reason": {
                               "type": "string",
@@ -2564,20 +2324,14 @@
                               "maxLength": 500
                             }
                           },
-                          "required": [
-                            "op",
-                            "itemId",
-                            "macros"
-                          ]
+                          "required": ["op", "itemId", "macros"]
                         },
                         {
                           "type": "object",
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "apply-day-to-week"
-                              ]
+                              "enum": ["apply-day-to-week"]
                             },
                             "day": {
                               "type": "integer",
@@ -2585,29 +2339,21 @@
                               "maximum": 7
                             }
                           },
-                          "required": [
-                            "op",
-                            "day"
-                          ]
+                          "required": ["op", "day"]
                         },
                         {
                           "type": "object",
                           "properties": {
                             "op": {
                               "type": "string",
-                              "enum": [
-                                "set-title"
-                              ]
+                              "enum": ["set-title"]
                             },
                             "title": {
                               "type": "string",
                               "maxLength": 50
                             }
                           },
-                          "required": [
-                            "op",
-                            "title"
-                          ]
+                          "required": ["op", "title"]
                         }
                       ]
                     },
@@ -2615,9 +2361,7 @@
                     "maxItems": 50
                   }
                 },
-                "required": [
-                  "ops"
-                ]
+                "required": ["ops"]
               }
             }
           }
@@ -2688,29 +2432,21 @@
                         "maxLength": 500
                       }
                     },
-                    "required": [
-                      "reason"
-                    ]
+                    "required": ["reason"]
                   },
                   "mealCount": {
                     "anyOf": [
                       {
                         "type": "number",
-                        "enum": [
-                          3
-                        ]
+                        "enum": [3]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          4
-                        ]
+                        "enum": [4]
                       },
                       {
                         "type": "number",
-                        "enum": [
-                          5
-                        ]
+                        "enum": [5]
                       }
                     ],
                     "default": 3
@@ -2841,10 +2577,7 @@
           },
           {
             "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "minimum": 0,
               "maximum": 4
             },
@@ -2912,17 +2645,13 @@
                 "properties": {
                   "reviewed": {
                     "type": "boolean",
-                    "enum": [
-                      true
-                    ]
+                    "enum": [true]
                   },
                   "acknowledgeDrift": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "reviewed"
-                ]
+                "required": ["reviewed"]
               }
             }
           }
@@ -2994,10 +2723,7 @@
                     "maxLength": 20000
                   },
                   "mealShares": {
-                    "type": [
-                      "object",
-                      "null"
-                    ],
+                    "type": ["object", "null"],
                     "properties": {
                       "breakfast": {
                         "type": "number",
@@ -3023,9 +2749,7 @@
                     "additionalProperties": false
                   }
                 },
-                "required": [
-                  "text"
-                ]
+                "required": ["text"]
               }
             }
           }
