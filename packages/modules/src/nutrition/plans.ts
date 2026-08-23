@@ -210,7 +210,8 @@ export const generatePlan = async (
         budgetTier: manifest.aiConfig.budgetTier,
         prepTimeCeilingMin: manifest.aiConfig.prepTimeCeilingMin,
         aiMode: options.ai.mode,
-        weekMode: 'daily_template',
+        weekMode: manifest.aiConfig.weekMode,
+        weekTemplateCount: manifest.aiConfig.weekTemplateCount,
         promptVersion: options.ai.promptVersion ?? null,
         adapterVersion: options.ai.adapterVersion ?? null,
         idempotencyKey: options.idempotencyKey ?? null,
@@ -237,12 +238,18 @@ export const generatePlan = async (
     clientId,
     varietyLookback: 3,
   });
-  const solved = solveWeek(targets, candidates, {
-    mealCount,
-    kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
-    macroTolerancePct: manifest.aiConfig.macroTolerancePct,
-    seed: generation.id,
-  });
+  const solved = solveWeek(
+    targets,
+    candidates,
+    {
+      mealCount,
+      kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
+      macroTolerancePct: manifest.aiConfig.macroTolerancePct,
+      seed: generation.id,
+    },
+    manifest.aiConfig.weekMode,
+    manifest.aiConfig.weekTemplateCount,
+  );
   if (!solved.ok) {
     return fail('FAILED', { code: 'SOLVER_FAILED', error: solved.error });
   }

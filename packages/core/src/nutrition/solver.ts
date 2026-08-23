@@ -603,39 +603,108 @@ const sumRounded = (items: readonly SolvedItem[]) => {
   };
 };
 
+/** Week-level generation mode (ADR-0015 D5). */
+export type WeekMode = 'daily_template' | 'rotating_template';
+
+const cloneAsDay = (template: SolvedDay, day: number): SolvedDay => ({
+  day,
+  meals: template.meals.map((meal) => ({
+    ...meal,
+    items: meal.items.map((item) => ({ ...item })),
+  })),
+  totals: { ...template.totals },
+});
+
+/** `solveDay` plus the existing deterministic recovery-retry policy, shared by both week modes. */
+const solveDayWithRecovery = (
+  day: number,
+  targets: MacroTargets,
+  candidates: readonly CandidateFood[],
+  config: SolverConfig,
+): Result<SolvedDay, SolverError> => {
+  let solved = solveDay(day, targets, candidates, config);
+  for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
+    if (solved.error.code !== 'SOLVER_INFEASIBLE') return solved;
+    solved = solveDay(day, targets, candidates, {
+      ...config,
+      seed: `${config.seed}:r${recovery}`,
+    });
+  }
+  return solved;
+};
+
 /**
  * Solve a weekly plan as a daily template: one day solved, then cloned to days 2–7.
- * Per-day variety is coach-authored via edits, not solver randomness (ADR-0001).
+ * Per-day variety is coach-authored via edits, not solver randomness (ADR-0001) —
+ * this remains the default; `rotating_template` (below) is opt-in.
+ */
+const solveDailyTemplateWeek = (
+  targets: MacroTargets,
+  candidates: readonly CandidateFood[],
+  config: SolverConfig,
+): Result<SolvedDay[], SolverError> => {
+  const solved = solveDayWithRecovery(1, targets, candidates, config);
+  if (!solved.ok) return solved;
+  const template = solved.value;
+  const days: SolvedDay[] = [template];
+  for (let day = 2; day <= 7; day += 1) {
+    days.push(cloneAsDay(template, day));
+  }
+  return ok(days);
+};
+
+/**
+ * Solve `templateCount` distinct days (clamped 1–7) and rotate them across
+ * the week (ADR-0015 D5) — real, visible variety while keeping shopping/prep
+ * to a bounded number of distinct meal sets, unlike a fully independent
+ * 7-day solve. Each template reuses `solveDay` unmodified: its seed already
+ * includes the day number, so distinct template days naturally produce
+ * distinct (still deterministic, tolerance-respecting) picks — this
+ * mechanism already existed and was simply never exercised for days 2–7.
+ */
+const solveRotatingTemplateWeek = (
+  targets: MacroTargets,
+  candidates: readonly CandidateFood[],
+  config: SolverConfig,
+  templateCount: number,
+): Result<SolvedDay[], SolverError> => {
+  const count = Math.min(7, Math.max(1, Math.round(templateCount)));
+  const templates: SolvedDay[] = [];
+  for (let t = 1; t <= count; t += 1) {
+    const solved = solveDayWithRecovery(t, targets, candidates, config);
+    if (!solved.ok) return solved;
+    templates.push(solved.value);
+  }
+
+  const days: SolvedDay[] = [];
+  for (let day = 1; day <= 7; day += 1) {
+    const template = templates[(day - 1) % count];
+    /* v8 ignore next -- unreachable: count is clamped >=1 and templates has exactly `count` entries */
+    if (!template)
+      return err({
+        code: 'SOLVER_INFEASIBLE',
+        detail: 'rotation index out of bounds',
+        bestErrorPct: 0,
+      });
+    days.push(cloneAsDay(template, day));
+  }
+  return ok(days);
+};
+
+/**
+ * Solve a weekly plan. `daily_template` (default) preserves the exact
+ * existing behavior; `rotating_template` is the ADR-0015 D5 opt-in.
  */
 export const solveWeek = (
   targets: MacroTargets,
   candidates: readonly CandidateFood[],
   config: SolverConfig,
-): Result<SolvedDay[], SolverError> => {
-  let solved = solveDay(1, targets, candidates, config);
-  for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
-    if (solved.error.code !== 'SOLVER_INFEASIBLE') return solved;
-    solved = solveDay(1, targets, candidates, {
-      ...config,
-      seed: `${config.seed}:r${recovery}`,
-    });
-  }
-  if (!solved.ok) return solved;
-
-  const template = solved.value;
-  const days: SolvedDay[] = [template];
-  for (let day = 2; day <= 7; day += 1) {
-    days.push({
-      day,
-      meals: template.meals.map((meal) => ({
-        ...meal,
-        items: meal.items.map((item) => ({ ...item })),
-      })),
-      totals: { ...template.totals },
-    });
-  }
-  return ok(days);
-};
+  weekMode: WeekMode = 'daily_template',
+  templateCount = 3,
+): Result<SolvedDay[], SolverError> =>
+  weekMode === 'rotating_template'
+    ? solveRotatingTemplateWeek(targets, candidates, config, templateCount)
+    : solveDailyTemplateWeek(targets, candidates, config);
 
 /**
  * Independent post-generation allergen assertion (the second of two checks;

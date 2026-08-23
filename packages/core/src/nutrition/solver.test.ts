@@ -571,6 +571,55 @@ describe('solveWeek', () => {
     expect(result.value.map((d) => d.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
+  it('rotating_template: produces exactly templateCount distinct days, not 1 and not 7, deterministically', () => {
+    const cfg = config({ mealCount: 4, seed: 'd5-rotation' });
+    const first = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    const second = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    expect(first.ok && second.ok).toBe(true);
+    if (!first.ok || !second.ok) return;
+
+    expect(first.value).toHaveLength(7);
+    const signature = (day: (typeof first.value)[number]) =>
+      day.meals.flatMap((m) => m.items.map((i) => `${i.foodId}:${i.portionGrams}`)).join('|');
+    const distinctDays = new Set(first.value.map(signature));
+    expect(distinctDays.size).toBe(3); // exactly templateCount, not 1 (daily_template) and not 7
+
+    // Same seed + config ⇒ identical week, every time.
+    expect(second.value.map(signature)).toEqual(first.value.map(signature));
+
+    // Every day still meets the same tolerance daily_template already guarantees.
+    for (const day of first.value) {
+      expect(Math.abs(day.totals.kcal - TARGETS.kcal) / TARGETS.kcal).toBeLessThanOrEqual(0.05);
+    }
+    expect(first.value.map((d) => d.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('rotating_template: clamps templateCount into 1–7 and defaults to 3 when omitted', () => {
+    const cfg = config({ mealCount: 3, seed: 'd5-default' });
+    const defaulted = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template');
+    const explicit3 = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 3);
+    expect(defaulted).toEqual(explicit3);
+
+    const clampedHigh = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 99);
+    const explicit7 = solveWeek(TARGETS, CANDIDATES, cfg, 'rotating_template', 7);
+    expect(clampedHigh).toEqual(explicit7);
+  });
+
+  it('daily_template is unaffected by the new weekMode parameter (default, unchanged behavior)', () => {
+    const withoutMode = solveWeek(
+      TARGETS,
+      CANDIDATES,
+      config({ mealCount: 3, seed: 'd5-unchanged' }),
+    );
+    const withDefaultMode = solveWeek(
+      TARGETS,
+      CANDIDATES,
+      config({ mealCount: 3, seed: 'd5-unchanged' }),
+      'daily_template',
+    );
+    expect(withoutMode).toEqual(withDefaultMode);
+  });
+
   it('reproduces the same template for the same seed', () => {
     const a = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
     const b = solveWeek(TARGETS, CANDIDATES, config({ mealCount: 3, seed: 'tpl' }));
