@@ -2,10 +2,10 @@
 
 - **Status**: Accepted
 - **Date**: 2026-08-23
-- **Approved**: 2026-08-23 — the recommended options (D1-E, D2-D + rich-text-C, D3-C) are confirmed as written. This revision adds the engineering-principles rationale ("Design principles applied") and concrete smoke-test specifications ("Smoke tests") requested at approval; it does not change which option was chosen in any decision.
+- **Approved**: 2026-08-23 — the recommended options (D1-E, D2-D + rich-text-C, D3-C) are confirmed as written. This revision adds the engineering-principles rationale ("Design principles applied") and concrete smoke-test specifications ("Smoke tests") requested at approval; it does not change which option was chosen in any decision. A follow-on request — showing the per-meal kcal split on the plan screen — is added as **D4**, a small presentational addition with no architecture decision to litigate (see D4 below).
 - **Phase**: AI-native nutrition track ([ADR-0001](0001-hybrid-ai-nutrition.md) lineage), not a `CLAUDE.md` P1–P4 alignment phase. The one net-new UI surface this introduces (Settings → Meal AI Planner) must still consume the P1 token/component set — it is new functionality, not a re-skin, so it does not belong to P1 itself.
 
-This is a planning ADR — the architecture is accepted for implementation as written. No source files change in _this_ PR; it sequences three follow-on implementation PRs, each scoped to its own CODEOWNERS review gate, and each is expected to ship with the smoke test(s) specified for it below, not just the `docs/specs/` acceptance criteria.
+This is a planning ADR — the architecture is accepted for implementation as written. No source files change in _this_ PR; it sequences four follow-on implementation PRs (D1–D3 as originally scoped, plus D4, a small presentational addition), each scoped to its own CODEOWNERS review gate where one applies, and each is expected to ship with the smoke test(s) specified for it below, not just the `docs/specs/` acceptance criteria.
 
 ## Context
 
@@ -14,8 +14,9 @@ Three coach-reported problems, all rooted in the Layer 2 solver and the coach-fa
 1. **Unrealistic single-item portions — every meal slot, not a breakfast-only bug.** The solver (`packages/core/src/nutrition/solver.ts`) sizes each pattern slot independently, and the same `buildItems`/`optimizePortions` code path runs for every entry in `MEAL_TEMPLATES` (`solver.ts:106-125`) — breakfast, lunch, dinner, and snack alike: it takes that meal's kcal share, divides by the number of adjustable pattern groups, and converts to serving units, clamped only by `UNIT_MAX = 8` native servings per item (`solver.ts:217-219`, `solver.ts:329-341`). There is no ceiling tied to what a food realistically looks like on a plate, in any slot. "Egg (whole, boiled)" at breakfast (`servingUnits: [{ name: 'piece', grams: 50 }]`, `packages/db/src/seed-data/foods.ts:121-131`) ballooning to 8 units — 400g, 8 whole eggs — in a single slot is the reported symptom, but the identical mechanism applies to lunch's `protein`/`staple`/`vegetable`/`fat` pattern and dinner's `protein`/`vegetable` pattern (`MEAL_TEMPLATES`, `solver.ts:106-125`) — e.g. "Chicken breast (skinless, cooked)" at lunch (`servingUnits: [{ name: 'piece', grams: 120 }]`) can equally be pushed to 8 pieces (960g) if that closes lunch's kcal gap cheapest. The post-build hill-climb (`optimizePortions`, `solver.ts:247-276`) pushes _any_ adjustable item in _any_ slot to that ceiling if it is the cheapest way to close a kcal gap; any food with a small per-100g kcal density relative to `perItemKcal` (`targets.kcal * meal.share / adjustableCount`) is at risk, regardless of which meal it is in. D1's fix below is therefore scoped to the shared solver mechanism, not to breakfast or to eggs specifically — the illustrative numbers throughout this ADR (eggs, breakfast) are the reported case, and every example is re-run against a lunch/dinner protein below to keep that generality explicit rather than assumed. This is a Layer 2 defect, not a Layer 3 one — Layer 3 (`packages/ai`) only names meals and writes prep notes and never sees or emits portion numbers (`packages/ai/src/prompts/meal-narrative.v1.ts:7-12`, `packages/ai/src/types.ts:38-55`); fixing it anywhere in Layer 3 would violate [ADR-0001](0001-hybrid-ai-nutrition.md)'s hard boundary and is not on the table.
 2. **No coach-level fine-tuning of meal narration.** [ADR-0001](0001-hybrid-ai-nutrition.md) fixed the global system prompt as a versioned code artifact (`MEAL_NARRATIVE_SYSTEM`, `packages/ai/src/prompts/meal-narrative.v1.ts:7-12`) plus an optional tenant-wide cuisine pack (`packages/ai/src/prompts/packs.ts`, `resolvePromptPack`). Neither is coach-scoped. Individual coaches have preferences the global prompt should not encode (protein-forward breakfasts, specific prep styles, phrasing tone) and today the only way to express them is editing the shared code prompt or the tenant manifest — both wrong-grained and both requiring an engineering change per preference.
 3. **No single-meal regeneration.** `generatePlan` (`packages/modules/src/nutrition/plans.ts:65-401`) always solves and narrates the full week from a fresh day-1 template (`solveWeek`, `solver.ts:431-459`). The only per-item control today is `patchPlan` → `applyPlanOps` (`packages/modules/src/nutrition/plan-ops.ts`) — manual `set-portion` / `swap` / `add` / `remove`, one item at a time. A coach who dislikes just breakfast on day 2 has no faster path than editing every item by hand or regenerating the entire week (`plan-editor.tsx:223-272`) and losing every other edit.
+4. **No visible per-meal calorie split on the plan screen.** `plan-editor.tsx` shows a single day-level totals `Card` (kcal/protein/fat/carbs vs. targets, `plan-editor.tsx:276-307`) above the list of meal sections, but each meal's own `SectionTitle` (`plan-editor.tsx:333`) shows only the slot label ("Breakfast," "Lunch," "Dinner," "Snack") with no calorie figure next to it. A coach can currently only learn a single meal's kcal contribution by adding up every item under that section by hand — exactly the information that would make D3's "Regenerate meal" button meaningfully actionable (is this meal over its share before I bother regenerating it?), so this pairs naturally with D3 rather than standing fully apart from it.
 
-All three land in code owned by `packages/core` and/or `packages/ai`, which `CODEOWNERS` requires a human (`@KhubaibQaiser`) to review. Approving this ADR accepts the _architecture_ below; it does not substitute for that CODEOWNERS review on the actual implementation PRs, which still happens per PR as normal.
+All four land primarily in `packages/core` and/or `packages/ai` (D1–D3) or are pure presentation over data already fetched (D4), which `CODEOWNERS` requires a human (`@KhubaibQaiser`) to review for the former. Approving this ADR accepts the _architecture_ below; it does not substitute for that CODEOWNERS review on the actual implementation PRs, which still happens per PR as normal.
 
 ## Decision
 
@@ -24,13 +25,14 @@ Ship as three independently reviewable PRs, in this order (2 is not blocked by 1
 - **D1** — Solver: realistic per-food serving ceilings + dynamic item-count expansion (`packages/core`).
 - **D2** — Coach-level generation instructions, stored per-coach, layered under the global/tenant prompt, surfaced at Settings → Meal AI Planner (`packages/db`, `packages/modules`, `apps/api`, `packages/app`).
 - **D3** — Per-meal regenerate action, reusing D1's solver entry point and D2's effective prompt (`packages/core`, `packages/modules`, `apps/api`, `packages/app`).
+- **D4** — Per-meal kcal split shown on the plan screen, computed client-side from data already fetched — no comparison matrix below; this one has no real competing architecture options (`packages/app` only).
 
 ### Design principles applied
 
 Each decision below was already screened against these before being marked "Chosen" — this section names the principle explicitly so the rationale doesn't have to be re-derived from the comparison tables during review:
 
 - **DRY.** D1's `solveMeal` extraction is consumed by both the full-week solver (`solveDay`'s loop) and D3's single-meal regenerate path — one portion-solving implementation, not two that could drift apart. D2's coach addendum reuses the exact `MEAL_NARRATIVE_SYSTEM` / `pack.systemAddendum` join pattern already in `narrate.ts`, and its safety checks reuse the existing `containsNumericClaim` / `assertDeidentified` guardrails rather than duplicating that pattern-matching logic a third time.
-- **KISS.** D1 rejects the LP/knapsack re-solve (option C) — a bounded-expansion rule over the existing deterministic hill-climb solves the actual defect without a new dependency or a new class of non-determinism to reason about. D2 rejects a DOM rich-text library (option A) for an ~80-line first-party markdown-subset stripper — the simplest mechanism that satisfies "good formatting" and "parses to plain text" without taking on an HTML-sanitization surface to maintain. D3 is scoped to exactly one meal, not a generalized "regenerate any subset of a plan" abstraction nobody asked for.
+- **KISS.** D1 rejects the LP/knapsack re-solve (option C) — a bounded-expansion rule over the existing deterministic hill-climb solves the actual defect without a new dependency or a new class of non-determinism to reason about. D2 rejects a DOM rich-text library (option A) for an ~80-line first-party markdown-subset stripper — the simplest mechanism that satisfies "good formatting" and "parses to plain text" without taking on an HTML-sanitization surface to maintain. D3 is scoped to exactly one meal, not a generalized "regenerate any subset of a plan" abstraction nobody asked for. D4 skips the comparison-matrix ceremony the other three decisions get, on purpose — a one-line derived display over data already in hand does not have competing architectures worth tabulating, and pretending otherwise would be the opposite of KISS.
 - **SOLID:**
   - _Single Responsibility_ — `solveMeal` only sizes portions; `narrate()` only names meals and writes prep notes; `coach-instructions.ts` only owns the coach's override text and its lifecycle. RBAC/authorization stays entirely in the route layer, never inside `packages/core` or `packages/ai`. No decision here merges two of those responsibilities into one function.
   - _Open/Closed_ — the coach addendum is _appended_ onto the existing prompt-composition pipeline in `narrate.ts`, not a rewrite of `MEAL_NARRATIVE_SYSTEM` or a new conditional branch inside it; `NarrateOptions`/`AiConfig` gain an additive optional field, so every existing caller keeps compiling and behaving identically without modification.
@@ -138,6 +140,19 @@ Each decision below was already screened against these before being marked "Chos
 - **API**: new operation on the existing plans route file (`apps/api/src/routes/plans.ts`) — `POST /v1/meal-plans/{planId}/days/{day}/meals/{mealIndex}/regenerate` — not a new route file, since it is a natural extension of the existing plan-editing surface `plans.ts` already owns; add to `packages/contracts/openapi/` per the committed-spec workflow (query via the `gymos-openapi` MCP server before hand-writing types, per `AGENTS.md`'s context-budget rule) rather than hand-inventing the route shape.
 - **UI**: one new action per meal section in `plan-editor.tsx`'s meal loop (`plan-editor.tsx:331-376`) — a `GhostButton` ("Regenerate meal") next to the existing "Add food" toggle, editable-gated the same way, calling the new mutation and replacing that meal's `PlanItemCard`s on success. No new confirm dialog needed here: unlike D2's "regenerate everything" (which destroys all manual edits across every client), a single-meal regenerate only discards manual edits within that one meal, which is the same blast radius as an existing `swap`, so it does not warrant a different confirmation bar than the other in-place edits `plan-editor.tsx` already allows without a dialog.
 
+---
+
+### D4 — Per-meal kcal split on the plan screen
+
+No options table: unlike D1–D3 there is no real architectural fork here — the data (`PlanItem.macros.kcal` per item, already tagged with `mealIndex`/`mealSlot`) is already fetched into `plan-editor.tsx`'s `items` prop; this is a pure derived-display addition, not a new fetch, new endpoint, or new business rule. The only actual choice is _where_ to put the number, so that's what's decided below rather than screened through a comparison matrix.
+
+**Decision:**
+
+- **Placement: inline, next to each meal's own section header** — e.g. "Breakfast · 350 kcal" — rather than a separate summary row above the meal list. `plan-editor.tsx` already has a day-level totals `Card` at the top of the screen (`plan-editor.tsx:276-307`); stacking a _second_ summary element above the meal list before the coach even reaches the sections themselves would be redundant with the per-section labels sitting one scroll away, for a feature this simple. The number appears exactly where the coach is already looking (at that meal's items), not in a second place they have to cross-reference. (The example numbers in the request — "Breakfast (350 cal)" — are illustrative, per the request itself; the actual UI keeps the existing codebase convention of labeling the unit "kcal," matching every other calorie figure already on this screen and in `PlanFoodPicker`, `client-hub-plan.tsx`, etc., rather than switching to "cal" for this one label.)
+- **Computation: reuse the exact pattern already one line above it in the same file, not a new utility.** `plan-editor.tsx` already computes `dayTotals` by filtering `dayItems` and reducing `macros.kcal` (`plan-editor.tsx:134-142`). D4 adds a small pure helper, `mealKcal(items: readonly PlanItem[], mealIndex: number): number`, colocated in `plan-editor.tsx` next to the existing `daySignature`/`planSwitcherLabel` helpers (`plan-editor.tsx:53-73`), and calls it once per entry inside the existing `meals.map(([mealIndex, mealSlot]) => ...)` loop (`plan-editor.tsx:331`). No new state, no new query, no new prop — it derives from the same `items` array `PlanItemCard` already renders from, so it is always in sync with whatever generated, patched, or (once D3 ships) regenerated the plan, with no separate cache-invalidation path to wire.
+- **Component: wrap the existing `SectionTitle` in the already-used `Row` primitive** (`Row` — an `XStack` with `justifyContent: 'space-between'`, `packages/ui/src/components/typography.tsx:42-47`, the same component `client-hub-plan.tsx` already uses to pair a title with a trailing element) rather than adding a new layout primitive: `SectionTitle` on the left, a `Muted` kcal label on the right. No new `packages/ui` component needed.
+- **Scope boundary, explicit:** this is presentational only, per `AGENTS.md`'s "restyle presentational UI without changing fetch, routing, or business conditionals" allowance — it reads existing data, computes a sum, and renders text. It does not touch `patchPlan`, `generatePlan`, D3's `regenerateMeal`, or any API contract. It is not gated on D1, D2, or D3 landing first, though it is more useful once D3's "Regenerate meal" button exists (that is when a coach most wants a fast answer to "which meal is over").
+
 ## Consequences
 
 **Easier:**
@@ -146,6 +161,7 @@ Each decision below was already screened against these before being marked "Chos
 - Per-coach narration preference is now a first-class, audited, versioned setting instead of an engineering ticket to edit a shared prompt file.
 - Single-meal iteration no longer requires either full-week regeneration (losing all edits) or slow manual food-by-food editing.
 - D1's `solveMeal` extraction is reused directly by D3 — no duplicated solving logic between full-plan and single-meal generation.
+- A coach can tell at a glance which meal is heavy or light before deciding whether to regenerate it (D3) or edit it manually — D4 turns D3's button from "regenerate and hope" into an informed decision, at essentially zero added engineering cost.
 
 **Harder:**
 
@@ -167,8 +183,9 @@ Captured per-decision above (D1/D2/D3 comparison tables) rather than duplicated 
 | D1 only     | `packages/core` (solver + tests), one migration + seed backfill (`packages/db`)                                                                                                                                                                                          | Nothing else in this ADR                                                                                                                                                                                                |
 | D2 only     | `packages/db` (new table + migration), `packages/modules/src/nutrition`, `apps/api/src/routes/coach-instructions.ts`, `packages/ai/src/narrate.ts` (thread-through only, no prompt-shape change), `packages/app/src/features/settings/meal-instructions/`, new web route | D1 not required, but ships more usefully after D1 (coach instructions are about narration quality; portion realism is the more visible fix)                                                                             |
 | D3 only     | `packages/core` (solver extraction — do this _as_ D1's refactor, not twice), `packages/modules`, `apps/api/src/routes/plans.ts`, OpenAPI spec update, `packages/app/src/features/plan/plan-editor.tsx`                                                                   | **Blocked on D1's `solveMeal` extraction** — do not implement D3's regenerate path against the current monolithic `buildItems`/`optimizePortions` loop and refactor later; extract once, in D1, and have D3 consume it. |
+| D4 only     | `packages/app/src/features/plan/plan-editor.tsx` only — one small pure helper plus wrapping the existing `SectionTitle` in `Row`                                                                                                                                         | Nothing else in this ADR — ships independently, any time, including before D1–D3.                                                                                                                                       |
 
-**Required outputs for each implementation PR** (per `AGENTS.md`): a `docs/specs/` entry (e.g. `fr-c10-meal-portion-realism.md`, `fr-c11-coach-meal-instructions.md`, `fr-c12-meal-regenerate.md` — numbered continuing from the existing `fr-c*` spec series) with Given/When/Then acceptance criteria, a test that fails before the change, and scoped `pnpm lint` / `pnpm typecheck` / `pnpm test` for every touched package (full workspace run if `packages/contracts` changes, which D3 requires). For D2 specifically, the acceptance criteria must include save-time sanitization cases: a submitted instruction containing raw HTML/script-like markup, zero-width or control Unicode characters, or a string past the length cap is neutralized/truncated before it is persisted and before it can reach `narrate.ts` — proven by a test that saves an adversarial input and asserts on the stored `plain_text`/`rich_text`, not just on final LLM output. The concrete smoke test for each decision, verifying the user-visible behavior end-to-end rather than an internal implementation detail, is specified below.
+**Required outputs for each implementation PR** (per `AGENTS.md`): a `docs/specs/` entry (e.g. `fr-c10-meal-portion-realism.md`, `fr-c11-coach-meal-instructions.md`, `fr-c12-meal-regenerate.md`, `fr-c14-meal-kcal-split.md` — numbered continuing from the existing `fr-c*` spec series; `fr-c13` is already used by [ADR-0016](0016-coach-custom-foods.md)) with Given/When/Then acceptance criteria, a test that fails before the change, and scoped `pnpm lint` / `pnpm typecheck` / `pnpm test` for every touched package (full workspace run if `packages/contracts` changes, which D3 requires; D4 touches only `packages/app`). For D2 specifically, the acceptance criteria must include save-time sanitization cases: a submitted instruction containing raw HTML/script-like markup, zero-width or control Unicode characters, or a string past the length cap is neutralized/truncated before it is persisted and before it can reach `narrate.ts` — proven by a test that saves an adversarial input and asserts on the stored `plain_text`/`rich_text`, not just on final LLM output. The concrete smoke test for each decision, verifying the user-visible behavior end-to-end rather than an internal implementation detail, is specified below.
 
 ## Smoke tests
 
@@ -385,6 +402,42 @@ describe('D3 smoke test — regenerate one meal in isolation', () => {
       .from(schema.aiFeedbackEvents)
       .where(eq(schema.aiFeedbackEvents.planId, planId));
     expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
+  });
+});
+```
+
+### D4 — each meal section shows its own kcal total, and it matches the sum of that meal's items
+
+No PGlite/API harness needed — this is a pure function over data already shaped like `PlanItem`. Add alongside `plan-editor.tsx` (e.g. `plan-editor.test.ts`, a new file — the pattern already exists for co-located pure helpers, just not yet exercised by a test in this particular file):
+
+```ts
+// packages/app/src/features/plan/plan-editor.test.ts
+import { describe, expect, it } from 'vitest';
+import { mealKcal } from './plan-editor';
+
+const item = (mealIndex: number, kcal: number) => ({
+  id: `i-${mealIndex}-${kcal}`,
+  day: 1,
+  mealIndex,
+  mealSlot: 'breakfast' as const,
+  mealName: 'Breakfast',
+  foodId: 'food-1',
+  portionGrams: 100,
+  macros: { kcal, proteinG: 0, fatG: 0, carbsG: 0 },
+  macrosSource: 'food_db' as const,
+  prepNotes: null,
+  position: 0,
+});
+
+describe('D4 smoke test — mealKcal', () => {
+  it('sums only the items belonging to the given meal, ignoring other meals', () => {
+    const items = [item(0, 200), item(0, 150), item(1, 500)];
+    expect(mealKcal(items, 0)).toBe(350); // breakfast: 200 + 150, not influenced by lunch's 500
+    expect(mealKcal(items, 1)).toBe(500);
+  });
+
+  it('returns 0 for a meal with no items rather than throwing', () => {
+    expect(mealKcal([], 0)).toBe(0);
   });
 });
 ```
