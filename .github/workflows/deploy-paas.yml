@@ -7,6 +7,11 @@ name: Deploy PaaS
 on:
   push:
     branches: [main]
+    # Skip Neon migrate when the commit is docs / PR-template only.
+    # Does not stop Vercel/Render autoDeploy — those are Git-driven outside this workflow.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
