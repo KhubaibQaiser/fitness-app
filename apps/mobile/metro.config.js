@@ -18,4 +18,20 @@ config.resolver.nodeModulesPaths = [
 config.resolver.disableHierarchicalLookup = false;
 config.resolver.unstable_enablePackageExports = true;
 
+// Expo Router 57 vendors React Navigation. Solito's useRouter/useLinkTo import
+// `@react-navigation/native`, which is a different LinkingContext instance than
+// ExpoRoot provides — login then throws "Couldn't find a LinkingContext context."
+const expoNavRoot = path.resolve(projectRoot, 'node_modules/expo-router/build/react-navigation');
+const defaultResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === '@react-navigation/native' || moduleName === '@react-navigation/core') {
+    const dir = moduleName === '@react-navigation/native' ? 'native' : 'core';
+    return { filePath: path.join(expoNavRoot, dir, 'index.js'), type: 'sourceFile' };
+  }
+  if (defaultResolveRequest) {
+    return defaultResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 module.exports = config;
