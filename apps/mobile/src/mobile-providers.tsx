@@ -15,10 +15,9 @@ import {
 } from '@expo-google-fonts/roboto-mono';
 import { useFonts } from 'expo-font';
 import { type ReactNode } from 'react';
-import { TamaguiProvider } from 'tamagui';
 import { AppProviders } from '@gymos/app/provider';
 import { ThemeModeProvider } from '@gymos/platform';
-import { LoadingState, tamaguiConfig } from '@gymos/ui';
+import { LoadingState, tamaguiConfig, TamaguiProvider, YStack } from '@gymos/ui';
 
 export const MobileProviders = ({ children }: { children: ReactNode }) => {
   const [loaded] = useFonts({
@@ -33,14 +32,25 @@ export const MobileProviders = ({ children }: { children: ReactNode }) => {
     'RobotoMono-Bold': RobotoMono_700Bold,
   });
 
-  if (!loaded) {
-    return <LoadingState label="Loading…" />;
-  }
-
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
       <ThemeModeProvider>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          {children}
+          {!loaded ? (
+            <YStack
+              position="absolute"
+              top={0}
+              right={0}
+              bottom={0}
+              left={0}
+              zIndex={1000}
+              backgroundColor="$canvas"
+            >
+              <LoadingState label="Loading…" />
+            </YStack>
+          ) : null}
+        </AppProviders>
       </ThemeModeProvider>
     </TamaguiProvider>
   );
