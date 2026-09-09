@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Hybrid nutrition pipeline",
+    "locale": "en",
+    "output": "hybrid-nutrition.html",
+    "viewBox": [1068, 560],
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "safety-math",
+        "label": "Physiology and solver",
+        "focus": ["client", "layer1", "catalog", "solver"],
+        "note": "Calories and macros are computed in packages/core, never by a model."
+      },
+      {
+        "id": "restriction-gates",
+        "label": "Restriction gates",
+        "focus": ["dietary", "catalog", "solver"],
+        "note": "Hard-filter the catalog first; a post-generation assertion repeats the same rules."
+      },
+      {
+        "id": "language-and-review",
+        "label": "Language then coach",
+        "focus": ["solver", "llm", "fallback", "draft"],
+        "note": "Layer-3 is optional naming. Generation always lands as DRAFT."
+      }
+    ]
+  },
+  "stages": [
+    { "label": "Profile" },
+    { "label": "Physiology" },
+    { "label": "Solver" },
+    { "label": "Language" },
+    { "label": "Coach" }
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client profile",
+      "sublabel": "intake",
+      "stage": 0,
+      "row": 0,
+      "tag": "coach-entered"
+    },
+    {
+      "id": "dietary",
+      "type": "security",
+      "label": "Dietary profile",
+      "sublabel": "allergens · medical",
+      "stage": 0,
+      "row": 2,
+      "tag": "undismissable"
+    },
+    {
+      "id": "layer1",
+      "type": "backend",
+      "label": "Layer 1",
+      "sublabel": "Mifflin–St Jeor",
+      "stage": 1,
+      "row": 0,
+      "tag": "pure TS"
+    },
+    {
+      "id": "catalog",
+      "type": "database",
+      "label": "Food catalog",
+      "sublabel": "per100g macros",
+      "stage": 2,
+      "row": 0,
+      "tag": "seeded"
+    },
+    {
+      "id": "solver",
+      "type": "backend",
+      "label": "Layer 2 solver",
+      "sublabel": "daily_template",
+      "stage": 2,
+      "row": 2,
+      "tag": "reproducible"
+    },
+    {
+      "id": "llm",
+      "type": "security",
+      "label": "Layer 3 LLM",
+      "sublabel": "names + notes",
+      "stage": 3,
+      "row": 0,
+      "tag": "no kcal"
+    },
+    {
+      "id": "fallback",
+      "type": "backend",
+      "label": "fallbackNarrative",
+      "sublabel": "template names",
+      "stage": 3,
+      "row": 1,
+      "tag": "always available"
+    },
+    {
+      "id": "draft",
+      "type": "database",
+      "label": "DRAFT plan",
+      "sublabel": "not client-facing",
+      "stage": 4,
+      "row": 2,
+      "tag": "reviewed: true"
+    }
+  ],
+  "flows": [
+    {
+      "id": "vitals-to-layer1",
+      "from": "client",
+      "to": "layer1",
+      "label": "physiology",
+      "classification": "physiology inputs",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "id": "dietary-to-solver",
+      "from": "dietary",
+      "to": "solver",
+      "label": "hard-filter first",
+      "classification": "restrictions",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "targets",
+      "from": "layer1",
+      "to": "solver",
+      "label": "kcal + macros",
+      "classification": "MacroTargets",
+      "variant": "emphasis"
+    },
+    {
+      "id": "foods",
+      "from": "catalog",
+      "to": "solver",
+      "label": "eligible foods",
+      "classification": "per100g × grams",
+      "labelDy": 24
+    },
+    {
+      "id": "narrate",
+      "from": "solver",
+      "to": "llm",
+      "label": "food names + grams",
+      "classification": "de-identified",
+      "variant": "dashed"
+    },
+    {
+      "id": "llm-fail",
+      "from": "llm",
+      "to": "fallback",
+      "label": "guardrail fail",
+      "classification": "fail closed",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "named-meals",
+      "from": "llm",
+      "to": "draft",
+      "label": "meal titles",
+      "classification": "language only",
+      "variant": "dashed",
+      "labelDy": -40
+    },
+    {
+      "id": "template-names",
+      "from": "fallback",
+      "to": "draft",
+      "label": "template titles",
+      "classification": "language only",
+      "variant": "dashed",
+      "labelDx": -72
+    },
+    {
+      "id": "items-persist",
+      "from": "solver",
+      "to": "draft",
+      "label": "foods + portions",
+      "classification": "DRAFT row",
+      "variant": "emphasis",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Numbers are code",
+      "items": [
+        "Layer 1 owns BMR/TDEE and safety floors in packages/core",
+        "Layer 2 solves one day and clones it to the week (daily_template)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Two independent restriction checks",
+      "items": [
+        "The solver never sees blocked foods; a post-check asserts the same rules",
+        "Under-16, pregnancy, and MEDICAL flags block generation without a logged override"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Language cannot publish",
+      "items": [
+        "assertDeidentified runs before every Layer-3 call",
+        "LLM failure still yields a DRAFT via fallbackNarrative"
+      ]
+    }
+  ]
+}

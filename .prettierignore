@@ -9,3 +9,5 @@ dist/
 coverage/
 packages/contracts/generated/
 **/.terraform/
+.agents/
+docs/architecture/*.html

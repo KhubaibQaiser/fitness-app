@@ -40,3 +40,9 @@ pnpm-debug.log*
 
 # Model artifacts (checksum-pinned in R2, never in git)
 *.gguf
+
+# Agent skills are restored from skills-lock.json, not vendored.
+.agents/
+
+# Archify visual-check sidecars (README uses the short *.png copies)
+docs/architecture/*.visual-check.*

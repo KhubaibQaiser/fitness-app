@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GymOS runtime architecture",
+    "locale": "en",
+    "output": "gymos-runtime.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/KhubaibQaiser/fitness-app",
+      "provider": "github",
+      "revision": "dfd88357f58fa1728c1d5b0c39b4bded5b3cd61c"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Coach request path",
+        "focus": ["coach", "web", "api", "postgres"],
+        "note": "HTTPS from the coach PWA into Hono /v1 and Postgres 17."
+      },
+      {
+        "id": "async-jobs",
+        "label": "Background jobs",
+        "focus": ["api", "queue", "worker", "postgres"],
+        "note": "pg-boss on a separate queue-db; workers never poll Neon."
+      },
+      {
+        "id": "isolated-llm",
+        "label": "Isolated Layer-3",
+        "focus": ["api", "llm"],
+        "note": "De-identified food names and grams only; the LLM has no network egress."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "coach",
+      "type": "external",
+      "label": "Coach",
+      "sublabel": "pilot operator",
+      "pos": [40, 300],
+      "size": [120, 60]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Coach Web PWA",
+      "sublabel": "Next.js 16",
+      "tag": "@gymos/app",
+      "brand": "next-js",
+      "pos": [250, 200],
+      "size": [140, 64],
+      "sources": [
+        { "path": "apps/web/app/layout.tsx", "line": 9, "end_line": 14, "label": "web shell" }
+      ]
+    },
+    {
+      "id": "mobile",
+      "type": "frontend",
+      "label": "Coach Mobile",
+      "sublabel": "Expo SDK 57",
+      "tag": "CI bundle gate",
+      "pos": [250, 420],
+      "size": [140, 64],
+      "sources": [
+        { "path": "apps/mobile/package.json", "line": 1, "end_line": 14, "label": "expo entry" }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Hono API",
+      "sublabel": "/v1 JWT :8080",
+      "tag": "modular monolith",
+      "pos": [500, 300],
+      "size": [150, 64],
+      "sources": [
+        { "path": "apps/api/src/index.ts", "line": 1, "end_line": 18, "label": "listen" },
+        { "path": "apps/api/src/app.ts", "line": 36, "end_line": 36, "label": "buildApp" }
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "security",
+      "label": "Layer-3 LLM",
+      "sublabel": "llama.cpp / Qwen3",
+      "tag": "no egress",
+      "pos": [500, 80],
+      "size": [150, 64],
+      "sources": [
+        { "path": "packages/ai/src/narrate.ts", "line": 40, "end_line": 53, "label": "narrate" }
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL 17",
+      "sublabel": "Drizzle + RLS",
+      "tag": "org_id scoped",
+      "brand": "postgresql",
+      "pos": [1000, 180],
+      "size": [140, 64],
+      "sources": [{ "path": "docker-compose.yml", "line": 4, "end_line": 18, "label": "local db" }]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "pg-boss queue",
+      "sublabel": "ephemeral queue-db",
+      "pos": [760, 420],
+      "size": [140, 64],
+      "sources": [
+        { "path": "apps/worker/src/index.ts", "line": 18, "end_line": 41, "label": "schedules" },
+        { "path": "docker-compose.yml", "line": 22, "end_line": 35, "label": "queue-db" }
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "check-ins · ranking",
+      "pos": [1000, 420],
+      "size": [140, 64],
+      "sources": [
+        { "path": "apps/worker/src/index.ts", "line": 43, "end_line": 62, "label": "jobs" }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Coach surfaces",
+      "wraps": ["web", "mobile"]
+    },
+    {
+      "kind": "region",
+      "label": "Data plane",
+      "wraps": ["postgres", "queue"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Isolated inference — no PII, no egress",
+      "wraps": ["llm"]
+    }
+  ],
+  "connections": [
+    { "id": "coach-web", "from": "coach", "to": "web", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "coach-mobile", "from": "coach", "to": "mobile", "label": "HTTPS" },
+    { "id": "web-api", "from": "web", "to": "api", "label": "/v1 JWT", "variant": "emphasis" },
+    { "id": "mobile-api", "from": "mobile", "to": "api", "label": "/v1 JWT" },
+    { "id": "api-sql", "from": "api", "to": "postgres", "label": "SQL" },
+    { "id": "api-enqueue", "from": "api", "to": "queue", "label": "enqueue", "variant": "dashed" },
+    { "id": "queue-worker", "from": "queue", "to": "worker" },
+    { "id": "worker-sql", "from": "worker", "to": "postgres", "label": "jobs" },
+    { "id": "api-llm", "from": "api", "to": "llm", "label": "de-identified", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One backend, two shells",
+      "items": [
+        "Feature screens live in packages/app and render on web via react-native-web",
+        "apps/mobile is the same screens behind Expo Router; CI always bundles iOS"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Domain writes stay in modules",
+      "items": [
+        "identity, tenancy, coaching, nutrition, notifications export public barrels",
+        "apps/api is a composition root: middleware, JWT, route registration. Media lands on R2 / MinIO."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Nutrition numbers never leave Layer 1–2",
+      "items": [
+        "Layer-3 names meals and writes prep notes, then fails closed to templates",
+        "Plans stay DRAFT until the coach explicitly publishes"
+      ]
+    }
+  ]
+}
