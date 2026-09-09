@@ -642,7 +642,7 @@ describe('the pilot core loop', () => {
       method: 'POST',
       json: {},
     });
-    expect(res.status).toBe(200);
+    expect(res.status, await res.clone().text()).toBe(200);
     const after = (await res.json()) as {
       items: { id: string; day: number; mealIndex: number; mealName: string }[];
     };
