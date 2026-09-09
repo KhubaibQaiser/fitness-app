@@ -19,7 +19,9 @@
     "format:check": "prettier --check .",
     "security:secrets": "gitleaks git --redact",
     "security:secrets:staged": "gitleaks git --pre-commit --staged --redact",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "archify:validate": "node .agents/skills/archify/bin/archify.mjs validate architecture docs/architecture/gymos.architecture.json --quality showcase --repo-root . --json",
+    "archify:deliver": "node scripts/archify-deliver.mjs"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",

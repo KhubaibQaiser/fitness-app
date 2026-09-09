@@ -6,10 +6,18 @@ pre-commit:
       run: PATH="$HOME/.tools/bin:$PATH" gitleaks git --pre-commit --staged --redact
     format:
       glob: '*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}'
+      exclude:
+        - 'graphify-out/**'
+        - '.agents/**'
+        - 'docs/architecture/*.html'
       run: pnpm exec prettier --check {staged_files}
     lint:
       glob: '*.{ts,tsx}'
       run: pnpm exec eslint --max-warnings 0 --no-warn-ignored {staged_files}
+    archify:
+      glob: 'docs/architecture/**'
+      run: node scripts/archify-deliver.mjs
+      stage_fixed: true
 
 pre-push:
   commands:

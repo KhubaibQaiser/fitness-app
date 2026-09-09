@@ -40,3 +40,11 @@ pnpm-debug.log*
 
 # Model artifacts (checksum-pinned in R2, never in git)
 *.gguf
+
+# Graphify machine-local interpreter pointers (graph.json / wiki stay tracked)
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/
+
+# Archify visual-check sidecars (HTML artifact stays tracked)
+docs/architecture/*.visual-check.*

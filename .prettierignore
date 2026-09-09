@@ -9,3 +9,7 @@ dist/
 coverage/
 packages/contracts/generated/
 **/.terraform/
+# Third-party skills and generated knowledge-graph dumps
+.agents/
+graphify-out/
+docs/architecture/gymos.html

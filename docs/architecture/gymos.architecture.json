@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GymOS Coach Platform",
+    "locale": "en",
+    "output": "gymos.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/KhubaibQaiser/fitness-app",
+      "provider": "github",
+      "revision": "e5ba5e019cdf3489851bc76c2071bb10782cac86"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Coach request path",
+        "focus": ["coach-web", "feature-ui", "api", "modules", "postgres"],
+        "note": "Coach UI shares packages/app, then Hono calls module public APIs, then Postgres."
+      },
+      {
+        "id": "nutrition-layers",
+        "label": "Nutrition layers",
+        "focus": ["modules", "core", "ai", "llm"],
+        "note": "Layers 1–2 stay in core. Layer 3 names meals only. The model never emits kcal."
+      },
+      {
+        "id": "async-maintenance",
+        "label": "Maintenance jobs",
+        "focus": ["worker", "postgres", "queue-db"],
+        "note": "pg-boss polls the ephemeral queue-db, never the tenant database."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "gapX": 36,
+    "gapY": 48,
+    "cellW": 148,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "coach-web",
+      "type": "frontend",
+      "label": "Coach Web",
+      "sublabel": "Next.js App Router",
+      "row": 1,
+      "col": 0,
+      "sources": [{ "path": "apps/web/app/layout.tsx", "line": 4, "label": "AppProviders" }]
+    },
+    {
+      "id": "coach-mobile",
+      "type": "frontend",
+      "label": "Coach Mobile",
+      "sublabel": "Expo Router",
+      "row": 2,
+      "col": 0,
+      "sources": [{ "path": "apps/mobile/package.json", "line": 4, "label": "expo-router" }]
+    },
+    {
+      "id": "feature-ui",
+      "type": "frontend",
+      "label": "packages/app",
+      "sublabel": "shared coach UI",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        { "path": "packages/app/src/provider/index.tsx", "line": 16, "label": "AppProviders" },
+        { "path": "packages/app/src/api/index.ts", "line": 8, "label": "OpenAPI client" }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Hono API",
+      "sublabel": "apps/api",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        { "path": "apps/api/src/app.ts", "line": 36, "label": "buildApp" },
+        { "path": "apps/api/src/routes/plans.ts", "line": 18, "label": "plan routes" }
+      ]
+    },
+    {
+      "id": "modules",
+      "type": "backend",
+      "label": "packages/modules",
+      "sublabel": "public barrels",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        { "path": "packages/modules/package.json", "line": 7, "label": "exports" },
+        { "path": "packages/modules/src/nutrition/plans.ts", "line": 74, "label": "generatePlan" }
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "packages/core",
+      "sublabel": "Layers 1–2",
+      "row": 2,
+      "col": 1,
+      "sources": [
+        { "path": "packages/core/src/nutrition/layer1.ts", "line": 24, "label": "physiology" },
+        { "path": "packages/core/src/nutrition/solver.ts", "line": 712, "label": "solveWeek" }
+      ]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "packages/ai",
+      "sublabel": "Layer 3 names",
+      "row": 0,
+      "col": 3,
+      "sources": [{ "path": "packages/ai/src/narrate.ts", "line": 45, "label": "narrate" }]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "LLM",
+      "sublabel": "names / notes only",
+      "row": 0,
+      "col": 4,
+      "sources": [
+        { "path": "packages/ai/src/narrate.ts", "line": 8, "label": "assertDeidentified" }
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "tenant data",
+      "row": 1,
+      "col": 4,
+      "sources": [
+        { "path": "packages/db/src/client.ts", "line": 20, "label": "createDb" },
+        { "path": "docker-compose.yml", "line": 4, "label": "local pg" }
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "apps/worker",
+      "row": 2,
+      "col": 4,
+      "sources": [{ "path": "apps/worker/src/index.ts", "line": 22, "label": "PgBoss" }]
+    },
+    {
+      "id": "queue-db",
+      "type": "database",
+      "label": "queue-db",
+      "sublabel": "ephemeral pg-boss",
+      "row": 2,
+      "col": 3,
+      "sources": [
+        { "path": "apps/worker/src/index.ts", "line": 18, "end_line": 22, "label": "queue URL" },
+        { "path": "docker-compose.yml", "line": 22, "label": "queue-db" }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Coach clients",
+      "wraps": ["coach-web", "coach-mobile", "feature-ui"]
+    },
+    { "kind": "region", "label": "Domain", "wraps": ["modules", "core", "ai"] }
+  ],
+  "connections": [
+    {
+      "id": "web-to-app",
+      "from": "coach-web",
+      "to": "feature-ui",
+      "label": "shared UI",
+      "variant": "emphasis"
+    },
+    { "id": "mobile-to-app", "from": "coach-mobile", "to": "feature-ui", "label": "shared UI" },
+    {
+      "id": "app-to-api",
+      "from": "feature-ui",
+      "to": "api",
+      "label": "HTTPS OpenAPI",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-to-modules",
+      "from": "api",
+      "to": "modules",
+      "label": "public barrels",
+      "variant": "emphasis",
+      "labelDy": -32
+    },
+    {
+      "id": "modules-to-postgres",
+      "from": "modules",
+      "to": "postgres",
+      "label": "SQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "modules-to-core",
+      "from": "modules",
+      "to": "core",
+      "label": "Layers 1–2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    { "id": "modules-to-ai", "from": "modules", "to": "ai", "label": "names / notes" },
+    {
+      "id": "ai-to-llm",
+      "from": "ai",
+      "to": "llm",
+      "label": "deidentified JSON",
+      "variant": "dashed",
+      "labelDy": -24
+    },
+    {
+      "id": "worker-to-modules",
+      "from": "worker",
+      "to": "modules",
+      "label": "ranking / roll",
+      "labelDy": 22
+    },
+    { "id": "worker-to-postgres", "from": "worker", "to": "postgres", "label": "SQL" },
+    {
+      "id": "worker-to-queue",
+      "from": "worker",
+      "to": "queue-db",
+      "label": "pg-boss",
+      "labelDy": 22
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Coach clients",
+      "items": [
+        "Next.js and Expo share packages/app",
+        "Feature code talks to the API through the generated OpenAPI client"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Domain writes",
+      "items": [
+        "apps/api is a composition root; routes live under apps/api/src/routes",
+        "Modules expose public barrels. Core owns physiology and the solver"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Nutrition safety",
+      "items": [
+        "Layer 3 names meals and writes prep notes only",
+        "pg-boss polls queue-db so tenant Postgres is not kept awake"
+      ]
+    }
+  ]
+}

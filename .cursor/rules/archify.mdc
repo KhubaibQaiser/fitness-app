@@ -1,0 +1,20 @@
+---
+description: Keep the GymOS Archify diagram in sync with real architecture
+globs: docs/architecture/**,apps/**,packages/app/**,packages/modules/**,packages/core/**,packages/ai/**,packages/db/**,packages/contracts/**,infra/**,docker-compose.yml
+alwaysApply: false
+---
+
+# Archify
+
+Canonical spec: `docs/architecture/gymos.architecture.json`. Rendered artifact: `docs/architecture/gymos.html`.
+
+Archify does not infer topology. The JSON is the source of truth. Graphify tracks symbols; this diagram tracks runtime boundaries.
+
+When a change adds, removes, or reroutes a runtime component (app, package, datastore, queue, LLM boundary):
+
+1. Query `graphify` first, then verify the files you will cite.
+2. Edit the JSON. Keep ≤12 components. Set `meta.repository.revision` to the 40-char `HEAD` you verified. Attach `components[].sources` with repo-relative paths.
+3. `pnpm archify:validate` then `pnpm archify:deliver`. Both need `--repo-root .` (the scripts already pass it).
+4. Do not hand-edit `gymos.html`. Lefthook re-delivers it when architecture files are staged.
+
+Do not invent edges (for example API → worker) without a file that proves the transport.

@@ -1,0 +1,5 @@
+# Third-party agent skills — not GymOS source
+.agents/skills/
+
+# Graphify's own outputs
+graphify-out/

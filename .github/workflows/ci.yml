@@ -58,6 +58,8 @@ jobs:
           pnpm --filter @gymos/api openapi:generate
           pnpm exec prettier --write packages/contracts/openapi/openapi.v1.json
           git diff --exit-code packages/contracts/openapi/openapi.v1.json
+      - name: Archify architecture check
+        run: pnpm archify:validate
       - name: Test
         run: pnpm test
       - name: Build (web)
