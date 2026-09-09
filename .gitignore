@@ -41,10 +41,12 @@ pnpm-debug.log*
 # Model artifacts (checksum-pinned in R2, never in git)
 *.gguf
 
-# Graphify machine-local interpreter pointers (graph.json / wiki stay tracked)
-graphify-out/.graphify_python
-graphify-out/.graphify_root
-graphify-out/cache/
+# Graphify output is local (rebuild with `graphify`). Do not commit the dump.
+graphify-out/
+
+# Archify upstream self-tests and rendered example HTML (CLI does not need them)
+.agents/skills/archify/test/
+.agents/skills/archify/examples/*.html
 
 # Archify visual-check sidecars (HTML artifact stays tracked)
 docs/architecture/*.visual-check.*
