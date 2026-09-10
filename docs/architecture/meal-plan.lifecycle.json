@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Meal plan lifecycle",
+    "locale": "en",
+    "output": "meal-plan.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-rail",
+        "label": "Draft to published",
+        "focus": ["draft", "editing", "review", "published", "superseded"],
+        "note": "A plan is never client-facing until an explicit coach publish."
+      }
+    ]
+  },
+  "lanes": [{ "id": "main", "label": "Plan status" }],
+  "states": [
+    {
+      "id": "draft",
+      "type": "start",
+      "label": "DRAFT",
+      "sublabel": "generatePlan",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "not public"
+    },
+    {
+      "id": "editing",
+      "type": "active",
+      "label": "Editing",
+      "sublabel": "swap · override",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "recompute macros"
+    },
+    {
+      "id": "review",
+      "type": "decision",
+      "label": "Coach review",
+      "sublabel": "reviewed: true",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "human gate"
+    },
+    {
+      "id": "published",
+      "type": "success",
+      "label": "PUBLISHED",
+      "sublabel": "one per client",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "immutable"
+    },
+    {
+      "id": "superseded",
+      "type": "neutral",
+      "label": "SUPERSEDED",
+      "sublabel": "replaced by vN+1",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "history"
+    }
+  ],
+  "transitions": []
+}

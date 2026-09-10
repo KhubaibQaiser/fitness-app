@@ -673,23 +673,37 @@ export const regenerateMeal = async (
     dayItems.filter((i) => i.mealIndex !== mealIndex).map((i) => i.foodId),
   );
 
-  // Fresh sub-seed per call: repeated regenerates of the same meal are
-  // reproducible per attempt (same seed twice ⇒ same result) but not
-  // identical to the last regenerate, since the sequence component changes.
-  const seed = `${existing.plan.generationId ?? planId}:regen:${day}:${mealIndex}:${Date.now()}`;
-  const solved = solveMeal(
+  // Fresh sub-seed per call so two regenerates of the same meal differ.
+  // Same recovery policy as `solveDayWithRecovery`: excluding foods already
+  // used that day can make one seed miss tolerance; retry with `:rN`.
+  const regenSeed = `${existing.plan.generationId ?? planId}:regen:${day}:${mealIndex}:${DateTime.utc().toMillis()}`;
+  const mealSolverConfig = {
+    mealCount,
+    kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
+    macroTolerancePct: manifest.aiConfig.macroTolerancePct,
+    seed: regenSeed,
+  };
+  let solved = solveMeal(
     mealIndex,
     template,
     existing.plan.targets,
     candidates,
-    {
-      mealCount,
-      kcalTolerancePct: manifest.aiConfig.kcalTolerancePct,
-      macroTolerancePct: manifest.aiConfig.macroTolerancePct,
-      seed,
-    },
+    mealSolverConfig,
     usedElsewhereThatDay,
   );
+  for (let recovery = 0; !solved.ok && recovery < 8; recovery += 1) {
+    if (solved.error.code !== 'SOLVER_INFEASIBLE') {
+      return err({ code: 'SOLVER_FAILED', error: solved.error });
+    }
+    solved = solveMeal(
+      mealIndex,
+      template,
+      existing.plan.targets,
+      candidates,
+      { ...mealSolverConfig, seed: `${regenSeed}:r${recovery}` },
+      usedElsewhereThatDay,
+    );
+  }
   if (!solved.ok) return err({ code: 'SOLVER_FAILED', error: solved.error });
 
   // Independent second allergen check on the regenerated composition, same
