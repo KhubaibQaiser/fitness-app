@@ -1,0 +1,152 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Coach meal-plan journey",
+    "locale": "en",
+    "output": "coach-journey.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Roster to publish",
+        "focus": ["coach", "login", "roster", "generate", "draft", "publish"],
+        "note": "The coach records a client, generates a draft, reviews it, then publishes."
+      },
+      {
+        "id": "safety-stop",
+        "label": "Safety stop",
+        "focus": ["generate", "gate", "blocked"],
+        "note": "Under-16, pregnancy, and medical flags halt generation until an audited override."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "ui", "label": "Coach UI" },
+    { "id": "nutrition", "label": "Nutrition engine" },
+    { "id": "policy", "label": "Safety gates", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "identity", "label": "Identity", "fromCol": 0, "toCol": 1 },
+    { "id": "roster", "label": "Roster", "fromCol": 2, "toCol": 2 },
+    { "id": "plan", "label": "Generate + review", "fromCol": 3, "toCol": 5, "variant": "emphasis" }
+  ],
+  "mainPath": ["coach", "login", "roster", "generate", "gate", "draft", "publish"],
+  "nodes": [
+    {
+      "id": "coach",
+      "lane": "ui",
+      "col": 0,
+      "type": "external",
+      "label": "Coach",
+      "sublabel": "opens GymOS",
+      "width": 132
+    },
+    {
+      "id": "login",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Login / signup",
+      "sublabel": "/login · /signup",
+      "width": 132
+    },
+    {
+      "id": "roster",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Client roster",
+      "sublabel": "attention-sorted",
+      "width": 132
+    },
+    {
+      "id": "generate",
+      "lane": "nutrition",
+      "col": 3,
+      "type": "backend",
+      "label": "generatePlan",
+      "sublabel": "Layers 1–2",
+      "tag": "POST /v1/meal-plans",
+      "width": 132
+    },
+    {
+      "id": "gate",
+      "lane": "policy",
+      "col": 3,
+      "type": "security",
+      "label": "Safety gate",
+      "sublabel": "age · medical",
+      "tag": "logged override",
+      "width": 132
+    },
+    {
+      "id": "blocked",
+      "lane": "policy",
+      "col": 4,
+      "type": "security",
+      "label": "Blocked",
+      "sublabel": "needs override",
+      "width": 132
+    },
+    {
+      "id": "draft",
+      "lane": "nutrition",
+      "col": 4,
+      "type": "database",
+      "label": "DRAFT",
+      "sublabel": "editable items",
+      "width": 132
+    },
+    {
+      "id": "publish",
+      "lane": "ui",
+      "col": 5,
+      "type": "frontend",
+      "label": "Publish",
+      "sublabel": "reviewed: true",
+      "tag": "no auto-publish",
+      "width": 132
+    }
+  ],
+  "edges": [
+    { "id": "open-login", "from": "coach", "to": "login" },
+    {
+      "id": "password-roster",
+      "from": "login",
+      "to": "roster",
+      "label": "session",
+      "variant": "emphasis"
+    },
+    {
+      "id": "open-client",
+      "from": "roster",
+      "to": "generate",
+      "label": "vitals + goal",
+      "variant": "emphasis"
+    },
+    {
+      "id": "safety-check",
+      "from": "generate",
+      "to": "gate",
+      "label": "safetyGateReasons",
+      "variant": "security"
+    },
+    { "id": "gate-ok", "from": "gate", "to": "draft", "variant": "emphasis" },
+    {
+      "id": "gate-block",
+      "from": "gate",
+      "to": "blocked",
+      "label": "denied",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "review-publish",
+      "from": "draft",
+      "to": "publish",
+      "label": "I reviewed this plan",
+      "variant": "emphasis"
+    }
+  ]
+}

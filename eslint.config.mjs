@@ -25,6 +25,8 @@ export default tseslint.config(
       '**/*.d.ts',
       'apps/web/e2e/',
       '**/playwright.config.ts',
+      '.agents/',
+      'docs/architecture/',
     ],
   },
 
