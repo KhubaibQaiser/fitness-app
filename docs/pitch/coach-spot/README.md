@@ -1,18 +1,16 @@
 # Coach product spot
 
-20-second launch film. Separate from the architecture diagrams in [`docs/architecture`](../../architecture/README.md).
+20-second launch film for the coach, not an allergen reel. Separate from the architecture diagrams in [`docs/architecture`](../../architecture/README.md).
 
-File: [gymos-coach-spot.mp4](./gymos-coach-spot.mp4). Source render: [brag-output/brag.mp4](../../brag-output/brag.mp4). Caption: [brag-output/share-copy.txt](../../brag-output/share-copy.txt).
+File: [gymos-coach-spot.mp4](./gymos-coach-spot.mp4). Source: [brag-output/brag.mp4](../../brag-output/brag.mp4). Caption: [brag-output/share-copy.txt](../../brag-output/share-copy.txt).
 
-Allergens are the whole set the plan will not serve. Preferences and medical conditions stay in view while the draft is written. The coach publishes.
+| Time  | On screen                                                    |
+| ----- | ------------------------------------------------------------ |
+| 0.0s  | Who are we coaching? Home, Clients, Tools, Alerts, Settings. |
+| 2.2s  | Onboard a client. Identity through Review.                   |
+| 6.2s  | Meal AI Planner drafts the week. The coach publishes.        |
+| 10.6s | Due today. Weight journey, 84.5 kg, ahead.                   |
+| 14.4s | Dark mode flips on. Weight kg or lb. Height cm or ft / in.   |
+| 17.6s | GymOS.                                                       |
 
-| Time  | On screen                                                                                               |
-| ----- | ------------------------------------------------------------------------------------------------------- |
-| 0.0s  | Allergens. Peanut, tree nut, milk, egg, fish, shellfish, soy, wheat gluten, sesame.                     |
-| 5.4s  | Severe allergens, preferences and restrictions, medical conditions. Honoring every dietary restriction. |
-| 8.2s  | AI suggestion. Omelette, bran bread, chai with stevia.                                                  |
-| 13.2s | +56 g. 2544 → 2616 kcal. I reviewed this plan. Publish.                                                 |
-| 16.8s | 84.5 kg. Ahead. 43%.                                                                                    |
-| 18.6s | GymOS. Review before publish.                                                                           |
-
-Music is a 120 BPM bed from the brag pack. Swap it in `brag-output/composition` if you have a track you can ship.
+Diet is one onboarding step. The film is the coach's day. Music is a 120 BPM bed with hits on the cuts, the steps, the meals, publish, and the settings toggles.

@@ -2,35 +2,36 @@
 
 ## What is this app?
 
-GymOS drafts a coach's meal plan around severe allergens, preferences, and medical conditions, and keeps publish in the coach's hands.
+GymOS is the coach's desk: onboard a client, draft a meal plan with AI, track progress, and set appearance and units.
 
 ## The angle
 
-An allergen is not one peanut chip. It is the whole set the plan is not allowed to serve, sitting next to preferences and medical conditions, while the draft is written.
+The coach is the product. Allergies are one step in onboarding, not the film.
 
 ## Hook (first 2-3 seconds)
 
-"Allergens." Then the catalog arrives one chip at a time: Peanut, Tree Nut, Milk, Egg, Fish, Shellfish, Soy, Wheat Gluten, Sesame. Peanut is the one on this client. The rest are the feature.
+"Who are we coaching?" The nav under it: Home. Clients. Tools. Alerts. Settings.
 
 ## Key moments (the middle)
 
-- Severe allergens, preferences and restrictions, medical conditions, then the product line "Honoring every dietary restriction."
-- The draft: omelette, bran bread, chai with stevia, under "AI suggestion. Review before publish", with Peanut, Halal, and Medical conditions still pinned.
-- The coach's edit: +56 g, 2544 to 2616 kcal, then "I reviewed this plan. Publish".
+- Onboard a client: Identity, Height, Contact, Body, Goal, Medical, Diet, Review.
+- Meal AI Planner drafts the week. The coach publishes.
+- Weight journey: due today, 84.5 kg, ahead.
+- Settings: dark mode flips on, weight kg/lb, height cm or ft/in.
 
 ## Outro / punchline
 
-84.5 kg, ahead, 43% from 88 to 80. Then GymOS.
+GymOS. Who are we coaching?
 
 ## User flow worth showing
 
-The profile's allergens, preferences, and medical conditions → the draft that honors them → the coach publishes → the weight moves.
+Onboard → generate the plan → track the client → configure the workspace.
 
 ## Tone
 
 - Preset: cinematic
-- Creative direction: punchy 20s product film, more motion, type that holds
-- Interpretation: hard cuts on a 120 BPM bed. Chips, rows, and meals arrive on the beat and stay up long enough to read.
+- Creative direction: punchy 20s coach product film, hard flashes, more hits
+- Interpretation: five hard cuts, type slams, cards arrive on the beat
 
 ## Format: landscape — 1920x1080
 
@@ -39,73 +40,82 @@ The profile's allergens, preferences, and medical conditions → the draft that 
 ## Visual identity (from the project)
 
 - Background: #0B1220
-- Accent: #2563EB, allergy #E11D48 on #FFF1F2
+- Accent: #2563EB
 - Text: #F4F4F5 on dark, #18181B on #F5F8FF
 - Display font: Inter Bold
 - Body font: Inter SemiBold, numbers Roboto Mono
-- Strongest visual element: the allergen catalog, then the meal draft
+- Strongest visual element: the onboarding step grid, then the meal draft, then dark mode
 
 ## Share copy (draft)
 
-Allergens, preferences, medical conditions. GymOS drafts the week around them. The coach is the one who publishes.
+GymOS is the coach's desk. Onboard a client, draft the week, watch it land, and set the workspace your way.
 
 ## Audio direction
 
 - Role: dense rhythmic layer
-- Music: happy-beats-business-moves-vol-1, trimmed at 15.95s so the 120 BPM hits start on the hook
-- Music treatment: bed from frame 0, louder than the last cut
-- Music cue guidance: strong cues land at about 0.07, 1.07, 2.07, 4.07, 5.06, 6.06, 7.07 after the trim. Chips step every half second. Meals every other beat at 8.57, 9.57, 10.57.
-- Audio-reactive treatment: subtle; bass lifts the blue glow
-- SFX posture: sparse. Hit on the word, three chip places, three meal places, a click, a bell
-- Audio-coupled moments: allergen chips, meal rows, portion click, publish
+- Music: vol-1 trimmed at 15.95s, about 120 BPM, louder bed
+- Music treatment: from frame 0
+- Music cue guidance: hook locked at 0.07. Steps every 0.4s. Meals and the publish bell on their own hits.
+- Audio-reactive treatment: subtle bass on the blue glow
+- SFX posture: moderate. Hit, three step places, three meal places, publish bell, progress hit, two clicks
+- Audio-coupled moments: hook, steps, meals, publish, dark-mode toggle, unit switch
 - Restraint rule: no voiceover
 
 ## Storyboard
 
-### Scene 1 — Allergens — 5.4s
+### Scene 1 — Hook — 2.15s
 
-"Allergens." Nine catalog chips land and hold. Line: "Excluded from all plans."
-Sequential/interaction: yes — nine chips, one by one, then a hold
-Audio intent: the word hits, chips tick
+Who are we coaching?
+Sequential/interaction: none
+Audio intent: impact on the question
+Audio-coupled idea: none
+Music: 120 BPM bed
+Transition mood: hard flash → Scene 2
+
+### Scene 2 — Onboard — 4.05s
+
+Eight real onboarding steps land one by one and hold.
+Sequential/interaction: yes — eight steps
+Audio intent: places on the first, middle, and last
 Audio-coupled idea: card sequence
-Music: trimmed vol-1
-Transition mood: hard → Scene 2
+Music: bed
+Transition mood: hard flash → Scene 3
 
-### Scene 2 — The context — 2.8s
+### Scene 3 — Draft — 4.4s
 
-Three rows: Severe allergens / Peanut, Preferences & restrictions / Halal, Medical conditions / On file. Then "Honoring every dietary restriction."
-Sequential/interaction: yes — three rows
-Audio intent: the bed carries it
+AI suggestion, three foods, then I reviewed this plan. Publish.
+Sequential/interaction: yes — three meals, then the button
+Audio intent: three places and a bell
+Audio-coupled idea: card sequence
+Music: bed
+Transition mood: hard flash → Scene 4
+
+### Scene 4 — Progress — 3.8s
+
+Due today, then the weight line draws to 84.5 kg.
+Sequential/interaction: the line draws
+Audio intent: a hit as the scene opens
 Audio-coupled idea: none
 Music: bed
-Transition mood: hard → Scene 3
+Transition mood: hard flash → Scene 5
 
-### Scene 3 — The draft — 5.0s
+### Scene 5 — Workspace — 3.2s
 
-Pinned context chips, the AI banner, then omelette, bran bread, chai with stevia.
-Sequential/interaction: yes — three meals
-Audio intent: three soft places
-Audio-coupled idea: card sequence
-Music: bed
-Transition mood: hard → Scene 4
-
-### Scene 4 — Publish — 3.6s
-
-Cursor, +56 g, 2544 → 2616 kcal, "I reviewed this plan. Publish".
-Sequential/interaction: yes — simulated click
-Audio intent: click, then bell
+Dark mode switches on and the card goes dark. Weight flips to lb. Height stays cm / ft in.
+Sequential/interaction: yes — toggle, then unit
+Audio intent: two clicks
 Audio-coupled idea: simulated tap
 Music: bed
-Transition mood: hard → Scene 5
+Transition mood: hard flash → end
 
-### Scene 5 — It lands — 3.2s
+### Scene 6 — GymOS — 2.4s
 
-84.5 kg, the line draws, the ring fills to 43%, then GymOS.
-Sequential/interaction: line, then ring
+GymOS. Who are we coaching?
+Sequential/interaction: none
 Audio intent: bed only
 Audio-coupled idea: none
 Music: bed
 Transition mood: hard → end
 
 **Music mood for this video:** energetic, 120 BPM
-**Audio summary:** One faster bed, hits on the allergen word, the chips, the meals, and publish.
+**Audio summary:** Louder bed, flashes on every cut, hits on the coach's actions.
