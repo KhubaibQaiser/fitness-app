@@ -1,17 +1,21 @@
 # Coach product spot
 
-15-second product reel of the coach app. Separate from the architecture diagrams in [`docs/architecture`](../../architecture/README.md).
+15-second marketing cut of the coach app. Separate from the architecture diagrams in [`docs/architecture`](../../architecture/README.md).
 
-File: [gymos-coach-spot.mp4](./gymos-coach-spot.mp4) (1440×900, 15.0s, original music).
+File: [gymos-coach-spot.mp4](./gymos-coach-spot.mp4) (1920×1080, 15.0s).
 
-Recorded from the seeded coach web app (`coach@pilot.local`, demo client Adnan): due check-in, weight-loss goal, peanut allergy and halal profile, AI draft meal plan with a coach portion edit, the publish confirmation, then the weight journey.
+Real UI from the seeded coach app (Adnan), cut like an ad: hard hits, big type, cards that slam in. Original 140 BPM bed, impacts on the cuts.
 
-| Time      | Screen                    | Line                       |
-| --------- | ------------------------- | -------------------------- |
-| 0–2.4s    | Home, check-in due        | Built for coaches          |
-| 2.4–5.4s  | Goal and dietary profile  | Their goal. Their history. |
-| 5.4–9.0s  | Draft meals, portion edit | AI drafts. You tune.       |
-| 9.0–11.6s | Review before publish     | You publish.               |
-| 11.6–15s  | Weight journey            | Then you watch it land.    |
+| Time  | Hit                                          |
+| ----- | -------------------------------------------- |
+| 0.0s  | GYMOS / FOR COACHES.                         |
+| 0.9s  | Who's due — today's check-in                 |
+| 1.7s  | 88 → 80 kg, weight-loss goal                 |
+| 3.0s  | Peanut. Halal. Dietary profile               |
+| 4.3s  | AI drafts the week — omelette, bread, chai   |
+| 6.1s  | You tune — portion bump, macros move         |
+| 7.8s  | You publish. Clients only see what you ship. |
+| 9.5s  | Weight journey and 43% ring                  |
+| 11.3s | GymOS. The coach stays in control.           |
 
-The bed is an original 128 BPM synth, not a licensed track. Swap the audio if you have a track you can ship.
+Swap the audio if you have a track you can ship.
