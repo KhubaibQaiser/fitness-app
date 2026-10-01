@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>GymOS</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/bass.js"></script>
+    <style>
+      @font-face {
+        font-family: "Gym Inter";
+        src: url("assets/fonts/Inter-Bold.ttf") format("truetype");
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: "Gym Inter Semi";
+        src: url("assets/fonts/Inter-SemiBold.ttf") format("truetype");
+        font-weight: 600;
+      }
+      @font-face {
+        font-family: "Gym Mono";
+        src: url("assets/fonts/RobotoMono-Medium.ttf") format("truetype");
+        font-weight: 500;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: #0b1220;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0b1220;
+        color: #f4f4f5;
+        font-family: "Gym Inter Semi", sans-serif;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .glow {
+        position: absolute;
+        width: 880px;
+        height: 880px;
+        left: -100px;
+        top: -40px;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.55), rgba(37, 99, 235, 0) 68%);
+        pointer-events: none;
+      }
+      .bug {
+        position: absolute;
+        z-index: 8;
+        left: 64px;
+        top: 36px;
+        font-family: "Gym Mono", monospace;
+        font-size: 20px;
+        letter-spacing: 0.22em;
+        color: #d4d4d8;
+      }
+      .left {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 720px;
+        height: 100%;
+        padding: 170px 40px 72px 64px;
+      }
+      .kicker {
+        display: block;
+        margin: 0 0 18px;
+        font-family: "Gym Mono", monospace;
+        font-size: 20px;
+        letter-spacing: 0.18em;
+        line-height: 1.3;
+        color: #93c5fd;
+      }
+      h1 {
+        margin: 0;
+        font-family: "Gym Inter", sans-serif;
+        font-weight: 700;
+        font-size: 92px;
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+      }
+      .sub {
+        margin: 22px 0 0;
+        max-width: 560px;
+        font-size: 30px;
+        line-height: 1.25;
+        color: #e4e4e7;
+      }
+      .panel {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 1180px;
+        height: 100%;
+        background: #f5f8ff;
+        color: #18181b;
+        padding: 56px 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .step {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 18px 20px;
+      }
+      .step b {
+        display: block;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+      .step span {
+        display: block;
+        margin-top: 4px;
+        font-size: 20px;
+        color: #52525b;
+      }
+      .banner {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 18px 22px;
+        margin-bottom: 14px;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+      .banner span {
+        display: block;
+        margin-top: 6px;
+        font-family: "Gym Inter Semi", sans-serif;
+        font-size: 20px;
+        color: #52525b;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 16px 22px;
+        margin-bottom: 12px;
+      }
+      .food {
+        font-family: "Gym Inter", sans-serif;
+        font-size: 32px;
+      }
+      .grams {
+        margin-top: 4px;
+        font-family: "Gym Mono", monospace;
+        font-size: 18px;
+        color: #52525b;
+      }
+      .kcal {
+        font-family: "Gym Mono", monospace;
+        font-size: 28px;
+      }
+      .publish {
+        display: inline-block;
+        margin-top: 8px;
+        background: #1d4ed8;
+        color: #ffffff;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 26px;
+        padding: 16px 26px;
+        border-radius: 999px;
+      }
+      .who {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 999px;
+        background: #e4e4e7;
+        color: #3f3f46;
+        display: grid;
+        place-items: center;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 22px;
+      }
+      .name {
+        font-family: "Gym Inter", sans-serif;
+        font-size: 32px;
+      }
+      .meta {
+        margin-top: 4px;
+        font-size: 20px;
+        color: #52525b;
+      }
+      .badge {
+        background: #fffbeb;
+        color: #b45309;
+        font-size: 22px;
+        padding: 8px 14px;
+        border-radius: 999px;
+      }
+      .chart-wrap {
+        margin-top: 16px;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 16px 16px 0;
+      }
+      .chart-label {
+        font-family: "Gym Mono", monospace;
+        font-size: 16px;
+        letter-spacing: 0.14em;
+        color: #52525b;
+      }
+      .ahead {
+        float: right;
+        background: #f0fdf4;
+        color: #166534;
+        font-size: 18px;
+        letter-spacing: 0;
+        padding: 4px 10px;
+        border-radius: 999px;
+      }
+      svg.chart {
+        width: 100%;
+        height: 220px;
+        display: block;
+      }
+      #wline {
+        stroke-dasharray: 780;
+      }
+      .set-card {
+        background: #ffffff;
+        color: #18181b;
+        border-radius: 24px;
+        padding: 28px;
+      }
+      .set-label {
+        font-family: "Gym Mono", monospace;
+        font-size: 18px;
+        letter-spacing: 0.16em;
+        color: #52525b;
+      }
+      .set-title {
+        margin-top: 8px;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 40px;
+      }
+      .switch {
+        width: 76px;
+        height: 42px;
+        border-radius: 999px;
+        background: #e4e4e7;
+        position: relative;
+      }
+      .knob {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: #ffffff;
+      }
+      .units {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .unit {
+        flex: 1;
+        text-align: center;
+        border-radius: 14px;
+        padding: 14px 8px;
+        background: #f4f4f5;
+        color: #18181b;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 26px;
+      }
+      .unit.on {
+        background: #1d4ed8;
+        color: #ffffff;
+      }
+      .flash-fill {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+      }
+      #onboard-word,
+      #step-panel,
+      #hook-word,
+      #hook-sub,
+      #s1,
+      #s2,
+      #s3,
+      #s4,
+      #s5,
+      #s6,
+      #s7,
+      #s8,
+      #plan-word,
+      #banner,
+      #meal-1,
+      #meal-2,
+      #meal-3,
+      #publish,
+      #track-word,
+      #due-row,
+      #chart-wrap,
+      #set-word,
+      #set-card,
+      #unit-row,
+      #logo-word,
+      #logo-line {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="gymos-brag"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+      data-duration="20"
+    >
+      <div id="glow" class="glow"></div>
+      <div id="bug" class="bug">GYMOS · COACH</div>
+
+      <section class="clip" data-start="0" data-duration="2.15" data-track-index="1">
+        <div class="left" style="width: 1700px">
+          <span class="kicker">COACH</span>
+          <h1 id="hook-word">Who are we coaching?</h1>
+          <p id="hook-sub" class="sub">Home. Clients. Tools. Alerts. Settings.</p>
+        </div>
+      </section>
+
+      <section class="clip" data-start="2.15" data-duration="4.05" data-track-index="1">
+        <div class="left">
+          <span class="kicker">ONBOARD</span>
+          <h1 id="onboard-word">A new client.</h1>
+        </div>
+        <div id="step-panel" class="panel">
+          <div class="steps">
+            <div id="s1" class="step"><b>Identity</b><span>Who are we coaching?</span></div>
+            <div id="s2" class="step"><b>Height</b><span>Used for calorie targets</span></div>
+            <div id="s3" class="step"><b>Contact</b><span>WhatsApp preferred</span></div>
+            <div id="s4" class="step"><b>Body</b><span>Weight and measurements</span></div>
+            <div id="s5" class="step"><b>Goal</b><span>Direction and pace</span></div>
+            <div id="s6" class="step"><b>Medical</b><span>Safety gates</span></div>
+            <div id="s7" class="step"><b>Diet</b><span>Allergies and preferences</span></div>
+            <div id="s8" class="step"><b>Review</b><span>Overview, journey and e-sign</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="clip" data-start="6.2" data-duration="4.4" data-track-index="1">
+        <div class="left">
+          <span class="kicker">MEAL AI PLANNER</span>
+          <h1 id="plan-word">Draft the week.</h1>
+        </div>
+        <div class="panel">
+          <div id="banner" class="banner">
+            AI suggestion. Review before publish
+            <span>Publish only after you have reviewed the plan.</span>
+          </div>
+          <div id="meal-1" class="row">
+            <div>
+              <div class="food">Omelette</div>
+              <div class="grams">281 g</div>
+            </div>
+            <div class="kcal">433</div>
+          </div>
+          <div id="meal-2" class="row">
+            <div>
+              <div class="food">Bran bread</div>
+              <div class="grams">157.5 g</div>
+            </div>
+            <div class="kcal">389</div>
+          </div>
+          <div id="meal-3" class="row">
+            <div>
+              <div class="food">Chai with stevia</div>
+              <div class="grams">200 g</div>
+            </div>
+            <div class="kcal">36</div>
+          </div>
+          <div id="publish" class="publish">I reviewed this plan. Publish</div>
+        </div>
+      </section>
+
+      <section class="clip" data-start="10.6" data-duration="3.8" data-track-index="1">
+        <div class="left">
+          <span class="kicker">WEIGHT JOURNEY</span>
+          <h1 id="track-word" style="font-family: 'Gym Mono', monospace; font-size: 84px">84.5 kg</h1>
+          <p class="sub">Ahead. Start 88 kg. Target 80 kg.</p>
+        </div>
+        <div class="panel">
+          <div id="due-row" class="row">
+            <div class="who">
+              <div class="avatar">AD</div>
+              <div>
+                <div class="name">Adnan (Demo)</div>
+                <div class="meta">Weekly check-in</div>
+              </div>
+            </div>
+            <div class="badge">Due today</div>
+          </div>
+          <div id="chart-wrap" class="chart-wrap">
+            <div class="chart-label">WEIGHT JOURNEY <span class="ahead">Ahead</span></div>
+            <svg class="chart" viewBox="0 0 860 240" aria-label="Weight journey">
+              <path
+                d="M20 40 C 140 50, 220 90, 340 120 S 560 190, 840 200"
+                fill="none"
+                stroke="#d4d4d8"
+                stroke-width="4"
+                stroke-dasharray="8 10"
+              />
+              <path
+                id="wline"
+                d="M20 28 C 130 48, 240 100, 360 130 S 600 180, 720 186"
+                fill="none"
+                stroke="#2563eb"
+                stroke-width="8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="clip" data-start="14.4" data-duration="3.2" data-track-index="1">
+        <div class="left">
+          <span class="kicker">SETTINGS</span>
+          <h1 id="set-word">Your workspace.</h1>
+          <p class="sub">Workspace, appearance, units.</p>
+        </div>
+        <div class="panel">
+          <div id="set-card" class="set-card">
+            <div class="set-label">APPEARANCE</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px">
+              <div id="set-title" class="set-title">Dark mode</div>
+              <div id="switch" class="switch"><div id="knob" class="knob"></div></div>
+            </div>
+            <div id="unit-row">
+              <div class="set-label" style="margin-top: 28px">WEIGHT</div>
+              <div class="units">
+                <div id="unit-kg" class="unit on">kg</div>
+                <div id="unit-lb" class="unit">lb</div>
+              </div>
+              <div class="set-label" style="margin-top: 22px">HEIGHT</div>
+              <div class="units">
+                <div class="unit on">cm</div>
+                <div class="unit">ft / in</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="clip" data-start="17.6" data-duration="2.4" data-track-index="2">
+        <div class="left" style="width: 1600px; padding-top: 340px">
+          <h1 id="logo-word" style="font-size: 140px">GymOS</h1>
+          <p id="logo-line" class="sub">Who are we coaching?</p>
+        </div>
+      </section>
+
+      <section class="clip" data-start="2.1" data-duration="0.08" data-track-index="3"><div class="flash-fill"></div></section>
+      <section class="clip" data-start="6.15" data-duration="0.08" data-track-index="3"><div class="flash-fill"></div></section>
+      <section class="clip" data-start="10.55" data-duration="0.08" data-track-index="3"><div class="flash-fill"></div></section>
+      <section class="clip" data-start="14.35" data-duration="0.08" data-track-index="3"><div class="flash-fill"></div></section>
+      <section class="clip" data-start="17.55" data-duration="0.08" data-track-index="3"><div class="flash-fill"></div></section>
+
+      <audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="20" data-volume="0.86" data-track-index="8"></audio>
+      <audio id="sfx-hit" src="assets/sfx/hit.ogg" data-start="0.07" data-duration="0.12" data-volume="0.95" data-track-index="9"></audio>
+      <audio id="sfx-s1" src="assets/sfx/place.ogg" data-start="2.35" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx-s4" src="assets/sfx/place.ogg" data-start="3.55" data-duration="0.3" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-s8" src="assets/sfx/place.ogg" data-start="5.15" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx-m1" src="assets/sfx/place.ogg" data-start="6.7" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx-m2" src="assets/sfx/place.ogg" data-start="7.35" data-duration="0.3" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-m3" src="assets/sfx/place.ogg" data-start="8.0" data-duration="0.3" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-bell" src="assets/sfx/bell.ogg" data-start="9.15" data-duration="0.12" data-volume="0.8" data-track-index="9"></audio>
+      <audio id="sfx-due" src="assets/sfx/hit.ogg" data-start="10.7" data-duration="0.12" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx-toggle" src="assets/sfx/click.ogg" data-start="15.05" data-duration="0.08" data-volume="0.9" data-track-index="9"></audio>
+      <audio id="sfx-unit" src="assets/sfx/click.ogg" data-start="15.7" data-duration="0.08" data-volume="0.75" data-track-index="9"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const bass = window.BASS || [];
+      const steps = ["#s1", "#s2", "#s3", "#s4", "#s5", "#s6", "#s7", "#s8"];
+
+      tl.fromTo("#hook-word", { y: 56, scale: 1.06, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.42, ease: "power4.out" }, 0.07);
+      // beat-locked: 0.07
+      tl.fromTo("#hook-sub", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 0.7);
+
+      tl.fromTo("#onboard-word", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power4.out" }, 2.2);
+      tl.fromTo("#step-panel", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 2.25);
+      steps.forEach((id, i) => {
+        tl.fromTo(id, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 2.35 + i * 0.4);
+      });
+      // beat-grid: steps every 0.40s from 2.35
+
+      tl.fromTo("#plan-word", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power4.out" }, 6.28);
+      tl.fromTo("#banner", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 6.45);
+      tl.fromTo("#meal-1", { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 6.7);
+      tl.fromTo("#meal-2", { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 7.35);
+      tl.fromTo("#meal-3", { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 8.0);
+      tl.fromTo("#publish", { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 9.15);
+
+      tl.fromTo("#track-word", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power4.out" }, 10.7);
+      tl.fromTo("#due-row", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 10.85);
+      tl.fromTo("#chart-wrap", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 11.15);
+      tl.fromTo("#wline", { strokeDashoffset: 780 }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" }, 11.3);
+
+      tl.fromTo("#set-word", { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power4.out" }, 14.5);
+      tl.fromTo("#set-card", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power3.out" }, 14.65);
+      tl.fromTo("#knob", { x: 0 }, { x: 30, duration: 0.28, ease: "power2.inOut" }, 15.05);
+      tl.to("#switch", { backgroundColor: "#1D4ED8", duration: 0.28 }, 15.05);
+      tl.to("#set-card", { backgroundColor: "#18181B", duration: 0.4 }, 15.35);
+      tl.to("#set-title", { color: "#F4F4F5", duration: 0.4 }, 15.35);
+      tl.to(".set-label", { color: "#D4D4D8", duration: 0.4 }, 15.35);
+      tl.fromTo("#unit-row", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 15.55);
+      tl.to("#unit-kg", { backgroundColor: "#F4F4F5", color: "#18181B", duration: 0.2 }, 15.7);
+      tl.to("#unit-lb", { backgroundColor: "#1D4ED8", color: "#FFFFFF", duration: 0.2 }, 15.7);
+
+      tl.fromTo("#logo-word", { y: 40, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.35, ease: "power4.out" }, 17.7);
+      tl.fromTo("#logo-line", { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 18.05);
+      tl.to("#bug", { opacity: 0, duration: 0.15 }, 17.6);
+
+      tl.to(
+        {},
+        {
+          duration: 20,
+          ease: "none",
+          onUpdate() {
+            const i = Math.min(bass.length - 1, Math.floor(this.progress() * bass.length));
+            const v = bass[i] || 0;
+            gsap.set("#glow", { scale: 1 + v * 0.2, opacity: 0.45 + v * 0.5 });
+          },
+        },
+        0,
+      );
+
+      window.__timelines["gymos-brag"] = tl;
+    </script>
+  </body>
+</html>
