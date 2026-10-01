@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GymOS — device</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/bass.js"></script>
+    <style>
+      @font-face { font-family: "Gym Inter"; src: url("assets/fonts/Inter-Bold.ttf") format("truetype"); font-weight: 700; }
+      @font-face { font-family: "Gym Semi"; src: url("assets/fonts/Inter-SemiBold.ttf") format("truetype"); font-weight: 600; }
+      @font-face { font-family: "Gym Mono"; src: url("assets/fonts/RobotoMono-Medium.ttf") format("truetype"); font-weight: 500; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: #f3efe6; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #f3efe6; font-family: "Gym Semi", sans-serif; color: #18181b; }
+      #stage { position: absolute; left: 210px; top: 70px; width: 1500px; height: 940px; }
+      #bezel { position: absolute; inset: 0; background: #1c1917; border-radius: 36px; box-shadow: 0 40px 80px rgba(28, 25, 23, 0.28); }
+      #screen { position: absolute; left: 28px; right: 28px; top: 28px; bottom: 28px; background: #f5f8ff; border-radius: 18px; overflow: hidden; padding: 48px 56px; }
+      .screen { position: absolute; inset: 0; padding: 48px 56px; }
+      h1 { margin: 0; font-family: "Gym Inter", sans-serif; font-size: 72px; letter-spacing: -0.04em; line-height: 1; }
+      .k { font-family: "Gym Mono", monospace; font-size: 18px; letter-spacing: 0.16em; color: #1d4ed8; margin-bottom: 12px; }
+      .step { font-size: 28px; padding: 10px 0; border-bottom: 2px solid #e4e4e7; }
+      .row { display: flex; justify-content: space-between; background: #ffffff; border-radius: 16px; padding: 16px 18px; margin-top: 12px; font-size: 28px; }
+      .btn { display: inline-block; margin-top: 18px; background: #1d4ed8; color: #ffffff; border-radius: 999px; padding: 14px 22px; font-family: "Gym Inter", sans-serif; font-size: 24px; }
+      #screen-dark { background: #18181b; color: #f4f4f5; }
+      #logo { position: absolute; left: 0; right: 0; top: 420px; text-align: center; font-family: "Gym Inter", sans-serif; font-size: 120px; letter-spacing: -0.05em; opacity: 0; }
+      #s-home, #s-on, #s-meal, #s-track, #s-set { opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="gymos-device" data-start="0" data-width="1920" data-height="1080" data-duration="18">
+      <div id="stage">
+        <div id="bezel"></div>
+        <div id="screen">
+          <div id="s-home" class="screen">
+            <div class="k">HOME</div>
+            <h1>Who are we coaching?</h1>
+            <p style="font-size: 28px; margin-top: 16px">Clients. Tools. Alerts. Settings.</p>
+          </div>
+          <div id="s-on" class="screen">
+            <div class="k">ONBOARD</div>
+            <div class="step">Identity</div>
+            <div class="step">Height</div>
+            <div class="step">Goal</div>
+            <div class="step">Medical</div>
+            <div class="step">Diet</div>
+            <div class="step">Review</div>
+          </div>
+          <div id="s-meal" class="screen">
+            <div class="k">MEAL AI PLANNER</div>
+            <h1 style="font-size: 48px">Draft the week.</h1>
+            <div class="row"><span>Omelette</span><span>433</span></div>
+            <div class="row"><span>Bran bread</span><span>389</span></div>
+            <div class="row"><span>Chai with stevia</span><span>36</span></div>
+            <div class="btn">I reviewed this plan. Publish</div>
+          </div>
+          <div id="s-track" class="screen">
+            <div class="k">DUE TODAY</div>
+            <h1 style="font-family: 'Gym Mono', monospace">84.5 kg</h1>
+            <p style="font-size: 28px">Ahead. Start 88 kg. Target 80 kg.</p>
+          </div>
+          <div id="s-set" class="screen" style="background: #18181b; color: #f4f4f5">
+            <div class="k" style="color: #93c5fd">APPEARANCE</div>
+            <h1>Dark mode</h1>
+            <p style="font-size: 28px; margin-top: 12px">kg or lb. cm or ft / in.</p>
+          </div>
+        </div>
+      </div>
+      <div id="logo">GymOS</div>
+      <audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="18" data-volume="0.85" data-track-index="8"></audio>
+      <audio id="sfx1" src="assets/sfx/hit.ogg" data-start="0.1" data-duration="0.12" data-volume="0.7" data-track-index="9"></audio>
+      <audio id="sfx2" src="assets/sfx/place.ogg" data-start="3.05" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx3" src="assets/sfx/place.ogg" data-start="6.55" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx4" src="assets/sfx/bell.ogg" data-start="10.05" data-duration="0.12" data-volume="0.7" data-track-index="9"></audio>
+      <audio id="sfx5" src="assets/sfx/click.ogg" data-start="13.05" data-duration="0.08" data-volume="0.8" data-track-index="9"></audio>
+      <audio id="sfx6" src="assets/sfx/hit.ogg" data-start="15.6" data-duration="0.12" data-volume="0.8" data-track-index="9"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#stage", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+      tl.fromTo("#s-home", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.35);
+      tl.to("#s-home", { opacity: 0, duration: 0.2 }, 2.8);
+      tl.fromTo("#s-on", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 3.05);
+      tl.to("#s-on", { opacity: 0, duration: 0.2 }, 6.3);
+      tl.fromTo("#s-meal", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 6.55);
+      tl.to("#s-meal", { opacity: 0, duration: 0.2 }, 9.8);
+      tl.fromTo("#s-track", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 10.05);
+      tl.to("#s-track", { opacity: 0, duration: 0.2 }, 12.8);
+      tl.fromTo("#s-set", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 13.05);
+      tl.to("#stage", { y: 80, scale: 0.7, opacity: 0, duration: 0.45, ease: "power3.in" }, 15.4);
+      tl.fromTo("#logo", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power4.out" }, 15.85);
+      window.__timelines["gymos-device"] = tl;
+    </script>
+  </body>
+</html>

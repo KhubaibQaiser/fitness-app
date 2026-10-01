@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GymOS — kinetic</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/bass.js"></script>
+    <style>
+      @font-face { font-family: "Gym Inter"; src: url("assets/fonts/Inter-Bold.ttf") format("truetype"); font-weight: 700; }
+      @font-face { font-family: "Gym Mono"; src: url("assets/fonts/RobotoMono-Medium.ttf") format("truetype"); font-weight: 500; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: #1d4ed8; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1d4ed8; color: #ffffff; font-family: "Gym Inter", sans-serif; }
+      .clip { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 100px; }
+      h1 { margin: 0; font-size: 132px; line-height: 0.92; letter-spacing: -0.05em; max-width: 1600px; }
+      .stack { display: flex; flex-direction: column; gap: 8px; }
+      .stack b { font-size: 64px; line-height: 1.05; letter-spacing: -0.04em; font-weight: 700; }
+      .foods { position: absolute; inset: 0; }
+      .foods span { position: absolute; font-size: 96px; letter-spacing: -0.045em; line-height: 1; }
+      #f1 { left: 80px; top: 120px; }
+      #f2 { right: 80px; top: 420px; font-size: 72px; }
+      #f3 { left: 220px; bottom: 120px; font-size: 80px; }
+      .kg { font-family: "Gym Mono", monospace; font-size: 200px; letter-spacing: -0.06em; line-height: 0.9; }
+      .invert { background: #f5f8ff; color: #1d4ed8; }
+      #q, #nav, #w1, #w2, #w3, #w4, #w5, #w6, #w7, #w8, #f1, #f2, #f3, #pub, #kg, #ahead, #dark, #logo { opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="gymos-kinetic" data-start="0" data-width="1920" data-height="1080" data-duration="18">
+      <section id="hook" class="clip" data-start="0" data-duration="3" data-track-index="1">
+        <div>
+          <h1 id="q">Who are we coaching?</h1>
+          <p id="nav" style="margin: 28px 0 0; font-family: 'Gym Mono', monospace; font-size: 28px; letter-spacing: 0.08em">HOME · CLIENTS · TOOLS · ALERTS · SETTINGS</p>
+        </div>
+      </section>
+      <section id="steps" class="clip" data-start="3" data-duration="4" data-track-index="1">
+        <div class="stack">
+          <b id="w1">Identity</b><b id="w2">Height</b><b id="w3">Contact</b><b id="w4">Body</b>
+          <b id="w5">Goal</b><b id="w6">Medical</b><b id="w7">Diet</b><b id="w8">Review</b>
+        </div>
+      </section>
+      <section id="meals" class="clip" data-start="7" data-duration="4" data-track-index="1">
+        <div class="foods">
+          <span id="f1">Omelette</span>
+          <span id="f2">Bran bread</span>
+          <span id="f3">Chai with stevia</span>
+          <span id="pub" style="right: 80px; bottom: 100px; font-size: 36px; background: #ffffff; color: #1d4ed8; padding: 14px 22px; border-radius: 999px">I reviewed this plan. Publish</span>
+        </div>
+      </section>
+      <section id="weight" class="clip" data-start="11" data-duration="3" data-track-index="1">
+        <div>
+          <div id="kg" class="kg">84.5 kg</div>
+          <p id="ahead" style="margin: 12px 0 0; font-size: 40px">Ahead. 88 kg to 80 kg.</p>
+        </div>
+      </section>
+      <section id="theme" class="clip invert" data-start="14" data-duration="2" data-track-index="1">
+        <h1 id="dark">Dark mode.</h1>
+      </section>
+      <section id="end" class="clip" data-start="16" data-duration="2" data-track-index="2">
+        <h1 id="logo">GymOS</h1>
+      </section>
+      <audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="18" data-volume="0.9" data-track-index="8"></audio>
+      <audio id="sfx1" src="assets/sfx/hit.ogg" data-start="0.05" data-duration="0.12" data-volume="1" data-track-index="9"></audio>
+      <audio id="sfx2" src="assets/sfx/place.ogg" data-start="3.1" data-duration="0.3" data-volume="0.6" data-track-index="9"></audio>
+      <audio id="sfx3" src="assets/sfx/place.ogg" data-start="4.5" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx4" src="assets/sfx/place.ogg" data-start="6.2" data-duration="0.3" data-volume="0.6" data-track-index="9"></audio>
+      <audio id="sfx5" src="assets/sfx/place.ogg" data-start="7.1" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx6" src="assets/sfx/place.ogg" data-start="8.0" data-duration="0.3" data-volume="0.55" data-track-index="9"></audio>
+      <audio id="sfx7" src="assets/sfx/bell.ogg" data-start="9.3" data-duration="0.12" data-volume="0.85" data-track-index="9"></audio>
+      <audio id="sfx8" src="assets/sfx/hit.ogg" data-start="11.05" data-duration="0.12" data-volume="0.8" data-track-index="9"></audio>
+      <audio id="sfx9" src="assets/sfx/click.ogg" data-start="14.05" data-duration="0.08" data-volume="0.9" data-track-index="9"></audio>
+      <audio id="sfx10" src="assets/sfx/hit.ogg" data-start="16.05" data-duration="0.12" data-volume="0.9" data-track-index="9"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#q", { y: 80, scale: 1.08, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" }, 0.08);
+      tl.fromTo("#nav", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 0.7);
+      ["#w1","#w2","#w3","#w4","#w5","#w6","#w7","#w8"].forEach((id, i) => {
+        tl.fromTo(id, { x: i % 2 ? 80 : -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 3.15 + i * 0.32);
+      });
+      tl.fromTo("#f1", { x: -120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 7.1);
+      tl.fromTo("#f2", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 8.0);
+      tl.fromTo("#f3", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 8.7);
+      tl.fromTo("#pub", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.4)" }, 9.3);
+      tl.fromTo("#kg", { scale: 1.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power4.out" }, 11.1);
+      tl.fromTo("#ahead", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 11.6);
+      tl.fromTo("#dark", { scale: 1.15, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "power4.out" }, 14.1);
+      tl.fromTo("#logo", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 16.15);
+      window.__timelines["gymos-kinetic"] = tl;
+    </script>
+  </body>
+</html>
