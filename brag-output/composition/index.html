@@ -11,19 +11,16 @@
         font-family: "Gym Inter";
         src: url("assets/fonts/Inter-Bold.ttf") format("truetype");
         font-weight: 700;
-        font-style: normal;
       }
       @font-face {
         font-family: "Gym Inter Semi";
         src: url("assets/fonts/Inter-SemiBold.ttf") format("truetype");
         font-weight: 600;
-        font-style: normal;
       }
       @font-face {
         font-family: "Gym Mono";
         src: url("assets/fonts/RobotoMono-Medium.ttf") format("truetype");
         font-weight: 500;
-        font-style: normal;
       }
       * {
         box-sizing: border-box;
@@ -48,182 +45,214 @@
       }
       .glow {
         position: absolute;
-        left: -120px;
-        top: -80px;
-        width: 900px;
-        height: 900px;
-        background: radial-gradient(circle, rgba(37, 99, 235, 0.55), rgba(37, 99, 235, 0) 68%);
+        left: -80px;
+        top: 40px;
+        width: 820px;
+        height: 820px;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.5), rgba(37, 99, 235, 0) 70%);
         pointer-events: none;
       }
       .bug {
         position: absolute;
-        left: 64px;
-        top: 36px;
-        z-index: 5;
+        left: 72px;
+        top: 40px;
+        z-index: 6;
         font-family: "Gym Mono", monospace;
-        font-size: 22px;
-        letter-spacing: 0.18em;
+        font-size: 20px;
+        letter-spacing: 0.22em;
         color: #d4d4d8;
       }
-      .stage-left {
+      .left {
         position: absolute;
         left: 0;
         top: 0;
-        width: 760px;
+        width: 780px;
         height: 100%;
-        padding: 160px 56px 80px 72px;
+        padding: 180px 48px 80px 72px;
       }
       .kicker {
+        display: block;
+        margin: 0 0 16px;
         font-family: "Gym Mono", monospace;
-        font-size: 22px;
-        letter-spacing: 0.14em;
+        font-size: 20px;
+        letter-spacing: 0.2em;
         color: #fda4af;
-        margin-bottom: 8px;
+        line-height: 1.3;
       }
       h1 {
-        margin: 28px 0 0;
+        margin: 0;
         font-family: "Gym Inter", sans-serif;
         font-weight: 700;
-        font-size: 132px;
-        line-height: 1.05;
-        letter-spacing: -0.04em;
+        font-size: 112px;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+      }
+      .rule {
+        width: 180px;
+        height: 6px;
+        margin-top: 28px;
+        background: #e11d48;
+        transform-origin: left center;
       }
       .sub {
-        margin-top: 28px;
-        max-width: 620px;
-        font-size: 36px;
-        line-height: 1.25;
+        margin: 28px 0 0;
+        max-width: 640px;
+        font-size: 32px;
+        line-height: 1.3;
         color: #e4e4e7;
+      }
+      .chip-grid {
+        position: absolute;
+        right: 72px;
+        top: 180px;
+        width: 980px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .chip {
+        background: #f4f4f5;
+        color: #18181b;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 32px;
+        line-height: 1.1;
+        padding: 22px 24px;
+        border-radius: 999px;
+        text-align: center;
+      }
+      .chip.hot {
+        background: #fff1f2;
+        color: #be123c;
+      }
+      .stack {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        top: 200px;
+      }
+      .bigrow {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        border-top: 2px solid rgba(244, 244, 245, 0.18);
+        padding: 28px 8px;
+      }
+      .lbl {
+        font-family: "Gym Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.16em;
+        color: #d4d4d8;
+      }
+      .val {
+        font-family: "Gym Inter", sans-serif;
+        font-size: 72px;
+        letter-spacing: -0.04em;
+        line-height: 1;
       }
       .panel {
         position: absolute;
         right: 0;
         top: 0;
-        width: 1160px;
+        width: 1140px;
         height: 100%;
         background: #f5f8ff;
         color: #18181b;
-        padding: 72px 56px;
+        padding: 64px 52px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+      }
+      .context-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+      .mini {
+        background: #fff1f2;
+        color: #be123c;
+        font-family: "Gym Inter Semi", sans-serif;
+        font-size: 22px;
+        padding: 10px 16px;
+        border-radius: 999px;
+      }
+      .mini.neutral {
+        background: #f4f4f5;
+        color: #3f3f46;
+      }
+      .banner {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 20px 26px;
+        margin-bottom: 16px;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 30px;
+        line-height: 1.2;
+      }
+      .banner span {
+        display: block;
+        margin-top: 8px;
+        font-family: "Gym Inter Semi", sans-serif;
+        font-size: 22px;
+        color: #52525b;
       }
       .row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         background: #ffffff;
-        border-radius: 28px;
-        padding: 28px 32px;
-        margin-bottom: 18px;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-      }
-      .who {
-        display: flex;
-        align-items: center;
-        gap: 22px;
-      }
-      .avatar {
-        width: 84px;
-        height: 84px;
-        border-radius: 999px;
-        background: #e4e4e7;
-        color: #3f3f46;
-        display: grid;
-        place-items: center;
-        font-family: "Gym Inter", sans-serif;
-        font-size: 28px;
-      }
-      .name {
-        font-family: "Gym Inter", sans-serif;
-        font-size: 40px;
-        line-height: 1.1;
-      }
-      .meta {
-        margin-top: 6px;
-        font-size: 24px;
-        color: #52525b;
-      }
-      .badge {
-        background: #fffbeb;
-        color: #b45309;
-        font-size: 26px;
-        padding: 12px 22px;
-        border-radius: 999px;
-      }
-      .chip {
-        display: inline-block;
-        background: #fff1f2;
-        color: #be123c;
-        font-size: 26px;
-        padding: 10px 18px;
-        border-radius: 999px;
-        margin-bottom: 22px;
-      }
-      .banner {
-        background: #ffffff;
         border-radius: 24px;
         padding: 22px 28px;
-        margin-bottom: 22px;
-        font-family: "Gym Inter", sans-serif;
-        font-size: 32px;
-      }
-      .banner span {
-        display: block;
-        margin-top: 8px;
-        font-family: "Gym Inter Semi", sans-serif;
-        font-size: 24px;
-        color: #52525b;
+        margin-bottom: 14px;
       }
       .food {
         font-family: "Gym Inter", sans-serif;
-        font-size: 36px;
+        font-size: 34px;
+        line-height: 1.1;
       }
       .grams {
         margin-top: 6px;
         font-family: "Gym Mono", monospace;
-        font-size: 22px;
+        font-size: 20px;
         color: #52525b;
       }
       .kcal {
         font-family: "Gym Mono", monospace;
-        font-size: 36px;
-      }
-      .stepper {
-        width: 72px;
-        height: 72px;
-        border-radius: 999px;
-        border: 3px solid #d4d4d8;
-        display: grid;
-        place-items: center;
-        font-size: 40px;
-        color: #18181b;
+        font-size: 32px;
       }
       .right-tools {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
       }
       .delta {
         background: #1d4ed8;
         color: #ffffff;
         font-family: "Gym Mono", monospace;
-        font-size: 32px;
-        padding: 14px 22px;
+        font-size: 28px;
+        padding: 12px 18px;
         border-radius: 999px;
+      }
+      .stepper {
+        width: 64px;
+        height: 64px;
+        border-radius: 999px;
+        border: 3px solid #d4d4d8;
+        display: grid;
+        place-items: center;
+        font-size: 36px;
       }
       .total {
         display: flex;
         align-items: baseline;
-        gap: 16px;
-        margin-top: 28px;
+        gap: 14px;
+        margin: 18px 0 8px;
         font-family: "Gym Mono", monospace;
         font-size: 64px;
         letter-spacing: -0.04em;
       }
       .numbox {
         position: relative;
-        width: 280px;
+        width: 260px;
         height: 76px;
       }
       #kcal-a,
@@ -233,20 +262,97 @@
         left: 0;
         top: 0;
       }
+      .total em {
+        font-style: normal;
+        font-size: 26px;
+        color: #52525b;
+      }
+      .publish {
+        display: inline-block;
+        margin-top: 18px;
+        background: #1d4ed8;
+        color: #ffffff;
+        font-family: "Gym Inter", sans-serif;
+        font-size: 30px;
+        padding: 20px 32px;
+        border-radius: 999px;
+      }
+      .cursor {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: #18181b;
+        border: 3px solid #ffffff;
+        z-index: 4;
+      }
+      .chart-wrap {
+        background: #ffffff;
+        border-radius: 28px;
+        padding: 24px 24px 8px;
+      }
+      .chart-label {
+        font-family: "Gym Mono", monospace;
+        font-size: 18px;
+        letter-spacing: 0.14em;
+        color: #52525b;
+      }
+      .ahead {
+        float: right;
+        background: #f0fdf4;
+        color: #166534;
+        font-family: "Gym Inter Semi", sans-serif;
+        font-size: 20px;
+        letter-spacing: 0;
+        padding: 6px 12px;
+        border-radius: 999px;
+      }
+      svg.chart {
+        width: 100%;
+        height: 280px;
+        display: block;
+      }
       #wline {
         stroke-dasharray: 820;
       }
       #ring {
-        stroke-dasharray: 465;
+        stroke-dasharray: 289;
       }
-      #hook-kicker,
+      .ring-block {
+        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: #18181b;
+      }
+      .ring-block strong {
+        font-family: "Gym Mono", monospace;
+        font-size: 48px;
+      }
+      .ring-block p {
+        margin: 4px 0 0;
+        font-size: 20px;
+        color: #52525b;
+      }
       #hook-word,
+      #hook-rule,
       #hook-sub,
-      #due-word,
-      #due-panel,
+      #c1,
+      #c2,
+      #c3,
+      #c4,
+      #c5,
+      #c6,
+      #c7,
+      #c8,
+      #c9,
+      #row-a,
+      #row-b,
+      #row-c,
+      #honor,
       #draft-word,
       #banner,
-      #peanut-chip,
+      #pins,
       #meal-1,
       #meal-2,
       #meal-3,
@@ -261,84 +367,6 @@
       #kcal-c {
         opacity: 0;
       }
-      .total em {
-        font-style: normal;
-        font-size: 28px;
-        color: #52525b;
-        margin-left: 10px;
-      }
-      .publish {
-        margin-top: 36px;
-        display: inline-block;
-        background: #1d4ed8;
-        color: #ffffff;
-        font-family: "Gym Inter", sans-serif;
-        font-size: 32px;
-        padding: 22px 36px;
-        border-radius: 999px;
-      }
-      .cursor {
-        position: absolute;
-        width: 36px;
-        height: 36px;
-        border-radius: 999px;
-        background: #18181b;
-        border: 4px solid #ffffff;
-        z-index: 4;
-      }
-      .chart-wrap {
-        margin-top: 24px;
-        background: #ffffff;
-        border-radius: 28px;
-        padding: 28px;
-      }
-      .chart-label {
-        font-family: "Gym Mono", monospace;
-        font-size: 20px;
-        letter-spacing: 0.12em;
-        color: #52525b;
-      }
-      .ahead {
-        float: right;
-        background: #f0fdf4;
-        color: #166534;
-        font-size: 22px;
-        padding: 8px 14px;
-        border-radius: 999px;
-      }
-      svg {
-        width: 100%;
-        height: 420px;
-        display: block;
-      }
-      .ring-block {
-        position: absolute;
-        right: 72px;
-        bottom: 72px;
-        width: 280px;
-        text-align: center;
-        color: #18181b;
-      }
-      .ring-block strong {
-        font-family: "Gym Mono", monospace;
-        font-size: 54px;
-      }
-      .ring-block p {
-        margin: 8px 0 0;
-        font-size: 22px;
-        color: #52525b;
-      }
-      .logo-word {
-        font-family: "Gym Inter", sans-serif;
-        font-size: 160px;
-        letter-spacing: -0.05em;
-        margin: 0;
-      }
-      .logo-line {
-        margin-top: 18px;
-        font-size: 36px;
-        color: #e4e4e7;
-      }
     </style>
   </head>
   <body>
@@ -348,46 +376,62 @@
       data-start="0"
       data-width="1920"
       data-height="1080"
-      data-duration="21"
+      data-duration="20"
     >
       <div id="glow" class="glow"></div>
       <div id="bug" class="bug">GYMOS · COACH</div>
 
-      <section id="hook" class="clip" data-start="0" data-duration="2.15" data-track-index="1">
-        <div class="stage-left">
-          <div id="hook-kicker" class="kicker">SEVERE ALLERGIES</div>
-          <h1 id="hook-word">Peanut.</h1>
-          <p id="hook-sub" class="sub">Hard blocks in the meal engine.</p>
+      <section id="allergens" class="clip" data-start="0" data-duration="5.4" data-track-index="1">
+        <div class="left">
+          <span class="kicker">SEVERE ALLERGENS</span>
+          <h1 id="hook-word">Allergens.</h1>
+          <div id="hook-rule" class="rule"></div>
+          <p id="hook-sub" class="sub">Excluded from all plans.</p>
+        </div>
+        <div class="chip-grid">
+          <div id="c1" class="chip hot">Peanut</div>
+          <div id="c2" class="chip">Tree Nut</div>
+          <div id="c3" class="chip">Milk</div>
+          <div id="c4" class="chip">Egg</div>
+          <div id="c5" class="chip">Fish</div>
+          <div id="c6" class="chip">Shellfish</div>
+          <div id="c7" class="chip">Soy</div>
+          <div id="c8" class="chip">Wheat Gluten</div>
+          <div id="c9" class="chip">Sesame</div>
         </div>
       </section>
 
-      <section id="due" class="clip" data-start="2.15" data-duration="2.1" data-track-index="1">
-        <div class="stage-left">
-          <div class="kicker">TODAY</div>
-          <h1 id="due-word">Due today.</h1>
-        </div>
-        <div id="due-panel" class="panel">
-          <div class="row">
-            <div class="who">
-              <div class="avatar">AD</div>
-              <div>
-                <div class="name">Adnan (Demo)</div>
-                <div class="meta">Weekly check-in · 2026-10-01</div>
-              </div>
-            </div>
-            <div class="badge">Due today</div>
+      <section id="context" class="clip" data-start="5.4" data-duration="2.8" data-track-index="1">
+        <div class="stack">
+          <div id="row-a" class="bigrow">
+            <div class="lbl">SEVERE ALLERGENS</div>
+            <div class="val">Peanut</div>
+          </div>
+          <div id="row-b" class="bigrow">
+            <div class="lbl">PREFERENCES & RESTRICTIONS</div>
+            <div class="val">Halal</div>
+          </div>
+          <div id="row-c" class="bigrow">
+            <div class="lbl">MEDICAL CONDITIONS</div>
+            <div class="val">On file</div>
           </div>
         </div>
+        <p id="honor" class="sub" style="position: absolute; left: 72px; bottom: 80px">
+          Honoring every dietary restriction.
+        </p>
       </section>
 
-      <section id="meals" class="clip" data-start="4.25" data-duration="6.85" data-track-index="1">
-        <div class="stage-left">
-          <div class="kicker">DRAFT</div>
-          <h1 id="draft-word" style="font-size: 104px">Not sent.</h1>
-          <p id="draft-sub" class="sub">Edit any day.</p>
+      <section id="meals" class="clip" data-start="8.2" data-duration="5" data-track-index="1">
+        <div class="left">
+          <span class="kicker">AI SUGGESTION</span>
+          <h1 id="draft-word" style="font-size: 96px">Review before publish.</h1>
         </div>
-        <div id="meal-panel" class="panel">
-          <div id="peanut-chip" class="chip">Peanut</div>
+        <div class="panel">
+          <div id="pins" class="context-row">
+            <div class="mini">Peanut</div>
+            <div class="mini neutral">Halal</div>
+            <div class="mini neutral">Medical conditions</div>
+          </div>
           <div id="banner" class="banner">
             AI suggestion. Review before publish
             <span>Publish only after you have reviewed the plan.</span>
@@ -416,10 +460,10 @@
         </div>
       </section>
 
-      <section id="review" class="clip" data-start="11.1" data-duration="5.26" data-track-index="1">
-        <div class="stage-left">
-          <div class="kicker">REVIEW</div>
-          <h1 id="review-word" style="font-size: 96px">You review it.</h1>
+      <section id="review" class="clip" data-start="13.2" data-duration="3.6" data-track-index="1">
+        <div class="left">
+          <span class="kicker">YOUR EDIT</span>
+          <h1 id="review-word" style="font-size: 92px">You still publish.</h1>
         </div>
         <div class="panel">
           <div class="row">
@@ -443,18 +487,18 @@
         <div id="cursor" class="cursor"></div>
       </section>
 
-      <section id="land" class="clip" data-start="16.36" data-duration="2.44" data-track-index="1">
-        <div class="stage-left">
-          <div class="kicker">WEIGHT JOURNEY</div>
-          <h1 id="kg" style="font-family: 'Gym Mono', monospace; font-size: 96px">84.5 kg</h1>
+      <section id="land" class="clip" data-start="16.8" data-duration="1.8" data-track-index="1">
+        <div class="left">
+          <span class="kicker">WEIGHT JOURNEY</span>
+          <h1 id="kg" style="font-family: 'Gym Mono', monospace; font-size: 88px">84.5 kg</h1>
           <p class="sub">Ahead. Start 88 kg. Target 80 kg.</p>
         </div>
         <div class="panel">
           <div class="chart-wrap">
             <div class="chart-label">WEIGHT JOURNEY <span class="ahead">Ahead</span></div>
-            <svg viewBox="0 0 900 420" aria-label="Weight journey">
+            <svg class="chart" viewBox="0 0 900 320" aria-label="Weight journey">
               <path
-                d="M40 90 C 160 100, 220 150, 320 180 S 520 250, 860 300"
+                d="M30 70 C 160 80, 240 130, 360 160 S 560 230, 860 250"
                 fill="none"
                 stroke="#d4d4d8"
                 stroke-width="4"
@@ -462,7 +506,7 @@
               />
               <path
                 id="wline"
-                d="M40 70 C 150 90, 230 140, 340 170 S 560 240, 700 250"
+                d="M30 50 C 150 70, 250 120, 380 150 S 600 210, 760 220"
                 fill="none"
                 stroke="#2563eb"
                 stroke-width="8"
@@ -471,94 +515,108 @@
             </svg>
           </div>
           <div class="ring-block">
-            <svg viewBox="0 0 200 200" width="220" height="220" aria-label="Goal progress">
-              <circle cx="100" cy="100" r="74" fill="none" stroke="#e4e4e7" stroke-width="16" />
+            <svg viewBox="0 0 120 120" width="120" height="120" aria-label="Goal progress">
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#e4e4e7" stroke-width="12" />
               <circle
                 id="ring"
-                cx="100"
-                cy="100"
-                r="74"
+                cx="60"
+                cy="60"
+                r="46"
                 fill="none"
                 stroke="#2563eb"
-                stroke-width="16"
+                stroke-width="12"
                 stroke-linecap="round"
-                transform="rotate(-90 100 100)"
+                transform="rotate(-90 60 60)"
               />
             </svg>
-            <strong>43%</strong>
-            <p>Goal progress</p>
+            <div>
+              <strong>43%</strong>
+              <p>Goal progress</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="logo" class="clip" data-start="18.8" data-duration="2.2" data-track-index="2">
-        <div class="stage-left" style="width: 1600px; padding-top: 340px">
-          <h1 id="logo-word" class="logo-word">GymOS</h1>
-          <p id="logo-line" class="logo-line">Review before publish.</p>
+      <section id="logo" class="clip" data-start="18.6" data-duration="1.4" data-track-index="2">
+        <div class="left" style="width: 1500px; padding-top: 360px">
+          <h1 id="logo-word" style="font-size: 140px">GymOS</h1>
+          <p id="logo-line" class="sub">Review before publish.</p>
         </div>
       </section>
 
-      <audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="21" data-volume="0.7" data-track-index="8"></audio>
-      <audio id="sfx-hit" src="assets/sfx/hit.ogg" data-start="0.05" data-duration="0.12" data-volume="0.85" data-track-index="9"></audio>
-      <audio id="sfx-due" src="assets/sfx/place.ogg" data-start="2.15" data-duration="0.4" data-volume="0.55" data-track-index="9"></audio>
-      <audio id="sfx-m1" src="assets/sfx/place.ogg" data-start="5.31" data-duration="0.4" data-volume="0.5" data-track-index="9"></audio>
-      <audio id="sfx-m2" src="assets/sfx/place.ogg" data-start="6.36" data-duration="0.4" data-volume="0.5" data-track-index="9"></audio>
-      <audio id="sfx-m3" src="assets/sfx/place.ogg" data-start="7.41" data-duration="0.4" data-volume="0.5" data-track-index="9"></audio>
-      <audio id="sfx-click" src="assets/sfx/click.ogg" data-start="12.15" data-duration="0.08" data-volume="0.8" data-track-index="9"></audio>
-      <audio id="sfx-bell" src="assets/sfx/bell.ogg" data-start="14.2" data-duration="0.12" data-volume="0.7" data-track-index="9"></audio>
+      <audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="20" data-volume="0.78" data-track-index="8"></audio>
+      <audio id="sfx-hit" src="assets/sfx/hit.ogg" data-start="0.07" data-duration="0.12" data-volume="0.9" data-track-index="9"></audio>
+      <audio id="sfx-c1" src="assets/sfx/place.ogg" data-start="0.57" data-duration="0.35" data-volume="0.45" data-track-index="9"></audio>
+      <audio id="sfx-c5" src="assets/sfx/place.ogg" data-start="2.57" data-duration="0.35" data-volume="0.4" data-track-index="9"></audio>
+      <audio id="sfx-c9" src="assets/sfx/place.ogg" data-start="4.56" data-duration="0.35" data-volume="0.45" data-track-index="9"></audio>
+      <audio id="sfx-m1" src="assets/sfx/place.ogg" data-start="8.57" data-duration="0.35" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-m2" src="assets/sfx/place.ogg" data-start="9.57" data-duration="0.35" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-m3" src="assets/sfx/place.ogg" data-start="10.57" data-duration="0.35" data-volume="0.5" data-track-index="9"></audio>
+      <audio id="sfx-click" src="assets/sfx/click.ogg" data-start="14.2" data-duration="0.08" data-volume="0.85" data-track-index="9"></audio>
+      <audio id="sfx-bell" src="assets/sfx/bell.ogg" data-start="15.07" data-duration="0.12" data-volume="0.75" data-track-index="9"></audio>
     </div>
     <script>
       const tl = gsap.timeline({ paused: true });
       const bass = window.BASS || [];
+      const chipAt = [0.57, 1.07, 1.57, 2.07, 2.57, 3.07, 3.57, 4.07, 4.56];
 
-      tl.fromTo("#hook-kicker", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.05);
-      // beat-locked: 0.05
-      tl.fromTo("#hook-word", { y: 64, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power4.out" }, 0.12);
-      tl.fromTo("#hook-sub", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.7);
+      tl.fromTo("#hook-word", { y: 48, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "power4.out" }, 0.07);
+      // beat-locked: 0.07
+      tl.fromTo("#hook-rule", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.4);
+      tl.fromTo("#hook-sub", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.7);
+      chipAt.forEach((time, index) => {
+        const fromX = index % 2 === 0 ? 36 : -36;
+        tl.fromTo(
+          "#c" + (index + 1),
+          { y: 32, x: fromX, opacity: 0 },
+          { y: 0, x: 0, opacity: 1, duration: 0.32, ease: "power3.out" },
+          time,
+        );
+      });
+      // beat-grid: chips at 0.57, 1.07, 1.57, 2.07, 2.57, 3.07, 3.57, 4.07, 4.56
 
-      tl.fromTo("#due-word", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 2.15);
-      // beat-locked: 2.15
-      tl.fromTo("#due-panel", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 2.28);
+      tl.fromTo("#row-a", { x: -48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 5.5);
+      tl.fromTo("#row-b", { x: 48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 6.06);
+      tl.fromTo("#row-c", { x: -48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 6.56);
+      tl.fromTo("#honor", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 7.07);
 
-      tl.fromTo("#draft-word", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 4.25);
-      // beat-locked: 4.25
-      tl.fromTo("#banner", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 4.45);
-      tl.fromTo("#peanut-chip", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 4.55);
-      // beat-grid: meal 1 at 5.31s, meal 2 at 6.36s, meal 3 at 7.41s
-      tl.fromTo("#meal-1", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 5.31);
-      tl.fromTo("#meal-2", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 6.36);
-      tl.fromTo("#meal-3", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 7.41);
+      tl.fromTo("#draft-word", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 8.2);
+      tl.fromTo("#pins", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 8.35);
+      tl.fromTo("#banner", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 8.5);
+      tl.fromTo("#meal-1", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.34, ease: "power3.out" }, 8.57);
+      tl.fromTo("#meal-2", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.34, ease: "power3.out" }, 9.57);
+      tl.fromTo("#meal-3", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.34, ease: "power3.out" }, 10.57);
+      // beat-grid: meals at 8.57, 9.57, 10.57
 
-      tl.fromTo("#review-word", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 11.1);
-      // beat-locked: 11.10
-      tl.fromTo("#cursor", { x: 1200, y: 780, opacity: 0 }, { x: 1680, y: 470, opacity: 1, duration: 0.55, ease: "power2.inOut" }, 11.4);
-      tl.to("#cursor", { opacity: 0, duration: 0.15 }, 12.4);
-      tl.fromTo("#plus", { scale: 1 }, { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1, ease: "power1.inOut" }, 12.15);
-      tl.fromTo("#delta", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" }, 12.2);
-      tl.fromTo("#kcal-a", { opacity: 1 }, { opacity: 0, duration: 0.15 }, 12.6);
-      tl.fromTo("#kcal-b", { opacity: 0 }, { opacity: 1, duration: 0.15, immediateRender: false }, 12.6);
-      tl.fromTo("#kcal-b", { opacity: 1 }, { opacity: 0, duration: 0.15, immediateRender: false }, 13.15);
-      tl.fromTo("#kcal-c", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 13.15);
-      tl.fromTo("#publish", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 14.2);
+      tl.fromTo("#review-word", { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 13.2);
+      tl.fromTo("#cursor", { x: 1500, y: 860, opacity: 0 }, { x: 1720, y: 430, opacity: 1, duration: 0.5, ease: "power2.inOut" }, 13.55);
+      tl.to("#cursor", { opacity: 0, duration: 0.15 }, 14.35);
+      tl.fromTo("#plus", { scale: 1 }, { scale: 0.84, duration: 0.08, yoyo: true, repeat: 1 }, 14.2);
+      tl.fromTo("#delta", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.32, ease: "back.out(1.4)" }, 14.28);
+      tl.fromTo("#kcal-a", { opacity: 1 }, { opacity: 0, duration: 0.12 }, 14.55);
+      tl.fromTo("#kcal-b", { opacity: 0 }, { opacity: 1, duration: 0.12, immediateRender: false }, 14.55);
+      tl.fromTo("#kcal-b", { opacity: 1 }, { opacity: 0, duration: 0.12, immediateRender: false }, 14.9);
+      tl.fromTo("#kcal-c", { opacity: 0 }, { opacity: 1, duration: 0.12, immediateRender: false }, 14.9);
+      tl.fromTo("#publish", { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 15.07);
+      // beat-locked: 15.07
 
-      tl.fromTo("#kg", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 16.36);
-      // beat-locked: 16.36
-      tl.fromTo("#wline", { strokeDashoffset: 820 }, { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" }, 16.5);
-      tl.fromTo("#ring", { strokeDashoffset: 465 }, { strokeDashoffset: 265, duration: 0.7, ease: "power2.out" }, 17.15);
+      tl.fromTo("#kg", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power4.out" }, 16.8);
+      tl.fromTo("#wline", { strokeDashoffset: 820 }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 16.95);
+      tl.fromTo("#ring", { strokeDashoffset: 289 }, { strokeDashoffset: 165, duration: 0.55, ease: "power2.out" }, 17.4);
 
-      tl.fromTo("#logo-word", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 18.9);
-      tl.fromTo("#logo-line", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 19.25);
-      tl.to("#bug", { opacity: 0, duration: 0.2 }, 18.8);
+      tl.fromTo("#logo-word", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 18.7);
+      tl.fromTo("#logo-line", { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: "power3.out" }, 18.95);
+      tl.to("#bug", { opacity: 0, duration: 0.15 }, 18.6);
 
       tl.to(
         {},
         {
-          duration: 21,
+          duration: 20,
           ease: "none",
           onUpdate() {
             const i = Math.min(bass.length - 1, Math.floor(this.progress() * bass.length));
             const v = bass[i] || 0;
-            gsap.set("#glow", { scale: 1 + v * 0.16, opacity: 0.55 + v * 0.4 });
+            gsap.set("#glow", { scale: 1 + v * 0.18, opacity: 0.5 + v * 0.45 });
           },
         },
         0,

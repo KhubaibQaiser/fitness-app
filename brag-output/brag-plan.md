@@ -2,110 +2,110 @@
 
 ## What is this app?
 
-GymOS is the coach's desk: who is due today, a meal draft that already knows the severe allergy, and a publish gate the coach has to press.
+GymOS drafts a coach's meal plan around severe allergens, preferences, and medical conditions, and keeps publish in the coach's hands.
 
 ## The angle
 
-The week is already written around the person. It still does not leave the building until the coach says so. The video is a night-desk film, not a tour of screenshots.
+An allergen is not one peanut chip. It is the whole set the plan is not allowed to serve, sitting next to preferences and medical conditions, while the draft is written.
 
 ## Hook (first 2-3 seconds)
 
-Full frame. One word, huge, left-anchored: Peanut. Under it, the product's own line: severe allergies are hard blocks. No logo. No app chrome.
+"Allergens." Then the catalog arrives one chip at a time: Peanut, Tree Nut, Milk, Egg, Fish, Shellfish, Soy, Wheat Gluten, Sesame. Peanut is the one on this client. The rest are the feature.
 
 ## Key moments (the middle)
 
-- The Due today row for the demo client, big enough to read, sliding into a light panel.
-- Breakfast drafting itself: omelette, bran bread, chai with stevia, under "AI suggestion. Review before publish".
-- The portion moves, the day total goes 2544 to 2616 kcal, then the real button: "I reviewed this plan. Publish".
+- Severe allergens, preferences and restrictions, medical conditions, then the product line "Honoring every dietary restriction."
+- The draft: omelette, bran bread, chai with stevia, under "AI suggestion. Review before publish", with Peanut, Halal, and Medical conditions still pinned.
+- The coach's edit: +56 g, 2544 to 2616 kcal, then "I reviewed this plan. Publish".
 
 ## Outro / punchline
 
-The weight is already moving: 84.5 kg, ahead, 43% of the way from 88 to 80. Then the name.
+84.5 kg, ahead, 43% from 88 to 80. Then GymOS.
 
 ## User flow worth showing
 
-Open the client who is due → the draft appears around the allergy → the coach changes a portion and publishes. The chart is the result, not a feature slide.
+The profile's allergens, preferences, and medical conditions → the draft that honors them → the coach publishes → the weight moves.
 
 ## Tone
 
 - Preset: cinematic
-- Creative direction: night-desk product film. Big type on the left, the working app on the right, hard cuts on the music.
-- Interpretation: fewer scenes, type holds long enough to read, motion is the cut and the thing being done. No bounce on every card.
+- Creative direction: punchy 20s product film, more motion, type that holds
+- Interpretation: hard cuts on a 120 BPM bed. Chips, rows, and meals arrive on the beat and stay up long enough to read.
 
 ## Format: landscape — 1920x1080
 
-## Duration: 21
+## Duration: 20
 
 ## Visual identity (from the project)
 
-- Background: #0B1220 (coach dark canvas)
-- Accent: #2563EB coach blue, #E11D48 only for the allergy
-- Text: #F4F4F5 on dark, #18181B on the light panel (#F5F8FF)
-- Display font: Inter
-- Body font: Inter, numbers in Roboto Mono
-- Strongest visual element: the Due today row, the meal rows, and the publish button, rebuilt at video size from the real UI copy
+- Background: #0B1220
+- Accent: #2563EB, allergy #E11D48 on #FFF1F2
+- Text: #F4F4F5 on dark, #18181B on #F5F8FF
+- Display font: Inter Bold
+- Body font: Inter SemiBold, numbers Roboto Mono
+- Strongest visual element: the allergen catalog, then the meal draft
 
 ## Share copy (draft)
 
-Peanut allergy. Due today. The week is drafted. GymOS does not ship it until the coach has reviewed the plan.
+Allergens, preferences, medical conditions. GymOS drafts the week around them. The coach is the one who publishes.
 
 ## Audio direction
 
-- Role: dense rhythmic layer under a cinematic picture, not a trailer sting
-- Music: happy-beats-business-moves-vol-11-by-ende-dot-app.mp3, trimmed so the first strong cue hits the hook
-- Music treatment: bed from 0, sit under the picture, no fade-up delay
-- Music cue guidance: preset `assets/music/cues/happy-beats-business-moves-vol-11-by-ende-dot-app.music-cues.md`, tempo about 115 BPM. File is trimmed at 1.55s so strong cues land at 0.05, 2.15, 4.25, 7.41, 11.10, 16.36. Foods snap to every other beat after 4.25.
-- Audio-reactive treatment: subtle; bass lifts the blue glow behind the type. No bars, no waveform.
-- SFX posture: sparse. One hit on the hook, a soft place on each food, a click on the portion, a bell on publish.
-- Audio-coupled moments: hook slam, three meal rows, portion click, publish button
-- Restraint rule: no extra whooshes, no voiceover
+- Role: dense rhythmic layer
+- Music: happy-beats-business-moves-vol-1, trimmed at 15.95s so the 120 BPM hits start on the hook
+- Music treatment: bed from frame 0, louder than the last cut
+- Music cue guidance: strong cues land at about 0.07, 1.07, 2.07, 4.07, 5.06, 6.06, 7.07 after the trim. Chips step every half second. Meals every other beat at 8.57, 9.57, 10.57.
+- Audio-reactive treatment: subtle; bass lifts the blue glow
+- SFX posture: sparse. Hit on the word, three chip places, three meal places, a click, a bell
+- Audio-coupled moments: allergen chips, meal rows, portion click, publish
+- Restraint rule: no voiceover
 
 ## Storyboard
 
-### Scene 1 — Peanut — 2.15s
+### Scene 1 — Allergens — 5.4s
 
-Full frame, left anchored. "Peanut." then "Severe allergies are hard blocks in the meal engine."
-Sequential/interaction: none
-Audio intent: the downbeat is the word
-Audio-coupled idea: impact on the word
-Music: trimmed vol-11 bed
+"Allergens." Nine catalog chips land and hold. Line: "Excluded from all plans."
+Sequential/interaction: yes — nine chips, one by one, then a hold
+Audio intent: the word hits, chips tick
+Audio-coupled idea: card sequence
+Music: trimmed vol-1
 Transition mood: hard → Scene 2
 
-### Scene 2 — Due today — 2.10s
+### Scene 2 — The context — 2.8s
 
-Split. Left: "Due today." Right: the client row, Adnan (Demo), weekly check-in, Due today badge.
-Sequential/interaction: the row slides in as one object
-Audio intent: a soft place as the row lands
-Audio-coupled idea: card place
+Three rows: Severe allergens / Peanut, Preferences & restrictions / Halal, Medical conditions / On file. Then "Honoring every dietary restriction."
+Sequential/interaction: yes — three rows
+Audio intent: the bed carries it
+Audio-coupled idea: none
 Music: bed
 Transition mood: hard → Scene 3
 
-### Scene 3 — The draft — 6.85s
+### Scene 3 — The draft — 5.0s
 
-Same split. Banner verbatim: "AI suggestion. Review before publish". Then omelette, bran bread, chai with stevia, one by one, held together after the third.
-Sequential/interaction: yes — three meal rows, every other beat, then a hold
-Audio intent: three soft places, then space
+Pinned context chips, the AI banner, then omelette, bran bread, chai with stevia.
+Sequential/interaction: yes — three meals
+Audio intent: three soft places
 Audio-coupled idea: card sequence
 Music: bed
 Transition mood: hard → Scene 4
 
-### Scene 4 — You review — 5.26s
+### Scene 4 — Publish — 3.6s
 
-The omelette stays. A cursor hits the plus. +56 g. The day total steps 2544 → 2616 kcal. Then the button "I reviewed this plan. Publish" and the line "Publish only after you have reviewed the plan."
-Sequential/interaction: yes — simulated click, then the button
-Audio intent: a click, then a bell when the button lands
+Cursor, +56 g, 2544 → 2616 kcal, "I reviewed this plan. Publish".
+Sequential/interaction: yes — simulated click
+Audio intent: click, then bell
 Audio-coupled idea: simulated tap
 Music: bed
 Transition mood: hard → Scene 5
 
-### Scene 5 — It lands — 4.64s
+### Scene 5 — It lands — 3.2s
 
-"84.5 kg" and "Ahead". The weight line draws. The ring fills to 43%, start 88 kg, target 80 kg. Hard cut to GymOS.
-Sequential/interaction: the line draws, then the ring
-Audio intent: the bed carries it, no new sting on the logo
+84.5 kg, the line draws, the ring fills to 43%, then GymOS.
+Sequential/interaction: line, then ring
+Audio intent: bed only
 Audio-coupled idea: none
 Music: bed
 Transition mood: hard → end
 
-**Music mood for this video:** cinematic, rhythmic, not comedic
-**Audio summary:** One bed, four sound effects, hits locked to the strong cues.
+**Music mood for this video:** energetic, 120 BPM
+**Audio summary:** One faster bed, hits on the allergen word, the chips, the meals, and publish.
