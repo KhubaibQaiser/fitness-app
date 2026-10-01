@@ -5,7 +5,7 @@ Audience: **technical investors** (architecture, AI systems, unit economics, ris
 | Doc                                                                          | Use when                                                                                        |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | [technical-investor-brief.md](./technical-investor-brief.md)                 | Full case study: problem, architecture, AI design, scale path, risks, slide outline, 90s script |
-| [Coach product spot](./coach-spot/README.md)                                 | 20s coach launch film (allergens, preferences, draft, publish). Not the architecture maps       |
+| [Coach product spot](./coach-spot/README.md)                                 | 20s coach film: onboard, AI meals, progress, dark mode and units. Not the architecture maps     |
 | [Platform roadmap](../roadmap.md)                                            | Phase status (0–6), sequencing, marketplace vs gym-admin bets                                   |
 | [ADR-0001 hybrid AI](../adr/0001-hybrid-ai-nutrition.md)                     | Deep dive on nutrition layers + non-goals                                                       |
 | [ADR-0002…0005](../adr/)                                                     | Auth, tenant RLS, config registry, Expo mobile                                                  |
