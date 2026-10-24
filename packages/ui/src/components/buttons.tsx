@@ -23,7 +23,8 @@ const baseButton = {
   focusVisibleStyle: focusRing,
   disabledStyle: { opacity: 0.4 },
   variants: {
-    size: {
+    // Not `size`: Tamagui Button treats `size` as a font-size token and warns on "md".
+    density: {
       sm: {
         minHeight: 44,
         height: 44,
@@ -45,7 +46,7 @@ const baseButton = {
     },
   },
   defaultVariants: {
-    size: 'md',
+    density: 'md',
   },
 } as const;
 

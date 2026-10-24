@@ -12,6 +12,7 @@
     "./features/shell/app-shell": "./src/features/shell/app-shell.tsx",
     "./features/shell/app-screen": "./src/features/shell/app-screen.tsx",
     "./features/shell/use-app-chrome": "./src/features/shell/use-app-chrome.ts",
+    "./features/auth/auth-split-layout": "./src/features/auth/auth-split-layout.tsx",
     "./features/login": "./src/features/login/index.tsx",
     "./features/not-found": "./src/features/not-found/index.tsx",
     "./features/signup": "./src/features/signup/index.tsx",

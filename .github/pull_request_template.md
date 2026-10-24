@@ -115,6 +115,11 @@ Not CI-gated (do not claim these as merge gates): Maestro, Lighthouse, authentic
 
 <!-- Edge cases, breaking changes, follow-ups, CODEOWNERS paths needing human review. -->
 
+## Screenshots
+
+<!-- Required when this PR changes UI (layout, styling, screens, or rendered content). Otherwise write N/A.
+Link each image with a direct raw.githubusercontent.com URL or a GitHub-uploaded image. Relative paths do not render on the pull request page. -->
+
 ## Test plan
 
 <!-- Human checklist for reviewer / QA. -->

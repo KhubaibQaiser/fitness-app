@@ -62,6 +62,7 @@ export {
   gymosSheetOverlayColor,
   gymosSheetTransition,
 } from './components/gymos-sheet-motion';
+export { Image } from 'react-native';
 export { GymosToast } from './components/gymos-toast';
 export * from './icons';
 export type { GymosIcon } from './icons';

@@ -7,7 +7,6 @@ import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
 import {
   AppErrorBoundary,
-  Card,
   FormField,
   FormKeyboardRoot,
   Muted,
@@ -18,6 +17,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { qk } from '../../api';
+import { AuthFormCard } from '../auth/auth-form-card';
 import { setSessionPresence } from '../shell/session-presence';
 
 export const LoginScreen = () => (
@@ -87,7 +87,7 @@ const LoginForm = () => {
               Sign in to your coaching workstation
             </Muted>
           </YStack>
-          <Card padding="$6" gap="$4">
+          <AuthFormCard>
             <FormField
               label="Email"
               value={email}
@@ -130,7 +130,7 @@ const LoginForm = () => {
                 </Muted>
               </Link>
             </YStack>
-          </Card>
+          </AuthFormCard>
           <Muted fontSize={11} textAlign="center">
             Pilot build · Pakistan region
           </Muted>

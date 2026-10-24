@@ -5,8 +5,9 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { AppErrorBoundary, Card, FormKeyboardRoot, Muted, Screen, Text, YStack } from '@gymos/ui';
+import { AppErrorBoundary, FormKeyboardRoot, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
+import { AuthFormCard } from '../auth/auth-form-card';
 import { setSessionPresence } from '../shell/session-presence';
 import {
   SignupDetailsForm,
@@ -134,7 +135,7 @@ export const SignupScreen = () => {
                   : `Enter the code sent to ${email}`}
               </Muted>
             </YStack>
-            <Card padding="$6" gap="$4">
+            <AuthFormCard>
               {step === 'details' ? (
                 <SignupDetailsForm busy={busy} error={error} onSubmit={(v) => void start(v)} />
               ) : (
@@ -148,7 +149,7 @@ export const SignupScreen = () => {
                   resendBusy={resendBusy}
                 />
               )}
-            </Card>
+            </AuthFormCard>
             <Link href="/login">
               <Muted fontSize={13} textAlign="center" color="$accent">
                 Already have an account? Sign in

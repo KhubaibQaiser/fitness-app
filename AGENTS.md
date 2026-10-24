@@ -48,6 +48,7 @@ Non-negotiable behaviors, all carried forward from v4 and still binding here:
 1. Link a spec under `docs/specs/` or an ADR in the PR body.
 2. A test that would have failed before the change.
 3. Scoped verification: `pnpm lint`, `pnpm typecheck`, and `pnpm test` for touched packages (full workspace when `packages/contracts` or shared types change).
+4. If the change touches UI (layout, styling, screens, or rendered content), the PR body includes screenshots of the affected states. Link each image with a direct `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/...` URL or a GitHub-uploaded image. A relative path such as `docs/pr/shot.png` does not render on the pull request page.
 
 ## Definition of done
 
