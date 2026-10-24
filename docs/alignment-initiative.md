@@ -1,6 +1,6 @@
 # GymOS alignment initiative: phases and original prompt
 
-Moved verbatim from `CLAUDE.md` (the system-prompt blurb, Phase 0, Phases 1 to 4 and the scalability verdict). `CLAUDE.md` still holds the locked answers, operating rules, design tokens and carried-forward guardrails, and **wins on conflict**.
+Moved verbatim from `CLAUDE.md` (the system-prompt blurb, Phase 0, Phases 1 to 4 and the scalability verdict). [`AGENTS.md`](../AGENTS.md) holds the locked answers, operating rules and definition of done, and **wins on conflict**; the design tokens are in [`design-system-reference.md`](design-system-reference.md).
 
 ---
 

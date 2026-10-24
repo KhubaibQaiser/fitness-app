@@ -1,1 +1,1 @@
-Follow the repo-root [AGENTS.md](../AGENTS.md). Product alignment lives in [CLAUDE.md](../CLAUDE.md) and wins on conflict.
+Follow the repo-root [AGENTS.md](../AGENTS.md). It is the single set of rules for every agent.

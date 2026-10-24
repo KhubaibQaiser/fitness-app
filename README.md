@@ -187,7 +187,7 @@ Useful scripts:
 | `pnpm --filter @gymos/web build`            | Production web build               |
 | `pnpm --filter @gymos/api openapi:generate` | Refresh OpenAPI; CI diffs it       |
 
-Agent contract (where code may live, nutrition rules, merge gates): [`AGENTS.md`](AGENTS.md). Alignment rules and design tokens: [`CLAUDE.md`](CLAUDE.md). Alignment phases: [`docs/alignment-initiative.md`](docs/alignment-initiative.md).
+Agent contract for every tool (where code may live, alignment rules, nutrition rules, merge gates): [`AGENTS.md`](AGENTS.md). Alignment phases: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). Design tokens: [`docs/design-system-reference.md`](docs/design-system-reference.md).
 
 ---
 
