@@ -6,8 +6,8 @@ The idea behind all of it: **rules are advice; hooks and CI are enforcement.** C
 
 ## 1. Instructions: short, one source, only what an agent cannot infer
 
-- [`AGENTS.md`](../AGENTS.md) (47 lines) is the execution contract: where code may live, what is denied, required outputs, which merge gates exist. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) starts with an `@AGENTS.md` import and both tools get the same contract.
-- `CLAUDE.md` (150 lines, down from 276) keeps the product alignment rules and design tokens. The phase-by-phase plan moved to [`alignment-initiative.md`](alignment-initiative.md), which an agent reads when it works on a phase. Imports do not reduce context cost, because imported files load with the file that imports them, so the real figure for Claude Code is 150 + 47 = 197 lines at session start. Before this change it loaded 276 lines and never saw the contract.
+- [`AGENTS.md`](../AGENTS.md) (74 lines) is the single contract for every agent: where code may live, the locked product answers and operating rules, what is denied, required outputs, the definition of done and the merge gates. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) is five lines that import it with `@AGENTS.md`. No tool gets different rules.
+- Two things moved out of the always-loaded files because they are reference data, not rules: the phase-by-phase plan ([`alignment-initiative.md`](alignment-initiative.md)) and the design token tables ([`design-system-reference.md`](design-system-reference.md)). `AGENTS.md` links to both. Imports do not reduce context cost, because imported files load with the file that imports them, so Claude Code now loads 5 + 74 = 79 lines at session start. Before this change it loaded 276 lines and never saw the execution contract.
 - Four Cursor rules (56 lines in total, all always on): module boundaries, nutrition safety, verification, minimal diffs.
 - The repo pins one skill (`archify`, locked by hash in `skills-lock.json`) for the architecture diagrams and one MCP server (version pinned in `.cursor/mcp.json`) that gives read-only access to the OpenAPI folder. `.cursorignore` keeps `.env`, key files and Terraform state out of the editor's context.
 
@@ -56,7 +56,8 @@ Measured:
 
 | What                                      | Number                                                                     | How                                                          |
 | ----------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Claude Code instructions at session start | 276 lines (no contract) → 197 lines (with contract)                        | line counts                                                  |
+| Claude Code instructions at session start | 276 lines (no contract) → 79 lines (with contract)                         | line counts                                                  |
+| Cursor `AGENTS.md`, always loaded         | 41 → 74 lines (now includes the alignment rules)                           | line counts                                                  |
 | Hook tests                                | 16 pass, run in CI                                                         | `pnpm test:agent-hooks`                                      |
 | Stop hook, full gates on this repo        | 26 seconds                                                                 | one run on the author's laptop, warm caches                  |
 | Production audit                          | 43 findings (5 critical, 16 high) → 13 (0 critical, 4 high, all 4 ignored) | `pnpm audit --prod --audit-level high`, before and after #67 |
