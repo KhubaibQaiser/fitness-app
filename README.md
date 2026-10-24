@@ -207,19 +207,35 @@ Agent contract (where code may live, nutrition rules, merge gates): [`AGENTS.md`
 
 Not gated: Maestro, Lighthouse, authenticated roster e2e.
 
+### How this repo is built with AI agents
+
+Cursor is the main editor and Claude Code the second. Both read the same contract, and the checks that matter do not depend on an agent following advice: rules are advice, hooks and CI are enforcement.
+
+| Layer                   | What it does                                                                                                                                 | Where                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| One contract            | `AGENTS.md` is the single source. `CLAUDE.md` imports it, so Claude Code reads the same rules as Cursor.                                     | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) |
+| Guard hook              | Blocks reading secrets, force-push, pushes to `main`, piping a download into a shell and new dependencies. Asks before destructive commands. | [`scripts/agent-hooks/`](scripts/agent-hooks/)     |
+| Stop hook               | Runs format, lint, typecheck and tests before an agent may finish.                                                                           | [`scripts/agent-hooks/`](scripts/agent-hooks/)     |
+| Reviewer subagent       | Reviews a diff in a fresh context, read-only, against `AGENTS.md`.                                                                           | `.cursor/agents/`, `.claude/agents/`               |
+| CI and repository rules | The merge gates above are required on `main`. Actions are pinned to commits and the production audit is a gate.                              | [`.github/`](.github/)                             |
+| Agent evals             | Frozen tickets scored by a deterministic script, no LLM judge.                                                                               | [`docs/evals/`](docs/evals/)                       |
+
+What is measured, what is not, and how to copy the setup: [`docs/ai-native-workflow.md`](docs/ai-native-workflow.md).
+
 ---
 
 ## Documentation map
 
-| Doc                                        | Use when                                               |
-| ------------------------------------------ | ------------------------------------------------------ |
-| [`docs/architecture/`](docs/architecture/) | Interactive Archify diagrams + regenerate instructions |
-| [`docs/adr/`](docs/adr/)                   | Accepted architecture decisions                        |
-| [`docs/specs/`](docs/specs/)               | Machine-checkable feature invariants                   |
-| [`docs/roadmap.md`](docs/roadmap.md)       | Current phase vs later product bets                    |
-| [`docs/runbooks/`](docs/runbooks/)         | Ops (down, OTP, generation failures, restore)          |
-| [`docs/ai/`](docs/ai/)                     | Model card, prompt canary, LoRA ops                    |
-| [`docs/pitch/`](docs/pitch/)               | Technical investor brief                               |
+| Doc                                                        | Use when                                               |
+| ---------------------------------------------------------- | ------------------------------------------------------ |
+| [`docs/ai-native-workflow.md`](docs/ai-native-workflow.md) | How agents are configured, enforced and measured       |
+| [`docs/architecture/`](docs/architecture/)                 | Interactive Archify diagrams + regenerate instructions |
+| [`docs/adr/`](docs/adr/)                                   | Accepted architecture decisions                        |
+| [`docs/specs/`](docs/specs/)                               | Machine-checkable feature invariants                   |
+| [`docs/roadmap.md`](docs/roadmap.md)                       | Current phase vs later product bets                    |
+| [`docs/runbooks/`](docs/runbooks/)                         | Ops (down, OTP, generation failures, restore)          |
+| [`docs/ai/`](docs/ai/)                                     | Model card, prompt canary, LoRA ops                    |
+| [`docs/pitch/`](docs/pitch/)                               | Technical investor brief                               |
 
 Architecture scorecard of the brownfield repo: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-alignment-audit.md).
 
@@ -237,4 +253,4 @@ Architecture scorecard of the brownfield repo: [`docs/adr/0007-alignment-audit.m
 
 ## License
 
-This repository does not currently publish a license file. Treat it as source-available for collaboration on GymOS unless the owners state otherwise.
+Apache License 2.0. See [`LICENSE`](LICENSE).
