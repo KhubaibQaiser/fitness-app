@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    # The root entry also covers apps/* and packages/* through pnpm-workspace.yaml.
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # Bound to the Expo SDK: upgrade these together with the SDK
+      # (`npx expo install --fix`), never one at a time.
+      - dependency-name: expo
+      - dependency-name: expo-*
+      - dependency-name: '@expo/metro-runtime'
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-gesture-handler
+      - dependency-name: react-native-reanimated
+      - dependency-name: react-native-safe-area-context
+      - dependency-name: react-native-screens
+      - dependency-name: react-native-svg
+      - dependency-name: react-native-webview
+      - dependency-name: react-native-worklets
+      - dependency-name: '@react-native-async-storage/async-storage'
+      - dependency-name: '@react-native/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
