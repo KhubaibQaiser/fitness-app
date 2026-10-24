@@ -46,3 +46,9 @@ pnpm-debug.log*
 
 # Archify visual-check sidecars (README uses the short *.png copies)
 docs/architecture/*.visual-check.*
+
+# Personal Claude Code settings
+.claude/settings.local.json
+
+# Graphify output is local (rebuild with `graphify`). Do not commit the dump.
+graphify-out/
