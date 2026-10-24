@@ -28,16 +28,37 @@ const readInput = () => {
 const SAFE_EXAMPLE = /\.(example|sample|template|dist)$/i;
 const SAFE_RM_TARGETS =
   /^(\.\/)?(node_modules|dist|build|out|coverage|\.next|\.turbo|\.cache|\.expo|\.vercel|tmp|\.tmp|playwright-report|test-results)\/?$/;
+// Flags whose next token is a value, not a package name.
 const VALUE_FLAGS = new Set([
   '--filter',
   '-F',
   '--cwd',
   '-C',
+  '--dir',
   '--prefix',
   '--registry',
   '--workspace',
-  '-w',
 ]);
+// pip: requirement files, constraints, editable paths and indexes are not package names.
+const PIP_VALUE_FLAGS = new Set([
+  '-r',
+  '--requirement',
+  '-c',
+  '--constraint',
+  '-e',
+  '--editable',
+  '-i',
+  '--index-url',
+  '--extra-index-url',
+  '-t',
+  '--target',
+  '--prefix',
+  '--root',
+  '--python',
+]);
+const JS_ADD = new Set(['add', 'install', 'i']);
+const PY_ADD = new Set(['add', 'install']);
+const REDIRECTION = /\d*[<>]+&?\d*\s*[^\s;&|]*/g;
 
 const sensitivePath = (p) => {
   if (!p) return false;
@@ -119,22 +140,37 @@ const checkPushToMain = (cmd) => {
   return undefined;
 };
 
+// Package names an install command would add. Flags (with their values) may come before the
+// subcommand, as in "pnpm --filter web add zod". Redirections, local paths and requirement files
+// are not packages, so restoring from a lockfile adds nothing.
+const addedPackages = (args, subcommands, valueFlags) => {
+  const toks = args.replace(REDIRECTION, ' ').trim().split(/\s+/).filter(Boolean);
+  let i = 0;
+  const skipFlags = () => {
+    while (toks[i]?.startsWith('-')) i += valueFlags.has(toks[i]) ? 2 : 1;
+  };
+  skipFlags();
+  if (toks[i] === 'pip') {
+    i += 1; // "uv pip install"
+    skipFlags();
+  }
+  if (!subcommands.has(toks[i])) return [];
+  const names = [];
+  for (i += 1; i < toks.length; i += 1) {
+    if (valueFlags.has(toks[i])) i += 1;
+    else if (!/^[-./~]/.test(toks[i])) names.push(toks[i]);
+  }
+  return names;
+};
+
 const checkInstall = (cmd) => {
   const found = [];
-  const scan = (re) => {
-    for (const m of cmd.matchAll(re)) {
-      const toks = m[1].trim().split(/\s+/).filter(Boolean);
-      for (let i = 0; i < toks.length; i += 1) {
-        if (VALUE_FLAGS.has(toks[i])) {
-          i += 1;
-        } else if (!toks[i].startsWith('-')) {
-          found.push(toks[i]);
-        }
-      }
-    }
-  };
-  scan(/\b(?:npm|pnpm|yarn|bun)\s+(?:add|install|i)\b([^;&|\n]*)/g);
-  scan(/\b(?:pip3?|uv)\s+(?:pip\s+)?(?:install|add)\b([^;&|\n]*)/g);
+  for (const m of cmd.matchAll(/\b(?:npm|pnpm|yarn|bun)\s+([^;&|\n]*)/g)) {
+    found.push(...addedPackages(m[1], JS_ADD, VALUE_FLAGS));
+  }
+  for (const m of cmd.matchAll(/\b(?:pip3?|uv)\s+([^;&|\n]*)/g)) {
+    found.push(...addedPackages(m[1], PY_ADD, PIP_VALUE_FLAGS));
+  }
   if (found.length === 0) return undefined;
   const what = `adding dependency ${found.slice(0, 3).join(', ')}`;
   return POLICY.denyDependencyAdds

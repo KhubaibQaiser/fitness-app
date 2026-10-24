@@ -77,6 +77,29 @@ test('dependency adds are denied for agents; plain installs pass', () => {
   assert.equal(decision(shell('pnpm install --filter web')), 'allow');
   assert.equal(decision(shell('npm ci')), 'allow');
   assert.equal(decision(shell('pnpm test --filter=@gymos/core')), 'allow');
+  // Restoring from a lockfile or requirements file adds nothing, even with redirections.
+  for (const command of [
+    'pnpm install --frozen-lockfile 2>&1 | tail -2',
+    'pnpm install > install.log',
+    'npm install 2>/dev/null',
+    'pip install -r requirements.txt',
+    'pnpm run build 2>&1',
+  ]) {
+    assert.equal(decision(shell(command)), 'allow', command);
+  }
+  // Flags before the subcommand, the workspace-root flag and redirections must not hide a package.
+  for (const command of [
+    'pnpm --filter web add zod',
+    'pnpm -F web add zod',
+    'pnpm add -w zod',
+    'pnpm install lodash 2>&1',
+    'npm install lodash > out.log',
+    'yarn add left-pad',
+    'pip install requests',
+    'uv pip install requests',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
 });
 
 test('AGENT_GUARD_ALLOW_INSTALL=1 turns the dependency deny into a confirmation', () => {
