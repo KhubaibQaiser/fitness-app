@@ -11,3 +11,4 @@ packages/contracts/generated/
 **/.terraform/
 .agents/
 docs/architecture/*.html
+graphify-out/

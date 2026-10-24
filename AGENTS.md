@@ -39,3 +39,9 @@ Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (need
 ## Human gate
 
 `CODEOWNERS` requires review on `packages/core`, `packages/ai`, and `infra/`. Agents propose; they do not bypass that.
+
+## Agent hooks
+
+- `.cursor/hooks.json` and `.claude/settings.json` run `scripts/agent-hooks/`. The guard blocks reading secrets, force-push, pushing to `main`, and adding dependencies. When it blocks something, ask the user to run it.
+- The stop hook runs `format:check`, `lint`, `typecheck` and `test` before you finish. Fix what it reports.
+- Run the `reviewer` subagent on your diff before you open a PR.

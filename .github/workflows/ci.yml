@@ -60,6 +60,8 @@ jobs:
           git diff --exit-code packages/contracts/openapi/openapi.v1.json
       - name: Test
         run: pnpm test
+      - name: Agent hook tests
+        run: pnpm test:agent-hooks
       - name: Build (web)
         run: pnpm --filter @gymos/web build
       - name: Install Playwright Chromium
