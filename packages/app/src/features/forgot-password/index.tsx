@@ -91,7 +91,19 @@ export const ForgotPasswordScreen = () => {
                   : `Enter the code sent to ${email}`}
               </Muted>
             </YStack>
-            <Card padding="$6" gap="$4">
+            <Card
+              padding="$6"
+              gap="$4"
+              $md={{
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                borderColor: 'transparent',
+                padding: 0,
+                borderRadius: 0,
+                shadowOpacity: 0,
+                shadowRadius: 0,
+              }}
+            >
               {step === 'request' ? (
                 <ForgotRequestForm
                   busy={busy}
