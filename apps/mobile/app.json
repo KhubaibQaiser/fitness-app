@@ -4,10 +4,25 @@
     "slug": "gymos-coach",
     "version": "0.1.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "scheme": "gymos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "plugins": ["expo-router", "expo-secure-store", "expo-font", "expo-updates"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-updates",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "backgroundColor": "#0E4C90"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     },
@@ -17,7 +32,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#005DB8"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0E4C90"
       },
       "package": "app.gymos.coach",
       "softwareKeyboardLayoutMode": "resize"

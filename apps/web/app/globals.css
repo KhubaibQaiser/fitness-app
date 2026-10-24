@@ -48,6 +48,67 @@ html[data-theme='dark'] *:focus-visible {
   -webkit-tap-highlight-color: transparent;
 }
 
+@keyframes gymos-auth-enter-forward {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gymos-auth-exit-forward {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes gymos-auth-enter-back {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gymos-auth-exit-back {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.gymos-auth-enter-forward,
+.gymos-auth-exit-forward,
+.gymos-auth-enter-back,
+.gymos-auth-exit-back {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.gymos-auth-enter-forward {
+  animation-name: gymos-auth-enter-forward;
+}
+
+.gymos-auth-exit-forward {
+  animation-name: gymos-auth-exit-forward;
+}
+
+.gymos-auth-enter-back {
+  animation-name: gymos-auth-enter-back;
+}
+
+.gymos-auth-exit-back {
+  animation-name: gymos-auth-exit-back;
+}
+
 /* Prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

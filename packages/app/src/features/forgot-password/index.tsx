@@ -5,8 +5,9 @@ import { useState, useTransition } from 'react';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { api, ApiError } from '@gymos/contracts';
-import { AppErrorBoundary, Card, FormKeyboardRoot, Muted, Screen, Text, YStack } from '@gymos/ui';
+import { AppErrorBoundary, FormKeyboardRoot, Muted, Screen, Text, YStack } from '@gymos/ui';
 import { qk } from '../../api';
+import { AuthFormCard } from '../auth/auth-form-card';
 import { setSessionPresence } from '../shell/session-presence';
 import { ForgotRequestForm } from './forgot-request-form';
 import { ForgotResetForm } from './forgot-reset-form';
@@ -91,19 +92,7 @@ export const ForgotPasswordScreen = () => {
                   : `Enter the code sent to ${email}`}
               </Muted>
             </YStack>
-            <Card
-              padding="$6"
-              gap="$4"
-              $md={{
-                backgroundColor: 'transparent',
-                borderWidth: 0,
-                borderColor: 'transparent',
-                padding: 0,
-                borderRadius: 0,
-                shadowOpacity: 0,
-                shadowRadius: 0,
-              }}
-            >
+            <AuthFormCard>
               {step === 'request' ? (
                 <ForgotRequestForm
                   busy={busy}
@@ -122,7 +111,7 @@ export const ForgotPasswordScreen = () => {
                   onSubmit={() => void reset()}
                 />
               )}
-            </Card>
+            </AuthFormCard>
             <Link href="/login">
               <Muted fontSize={13} textAlign="center" color="$accent">
                 Back to sign in

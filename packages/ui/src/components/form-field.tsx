@@ -3,6 +3,7 @@
 import { forwardRef, useId, useImperativeHandle, useRef, type ReactNode } from 'react';
 import {
   Input,
+  isWeb,
   Label,
   Text,
   TextArea,
@@ -121,13 +122,18 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
 
   const a11y = {
     id,
-    nativeID: id.replace(/[^a-zA-Z0-9_-]/g, ''),
-    accessibilityLabel: label,
-    accessibilityState: { disabled },
     'aria-invalid': Boolean(error),
     'aria-required': required,
-    ...(error ? { accessibilityHint: error } : hint ? { accessibilityHint: hint } : {}),
     ...(describedBy !== '' ? { 'aria-describedby': describedBy } : {}),
+    // Web DOM rejects these RN props. The <label htmlFor> already names the field.
+    ...(isWeb
+      ? {}
+      : {
+          nativeID: id.replace(/[^a-zA-Z0-9_-]/g, ''),
+          accessibilityLabel: label,
+          accessibilityState: { disabled },
+          ...(error ? { accessibilityHint: error } : hint ? { accessibilityHint: hint } : {}),
+        }),
   };
 
   const keyboardProps = {
