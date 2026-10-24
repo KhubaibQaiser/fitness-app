@@ -198,6 +198,7 @@ Agent contract for every tool (where code may live, alignment rules, nutrition r
 3. **Nutrition numbers stay in Layers 1–2.** Layer-3 payloads must pass `assertDeidentified`. Plans stay `DRAFT` until explicit publish.
 4. **Add a test that would have failed before the change.**
 5. **Verify** `pnpm lint`, `pnpm typecheck`, and scoped `pnpm test` (full workspace if `packages/contracts` or shared types changed). Touching web/app/ui/platform also needs `pnpm --filter @gymos/web build`.
+6. **UI changes need screenshots in the PR body.** Use a direct `raw.githubusercontent.com` URL or a GitHub-uploaded image. A relative path does not render on the pull request page.
 
 `CODEOWNERS` requires human review on `packages/core`, `packages/ai`, and `infra/`. Agents propose; they do not bypass that.
 
