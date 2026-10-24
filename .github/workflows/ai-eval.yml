@@ -1,4 +1,9 @@
-name: AI live eval
+name: AI eval (nightly)
+
+# The offline eval runs every time. The live eval needs a reachable
+# OpenAI-compatible endpoint (llama.cpp), so it runs only when the repository
+# secret AI_BASE_URL is set. Otherwise that step shows as "skipped": a green
+# run never claims a live check that did not happen.
 
 on:
   schedule:
@@ -9,28 +14,30 @@ permissions:
   contents: read
 
 jobs:
-  live:
-    name: Narrative live eval
+  eval:
+    name: Narrative eval
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
-      - name: Offline eval (always)
+      - name: Offline eval
         run: pnpm --filter @gymos/ai test
-      - name: Live eval (llama.cpp)
+      - name: Check live endpoint is configured
+        id: live
+        env:
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+        run: echo "enabled=${AI_BASE_URL:+true}" >> "$GITHUB_OUTPUT"
+      - name: Live eval (llama.cpp; needs secret AI_BASE_URL)
+        if: steps.live.outputs.enabled == 'true'
         env:
           AI_EVAL_LIVE: '1'
           AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
-        run: |
-          if [ -z "${AI_BASE_URL}" ]; then
-            echo "Skipping live eval: repository secret AI_BASE_URL is not set."
-            exit 0
-          fi
-          pnpm --filter @gymos/ai test
+        run: pnpm --filter @gymos/ai test
