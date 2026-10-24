@@ -1,0 +1,7 @@
+# Keep secrets and state out of the AI's reach. Terminal reads are covered by the guard hook.
+.env
+.env.*
+!.env.example
+*.pem
+infra/**/*.tfstate*
+infra/**/*.tfvars

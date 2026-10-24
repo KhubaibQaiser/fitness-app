@@ -63,7 +63,7 @@ export default tseslint.config(
     plugins: { boundaries },
     settings: {
       'boundaries/include': ['apps/**/*', 'packages/**/*'],
-      // Pre-declared for CLAUDE.md phases P2–P4 (packages/charts, i18n,
+      // Pre-declared for alignment phases P2–P4 (docs/alignment-initiative.md; packages/charts, i18n,
       // app-client, app-admin, and client/admin app shells do not exist yet).
       // Remove an entry here only when its phase is explicitly descoped, not
       // when the package is simply not built yet.
