@@ -1,6 +1,6 @@
 # AGENTS.md — GymOS coding-agent contract
 
-Read this before any edit. This is the **execution** contract (what an agent may do, and how). Product alignment, phase sequencing, and design tokens live in [`CLAUDE.md`](CLAUDE.md) and **win on conflict**.
+Read this before any edit. This is the **execution** contract (what an agent may do, and how). Product alignment rules and design tokens live in [`CLAUDE.md`](CLAUDE.md); phase sequencing lives in [`docs/alignment-initiative.md`](docs/alignment-initiative.md). Both **win on conflict**.
 
 Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-alignment-audit.md). Nutrition safety: [`docs/adr/0001-hybrid-ai-nutrition.md`](docs/adr/0001-hybrid-ai-nutrition.md). Feature specs: [`docs/specs/`](docs/specs/).
 
@@ -8,7 +8,7 @@ Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-align
 
 ## Allowed
 
-- One logical unit per PR. Name the alignment phase (from `CLAUDE.md`) or this AI-native track in the PR body.
+- One logical unit per PR. Name the alignment phase (from `docs/alignment-initiative.md`) or this AI-native track in the PR body.
 - Domain logic in `packages/core` or `packages/modules` public barrels only.
 - Nutrition numbers: Layers 1–2 (`packages/core` solver / physiology) only. Layer-3 (`packages/ai`) names meals and writes prep notes. Never emit kcal or macros from an LLM.
 - Restyle presentational UI without changing fetch, routing, or business conditionals (alignment P1 rule).
@@ -17,7 +17,7 @@ Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-align
 
 - New routes appended to `apps/api/src/app.ts`. Register them in `apps/api/src/routes/`. Keep `app.ts` as a composition root (middleware, token issuance, health).
 - Secrets, `.env`, tenant-name conditionals (`if (tenant === …)`), `Platform.OS` in `packages/app`, raw `fetch` in feature code, raw `<div>` in `packages/app`, `new Date()` in `packages/db` or `packages/modules` (Luxon only).
-- Expanding scope into a later `CLAUDE.md` alignment phase. Flag it; do not sneak it in.
+- Expanding scope into a later alignment phase (`docs/alignment-initiative.md`). Flag it; do not sneak it in.
 - Editing `apps/web/CLAUDE.md`.
 
 ## Required outputs
