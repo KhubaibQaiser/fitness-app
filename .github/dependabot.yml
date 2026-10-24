@@ -33,6 +33,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # Major bumps get their own PR: the deploy actions cannot be exercised by PR CI.
     groups:
       actions:
         patterns: ['*']
+        update-types: [minor, patch]
