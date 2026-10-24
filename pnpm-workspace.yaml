@@ -5,23 +5,46 @@ packages:
 # image-size (react-native → metro) GHSA-w3rx / GHSA-5p2g — DoS via crafted
 # ICNS/JXL/HEIF. No patched npm release yet (all versions ≤2.0.2 affected).
 # Remove these ignores when image-size / metro ships a fix.
+# node-forge GHSA-86w9-cpqp-85rv / CVE-2026-85393 — RSA PKCS#1 v1.5 signature
+# verification accepts extra DigestAlgorithm elements. No patched release (the
+# latest, 1.4.0, is affected). Only @expo/cli and @expo/code-signing-certificates
+# use it (Expo build and signing tooling). Remove when node-forge ships a fix.
+# zod GHSA-mrhx-c7xc-m3w5 / CVE-2023-54404 — memory exhaustion when validating
+# oversized constrained collections. Patched only in zod 4.6.6+; every @expo/cli
+# 57.0.14–57.0.32 pins zod ^3.25.76, and forcing v4 into Expo's CLI is untested.
+# Our own zod (API, worker, packages) is on 4.6.7. Remove when @expo/cli moves
+# to zod 4.6.6+.
 auditConfig:
   ignoreCves:
     - CVE-2025-71330
     - CVE-2025-71329
+    - CVE-2026-85393
+    - CVE-2023-54404
 
 # Transitive pins for `pnpm audit --prod --audit-level high` (CI merge gate).
 # Dual xmldom majors: Expo plist is on 0.8, xcode/simple-plist on 0.9.
 # nanoid GHSA-2v37-7h3g-55p8 / CVE-2026-67213 — customAlphabet/customRandom
 # infinite-loop DoS when size is 0. 3.3.17 is still flagged; 3.3.18 is patched.
+# Advisories published after 2026-09-13, each pinned to the latest release of
+# the affected major: brace-expansion GHSA-qhr7-859c-m2p7 / GHSA-6j4f-fj2g-mc7p,
+# piscina GHSA-67c8-pqhq-4rmx, shell-quote GHSA-pqg4-j6r4-53mv, compression
+# GHSA-vc2v-76pw-4v95, source-map-js GHSA-68fv-2mgg-jv7q, fast-uri
+# GHSA-qw65-cvwx-89v3 / GHSA-58mr-gqgx-xq4g, sharp GHSA-wq5f-xc86-pv6w.
+# Drop an override once the parent package asks for a patched range.
 overrides:
   nanoid@^3: 3.3.18
   '@xmldom/xmldom@^0.8.0': 0.8.15
   '@xmldom/xmldom@^0.9.0': 0.9.12
   js-yaml@^3: 3.15.2
   js-yaml@^4: 4.3.2
-  fast-uri: 3.1.6
-  sharp: 0.35.4
+  fast-uri: 3.1.9
+  sharp: 0.35.5
+  brace-expansion@^1: 1.1.21
+  brace-expansion@^5: 5.0.12
+  compression@^1: 1.8.2
+  piscina@^4: 4.9.4
+  shell-quote@^1: 1.12.0
+  source-map-js@^1: 1.2.2
 
 # pnpm 10 blocks postinstall scripts by default; allow only what we vetted.
 onlyBuiltDependencies:
