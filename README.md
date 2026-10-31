@@ -8,6 +8,10 @@ The product today is **coach-only**. There is no client/member app yet. Feature 
 
 > Nutrition numbers are code. Language is optional. Publish is always a human.
 
+[![Watch the GymOS product video on YouTube](https://img.youtube.com/vi/3KDY6SXwLZM/maxresdefault.jpg)](https://www.youtube.com/watch?v=3KDY6SXwLZM)
+
+**Product video:** [GymOS: The AI Meal Planner Built for Coaches](https://www.youtube.com/watch?v=3KDY6SXwLZM).
+
 Interactive architecture diagrams (pan, zoom, search, light/dark) live under [`docs/architecture/`](docs/architecture/). Open the HTML files locally after clone.
 
 ---

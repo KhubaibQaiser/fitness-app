@@ -5,21 +5,22 @@ packages:
 # image-size (react-native → metro) GHSA-w3rx / GHSA-5p2g — DoS via crafted
 # ICNS/JXL/HEIF. No patched npm release yet (all versions ≤2.0.2 affected).
 # Remove these ignores when image-size / metro ships a fix.
-# node-forge GHSA-86w9-cpqp-85rv / CVE-2026-85393 — RSA PKCS#1 v1.5 signature
-# verification accepts extra DigestAlgorithm elements. No patched release (the
-# latest, 1.4.0, is affected). Only @expo/cli and @expo/code-signing-certificates
-# use it (Expo build and signing tooling). Remove when node-forge ships a fix.
 # zod GHSA-mrhx-c7xc-m3w5 / CVE-2023-54404 — memory exhaustion when validating
 # oversized constrained collections. Patched only in zod 4.6.6+; every @expo/cli
 # 57.0.14–57.0.32 pins zod ^3.25.76, and forcing v4 into Expo's CLI is untested.
 # Our own zod (API, worker, packages) is on 4.6.7. Remove when @expo/cli moves
 # to zod 4.6.6+.
+# decode-uri-component GHSA-qr28-fpjm-wq7f / CVE-2026-118664 — quadratic
+# percent-decode. Patched in 0.5.1, which is ESM-only. query-string 7 (React
+# Navigation and Expo Router) does `require('decode-uri-component')` and calls
+# the export as a function; Node's require(esm) returns `{ default }`, so the
+# call throws. Remove when a CJS build ships or those parents leave query-string 7.
 auditConfig:
   ignoreCves:
     - CVE-2025-71330
     - CVE-2025-71329
-    - CVE-2026-85393
     - CVE-2023-54404
+    - CVE-2026-118664
 
 # Transitive pins for `pnpm audit --prod --audit-level high` (CI merge gate).
 # Dual xmldom majors: Expo plist is on 0.8, xcode/simple-plist on 0.9.
@@ -30,6 +31,13 @@ auditConfig:
 # piscina GHSA-67c8-pqhq-4rmx, shell-quote GHSA-pqg4-j6r4-53mv, compression
 # GHSA-vc2v-76pw-4v95, source-map-js GHSA-68fv-2mgg-jv7q, fast-uri
 # GHSA-qw65-cvwx-89v3 / GHSA-58mr-gqgx-xq4g, sharp GHSA-wq5f-xc86-pv6w.
+# node-forge 1.4.2 — GHSA-86w9-cpqp-85rv / CVE-2026-85393 and CVE-2026-119192
+# (RSA PKCS#1 v1.5), GHSA-7wch-p9px-956x / CVE-2026-118779 (PEM ReDoS),
+# GHSA-jc66-7q78-782g / CVE-2026-118782 (PKCS#12), GHSA-8hrf-8g6f-7xwp /
+# CVE-2026-119188 and GHSA-hqq3-7jhf-c5jx / CVE-2026-119187 (TLS DoS),
+# GHSA-5x38-2vff-x55p / CVE-2026-119190 (basicConstraints). 1.4.2 also restores
+# Buffer input to pem.decode() that 1.4.1 rejected. Only @expo/cli and
+# @expo/code-signing-certificates use it.
 # Drop an override once the parent package asks for a patched range.
 overrides:
   nanoid@^3: 3.3.18
@@ -45,6 +53,7 @@ overrides:
   piscina@^4: 4.9.4
   shell-quote@^1: 1.12.0
   source-map-js@^1: 1.2.2
+  node-forge@^1: 1.4.2
 
 # pnpm 10 blocks postinstall scripts by default; allow only what we vetted.
 onlyBuiltDependencies:
