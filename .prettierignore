@@ -12,3 +12,4 @@ packages/contracts/generated/
 .agents/
 docs/architecture/*.html
 graphify-out/
+.harness/

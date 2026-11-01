@@ -1,0 +1,47 @@
+# .harness/config.yaml - owner-approved values for fitness-app (harness M1).
+checks:
+  guard: true
+  protect: true
+  depVerify: true
+  multiFile: true
+  tdd: true
+  stop: true
+
+tdd:
+  paths:
+    - packages/core/src/**
+    - packages/modules/src/**
+    - packages/db/src/**
+    - packages/ai/src/**
+    - packages/platform/src/**
+    - packages/contracts/src/**
+    - apps/api/src/**
+    - apps/worker/src/**
+    - packages/app/src/**/*.ts
+    - apps/mobile/src/**/*.ts
+    - apps/web/src/**/*.ts
+  exempt:
+    - '**/*.tsx'
+    - '**/*.stories.*'
+    - '**/index.ts'
+    - '**/generated/**'
+    - '**/migrations/**'
+  diff_coverage: 80
+  test_lock: true
+  results_dir: .harness/state/test-results
+
+multi_file_gate:
+  generated: []
+
+unattended:
+  multi_file_gate: allow-log
+  require_reason: true   # deny once until the agent states why each extra file is necessary
+
+# Same steps, package manager and attempt limit as the previous scripts/agent-hooks/stop-check.mjs.
+stop:
+  steps: [format:check, lint, typecheck, test]
+  package_manager: pnpm
+  max_attempts: 3
+  timeout_s: 540
+  base_ref: origin/main
+  coverage_globs: ['**/coverage/coverage-final.json']
