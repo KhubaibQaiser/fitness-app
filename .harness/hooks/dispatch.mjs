@@ -9144,7 +9144,7 @@ var require_dist = __commonJS({
 });
 
 // src/hooks/dispatch.ts
-import { spawnSync as spawnSync2 } from "node:child_process";
+import { spawnSync as spawnSync3 } from "node:child_process";
 import { readFileSync as readFileSync12, realpathSync as realpathSync2 } from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -9421,6 +9421,7 @@ var checkInstall = (cmd, ctx) => {
   if (found.length === 0) return void 0;
   const what = `adding dependency ${found.slice(0, 3).join(", ")}`;
   if (ctx.env.AGENT_GUARD_ALLOW_INSTALL === "1") {
+    if (ctx.config?.checks.depVerify === false) return { kind: "ask", reason: `Confirm adding ${found.join(", ")}.`, check: "guard" };
     const jsDecision = js.length ? verifyPackages(js, { root: ctx.root, now: /* @__PURE__ */ new Date(), lookup: ctx.lookup ?? defaultLookup }) : void 0;
     if (jsDecision?.kind === "deny") return jsDecision;
     const reasons = [jsDecision && "reason" in jsDecision ? jsDecision.reason : "", py.length ? `Confirm adding ${py.join(", ")}.` : ""];
@@ -9592,7 +9593,7 @@ function writeState(root, session, s) {
   renameSync(tmp, f);
 }
 function clearTurn(root, session) {
-  writeState(root, session, { ...readState(root, session), files: [], approved: false, reasonDenied: [] });
+  writeState(root, session, { ...readState(root, session), files: [], approved: false, reasonDenied: [], stopAttempts: 0 });
 }
 var readOwner = (lock) => {
   try {
@@ -9709,19 +9710,21 @@ var multiFile = {
   name: "multiFile",
   events: ["UserPromptSubmit", "PreToolUse", "PostToolUse"],
   run(ctx) {
-    if (!ctx.config.checks.multiFile) return { kind: "allow" };
     const { hook_event_name: event, session_id: session } = ctx.input;
     if (event === "UserPromptSubmit") {
       clearTurn(ctx.root, session);
       return { kind: "allow" };
     }
+    if (!ctx.config.checks.multiFile) return { kind: "allow" };
     const rel = target(ctx);
     if (rel === null) return { kind: "allow" };
     const { files, approved } = ctx.state;
     const units = new Set(files.map(pairKey));
     if (event === "PostToolUse") {
       units.add(pairKey(rel));
-      ctx.save({ ...ctx.state, files: files.includes(rel) ? files : [...files, rel], approved: approved || units.size >= 2 });
+      const next = files.includes(rel) ? files : [...files, rel];
+      ctx.save({ ...ctx.state, files: next, approved: approved || units.size >= 2 });
+      if (!approved && units.size >= 2 && !ctx.unattended) appendEvent(ctx.root, { ts: (/* @__PURE__ */ new Date()).toISOString(), session, check: "multi-file", decision: "approved", files: next });
       return { kind: "allow" };
     }
     const record = () => {
@@ -9764,9 +9767,10 @@ var multiFile = {
 
 // src/checks/protect.ts
 var import_picomatch2 = __toESM(require_picomatch2(), 1);
+import { spawnSync } from "node:child_process";
 import { resolve as resolve2 } from "node:path";
-var PROTECTED = [".harness/hooks/**", ".harness/state/**", ".harness/config.yaml", ".claude/settings.json", ".claude/settings.local.json"];
-var PROTECTED_CONCRETE = [".harness", ".harness/hooks", ".harness/hooks/dispatch.mjs", ".harness/state", ".harness/state/tdd-pause.json", ".harness/config.yaml", ".claude", ".claude/settings.json", ".claude/settings.local.json"];
+var PROTECTED = [".harness/hooks/**", ".harness/state/**", ".harness/logs/**", ".harness/config.yaml", ".claude/settings.json", ".claude/settings.local.json"];
+var PROTECTED_CONCRETE = [".harness", ".harness/hooks", ".harness/hooks/dispatch.mjs", ".harness/state", ".harness/state/tdd-pause.json", ".harness/logs", ".harness/logs/events.jsonl", ".harness/config.yaml", ".claude", ".claude/settings.json", ".claude/settings.local.json"];
 var REASON = "Harness files and Claude settings are changed by a person, not the agent.";
 var segTokens = (cmd) => cmd.split(/[;&|\n]+/).map((seg) => [...seg.match(/'[^']*'|"[^"]*"|\S+/g) ?? []].map((t) => t.replace(/^['"]|['"]$/g, "")));
 function expand(cmd) {
@@ -9800,6 +9804,35 @@ function gitRestoreTargets(cmds) {
   }
   return out;
 }
+function switchTarget(toks, cwd) {
+  const [sub, ...rest] = gitArgs(toks);
+  if (sub !== "checkout" && sub !== "switch") return null;
+  let dir = cwd;
+  for (let i = toks.indexOf("git") + 1; toks[i]?.startsWith("-"); i += /^-[Cc]$/.test(toks[i]) ? 2 : 1) if (toks[i] === "-C") dir = resolve2(dir, toks[i + 1] ?? "");
+  if (rest.includes("--")) return null;
+  const pos = [];
+  for (let i = 0; i < rest.length; i += 1) {
+    if (/^(-[bBcC]|--orphan)$/.test(rest[i])) i += 1;
+    else if (!rest[i].startsWith("-")) pos.push(rest[i]);
+  }
+  return pos.length === 1 ? { ref: pos[0], dir, sw: sub === "switch" } : null;
+}
+var git = (dir, args) => spawnSync("git", args, { cwd: dir, encoding: "utf8", timeout: 1500 });
+function switchAsk(cmds, cwd) {
+  for (const toks of cmds.flatMap(segTokens)) {
+    const t = switchTarget(toks, cwd);
+    if (!t) continue;
+    const ask = (reason) => ({ kind: "ask", reason, check: "protect" });
+    const failed = ask(`Could not check that ${t.ref} has the harness hooks. Confirm the switch.`);
+    const rp = git(t.dir, ["rev-parse", "--verify", "-q", `${t.ref}^{commit}`]);
+    if (rp.status === 1 && !t.sw) continue;
+    if (rp.status !== 0) return failed;
+    const cf = git(t.dir, ["cat-file", "-e", `${t.ref}:.harness/hooks/dispatch.mjs`]);
+    if (cf.status === null || cf.error) return failed;
+    if (cf.status !== 0) return ask(`Switching to ${t.ref} removes the harness hooks (no .harness/hooks/dispatch.mjs there). Confirm the switch.`);
+  }
+  return null;
+}
 var GLOB = /[*?[{]/;
 var isProtectedGlob = (root, t) => {
   const rel = toRepoPath(root, t.replace(/^:\//, ""))?.toLowerCase().replace(/\[!/g, "[^");
@@ -9828,10 +9861,11 @@ var protect = {
       const cmds = expand(cmd);
       const mc = moveCopyTargets(cmds);
       const removed = [...cmds.flatMap((c) => rmTargets(c).flatMap((r) => r.targets)), ...mc.mv];
-      const git = gitRestoreTargets(cmds);
-      if (git.some((t) => isWholeTree(root, t))) return { kind: "deny", reason: REASON, check: "protect" };
-      if ([...removed, ...mc.cp, ...git].some((t) => GLOB.test(t) && isProtectedGlob(root, t))) return { kind: "deny", reason: REASON, check: "protect" };
-      paths = [...fileWriteTargets(cmd), ...removed, ...mc.cp, ...git];
+      const git2 = gitRestoreTargets(cmds);
+      if (git2.some((t) => isWholeTree(root, t))) return { kind: "deny", reason: REASON, check: "protect" };
+      if ([...removed, ...mc.cp, ...git2].some((t) => GLOB.test(t) && isProtectedGlob(root, t))) return { kind: "deny", reason: REASON, check: "protect" };
+      paths = [...fileWriteTargets(cmd), ...removed, ...mc.cp, ...git2];
+      if (!paths.some((p) => p && isProtected(root, p))) return switchAsk(cmds, input.cwd || root) ?? { kind: "allow" };
     }
     return paths.some((p) => p && isProtected(root, p)) ? { kind: "deny", reason: REASON, check: "protect" } : { kind: "allow" };
   }
@@ -9904,7 +9938,7 @@ function readResults(root, dir) {
   }
   return out;
 }
-var relatedTests = (_root, implRel, results) => results.filter((r) => pairKey(r.file) === pairKey(implRel));
+var relatedTests = (implRel, results) => results.filter((r) => pairKey(r.file) === pairKey(implRel));
 function newestFresh(results, startedAt) {
   const newest = /* @__PURE__ */ new Map();
   for (const r of results) {
@@ -9929,7 +9963,7 @@ var redFirst = {
     const rel = toRepoPath(ctx.root, p);
     const { paths, exempt, results_dir } = ctx.config.tdd;
     if (rel === null || !matches(rel, paths) || matches(rel, exempt) || isTestFile(rel) || isPaused(ctx.root, ctx.input.session_id)) return { kind: "allow" };
-    const related = relatedTests(ctx.root, rel, readResults(ctx.root, resultsDir(ctx.root, ctx.config)));
+    const related = relatedTests(rel, readResults(ctx.root, resultsDir(ctx.root, ctx.config)));
     const fresh = [...newestFresh(related, ctx.state.startedAt).values()].sort((a, b) => b.writtenAt - a.writtenAt);
     const newestFile = [...related].sort((a, b) => b.writtenAt - a.writtenAt)[0]?.file;
     if (fresh.some((r) => r.status === "failed")) return { kind: "allow" };
@@ -10092,7 +10126,7 @@ var specGate = {
   run(ctx) {
     if (!ctx.config.checks.tdd) return { kind: "allow" };
     const { tool_name, tool_input = {} } = ctx.input;
-    const deny2 = (reason) => ({ kind: "deny", reason, check: "specGate" });
+    const deny2 = (reason) => ({ kind: "deny", reason, check: "spec-gate" });
     if (tool_name === "Bash") {
       const cmd = tool_input.command;
       const hit = typeof cmd === "string" && fileWriteTargets(cmd).some((t) => toRepoPath(ctx.root, t) === FILE);
@@ -10148,7 +10182,7 @@ var specGate = {
 };
 
 // src/checks/stop/gate.ts
-import { spawnSync } from "node:child_process";
+import { spawnSync as spawnSync2 } from "node:child_process";
 import { existsSync as existsSync3, readFileSync as readFileSync10 } from "node:fs";
 import { join as join8 } from "node:path";
 
@@ -10226,19 +10260,20 @@ function diffCoverage(root, cfg, exec, opts) {
   const base = (ok(mb) ? mb.output.split("\n")[0].trim() : "") || opts.baseHead;
   if (!base) return result("no-base");
   const d = exec("git", ["-c", "core.quotePath=false", "diff", "--relative", "-U0", "--no-color", "--no-ext-diff", "--src-prefix=a/", "--dst-prefix=b/", base], GIT_MS);
-  if (!ok(d)) return { ...result("diff-failed"), detail: d.timedOut ? "timed out" : (d.output.split("\n").find((x) => x.trim()) ?? `exit ${d.status}`).trim().slice(0, 100) };
+  const why = (r) => r.timedOut ? "timed out" : (r.output.split("\n").find((x) => x.trim()) ?? `exit ${r.status}`).trim().slice(0, 100);
+  if (!ok(d)) return { ...result("diff-failed"), detail: why(d) };
   const changed = changedLines(d.output);
   const un = exec("git", ["-c", "core.quotePath=false", "ls-files", "-z", "--others", "--exclude-standard"], GIT_MS);
-  if (ok(un))
-    for (const f of un.output.split("\0").filter((x) => x.trim())) {
-      try {
-        if (!lstatSync(join7(root, f)).isFile()) continue;
-        const text = readFileSync9(join7(root, f), "utf8");
-        const n = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
-        for (let i = 1; i <= n; i++) add(changed, f, i);
-      } catch {
-      }
+  if (!ok(un)) return { ...result("diff-failed"), detail: `untracked files: ${why(un)}` };
+  for (const f of un.output.split("\0").filter((x) => x.trim())) {
+    try {
+      if (!lstatSync(join7(root, f)).isFile()) continue;
+      const text = readFileSync9(join7(root, f), "utf8");
+      const n = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
+      for (let i = 1; i <= n; i++) add(changed, f, i);
+    } catch {
     }
+  }
   const { paths, exempt } = cfg.tdd;
   const scoped = [...changed].filter(([f]) => toRepoPath(root, f) && matches(f, paths) && !matches(f, exempt) && !isTestFile(f));
   if (scoped.length === 0) return result(void 0);
@@ -10310,7 +10345,7 @@ var MAX_LOG = 3500;
 var GIT_MS2 = 5e3;
 var allow = { kind: "allow" };
 var defaultExec = (root) => (cmd, args, timeout) => {
-  const r = spawnSync(cmd, args, { cwd: root, encoding: "utf8", timeout, maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync2(cmd, args, { cwd: root, encoding: "utf8", timeout, maxBuffer: 64 * 1024 * 1024 });
   const timedOut = r.error?.code === "ETIMEDOUT" || r.signal === "SIGTERM";
   return { status: r.status, output: `${r.stdout ?? ""}
 ${r.stderr ?? ""}`, timedOut };
@@ -10341,20 +10376,19 @@ function runStop(ctx, exec, now = Date.now) {
     if (ctx.state.stopAttempts !== n) ctx.save({ ...ctx.state, stopAttempts: n });
   };
   const paths = (out, porcelain) => out.split("\n").filter(Boolean).map((l) => (porcelain ? l.slice(3).split(" -> ").pop() : l).replace(/^"|"$/g, ""));
-  const git = exec("git", ["status", "--porcelain"], GIT_MS2);
-  if (git.status !== 0 || git.timedOut) {
-    log("stop-skipped", "git status failed");
-    return allow;
-  }
-  const changed = paths(git.output, true);
+  const ok2 = (r) => r.status === 0 && !r.timedOut;
+  const git2 = exec("git", ["status", "--porcelain"], GIT_MS2);
+  const changed = ok2(git2) ? paths(git2.output, true) : [];
+  let failed = !ok2(git2);
   const base = ctx.state.baseHead;
   if (base) {
     const d = exec("git", ["diff", "--name-only", base, "HEAD"], GIT_MS2);
-    if (d.status === 0 && !d.timedOut) changed.push(...paths(d.output, false));
-    else {
-      log("stop-diff-failed");
-      changed.push("(unknown)");
-    }
+    if (ok2(d)) changed.push(...paths(d.output, false));
+    else failed = true;
+  }
+  if (failed) {
+    log("stop-diff-failed", ok2(git2) ? void 0 : "git status failed");
+    changed.push("(unknown)");
   }
   if (changed.every((f) => DOCS_ONLY.test(f))) {
     setAttempts(0);
@@ -10410,7 +10444,7 @@ var testLock = {
     const p = tool_name === "Edit" || tool_name === "Write" || tool_name === "MultiEdit" ? tool_input.file_path : "";
     if (!ctx.config.checks.tdd || !ctx.config.tdd.test_lock || typeof p !== "string" || !p || isPaused(ctx.root, ctx.input.session_id)) return { kind: "allow" };
     const rel = toRepoPath(ctx.root, p);
-    if (rel === null) return { kind: "allow" };
+    if (rel === null || !matches(rel, ctx.config.tdd.paths) || matches(rel, ctx.config.tdd.exempt)) return { kind: "allow" };
     const s = ctx.state;
     if (ctx.input.hook_event_name === "PostToolUse") {
       if (isTestFile(rel) && !s.redTests.includes(rel)) ctx.save({ ...s, redTests: [...s.redTests, rel] });
@@ -10471,9 +10505,9 @@ function loadConfig(root) {
   if (user == null) return { config, warnings };
   if (!isObj(user)) return { config, warnings: ["config.yaml is invalid: top level must be a mapping; using defaults"] };
   merge(config, user, "", warnings);
-  if (config.stop.timeout_s > 580) {
-    config.stop.timeout_s = 580;
-    warnings.push("stop.timeout_s capped at 580 to fit the 600 s Stop hook timeout");
+  if (config.stop.timeout_s > 550) {
+    config.stop.timeout_s = 550;
+    warnings.push("stop.timeout_s capped at 550 to fit the 600 s Stop hook timeout");
   }
   const rel = relative2(join9(root, ".harness/state"), resolve6(root, config.tdd.results_dir));
   if (rel === ".." || rel.startsWith(".." + sep2) || isAbsolute2(rel)) warnings.push("tdd.results_dir is outside .harness/state; the agent could forge test results there");
@@ -10529,13 +10563,13 @@ function emit(event, d) {
 }
 
 // src/hooks/dispatch.ts
-var registry = [guard, protect, multiFile, redFirst, tamper, testLock, specGate, stopGate];
+var registry = [guard, protect, redFirst, tamper, testLock, specGate, multiFile, stopGate];
 var EVENTS = ["PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop", "SessionStart", "SessionEnd", "ConfigChange"];
 var CURSOR_KEYS = ["conversation_id", "generation_id", "model_id", "workspace_roots"];
 var NO_ROOT = "/nonexistent-harness-root";
 var warn = (what, e) => process.stderr.write(`harness: ${what} failed: ${String(e?.message ?? e)}
 `);
-function detectBaseHead(root, run = (args) => spawnSync2("git", args, { cwd: root, encoding: "utf8", timeout: 2e3 })) {
+function detectBaseHead(root, run = (args) => spawnSync3("git", args, { cwd: root, encoding: "utf8", timeout: 2e3 })) {
   const head = run(["rev-parse", "HEAD"]);
   if (head.status === 0 && head.stdout.trim()) return head.stdout.trim();
   const any = run(["rev-list", "-n", "1", "--all"]);
@@ -10639,6 +10673,7 @@ async function dispatchLocked(raw, checks, env) {
     }
     log(d.check, d.kind, d.kind === "context" ? d.text : d.reason);
     decisions.push(d);
+    if (event === "PreToolUse" && d.kind === "deny") break;
   }
   const win = decisions.find((d) => d.kind === "deny" || d.kind === "block") ?? decisions.find((d) => d.kind === "ask");
   if (win) return emit(event, win);
