@@ -17,16 +17,16 @@
   },
   "dependencies": {
     "@gymos/core": "workspace:^",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.4",
     "luxon": "^3.7.2",
     "postgres": "^3.4.9",
     "uuidv7": "^1.2.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.4",
-    "@types/luxon": "^3.7.3",
+    "@electric-sql/pglite": "^0.5.14",
+    "@types/luxon": "^3.7.6",
     "@types/node": "^26.1.2",
-    "drizzle-kit": "^0.31.10",
-    "tsx": "^4.23.9"
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15"
   }
 }
