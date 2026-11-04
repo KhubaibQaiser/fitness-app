@@ -25,7 +25,7 @@
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.2",
     "solito": "^5.0.0",
-    "tamagui": "^2.7.2"
+    "tamagui": "^3.1.10"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
