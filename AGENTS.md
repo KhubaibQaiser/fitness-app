@@ -70,6 +70,38 @@ Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (need
 
 ## Agent hooks
 
-- `.cursor/hooks.json` and `.claude/settings.json` run `scripts/agent-hooks/`. The guard blocks reading secrets, force-push, pushing to `main`, and adding dependencies. When it blocks something, ask the user to run it.
+- Cursor: `.cursor/hooks.json` runs `scripts/agent-hooks/`. Claude Code: `.claude/settings.json` runs the harness dispatcher, `.harness/hooks/dispatch.mjs` (see "Harness workflow" below). Both guards block reading secrets, force-push, pushing to `main`, and adding dependencies. When a guard blocks something, ask the user to run it.
 - The stop hook runs `format:check`, `lint`, `typecheck` and `test` before you finish. Fix what it reports.
-- Run the `reviewer` subagent on your diff before you open a PR.
+- Before you open a PR, run a reviewer subagent on your diff: `staff-reviewer` in Claude Code, `reviewer` in Cursor.
+
+<!-- harness:start -->
+
+## Harness workflow
+
+Hooks enforce these rules. When a hook blocks or asks, its message names the next step; do that step.
+
+### TDD
+
+1. Write a failing test first. Refactors need a failing test too.
+2. Run it and see it fail.
+3. Implement the smallest change that passes.
+4. Run the tests again.
+
+Do not weaken or delete a test to make it pass; fix the code.
+
+### Scope
+
+- Before editing a second file in one turn, list the files you plan to change. The user is asked once per turn.
+- In unattended runs, each extra file needs a line "<file> because <reason>" before it is edited.
+- Installs are denied by default: ask the user to run them. When the user allows installs, JS package names are checked on the npm registry and the user approves each one.
+
+### Protected paths
+
+- Never edit `.harness/` or `.claude/settings*.json`.
+- Only a person can pause TDD, by running `harness tdd off` in their own terminal.
+
+### Finishing
+
+- The Stop gate runs the configured checks. If it blocks, fix the failure and finish again.
+
+<!-- harness:end -->

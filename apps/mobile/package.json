@@ -9,7 +9,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --coverage --json --outputFile=../../.harness/state/test-results/mobile.json",
     "export:check": "expo export --platform ios --output-dir /tmp/gymos-mobile-export",
     "maestro:login": "maestro test maestro/login.yaml"
   },

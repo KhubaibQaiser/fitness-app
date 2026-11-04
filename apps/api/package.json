@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "openapi:generate": "tsx src/cli/generate-openapi.ts",
     "dev:pglite": "tsx src/dev-pglite.ts"
   },
