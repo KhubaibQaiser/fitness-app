@@ -48,6 +48,7 @@ overrides:
   fast-uri: 3.1.9
   sharp: 0.35.5
   brace-expansion@^1: 1.1.21
+  brace-expansion@^2: 2.1.6
   brace-expansion@^5: 5.0.12
   compression@^1: 1.8.2
   piscina@^4: 4.9.4
