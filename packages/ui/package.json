@@ -22,7 +22,7 @@
     "react-native-svg": "15.12.1",
     "react-native-ui-datepicker": "^3.3.0",
     "react-native-web": "^0.21.2",
-    "tamagui": "^2.7.2"
+    "tamagui": "^3.1.10"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
