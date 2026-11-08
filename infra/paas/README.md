@@ -95,3 +95,27 @@ so the two paths do not fight.
 - Render free **spins down** after ~15 min idle → first request ~30–60s.
 - No overdue auto-alerts / ranking learning until a VM worker returns.
 - `AI_MODE=fallback` only (no local Qwen).
+
+## Vercel API (ADR-0016, opt-in)
+
+Everything for moving the API from Render to Vercel is off by default, so a plain `tofu plan` shows no change.
+See [`docs/adr/0016-vercel-api-hosting-and-cron-worker.md`](../../docs/adr/0016-vercel-api-hosting-and-cron-worker.md)
+and [`docs/specs/vercel-api-hosting.md`](../../docs/specs/vercel-api-hosting.md).
+
+| Variable                   | Effect                                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `manage_neon_test_branch`  | Neon branch + pooled endpoint for testing the Vercel API; see `database_url_vercel_test_pooled`                          |
+| `manage_vercel_api`        | Vercel project for `apps/api` (non-secret env only)                                                                      |
+| `web_domain`, `api_domain` | Attach custom domains (DNS CNAMEs live in the `demo-infra` repo)                                                         |
+| `api_origin`               | **The cutover switch.** Empty keeps `render_api_url`; set it to the Vercel API origin to cut over, empty it to roll back |
+
+Manual steps OpenTofu cannot do:
+
+1. In the Vercel API project settings, enable "Include source files outside of the Root Directory".
+2. Set secrets in the Vercel dashboard (kept out of state, same as Render): `DATABASE_URL` (use the pooled test-branch URL until cutover), `JWT_ACCESS_SECRET`, `OTP_PEPPER`, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET` (>= 16 chars).
+3. At cutover use the **same** `JWT_ACCESS_SECRET` and `OTP_PEPPER` as Render so sessions and OTPs stay valid.
+
+`database_url_vercel_test_pooled` carries the production role's password (the project-level one, already in state today), and it goes stale if that password is reset after the branch was created; recreate the branch then. Never commit `terraform.tfstate*`.
+
+State is still local. Moving it to the remote R2 backend (the `demo-infra` pattern) needs bucket credentials and a
+lock test first, so it is a separate step; do it before adding real secrets to any variable.
