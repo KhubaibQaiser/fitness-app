@@ -28,6 +28,12 @@ const envSchema = z.object({
    */
   PILOT_COACH_PASSWORD: z.string().min(12).optional(),
   TENANT_MANIFEST_PATH: z.string().min(1),
+  /** Bearer secret for /internal/cron/*; when unset the cron route returns 404. */
+  CRON_SECRET: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(16, 'use at least 16 characters').optional(),
+  ),
+  TENANT_TIMEZONE: z.string().min(1).default('Asia/Karachi'),
   AI_MODE: z.enum(['local', 'fallback', 'hosted']).default('fallback'),
   AI_BASE_URL: z.url().optional(),
   AI_MODEL: z.string().optional(),

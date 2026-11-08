@@ -1,6 +1,20 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
   "functions": {
-    "api/index.ts": { "includeFiles": "../../infra/tenants/**" }
-  }
+    "api/index.ts": {
+      "includeFiles": "../../infra/tenants/**",
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/internal/cron/nightly",
+      "schedule": "5 21 * * *"
+    }
+  ]
 }
