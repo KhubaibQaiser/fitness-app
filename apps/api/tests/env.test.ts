@@ -57,3 +57,13 @@ describe('resolveEmailFrom', () => {
     ).toThrow(/verified custom domain/);
   });
 });
+
+describe('loadEnv CRON_SECRET', () => {
+  it('treats an empty CRON_SECRET as unset instead of failing boot', () => {
+    expect(loadEnv({ ...base, CRON_SECRET: '' }).CRON_SECRET).toBeUndefined();
+  });
+
+  it('rejects a short CRON_SECRET', () => {
+    expect(() => loadEnv({ ...base, CRON_SECRET: 'short' })).toThrow(/at least 16/);
+  });
+});
