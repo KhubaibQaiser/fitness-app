@@ -16,9 +16,28 @@ export type DbOrTx = Db | Tx;
 
 export type DbConnection = { db: Db; close: () => Promise<void> };
 
+export type DbOptions = {
+  /**
+   * Set `false` behind a transaction-mode pooler (Neon's pgbouncer endpoint on
+   * serverless hosts). Left unset, postgres.js keeps its default (prepared
+   * statements on), which is what the long-lived Render/VM API uses.
+   */
+  prepare?: boolean;
+};
+
+/** postgres.js options for the runtime pool; pure so it can be tested without a server. */
+export const runtimeOptions = (
+  maxConnections: number,
+  { prepare }: DbOptions = {},
+): postgres.Options<Record<string, never>> => ({
+  max: maxConnections,
+  onnotice: () => undefined,
+  ...(prepare === undefined ? {} : { prepare }),
+});
+
 /** Pooled connection for the API/worker (Neon pgbouncer endpoint in prod). */
-export const createDb = (url: string, maxConnections = 4): DbConnection => {
-  const sql = postgres(url, { max: maxConnections, onnotice: () => undefined });
+export const createDb = (url: string, maxConnections = 4, options?: DbOptions): DbConnection => {
+  const sql = postgres(url, runtimeOptions(maxConnections, options));
   return {
     db: drizzle(sql, { schema }),
     close: () => sql.end({ timeout: 5 }),

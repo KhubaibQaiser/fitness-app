@@ -6,12 +6,12 @@ import { memoizeAsync } from '../src/lazy-app';
 
 /**
  * Vercel entry (ADR-0016). Render/VM keep using `src/index.ts`. The app is
- * built lazily, once per instance. Phase 0 spike: point DATABASE_URL at a
- * Neon *branch* (direct URL); pooled-URL options arrive in Phase 1.
+ * built lazily, once per instance. Use Neon's pooled URL; prepared
+ * statements are off because the pooler runs in transaction mode.
  */
 const getApp = memoizeAsync(async () => {
   const env = loadEnv(process.env);
-  const { db, close } = createDb(env.DATABASE_URL, 1);
+  const { db, close } = createDb(env.DATABASE_URL, 1, { prepare: false });
   try {
     const manifest = readManifestFile(env.TENANT_MANIFEST_PATH);
     await syncSingleOrgRegistryFromFile(db, env.TENANT_MANIFEST_PATH);
