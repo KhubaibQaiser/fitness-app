@@ -172,6 +172,11 @@ same cron route.
 
 ## Open items
 
+- Phase 0 must confirm that `includeFiles: ../../infra/tenants/**` (outside the `apps/api` project root) is
+  honoured. It may require the Vercel project setting "Include source files outside of the Root Directory".
+  If not, copy the manifest into `apps/api` at build time. Also confirm where the file lands under `/var/task`
+  relative to `TENANT_MANIFEST_PATH`, and that extensionless relative imports resolve in the Vercel build.
+
 - Confirm the current Vercel Hobby limits (function timeout, cron count and frequency, bundle size) before
   Phase 0 starts; this spec treats them as unverified.
 - Confirm how Vercel supplies `CRON_SECRET` to cron calls.

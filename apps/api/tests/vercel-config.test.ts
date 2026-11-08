@@ -14,7 +14,7 @@ describe('vercel.json (ADR-0016)', () => {
     expect(existsSync(path.join(root, 'api/index.ts'))).toBe(true);
   });
 
-  it('bundles the tenant manifest the API reads at startup', () => {
+  it('points includeFiles at a manifest source that exists (bundle placement is only proven by a Vercel preview)', () => {
     const include = config.functions['api/index.ts']?.includeFiles ?? '';
     const dir = path.resolve(root, include.replace(/\/\*\*$/, ''));
     expect(existsSync(path.join(dir, 'pilot.json'))).toBe(true);
