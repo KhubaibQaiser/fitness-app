@@ -54,3 +54,58 @@ variable "manage_vercel_git" {
   description = "Connect the GitHub repo to the Vercel project (requires Vercel GitHub app installed)."
   default     = true
 }
+
+# --- Vercel API migration (ADR-0016). Everything below is off by default, so an
+# --- existing `tofu plan` shows no change until you opt in.
+
+variable "manage_vercel_api" {
+  type        = bool
+  description = "Create the Vercel project that hosts the API (apps/api). Off until the Phase 0 spike is ready."
+  default     = false
+}
+
+variable "api_project_name" {
+  type        = string
+  description = "Vercel project name for the API."
+  default     = "gymos-api"
+}
+
+variable "api_serverless_region" {
+  type        = string
+  description = "Vercel function region; keep it next to Neon (aws-ap-southeast-1 is Singapore, sin1)."
+  default     = "sin1"
+}
+
+variable "api_tenant_manifest_path" {
+  type        = string
+  description = "TENANT_MANIFEST_PATH for the Vercel API. UNVERIFIED: confirm where includeFiles places the file in the Phase 0 spike."
+  default     = "infra/tenants/pilot.json"
+}
+
+variable "api_origin" {
+  type        = string
+  description = <<-EOT
+    Origin the web app proxies /v1, /gate and /health to (API_ORIGIN). Empty keeps
+    render_api_url, so production stays on Render. THIS IS THE CUTOVER SWITCH:
+    set it to the Vercel API origin (and apply) to cut over; set it back to roll back.
+  EOT
+  default     = ""
+}
+
+variable "web_domain" {
+  type        = string
+  description = "Custom domain for the web project (e.g. gymos.khubaibqaiser.com). Empty = none. DNS lives in the demo-infra repo."
+  default     = ""
+}
+
+variable "api_domain" {
+  type        = string
+  description = "Custom domain for the API project (e.g. gymos-api.khubaibqaiser.com). Attach at the cutover rehearsal, not earlier."
+  default     = ""
+}
+
+variable "manage_neon_test_branch" {
+  type        = bool
+  description = "Create a copy-on-write Neon branch + pooled endpoint for testing the Vercel API against production-shaped data."
+  default     = false
+}
