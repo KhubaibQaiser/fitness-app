@@ -1,6 +1,6 @@
 # ADR-0016: Move the API from Render to Vercel, and replace the worker with a cron route
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-09
 
 ## Context
