@@ -9,7 +9,8 @@
     "./identity": "./src/identity/index.ts",
     "./coaching": "./src/coaching/index.ts",
     "./nutrition": "./src/nutrition/index.ts",
-    "./notifications": "./src/notifications/index.ts"
+    "./notifications": "./src/notifications/index.ts",
+    "./maintenance": "./src/maintenance/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

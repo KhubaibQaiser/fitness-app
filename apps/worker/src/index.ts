@@ -2,8 +2,8 @@ import { PgBoss } from 'pg-boss';
 import { z } from 'zod';
 import { createDb } from '@gymos/db';
 import { resolvePilotCoachPrincipal } from '@gymos/modules/identity';
+import { cleanupExpired, refreshAttention, rollCheckIns } from '@gymos/modules/maintenance';
 import { refreshFoodRankings } from '@gymos/modules/nutrition';
-import { cleanupExpired, refreshAttention, rollCheckIns } from './jobs/checkins-roll';
 
 const env = z
   .object({

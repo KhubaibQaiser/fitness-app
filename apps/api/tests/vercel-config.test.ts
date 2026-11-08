@@ -6,6 +6,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(readFileSync(path.join(root, 'vercel.json'), 'utf8')) as {
   rewrites: { source: string; destination: string }[];
   functions: Record<string, { includeFiles: string }>;
+  crons: { path: string; schedule: string }[];
 };
 
 describe('vercel.json (ADR-0016)', () => {
@@ -18,5 +19,9 @@ describe('vercel.json (ADR-0016)', () => {
     const include = config.functions['api/index.ts']?.includeFiles ?? '';
     const dir = path.resolve(root, include.replace(/\/\*\*$/, ''));
     expect(existsSync(path.join(dir, 'pilot.json'))).toBe(true);
+  });
+
+  it('has exactly one daily nightly cron (Hobby allows once a day)', () => {
+    expect(config.crons).toEqual([{ path: '/internal/cron/nightly', schedule: '5 21 * * *' }]);
   });
 });
