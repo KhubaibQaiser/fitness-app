@@ -88,6 +88,7 @@ variable "api_origin" {
     Origin the web app proxies /v1, /gate and /health to (API_ORIGIN). Empty keeps
     render_api_url, so production stays on Render. THIS IS THE CUTOVER SWITCH:
     set it to the Vercel API origin (and apply) to cut over; set it back to roll back.
+    It sets API_ORIGIN for both the production and preview targets of the web project.
   EOT
   default     = ""
 }
@@ -100,7 +101,7 @@ variable "web_domain" {
 
 variable "api_domain" {
   type        = string
-  description = "Custom domain for the API project (e.g. gymos-api.khubaibqaiser.com). Attach at the cutover rehearsal, not earlier."
+  description = "Custom domain for the API project (e.g. gymos-api.khubaibqaiser.com). Attach at the cutover rehearsal, not earlier. Ignored unless manage_vercel_api is true."
   default     = ""
 }
 

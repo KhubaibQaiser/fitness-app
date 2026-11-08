@@ -115,5 +115,7 @@ Manual steps OpenTofu cannot do:
 2. Set secrets in the Vercel dashboard (kept out of state, same as Render): `DATABASE_URL` (use the pooled test-branch URL until cutover), `JWT_ACCESS_SECRET`, `OTP_PEPPER`, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET` (>= 16 chars).
 3. At cutover use the **same** `JWT_ACCESS_SECRET` and `OTP_PEPPER` as Render so sessions and OTPs stay valid.
 
+`database_url_vercel_test_pooled` carries the production role's password (the project-level one, already in state today), and it goes stale if that password is reset after the branch was created; recreate the branch then. Never commit `terraform.tfstate*`.
+
 State is still local. Moving it to the remote R2 backend (the `demo-infra` pattern) needs bucket credentials and a
 lock test first, so it is a separate step; do it before adding real secrets to any variable.
