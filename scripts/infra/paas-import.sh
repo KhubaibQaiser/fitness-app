@@ -21,14 +21,14 @@ if ! have neon_project.pilot; then
     [ "$code" = 200 ] || { echo "Neon project lookup failed with HTTP $code: $(jq -r '.message // empty' /tmp/nproj.json 2>/dev/null)"; exit 1; }
     id=$(jq -r --arg n "$name" '.projects[] | select(.name==$n) | .id' /tmp/nproj.json | head -n1)
   fi
-  if [ -n "$id" ]; then tofu import -input=false neon_project.pilot "$id"; else echo "no Neon project named $name: apply will create it"; fi
+  if [ -n "$id" ]; then tofu import -input=false -lock-timeout=120s neon_project.pilot "$id"; else echo "no Neon project named $name: apply will create it"; fi
 fi
 
 if ! have vercel_project.web; then
   q=""; [ -z "${VERCEL_TEAM_ID:-}" ] || q="?teamId=$VERCEL_TEAM_ID"
   code=$(curl -sS -o /tmp/vproj.json -w '%{http_code}' -H "Authorization: Bearer $VERCEL_API_TOKEN" "https://api.vercel.com/v9/projects/$name$q")
   case "$code" in
-    200) tofu import -input=false vercel_project.web "${VERCEL_TEAM_ID:+$VERCEL_TEAM_ID/}$(jq -er .id /tmp/vproj.json)" ;;
+    200) tofu import -input=false -lock-timeout=120s vercel_project.web "${VERCEL_TEAM_ID:+$VERCEL_TEAM_ID/}$(jq -er .id /tmp/vproj.json)" ;;
     404) echo "no Vercel project named $name: apply will create it" ;;
     *) echo "Vercel project lookup failed with HTTP $code"; exit 1 ;;
   esac
