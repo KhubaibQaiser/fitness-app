@@ -4,6 +4,7 @@
 # Usage: PILOT_COACH_PASSWORD=... [PILOT_COACH_EMAIL=coach@pilot.local] vercel-api-acceptance.sh https://<deployment-host>
 set -euo pipefail
 base="${1:?base url}"
+read_only=${2-} # --read-only: login and /me only (safe against the production database)
 : "${PILOT_COACH_PASSWORD:?set PILOT_COACH_PASSWORD}"
 jar=$(mktemp); body=$(mktemp); trap 'rm -f "$jar" "$body"' EXIT
 stamp=$(date +%s)
@@ -30,6 +31,7 @@ is_pdf() { # name
 
 call "login" 200 POST /v1/auth/login "$(jq -n --arg e "${PILOT_COACH_EMAIL:-coach@pilot.local}" --arg p "$PILOT_COACH_PASSWORD" '{email:$e,password:$p}')"
 call "me" 200 GET /v1/me
+if [ "$read_only" = "--read-only" ]; then echo "ACCEPTANCE (read-only) OK"; exit 0; fi
 
 onboard=$(jq -n --arg n "Acceptance $stamp" --arg e "acceptance-$stamp@example.com" '{
   client:{name:$n, sex:"M", phone:"+923001112233", email:$e, heightCm:178, activityLevel:1.55,

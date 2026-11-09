@@ -20,6 +20,10 @@ on:
         description: 'Apply the plan (default: plan only)'
         type: boolean
         default: false
+      redeploy_web:
+        description: 'After applying, redeploy the production web app (needed for API_ORIGIN changes: it is baked in at build time)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -63,6 +67,9 @@ jobs:
       TF_STATE_PASSPHRASE: ${{ secrets.TF_STATE_PASSPHRASE }}
       TF_VAR_neon_org_id: ${{ vars.NEON_ORG_ID }}
       TF_VAR_api_email_from: ${{ vars.EMAIL_FROM }}
+      # Cutover switches (ADR-0016). Unset = stay on Render and the Neon test branch.
+      TF_VAR_api_use_production_db: ${{ vars.PAAS_API_USE_PRODUCTION_DB || 'false' }}
+      TF_VAR_api_origin: ${{ vars.PAAS_API_ORIGIN }}
       TF_VAR_api_jwt_access_secret: ${{ secrets.API_JWT_ACCESS_SECRET }}
       TF_VAR_api_otp_pepper: ${{ secrets.API_OTP_PEPPER }}
       TF_VAR_api_resend_api_key: ${{ secrets.RESEND_API_KEY }}
@@ -137,5 +144,21 @@ jobs:
           GITHUB_REF_NAME: ${{ github.ref_name }}
           PILOT_COACH_PASSWORD: ${{ secrets.PILOT_COACH_PASSWORD }}
           PILOT_COACH_EMAIL: ${{ vars.PILOT_COACH_EMAIL }}
+          API_USES_PRODUCTION_DB: ${{ vars.PAAS_API_USE_PRODUCTION_DB }}
           FORCE_DEPLOY: ${{ (needs.apply.result == 'success' || github.event_name == 'workflow_dispatch') && 'true' || '' }}
         run: scripts/infra/vercel-api-smoke.sh
+
+  redeploy-web:
+    name: Redeploy web
+    needs: [apply, smoke]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.redeploy_web && needs.apply.result == 'success' && needs.smoke.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Rebuild production web so it picks up the new API_ORIGIN
+        env:
+          VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+        run: scripts/infra/vercel-redeploy.sh gymos-pilot

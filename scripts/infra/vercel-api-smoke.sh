@@ -46,9 +46,15 @@ rc=0
 check /health/live 200 || rc=1
 check /health/ready 200 || rc=1
 check /internal/cron/nightly 401 || rc=1
+echo "Production aliases (use one as api_origin): $(curl -fsS -H "$auth" "$api/v9/projects/$project?$q" | jq -r '[.targets.production.alias[]?] | join(" ")')"
 if [ "$rc" = 0 ] && [ -n "${PILOT_COACH_PASSWORD:-}" ]; then
-  echo "Acceptance pass against the Neon test branch:"
-  "$(dirname "$0")/vercel-api-acceptance.sh" "https://$url" || rc=1
+  if [ "${API_USES_PRODUCTION_DB:-}" = "true" ]; then
+    echo "Read-only login check against the PRODUCTION database:"
+    "$(dirname "$0")/vercel-api-acceptance.sh" "https://$url" --read-only || rc=1
+  else
+    echo "Acceptance pass against the Neon test branch:"
+    "$(dirname "$0")/vercel-api-acceptance.sh" "https://$url" || rc=1
+  fi
 fi
 if [ "$rc" = 0 ]; then echo OK; else echo "Runtime logs of $uid:"; runtime_logs; fi
 exit "$rc"
