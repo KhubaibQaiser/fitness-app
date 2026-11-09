@@ -1,6 +1,11 @@
 # Next.js web on Vercel free. Browser stays same-origin; /v1,/gate,/health
 # are rewritten to Render via API_ORIGIN (see apps/web/next.config.mjs).
 
+locals {
+  # Defaults to Render so production is unchanged until api_origin is set (ADR-0016 cutover).
+  api_origin = var.api_origin != "" ? var.api_origin : var.render_api_url
+}
+
 resource "vercel_project" "web" {
   name            = var.project_name
   framework       = var.vercel_framework
@@ -8,7 +13,7 @@ resource "vercel_project" "web" {
   install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile"
   build_command   = "cd ../.. && pnpm --filter @gymos/web build"
   # Do not set output_directory for Next.js — Vercel owns the .next layout.
-  node_version    = "22.x"
+  node_version = "22.x"
 
   git_repository = var.manage_vercel_git ? {
     type              = "github"
@@ -24,9 +29,89 @@ resource "vercel_project" "web" {
   environment = [
     {
       key       = "API_ORIGIN"
-      value     = var.render_api_url
+      value     = local.api_origin
       target    = ["production", "preview"]
       sensitive = false
     },
   ]
+}
+
+# --- API on Vercel (ADR-0016) -------------------------------------------------
+# Secrets come from CI (TF_VAR_*) and live only in the encrypted R2 state. Nothing is set by hand
+# in the dashboard. The build copies the tenant manifest into the project root so includeFiles
+# needs no "files outside the Root Directory" setting (the provider cannot express it).
+
+resource "random_password" "api_cron" {
+  count   = var.manage_vercel_api ? 1 : 0
+  length  = 40
+  special = false
+}
+
+locals {
+  api_database_url = var.api_use_production_db ? neon_project.pilot.connection_uri_pooler : local.vercel_test_pooled_url
+
+  api_env_plain = {
+    AI_MODE              = "fallback"
+    TENANT_TIMEZONE      = "Asia/Karachi"
+    TENANT_MANIFEST_PATH = var.api_tenant_manifest_path
+    EMAIL_FROM           = var.api_email_from
+  }
+  api_env_secret = var.manage_vercel_api ? {
+    DATABASE_URL      = local.api_database_url
+    JWT_ACCESS_SECRET = var.api_jwt_access_secret
+    OTP_PEPPER        = var.api_otp_pepper
+    RESEND_API_KEY    = var.api_resend_api_key
+    CRON_SECRET       = random_password.api_cron[0].result
+  } : {}
+}
+
+resource "vercel_project" "api" {
+  count = var.manage_vercel_api ? 1 : 0
+
+  name            = var.api_project_name
+  root_directory  = "apps/api"
+  install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile --filter @gymos/api..."
+  build_command   = "mkdir -p tenants && cp ../../infra/tenants/*.json tenants/"
+  node_version    = "22.x"
+
+  serverless_function_region = var.api_serverless_region
+
+  git_repository = var.manage_vercel_git ? {
+    type              = "github"
+    repo              = var.github_repo
+    production_branch = var.git_production_branch
+  } : null
+
+  # The API is public (browsers and the mobile app call it directly).
+  vercel_authentication = {
+    deployment_type = "none"
+  }
+
+  environment = concat(
+    [for k, v in local.api_env_plain : { key = k, value = v, target = ["production", "preview"] }],
+    [for k, v in local.api_env_secret : { key = k, value = v, target = ["production", "preview"], sensitive = true }],
+  )
+
+  lifecycle {
+    precondition {
+      condition     = var.manage_neon_test_branch || var.api_use_production_db
+      error_message = "The Vercel API needs a database: enable manage_neon_test_branch or api_use_production_db."
+    }
+    precondition {
+      condition     = length(var.api_jwt_access_secret) >= 32 && var.api_otp_pepper != "" && var.api_resend_api_key != "" && var.api_email_from != ""
+      error_message = "Set api_jwt_access_secret (>= 32 chars), api_otp_pepper, api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
+    }
+  }
+}
+
+resource "vercel_project_domain" "web" {
+  count      = var.web_domain != "" ? 1 : 0
+  project_id = vercel_project.web.id
+  domain     = var.web_domain
+}
+
+resource "vercel_project_domain" "api" {
+  count      = var.manage_vercel_api && var.api_domain != "" ? 1 : 0
+  project_id = vercel_project.api[0].id
+  domain     = var.api_domain
 }

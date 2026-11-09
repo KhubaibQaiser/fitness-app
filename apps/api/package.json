@@ -16,7 +16,7 @@
     "@gymos/core": "workspace:^",
     "@gymos/db": "workspace:^",
     "@gymos/modules": "workspace:^",
-    "@hono/node-server": "^2.1.0",
+    "@hono/node-server": "^2.1.3",
     "@hono/zod-openapi": "^1.5.1",
     "hono": "^4.13.11",
     "jose": "^6.1.3",

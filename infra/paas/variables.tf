@@ -54,3 +54,94 @@ variable "manage_vercel_git" {
   description = "Connect the GitHub repo to the Vercel project (requires Vercel GitHub app installed)."
   default     = true
 }
+
+# --- Vercel API migration (ADR-0016). Everything below is off by default, so an
+# --- existing `tofu plan` shows no change until you opt in.
+
+variable "manage_vercel_api" {
+  type        = bool
+  description = "Create the Vercel project that hosts the API (apps/api). Off until the Phase 0 spike is ready."
+  default     = false
+}
+
+variable "api_project_name" {
+  type        = string
+  description = "Vercel project name for the API."
+  default     = "gymos-api"
+}
+
+variable "api_serverless_region" {
+  type        = string
+  description = "Vercel function region; keep it next to Neon (aws-ap-southeast-1 is Singapore, sin1)."
+  default     = "sin1"
+}
+
+variable "api_tenant_manifest_path" {
+  type        = string
+  description = "TENANT_MANIFEST_PATH for the Vercel API. The build copies infra/tenants/*.json to apps/api/tenants/ and vercel.json bundles it. UNVERIFIED: the runtime cwd; confirm on the first preview."
+  default     = "tenants/pilot.json"
+}
+
+variable "api_origin" {
+  type        = string
+  description = <<-EOT
+    Origin the web app proxies /v1, /gate and /health to (API_ORIGIN). Empty keeps
+    render_api_url, so production stays on Render. THIS IS THE CUTOVER SWITCH:
+    set it to the Vercel API origin (and apply) to cut over; set it back to roll back.
+    It sets API_ORIGIN for both the production and preview targets of the web project.
+  EOT
+  default     = ""
+}
+
+variable "web_domain" {
+  type        = string
+  description = "Custom domain for the web project (e.g. gymos.khubaibqaiser.com). Empty = none. DNS lives in the demo-infra repo."
+  default     = ""
+}
+
+variable "api_domain" {
+  type        = string
+  description = "Custom domain for the API project (e.g. gymos-api.khubaibqaiser.com). Attach at the cutover rehearsal, not earlier. Ignored unless manage_vercel_api is true."
+  default     = ""
+}
+
+variable "manage_neon_test_branch" {
+  type        = bool
+  description = "Create a copy-on-write Neon branch + pooled endpoint for testing the Vercel API against production-shaped data."
+  default     = false
+}
+
+variable "api_use_production_db" {
+  type        = bool
+  description = "CUTOVER STEP: point the Vercel API at the production Neon branch instead of the vercel-test branch."
+  default     = false
+}
+
+# Secrets arrive as TF_VAR_* from CI secrets. State is client-side encrypted on R2 (versions.tf).
+# Use the SAME jwt/pepper values as Render before cutover so sessions and OTPs stay valid.
+variable "api_jwt_access_secret" {
+  type        = string
+  description = "JWT_ACCESS_SECRET for the Vercel API (>= 32 chars). Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_otp_pepper" {
+  type        = string
+  description = "OTP_PEPPER for the Vercel API. Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_resend_api_key" {
+  type        = string
+  description = "RESEND_API_KEY for the Vercel API. Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_email_from" {
+  type        = string
+  description = "EMAIL_FROM for the Vercel API (a verified sender, never resend.dev)."
+  default     = ""
+}

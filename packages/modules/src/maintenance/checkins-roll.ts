@@ -1,8 +1,8 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { isoDate, nowIso, schema as s, type Db } from '@gymos/db';
-import { notify } from '@gymos/modules/notifications';
-import { purgeStaleAiArtifacts } from '@gymos/modules/nutrition';
+import { notify } from '../notifications';
+import { purgeStaleAiArtifacts } from '../nutrition';
 
 /**
  * Nightly roll: every ACTIVE goal must always have exactly one upcoming DUE

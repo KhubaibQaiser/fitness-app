@@ -22,6 +22,8 @@ export type AppDeps = {
         | 'RESEND_API_KEY'
         | 'EMAIL_FROM'
         | 'NODE_ENV'
+        | 'CRON_SECRET'
+        | 'TENANT_TIMEZONE'
       >
     >;
   /** Test seam — inject a memory mailer. */

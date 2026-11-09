@@ -37,3 +37,14 @@ output "next_steps" {
     6. Expect a cold start on first API hit (Render free spins down after idle)
   EOT
 }
+
+output "vercel_api_project_id" {
+  description = "Vercel API project id (null until manage_vercel_api = true)."
+  value       = one(vercel_project.api[*].id)
+}
+
+output "database_url_vercel_test_pooled" {
+  description = "Pooled DATABASE_URL on the Neon test branch (null until manage_neon_test_branch = true)."
+  value       = local.vercel_test_pooled_url
+  sensitive   = true
+}

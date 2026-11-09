@@ -20,3 +20,33 @@ resource "neon_project" "pilot" {
     role_name     = "gymos"
   }
 }
+
+# --- Test branch for the Vercel API (ADR-0016) --------------------------------
+# Copy-on-write branch of production; the Vercel API is tested against this
+# until cutover so it never touches production data.
+
+resource "neon_branch" "vercel_test" {
+  count      = var.manage_neon_test_branch ? 1 : 0
+  project_id = neon_project.pilot.id
+  parent_id  = neon_project.pilot.default_branch_id
+  name       = "vercel-test"
+}
+
+resource "neon_endpoint" "vercel_test" {
+  count          = var.manage_neon_test_branch ? 1 : 0
+  project_id     = neon_project.pilot.id
+  branch_id      = neon_branch.vercel_test[0].id
+  type           = "read_write"
+  pooler_enabled = true
+}
+
+locals {
+  # The pooler host is the endpoint host with "-pooler" appended to its first label.
+  vercel_test_pooled_url = var.manage_neon_test_branch ? format(
+    "postgresql://%s:%s@%s/%s?sslmode=require",
+    neon_project.pilot.database_user,
+    neon_project.pilot.database_password,
+    replace(neon_endpoint.vercel_test[0].host, "/^([^.]+)/", "$1-pooler"),
+    neon_project.pilot.database_name,
+  ) : null
+}

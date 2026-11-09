@@ -11,6 +11,9 @@ build/
 out/
 *.tsbuildinfo
 
+# Copied from infra/tenants/ by the Vercel API build (infra/paas/vercel.tf)
+apps/api/tenants/
+
 # Test artifacts
 coverage/
 playwright-report/
@@ -54,3 +57,4 @@ docs/architecture/*.visual-check.*
 graphify-out/
 .harness/state/
 .harness/logs/
+infra/paas/backend.hcl

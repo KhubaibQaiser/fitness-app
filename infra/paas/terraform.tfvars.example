@@ -10,3 +10,10 @@ render_api_url        = "https://gymos-api.onrender.com"
 # Generate and paste into the Render dashboard:
 #   openssl rand -hex 32   → JWT_ACCESS_SECRET
 # Seed (laptop / CI) also needs PILOT_COACH_PASSWORD (≥12 chars) for coach@pilot.local.
+
+# --- Vercel API migration (ADR-0016): all off by default ---
+# manage_neon_test_branch = true
+# manage_vercel_api       = true
+# web_domain              = "gymos.khubaibqaiser.com"
+# api_domain              = "gymos-api.khubaibqaiser.com"   # attach at the cutover rehearsal
+# api_origin              = "https://gymos-api.khubaibqaiser.com"   # CUTOVER SWITCH; empty = stay on Render

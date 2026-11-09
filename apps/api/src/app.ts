@@ -26,6 +26,7 @@ import { registerAuthRoutes } from './routes/auth';
 import { registerCheckInRoutes } from './routes/check-ins';
 import { registerClientRoutes } from './routes/clients';
 import { registerCoachInstructionsRoutes } from './routes/coach-instructions';
+import { registerCronRoutes } from './routes/cron';
 import { registerMeRoutes } from './routes/me';
 import { registerNotificationRoutes } from './routes/notifications';
 import { registerPlanRoutes } from './routes/plans';
@@ -319,6 +320,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   registerCheckInRoutes(app, bind);
   registerPlanRoutes(app, bind);
   registerCoachInstructionsRoutes(app, bind);
+  registerCronRoutes(app, bind);
 
   app.doc('/openapi.json', {
     openapi: '3.1.0',

@@ -4,3 +4,5 @@
 /packages/core/ @KhubaibQaiser
 /packages/ai/ @KhubaibQaiser
 /infra/ @KhubaibQaiser
+/scripts/infra/ @KhubaibQaiser
+/.github/workflows/infra-paas.yml @KhubaibQaiser
