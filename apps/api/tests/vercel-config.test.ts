@@ -15,10 +15,13 @@ describe('vercel.json (ADR-0016)', () => {
     expect(existsSync(path.join(root, 'api/index.ts'))).toBe(true);
   });
 
-  it('points includeFiles at a manifest source that exists (bundle placement is only proven by a Vercel preview)', () => {
-    const include = config.functions['api/index.ts']?.includeFiles ?? '';
-    const dir = path.resolve(root, include.replace(/\/\*\*$/, ''));
-    expect(existsSync(path.join(dir, 'pilot.json'))).toBe(true);
+  it('bundles the tenants/ copy that the Vercel build makes from infra/tenants (placement is only proven by a deploy)', () => {
+    expect(config.functions['api/index.ts']?.includeFiles).toBe('tenants/**');
+    expect(existsSync(path.resolve(root, '../../infra/tenants/pilot.json'))).toBe(true);
+    const tf = readFileSync(path.resolve(root, '../../infra/paas/vercel.tf'), 'utf8');
+    expect(tf).toMatch(
+      /build_command\s*=\s*"[^"]*cp \.\.\/\.\.\/infra\/tenants\/\*\.json tenants\/"/,
+    );
   });
 
   it('has exactly one daily nightly cron (Hobby allows once a day)', () => {

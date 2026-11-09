@@ -11,6 +11,9 @@ build/
 out/
 *.tsbuildinfo
 
+# Copied from infra/tenants/ by the Vercel API build (infra/paas/vercel.tf)
+apps/api/tenants/
+
 # Test artifacts
 coverage/
 playwright-report/
@@ -52,3 +55,4 @@ docs/architecture/*.visual-check.*
 
 # Graphify output is local (rebuild with `graphify`). Do not commit the dump.
 graphify-out/
+infra/paas/backend.hcl

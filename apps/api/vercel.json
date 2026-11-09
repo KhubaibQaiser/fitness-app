@@ -7,7 +7,7 @@
   ],
   "functions": {
     "api/index.ts": {
-      "includeFiles": "../../infra/tenants/**",
+      "includeFiles": "tenants/**",
       "maxDuration": 60
     }
   },

@@ -37,12 +37,33 @@ resource "vercel_project" "web" {
 }
 
 # --- API on Vercel (ADR-0016) -------------------------------------------------
-# Secrets are NOT managed here (same convention as Render): set DATABASE_URL
-# (Neon pooled), JWT_ACCESS_SECRET, OTP_PEPPER, RESEND_API_KEY, EMAIL_FROM and
-# CRON_SECRET in the Vercel dashboard, so they never land in OpenTofu state.
-#
-# One setting the provider cannot express: enable "Include source files outside
-# of the Root Directory" on this project (needed for ../../infra/tenants/**).
+# Secrets come from CI (TF_VAR_*) and live only in the encrypted R2 state. Nothing is set by hand
+# in the dashboard. The build copies the tenant manifest into the project root so includeFiles
+# needs no "files outside the Root Directory" setting (the provider cannot express it).
+
+resource "random_password" "api_cron" {
+  count   = var.manage_vercel_api ? 1 : 0
+  length  = 40
+  special = false
+}
+
+locals {
+  api_database_url = var.api_use_production_db ? neon_project.pilot.connection_uri_pooler : local.vercel_test_pooled_url
+
+  api_env_plain = {
+    AI_MODE              = "fallback"
+    TENANT_TIMEZONE      = "Asia/Karachi"
+    TENANT_MANIFEST_PATH = var.api_tenant_manifest_path
+    EMAIL_FROM           = var.api_email_from
+  }
+  api_env_secret = var.manage_vercel_api ? {
+    DATABASE_URL      = local.api_database_url
+    JWT_ACCESS_SECRET = var.api_jwt_access_secret
+    OTP_PEPPER        = var.api_otp_pepper
+    RESEND_API_KEY    = var.api_resend_api_key
+    CRON_SECRET       = random_password.api_cron[0].result
+  } : {}
+}
 
 resource "vercel_project" "api" {
   count = var.manage_vercel_api ? 1 : 0
@@ -50,6 +71,7 @@ resource "vercel_project" "api" {
   name            = var.api_project_name
   root_directory  = "apps/api"
   install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile --filter @gymos/api..."
+  build_command   = "mkdir -p tenants && cp ../../infra/tenants/*.json tenants/"
   node_version    = "22.x"
 
   serverless_function_region = var.api_serverless_region
@@ -65,23 +87,21 @@ resource "vercel_project" "api" {
     deployment_type = "none"
   }
 
-  environment = [
-    {
-      key    = "AI_MODE"
-      value  = "fallback"
-      target = ["production", "preview"]
-    },
-    {
-      key    = "TENANT_TIMEZONE"
-      value  = "Asia/Karachi"
-      target = ["production", "preview"]
-    },
-    {
-      key    = "TENANT_MANIFEST_PATH"
-      value  = var.api_tenant_manifest_path
-      target = ["production", "preview"]
-    },
-  ]
+  environment = concat(
+    [for k, v in local.api_env_plain : { key = k, value = v, target = ["production", "preview"] }],
+    [for k, v in local.api_env_secret : { key = k, value = v, target = ["production", "preview"], sensitive = true }],
+  )
+
+  lifecycle {
+    precondition {
+      condition     = var.manage_neon_test_branch || var.api_use_production_db
+      error_message = "The Vercel API needs a database: enable manage_neon_test_branch or api_use_production_db."
+    }
+    precondition {
+      condition     = length(var.api_jwt_access_secret) >= 32 && var.api_otp_pepper != "" && var.api_resend_api_key != "" && var.api_email_from != ""
+      error_message = "Set api_jwt_access_secret (>= 32 chars), api_otp_pepper, api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
+    }
+  }
 }
 
 resource "vercel_project_domain" "web" {

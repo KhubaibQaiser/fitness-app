@@ -1,0 +1,125 @@
+name: Infra PaaS
+
+# OpenTofu for infra/paas (Neon, Vercel web + API). Nothing is applied from a laptop.
+# State: Cloudflare R2 (client-side encrypted). Docs: docs/specs/vercel-api-hosting.md
+#
+# One-time setup (GitHub → Settings):
+#   secrets: NEON_API_KEY, VERCEL_API_TOKEN, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, TF_STATE_PASSPHRASE (>=16),
+#            API_JWT_ACCESS_SECRET (>=32, same as Render before cutover), API_OTP_PEPPER, RESEND_API_KEY
+#   vars:    CLOUDFLARE_ACCOUNT_ID, NEON_ORG_ID, EMAIL_FROM, PAAS_IAC_ENABLED=true, VERCEL_TEAM_ID (team accounts only)
+
+on:
+  pull_request:
+    paths: ['infra/paas/**', 'scripts/infra/**', '.github/workflows/infra-paas.yml']
+  push:
+    branches: [main]
+    paths: ['infra/paas/**', 'scripts/infra/**', '.github/workflows/infra-paas.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # PR plans must never queue-replace a pending main apply, so they get their own group.
+  group: infra-paas-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+env:
+  TOFU_VERSION: 1.12.5
+
+jobs:
+  validate:
+    name: Format · validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+      - run: tofu -chdir=infra/paas fmt -check -recursive
+      - run: tofu -chdir=infra/paas init -backend=false -input=false && tofu -chdir=infra/paas validate
+
+  plan:
+    name: Plan
+    needs: validate
+    if: ${{ vars.PAAS_IAC_ENABLED == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      changes: ${{ steps.plan.outputs.changes }}
+    env: &tofu-env
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+      VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+      TF_STATE_PASSPHRASE: ${{ secrets.TF_STATE_PASSPHRASE }}
+      TF_VAR_neon_org_id: ${{ vars.NEON_ORG_ID }}
+      TF_VAR_api_email_from: ${{ vars.EMAIL_FROM }}
+      TF_VAR_api_jwt_access_secret: ${{ secrets.API_JWT_ACCESS_SECRET }}
+      TF_VAR_api_otp_pepper: ${{ secrets.API_OTP_PEPPER }}
+      TF_VAR_api_resend_api_key: ${{ secrets.RESEND_API_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+      - name: Init (R2 backend)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          . scripts/infra/tf-env.sh
+          printf 'endpoints = { s3 = "https://%s.r2.cloudflarestorage.com" }\n' "$CLOUDFLARE_ACCOUNT_ID" > infra/paas/backend.hcl
+          tofu -chdir=infra/paas init -input=false -backend-config=backend.hcl
+      # Writes to the shared state, so never from a PR; the first PR plan before the first apply shows existing resources as creates.
+      - name: Adopt existing resources (idempotent)
+        if: ${{ github.event_name != 'pull_request' }}
+        run: . scripts/infra/tf-env.sh && scripts/infra/paas-import.sh
+      - name: Plan
+        id: plan
+        run: |
+          . scripts/infra/tf-env.sh
+          set +e
+          tofu -chdir=infra/paas plan -input=false -lock-timeout=120s -detailed-exitcode | tee plan.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          [ "$code" -ne 1 ] || exit 1
+          echo "changes=$([ "$code" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          { echo '### tofu plan'; echo '```'; tail -n 150 plan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: Apply
+    needs: plan
+    if: ${{ github.event_name != 'pull_request' && needs.plan.outputs.changes == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env: *tofu-env
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+      - name: Init, adopt, apply
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          . scripts/infra/tf-env.sh
+          printf 'endpoints = { s3 = "https://%s.r2.cloudflarestorage.com" }\n' "$CLOUDFLARE_ACCOUNT_ID" > infra/paas/backend.hcl
+          tofu -chdir=infra/paas init -input=false -backend-config=backend.hcl
+          scripts/infra/paas-import.sh
+          tofu -chdir=infra/paas apply -input=false -auto-approve -lock-timeout=120s
+
+  smoke:
+    name: Vercel API smoke
+    needs: [plan, apply]
+    if: ${{ always() && github.event_name != 'pull_request' && needs.plan.result == 'success' && needs.apply.result != 'failure' && needs.apply.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Deploy if needed, then check /health/live, /health/ready, cron auth
+        env:
+          VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          FORCE_DEPLOY: ${{ needs.apply.result == 'success' && 'true' || '' }}
+        run: scripts/infra/vercel-api-smoke.sh

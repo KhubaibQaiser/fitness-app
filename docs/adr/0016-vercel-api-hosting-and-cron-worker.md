@@ -61,6 +61,9 @@ Constraints and facts:
    pattern: separate key, lock test before relying on it, client-side state encryption. Existing local
    state is migrated with `tofu init -migrate-state`. Local `terraform.tfstate*` and `terraform.tfvars`
    stay untracked.
+   Deployment is CI-only: `.github/workflows/infra-paas.yml` plans on PRs and applies on merge, and
+   the API's secrets are passed from GitHub secrets into the encrypted state rather than typed into the
+   Vercel dashboard. Nothing is applied from a laptop.
 7. **Go / no-go bar for cutover:** at least one week on the Neon branch with zero server errors; slowest
    endpoint (plan generation, PDF) comfortably inside the function limit; cron has run clean on several
    nights; login smoke and a full manual pass (create client, generate plan, publish, check-in, both PDFs)
