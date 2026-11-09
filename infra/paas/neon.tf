@@ -43,7 +43,8 @@ resource "neon_endpoint" "vercel_test" {
 locals {
   database_password = var.neon_database_password != "" ? var.neon_database_password : neon_project.pilot.database_password
 
-  # The pooler host is the endpoint host with "-pooler" appended to its first label.
+  # The pooler host is "<endpoint id>-pooler" plus the endpoint domain. Built from the id because the endpoint's
+  # own host already carries "-pooler" once pooling is enabled.
   # Production branch, pooled, with the real password (see neon_database_password).
   production_pooled_url = format(
     "postgresql://%s:%s@%s/%s?sslmode=require",
@@ -57,7 +58,7 @@ locals {
     "postgresql://%s:%s@%s/%s?sslmode=require",
     neon_project.pilot.database_user,
     local.database_password,
-    replace(neon_endpoint.vercel_test[0].host, "/^([^.]+)/", "$1-pooler"),
+    replace(neon_endpoint.vercel_test[0].host, "/^[^.]+/", "${neon_endpoint.vercel_test[0].id}-pooler"),
     neon_project.pilot.database_name,
   ) : null
 }
