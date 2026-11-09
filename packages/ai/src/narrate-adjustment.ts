@@ -88,7 +88,6 @@ export const narrateAdjustment = (
   }
 
   // Hosted/local paths can land later; pilot uses deterministic fallback.
-  void config.mode;
   const draft = fallbackAdjustmentNarrative(verdict, config.verbosity);
   const parsed = adjustmentNarrativeSchema.safeParse(draft);
   if (!parsed.success || containsForbiddenNumber(parsed.data)) {
