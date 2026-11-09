@@ -13,6 +13,8 @@ export const ADAPTIVE = {
   emaAlpha: 0.25,
   /** Analysis window in days. */
   windowDays: 21,
+  /** Weekly check-ins are stamped at a fixed time but baselines are not; keep a weigh-in up to this much older than the window. */
+  windowGraceDays: 1,
   /** Minimum weigh-ins and minimum span before we trust a verdict. */
   minWeighIns: 4,
   minSpanDays: 10,
@@ -211,7 +213,7 @@ const confidenceScore = (
  * adherence gate → damped target adjustment (clamped into the safe band).
  */
 export const evaluateProgress = (input: AdaptiveInput): AdjustmentRecommendation => {
-  const windowStart = input.now - ADAPTIVE.windowDays * MS_PER_DAY;
+  const windowStart = input.now - (ADAPTIVE.windowDays + ADAPTIVE.windowGraceDays) * MS_PER_DAY;
   const inWindow = input.weighIns.filter((w) => w.t >= windowStart && w.t <= input.now);
   const sorted = [...inWindow].sort((a, b) => a.t - b.t);
   const first = sorted.at(0);

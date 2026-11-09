@@ -142,6 +142,29 @@ describe('evaluateProgress — data sufficiency', () => {
     expect(verdict.confidence).toBeLessThanOrEqual(1);
   });
 
+  it('keeps a baseline weigh-in a few hours older than the window on a weekly cadence', () => {
+    // Baseline logged Monday 09:00; the week-3 check-in is stamped Monday 12:00, 21d 3h later.
+    const hour = DAY / 24;
+    const weighIns = [
+      { t: NOW - 21 * DAY - 3 * hour, weightKg: 90 },
+      { t: NOW - 14 * DAY, weightKg: 89.6 },
+      { t: NOW - 7 * DAY, weightKg: 89.2 },
+      { t: NOW, weightKg: 88.8 },
+    ];
+    const verdict = evaluateProgress(baseInput({ weighIns }));
+    expect(verdict.type).not.toBe('INSUFFICIENT_DATA');
+  });
+
+  it('still excludes a baseline older than the window plus its one-day grace', () => {
+    const weighIns = [
+      { t: NOW - 22 * DAY - DAY / 24, weightKg: 90 },
+      { t: NOW - 14 * DAY, weightKg: 89.6 },
+      { t: NOW - 7 * DAY, weightKg: 89.2 },
+      { t: NOW, weightKg: 88.8 },
+    ];
+    expect(evaluateProgress(baseInput({ weighIns })).type).toBe('INSUFFICIENT_DATA');
+  });
+
   it('ignores weigh-ins outside the window', () => {
     const stale = daily(80, -0.1, 21).map((w) => ({ ...w, t: w.t - 60 * DAY }));
     const verdict = evaluateProgress(baseInput({ weighIns: stale }));
