@@ -109,8 +109,8 @@ resource "vercel_project" "api" {
       error_message = "The Vercel API needs a database: enable manage_neon_test_branch or api_use_production_db."
     }
     precondition {
-      condition     = length(var.api_jwt_access_secret) >= 32 && var.api_otp_pepper != "" && var.api_resend_api_key != "" && var.api_email_from != ""
-      error_message = "Set api_jwt_access_secret (>= 32 chars), api_otp_pepper, api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
+      condition     = length(var.api_jwt_access_secret) >= 32 && length(var.api_otp_pepper) >= 32 && var.api_resend_api_key != "" && var.api_email_from != ""
+      error_message = "Set api_jwt_access_secret and api_otp_pepper (both >= 32 chars, as the API requires), api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
     }
   }
 }
