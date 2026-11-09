@@ -81,8 +81,9 @@ resource "vercel_project" "api" {
   name            = var.api_project_name
   root_directory  = "apps/api"
   install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile --filter @gymos/api..."
-  build_command   = "mkdir -p tenants && cp ../../infra/tenants/*.json tenants/"
-  node_version    = "22.x"
+  # `public/` satisfies Vercel's static output-directory check; all routes go to the api/ function.
+  build_command = "mkdir -p tenants public && touch public/.keep && cp ../../infra/tenants/*.json tenants/"
+  node_version  = "22.x"
 
   serverless_function_region = var.api_serverless_region
 
