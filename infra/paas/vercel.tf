@@ -26,15 +26,23 @@ resource "vercel_project" "web" {
   vercel_authentication = {
     deployment_type = "none"
   }
+}
 
-  environment = [
-    {
-      key       = "API_ORIGIN"
-      value     = local.api_origin
-      target    = ["production", "preview"]
-      sensitive = false
-    },
-  ]
+# API_ORIGIN is its own resource (adopted by the import block below) because the project's inline
+# `environment` cannot adopt a variable that already exists. This is the cutover switch (api_origin).
+resource "vercel_project_environment_variable" "web_api_origin" {
+  project_id = vercel_project.web.id
+  team_id    = var.vercel_team_id != "" ? var.vercel_team_id : null
+  key        = "API_ORIGIN"
+  value      = local.api_origin
+  target     = ["production", "preview"]
+  sensitive  = false
+}
+
+# Existing variable on the production web project; a no-op once it is in state.
+import {
+  to = vercel_project_environment_variable.web_api_origin
+  id = "team_OpgANjI9xXc4bjJpbev3uRpk/prj_7f5IIQz5ccsV0YZUUlC2Q7r312hv/9P3W3GnLugMlcqM8"
 }
 
 # --- API on Vercel (ADR-0016) -------------------------------------------------
