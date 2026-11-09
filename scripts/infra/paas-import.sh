@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
 # Idempotent one-time adoption of the resources first created from a laptop (local state) into the R2 state.
-# Skips anything already in state. Needs: NEON_API_KEY, VERCEL_API_TOKEN, optional VERCEL_TEAM_ID, TF_VAR_neon_org_id.
+# Skips anything already in state. Needs: NEON_API_KEY, VERCEL_API_TOKEN, optional VERCEL_TEAM_ID, NEON_PROJECT_ID, TF_VAR_neon_org_id.
 set -euo pipefail
 cd "$(dirname "$0")/../../infra/paas"
 name="${TF_VAR_project_name:-gymos-pilot}"
 have() { tofu state list 2>/dev/null | grep -qx "$1"; }
 
 if ! have neon_project.pilot; then
-  code=$(curl -sS -o /tmp/nproj.json -w '%{http_code}' -H "Authorization: Bearer $NEON_API_KEY" \
-    "https://console.neon.tech/api/v2/projects?org_id=${TF_VAR_neon_org_id}&limit=400")
-  [ "$code" = 200 ] || { echo "Neon project lookup failed with HTTP $code: $(jq -r '.message // empty' /tmp/nproj.json 2>/dev/null)"; exit 1; }
-  id=$(jq -r --arg n "$name" '.projects[] | select(.name==$n) | .id' /tmp/nproj.json | head -n1)
+  # A project-scoped Neon key cannot list projects, so prefer an explicit NEON_PROJECT_ID and verify its name.
+  if [ -n "${NEON_PROJECT_ID:-}" ]; then
+    code=$(curl -sS -o /tmp/nproj.json -w '%{http_code}' -H "Authorization: Bearer $NEON_API_KEY" \
+      "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}")
+    [ "$code" = 200 ] || { echo "Neon project $NEON_PROJECT_ID lookup failed with HTTP $code: $(jq -r '.message // empty' /tmp/nproj.json 2>/dev/null)"; exit 1; }
+    found=$(jq -r '.project.name' /tmp/nproj.json)
+    [ "$found" = "$name" ] || { echo "Neon project $NEON_PROJECT_ID is named '$found', expected '$name'"; exit 1; }
+    id="$NEON_PROJECT_ID"
+  else
+    code=$(curl -sS -o /tmp/nproj.json -w '%{http_code}' -H "Authorization: Bearer $NEON_API_KEY" \
+      "https://console.neon.tech/api/v2/projects?org_id=${TF_VAR_neon_org_id}&limit=400")
+    [ "$code" = 200 ] || { echo "Neon project lookup failed with HTTP $code: $(jq -r '.message // empty' /tmp/nproj.json 2>/dev/null)"; exit 1; }
+    id=$(jq -r --arg n "$name" '.projects[] | select(.name==$n) | .id' /tmp/nproj.json | head -n1)
+  fi
   if [ -n "$id" ]; then tofu import -input=false neon_project.pilot "$id"; else echo "no Neon project named $name: apply will create it"; fi
 fi
 
