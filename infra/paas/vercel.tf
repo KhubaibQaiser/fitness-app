@@ -36,6 +36,7 @@ resource "vercel_project_environment_variable" "web_api_origin" {
   key        = "API_ORIGIN"
   value      = local.api_origin
   target     = ["production", "preview"]
+  sensitive  = false
 }
 
 # Existing variable on the production web project; a no-op once it is in state.
