@@ -15,6 +15,11 @@ on:
     branches: [main]
     paths: ['infra/paas/**', 'scripts/infra/**', '.github/workflows/infra-paas.yml']
   workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply the plan (default: plan only)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -89,7 +94,8 @@ jobs:
   apply:
     name: Apply
     needs: plan
-    if: ${{ github.event_name != 'pull_request' && needs.plan.outputs.changes == 'true' }}
+    # Push to main only applies when the repo variable PAAS_IAC_AUTO_APPLY is 'true'; otherwise run the workflow manually with apply=true after reading the plan.
+    if: ${{ needs.plan.outputs.changes == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.apply) || (github.event_name == 'push' && vars.PAAS_IAC_AUTO_APPLY == 'true')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -111,7 +117,7 @@ jobs:
   smoke:
     name: Vercel API smoke
     needs: [plan, apply]
-    if: ${{ always() && github.event_name != 'pull_request' && needs.plan.result == 'success' && needs.apply.result != 'failure' && needs.apply.result != 'cancelled' }}
+    if: ${{ always() && github.event_name != 'pull_request' && needs.plan.result == 'success' && (needs.apply.result == 'success' || (needs.apply.result == 'skipped' && needs.plan.outputs.changes == 'false')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

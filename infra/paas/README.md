@@ -99,7 +99,7 @@ so the two paths do not fight.
 ## Deploy from CI only (ADR-0016)
 
 `.github/workflows/infra-paas.yml` is the only way this stack is planned and applied. PRs run `tofu plan` (summary on the run);
-merging to `main` applies it (environment `production`, so you can add a required reviewer) and then smoke-tests the Vercel API.
+merging to `main` plans it again. Applying needs either the repo variable `PAAS_IAC_AUTO_APPLY=true` or a manual run with `apply=true` after you have read the plan (then it smoke-tests the Vercel API).
 State is on Cloudflare R2 (the `demo-infra` bucket, own key `gymos/paas`), encrypted client-side. `scripts/infra/paas-import.sh`
 adopts the Neon and Vercel web resources that were first created from a laptop. Nothing runs locally.
 
