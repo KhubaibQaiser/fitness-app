@@ -128,7 +128,7 @@ The API project's variables (`DATABASE_URL`, `JWT_ACCESS_SECRET`, `OTP_PEPPER`, 
 `infra/tenants/*.json` into `apps/api/tenants/` so `vercel.json` can bundle it without the "files outside the Root Directory" setting.
 
 If the repo secret `PILOT_COACH_PASSWORD` exists, the smoke job also runs `scripts/infra/vercel-api-acceptance.sh`: login, create a client, both PDFs,
-generate and publish a plan, complete a check-in, with timings. It writes data, so it is for the Neon test branch only: **delete that secret before
+generate and publish a plan, complete a check-in, with timings. It writes data, so it is for the Neon test branch only: **delete that secret (and the PILOT_COACH_EMAIL variable) before
 pointing the API at production (`api_use_production_db`)**.
 
 The test-branch URL carries the production role's password, so it goes stale if that password is reset; recreate the branch then.

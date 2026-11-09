@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # API-level version of the manual pass (ADR-0016, spec section E) against a Vercel API deployment that is
 # backed by the Neon TEST branch. Mutates data (creates one client), so never point it at production.
-# Usage: PILOT_COACH_PASSWORD=... vercel-api-acceptance.sh https://<deployment-host>
+# Usage: PILOT_COACH_PASSWORD=... [PILOT_COACH_EMAIL=coach@pilot.local] vercel-api-acceptance.sh https://<deployment-host>
 set -euo pipefail
 base="${1:?base url}"
 : "${PILOT_COACH_PASSWORD:?set PILOT_COACH_PASSWORD}"
@@ -28,7 +28,7 @@ is_pdf() { # name
   echo "ok $1 is a PDF ($size bytes)"
 }
 
-call "login" 200 POST /v1/auth/login "$(jq -n --arg p "$PILOT_COACH_PASSWORD" '{email:"coach@pilot.local",password:$p}')"
+call "login" 200 POST /v1/auth/login "$(jq -n --arg e "${PILOT_COACH_EMAIL:-coach@pilot.local}" --arg p "$PILOT_COACH_PASSWORD" '{email:$e,password:$p}')"
 call "me" 200 GET /v1/me
 
 onboard=$(jq -n --arg n "Acceptance $stamp" --arg e "acceptance-$stamp@example.com" '{
