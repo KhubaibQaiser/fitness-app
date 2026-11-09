@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+        with: { tofu_version: '${{ env.TOFU_VERSION }}', tofu_wrapper: false }
       - run: tofu -chdir=infra/paas fmt -check -recursive
       - run: tofu -chdir=infra/paas init -backend=false -input=false && tofu -chdir=infra/paas validate
 
@@ -58,6 +58,8 @@ jobs:
       NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
       VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
       VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      TF_VAR_vercel_team_id: ${{ vars.VERCEL_TEAM_ID }}
       TF_STATE_PASSPHRASE: ${{ secrets.TF_STATE_PASSPHRASE }}
       TF_VAR_neon_org_id: ${{ vars.NEON_ORG_ID }}
       TF_VAR_api_email_from: ${{ vars.EMAIL_FROM }}
@@ -67,7 +69,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+        with: { tofu_version: '${{ env.TOFU_VERSION }}', tofu_wrapper: false }
+      - name: Read the Neon role password
+        run: scripts/infra/neon-role-password.sh
       - name: Init (R2 backend)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -98,12 +102,15 @@ jobs:
     if: ${{ needs.plan.outputs.changes == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.apply) || (github.event_name == 'push' && vars.PAAS_IAC_AUTO_APPLY == 'true')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: production
+    # No `environment:` — GitHub returned an internal error creating this job once Vercel added
+    # similarly named environments, and the old one had no protection rules. Apply is gated by apply=true.
     env: *tofu-env
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+        with: { tofu_version: '${{ env.TOFU_VERSION }}', tofu_wrapper: false }
+      - name: Read the Neon role password
+        run: scripts/infra/neon-role-password.sh
       - name: Init, adopt, apply
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -127,5 +134,6 @@ jobs:
           VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
           VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
-          FORCE_DEPLOY: ${{ needs.apply.result == 'success' && 'true' || '' }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          FORCE_DEPLOY: ${{ (needs.apply.result == 'success' || github.event_name == 'workflow_dispatch') && 'true' || '' }}
         run: scripts/infra/vercel-api-smoke.sh

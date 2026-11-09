@@ -1,8 +1,8 @@
 import { createDb } from '@gymos/db';
 import { readManifestFile, syncSingleOrgRegistryFromFile } from '@gymos/modules/tenancy';
-import { buildApp } from '../src/app';
-import { loadEnv } from '../src/env';
-import { memoizeAsync } from '../src/lazy-app';
+import { buildApp } from './app';
+import { loadEnv } from './env';
+import { memoizeAsync } from './lazy-app';
 
 /**
  * Vercel entry (ADR-0016). Render/VM keep using `src/index.ts`. The app is

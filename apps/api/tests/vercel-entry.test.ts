@@ -23,7 +23,7 @@ describe('Vercel entry (ADR-0016)', () => {
   });
 
   it('serves /health/live through the exported handlers with the original path', async () => {
-    const { GET, POST } = await import('../api/index');
+    const { GET, POST } = await import('../src/vercel');
     const res = await GET(new Request('https://api.example.test/health/live'));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: 'live' });

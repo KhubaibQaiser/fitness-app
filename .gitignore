@@ -11,8 +11,8 @@ build/
 out/
 *.tsbuildinfo
 
-# Copied from infra/tenants/ by the Vercel API build (infra/paas/vercel.tf)
-apps/api/tenants/
+# Vercel Build Output written by apps/api/scripts/build-vercel.mjs
+.vercel/
 
 # Test artifacts
 coverage/

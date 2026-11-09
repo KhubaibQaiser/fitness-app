@@ -13,3 +13,4 @@ packages/contracts/generated/
 docs/architecture/*.html
 graphify-out/
 .harness/
+.vercel/
