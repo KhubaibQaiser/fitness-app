@@ -57,7 +57,7 @@ resource "random_password" "api_cron" {
 }
 
 locals {
-  api_database_url = var.api_use_production_db ? neon_project.pilot.connection_uri_pooler : local.vercel_test_pooled_url
+  api_database_url = var.api_use_production_db ? local.production_pooled_url : local.vercel_test_pooled_url
 
   api_env_plain = {
     AI_MODE              = "fallback"

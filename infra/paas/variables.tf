@@ -151,3 +151,10 @@ variable "vercel_team_id" {
   description = "Vercel team ID or slug the projects live in. Empty = personal account."
   default     = ""
 }
+
+variable "neon_database_password" {
+  type        = string
+  description = "Password of the existing Neon role. CI reads it from the Neon API (scripts/infra/neon-role-password.sh) because an imported project does not carry it. Empty falls back to the provider attribute."
+  default     = ""
+  sensitive   = true
+}
