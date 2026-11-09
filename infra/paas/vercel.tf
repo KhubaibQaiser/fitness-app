@@ -47,8 +47,8 @@ import {
 
 # --- API on Vercel (ADR-0016) -------------------------------------------------
 # Secrets come from CI (TF_VAR_*) and live only in the encrypted R2 state. Nothing is set by hand
-# in the dashboard. The build copies the tenant manifest into the project root so includeFiles
-# needs no "files outside the Root Directory" setting (the provider cannot express it).
+# in the dashboard. The build bundles the workspace TypeScript and the tenant manifest into the
+# function (Vercel's zero-config functions cannot run workspace packages).
 
 resource "random_password" "api_cron" {
   count   = var.manage_vercel_api ? 1 : 0
@@ -81,8 +81,8 @@ resource "vercel_project" "api" {
   name            = var.api_project_name
   root_directory  = "apps/api"
   install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile --filter @gymos/api..."
-  # `public/` satisfies Vercel's static output-directory check; all routes go to the api/ function.
-  build_command = "mkdir -p tenants public && touch public/.keep && cp ../../infra/tenants/*.json tenants/"
+  # Bundles the API into .vercel/output (Build Output API); see apps/api/scripts/build-vercel.mjs.
+  build_command = "node scripts/build-vercel.mjs"
   node_version  = "22.x"
 
   serverless_function_region = var.api_serverless_region

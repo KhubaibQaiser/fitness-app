@@ -20,6 +20,7 @@ export default tseslint.config(
       '**/.next/',
       '**/.expo/',
       '**/.turbo/',
+      '**/.vercel/',
       '**/coverage/',
       'packages/contracts/generated/',
       '**/*.d.ts',
