@@ -7,5 +7,5 @@ provider "neon" {}
 
 provider "vercel" {
   # api_token defaults to VERCEL_API_TOKEN
-  team = var.vercel_team_id != "" ? var.vercel_team_id : null
+  # The team is set per resource (team_id): the token can reach the team's projects but not read the team itself.
 }
