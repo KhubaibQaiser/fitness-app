@@ -8,6 +8,13 @@ q="x=1${VERCEL_TEAM_ID:+&teamId=$VERCEL_TEAM_ID}"
 auth="Authorization: Bearer $VERCEL_API_TOKEN"
 api="https://api.vercel.com"
 
+dump_logs() { # last build log lines of a deployment (no secrets: Vercel redacts env values)
+  curl -fsS -H "$auth" "$api/v3/deployments/$1/events?limit=-1&$q" | jq -r '.[] | select(.text != null) | .text' | tail -n 60 || true
+}
+# Show why the latest deployment failed, if it did.
+bad=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&limit=1&$q" | jq -r '.deployments[0] | select(.state=="ERROR") | .uid // empty')
+[ -z "$bad" ] || { echo "Latest deployment $bad failed; last build log lines:"; dump_logs "$bad"; }
+
 url=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&target=production&state=READY&limit=1&$q" | jq -r '.deployments[0].url // empty')
 if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
   url=""
@@ -18,7 +25,7 @@ if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
   for _ in $(seq 1 60); do
     d=$(curl -fsS -H "$auth" "$api/v13/deployments/$id?$q")
     state=$(jq -r .readyState <<<"$d"); echo "deployment $id: $state"
-    case "$state" in READY) url=$(jq -r .url <<<"$d"); break ;; ERROR|CANCELED) echo "deployment failed: $(jq -r .inspectorUrl <<<"$d")"; exit 1 ;; esac
+    case "$state" in READY) url=$(jq -r .url <<<"$d"); break ;; ERROR|CANCELED) echo "deployment failed: $(jq -r .inspectorUrl <<<"$d")"; dump_logs "$id"; exit 1 ;; esac
     sleep 10
   done
   [ -n "$url" ] || { echo "deployment timed out"; exit 1; }
