@@ -32,8 +32,14 @@ if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
 fi
 
 echo "Smoke: https://$url"
-code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
-[ "$(code "https://$url/health/live")" = 200 ] || { echo "/health/live failed"; exit 1; }
-[ "$(code "https://$url/health/ready")" = 200 ] || { echo "/health/ready failed (pooled Neon connection)"; exit 1; }
-[ "$(code "https://$url/internal/cron/nightly")" = 401 ] || { echo "cron route must reject unauthenticated calls"; exit 1; }
-echo "OK"
+check() { # path, expected status
+  got=$(curl -s -o /tmp/smoke.body -w '%{http_code}' "https://$url$1")
+  if [ "$got" = "$2" ]; then echo "ok $1 -> $got"; return 0; fi
+  echo "FAIL $1 -> $got (want $2); body: $(head -c 400 /tmp/smoke.body | tr '\n' ' ')"; return 1
+}
+rc=0
+check /health/live 200 || rc=1
+check /health/ready 200 || rc=1
+check /internal/cron/nightly 401 || rc=1
+[ "$rc" = 0 ] && echo "OK"
+exit "$rc"
