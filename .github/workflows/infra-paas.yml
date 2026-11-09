@@ -100,7 +100,8 @@ jobs:
     if: ${{ needs.plan.outputs.changes == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.apply) || (github.event_name == 'push' && vars.PAAS_IAC_AUTO_APPLY == 'true')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: production
+    # No `environment:` — GitHub returned an internal error creating this job once Vercel added
+    # similarly named environments, and the old one had no protection rules. Apply is gated by apply=true.
     env: *tofu-env
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
