@@ -70,6 +70,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_version: '${{ env.TOFU_VERSION }}' }
+      - name: TEMP probe Vercel token scope (status codes only)
+        run: |
+          T="$VERCEL_TEAM_ID"; H="Authorization: Bearer $VERCEL_API_TOKEN"
+          for u in "v2/user" "v2/teams/$T" "v9/projects/gymos-pilot?teamId=$T" "v9/projects/gymos-pilot" "v10/projects/gymos-pilot/env?teamId=$T" "v9/projects/gymos-pilot/custom-environments?teamId=$T" "v9/projects?teamId=$T&limit=1"; do
+            echo "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" "https://api.vercel.com/$u") ${u//$T/TEAM}"
+          done
       - name: Init (R2 backend)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
