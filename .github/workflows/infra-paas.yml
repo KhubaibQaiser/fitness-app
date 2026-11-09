@@ -59,6 +59,7 @@ jobs:
       VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
       VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
       NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      TF_VAR_vercel_team_id: ${{ vars.VERCEL_TEAM_ID }}
       TF_STATE_PASSPHRASE: ${{ secrets.TF_STATE_PASSPHRASE }}
       TF_VAR_neon_org_id: ${{ vars.NEON_ORG_ID }}
       TF_VAR_api_email_from: ${{ vars.EMAIL_FROM }}
