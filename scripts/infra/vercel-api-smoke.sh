@@ -19,10 +19,10 @@ dep=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&target=produc
 url=${dep% *}; uid=${dep#* }; [ "$url" != null ] || { url=""; uid=""; }
 if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
   url=""
-  echo "No ready production deployment: starting one from main"
+  echo "No ready production deployment: starting one from ${GITHUB_REF_NAME:-main}"
   id=$(curl -fsS -X POST -H "$auth" -H 'Content-Type: application/json' "$api/v13/deployments?forceNew=1&$q" \
-    -d "$(jq -n --arg n "$project" --arg i "$GITHUB_REPOSITORY_ID" \
-      '{name:$n, project:$n, target:"production", gitSource:{type:"github", ref:"main", repoId:($i|tonumber)}}')" | jq -er .id)
+    -d "$(jq -n --arg n "$project" --arg r "${GITHUB_REF_NAME:-main}" --arg i "$GITHUB_REPOSITORY_ID" \
+      '{name:$n, project:$n, target:"production", gitSource:{type:"github", ref:$r, repoId:($i|tonumber)}}')" | jq -er .id)
   for _ in $(seq 1 60); do
     d=$(curl -fsS -H "$auth" "$api/v13/deployments/$id?$q")
     state=$(jq -r .readyState <<<"$d"); echo "deployment $id: $state"
