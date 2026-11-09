@@ -78,8 +78,8 @@ variable "api_serverless_region" {
 
 variable "api_tenant_manifest_path" {
   type        = string
-  description = "TENANT_MANIFEST_PATH for the Vercel API. UNVERIFIED: confirm where includeFiles places the file in the Phase 0 spike."
-  default     = "infra/tenants/pilot.json"
+  description = "TENANT_MANIFEST_PATH for the Vercel API. The build copies infra/tenants/*.json to apps/api/tenants/ and vercel.json bundles it. UNVERIFIED: the runtime cwd; confirm on the first preview."
+  default     = "tenants/pilot.json"
 }
 
 variable "api_origin" {
@@ -109,4 +109,39 @@ variable "manage_neon_test_branch" {
   type        = bool
   description = "Create a copy-on-write Neon branch + pooled endpoint for testing the Vercel API against production-shaped data."
   default     = false
+}
+
+variable "api_use_production_db" {
+  type        = bool
+  description = "CUTOVER STEP: point the Vercel API at the production Neon branch instead of the vercel-test branch."
+  default     = false
+}
+
+# Secrets arrive as TF_VAR_* from CI secrets. State is client-side encrypted on R2 (versions.tf).
+# Use the SAME jwt/pepper values as Render before cutover so sessions and OTPs stay valid.
+variable "api_jwt_access_secret" {
+  type        = string
+  description = "JWT_ACCESS_SECRET for the Vercel API (>= 32 chars). Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_otp_pepper" {
+  type        = string
+  description = "OTP_PEPPER for the Vercel API. Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_resend_api_key" {
+  type        = string
+  description = "RESEND_API_KEY for the Vercel API. Required when manage_vercel_api is true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "api_email_from" {
+  type        = string
+  description = "EMAIL_FROM for the Vercel API (a verified sender, never resend.dev)."
+  default     = ""
 }

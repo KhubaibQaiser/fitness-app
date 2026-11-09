@@ -44,13 +44,7 @@ output "vercel_api_project_id" {
 }
 
 output "database_url_vercel_test_pooled" {
-  description = "Pooled DATABASE_URL for the Vercel API on the Neon test branch (null until manage_neon_test_branch = true)."
-  value = var.manage_neon_test_branch ? format(
-    "postgresql://%s:%s@%s/%s?sslmode=require",
-    neon_project.pilot.database_user,
-    neon_project.pilot.database_password,
-    replace(neon_endpoint.vercel_test[0].host, "/^([^.]+)/", "$1-pooler"),
-    neon_project.pilot.database_name,
-  ) : null
-  sensitive = true
+  description = "Pooled DATABASE_URL on the Neon test branch (null until manage_neon_test_branch = true)."
+  value       = local.vercel_test_pooled_url
+  sensitive   = true
 }
