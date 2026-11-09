@@ -7,6 +7,7 @@ locals {
 }
 
 resource "vercel_project" "web" {
+  team_id         = var.vercel_team_id != "" ? var.vercel_team_id : null
   name            = var.project_name
   framework       = var.vercel_framework
   root_directory  = "apps/web"
@@ -66,7 +67,8 @@ locals {
 }
 
 resource "vercel_project" "api" {
-  count = var.manage_vercel_api ? 1 : 0
+  count   = var.manage_vercel_api ? 1 : 0
+  team_id = var.vercel_team_id != "" ? var.vercel_team_id : null
 
   name            = var.api_project_name
   root_directory  = "apps/api"
@@ -107,11 +109,13 @@ resource "vercel_project" "api" {
 resource "vercel_project_domain" "web" {
   count      = var.web_domain != "" ? 1 : 0
   project_id = vercel_project.web.id
+  team_id    = var.vercel_team_id != "" ? var.vercel_team_id : null
   domain     = var.web_domain
 }
 
 resource "vercel_project_domain" "api" {
   count      = var.manage_vercel_api && var.api_domain != "" ? 1 : 0
   project_id = vercel_project.api[0].id
+  team_id    = var.vercel_team_id != "" ? var.vercel_team_id : null
   domain     = var.api_domain
 }

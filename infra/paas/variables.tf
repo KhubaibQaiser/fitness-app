@@ -145,3 +145,9 @@ variable "api_email_from" {
   description = "EMAIL_FROM for the Vercel API (a verified sender, never resend.dev)."
   default     = ""
 }
+
+variable "vercel_team_id" {
+  type        = string
+  description = "Vercel team ID or slug the projects live in. Empty = personal account."
+  default     = ""
+}
