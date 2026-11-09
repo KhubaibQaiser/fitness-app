@@ -73,8 +73,8 @@ jobs:
       - name: TEMP probe Vercel token scope (status codes only)
         run: |
           T="$VERCEL_TEAM_ID"; H="Authorization: Bearer $VERCEL_API_TOKEN"
-          for u in "v2/user" "v2/teams/$T" "v9/projects/gymos-pilot?teamId=$T" "v9/projects/gymos-pilot" "v10/projects/gymos-pilot/env?teamId=$T" "v9/projects/gymos-pilot/custom-environments?teamId=$T" "v9/projects?teamId=$T&limit=1"; do
-            echo "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" "https://api.vercel.com/$u") ${u//$T/TEAM}"
+          for u in "v2/teams/$T" "v2/teams?limit=1" "v2/user" "v1/teams/$T" "v2/teams/$T/members?limit=1"; do
+            curl -s -o /tmp/p.json -w '%{http_code} ' -H "$H" "https://api.vercel.com/$u"; echo "${u//$T/TEAM} :: $(jq -c '.error // {n:(.teams|length?)}' /tmp/p.json 2>/dev/null | cut -c1-200)"
           done
       - name: Init (R2 backend)
         env:
