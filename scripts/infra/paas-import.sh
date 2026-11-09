@@ -4,13 +4,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/../../infra/paas"
 name="${TF_VAR_project_name:-gymos-pilot}"
-have() { tofu state list | grep -qx "$1"; }
+have() { tofu state list 2>/dev/null | grep -qx "$1"; }
 
 if ! have neon_project.pilot; then
-  id=$(curl -fsS -H "Authorization: Bearer $NEON_API_KEY" "https://console.neon.tech/api/v2/projects?org_id=${TF_VAR_neon_org_id}&limit=400" |
-    jq -r --arg n "$name" '.projects[] | select(.name==$n) | .id' | head -n1)
-  [ -n "$id" ] || { echo "no Neon project named $name: leave it, apply will create it"; id=""; }
-  [ -z "$id" ] || tofu import -input=false neon_project.pilot "$id"
+  code=$(curl -sS -o /tmp/nproj.json -w '%{http_code}' -H "Authorization: Bearer $NEON_API_KEY" \
+    "https://console.neon.tech/api/v2/projects?org_id=${TF_VAR_neon_org_id}&limit=400")
+  [ "$code" = 200 ] || { echo "Neon project lookup failed with HTTP $code: $(jq -r '.message // empty' /tmp/nproj.json 2>/dev/null)"; exit 1; }
+  id=$(jq -r --arg n "$name" '.projects[] | select(.name==$n) | .id' /tmp/nproj.json | head -n1)
+  if [ -n "$id" ]; then tofu import -input=false neon_project.pilot "$id"; else echo "no Neon project named $name: apply will create it"; fi
 fi
 
 if ! have vercel_project.web; then
