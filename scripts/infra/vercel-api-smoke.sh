@@ -15,7 +15,8 @@ dump_logs() { # last build log lines of a deployment (no secrets: Vercel redacts
 bad=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&limit=1&$q" | jq -r '.deployments[0] | select(.state=="ERROR") | .uid // empty')
 [ -z "$bad" ] || { echo "Latest deployment $bad failed; last build log lines:"; dump_logs "$bad"; }
 
-url=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&target=production&state=READY&limit=1&$q" | jq -r '.deployments[0].url // empty')
+dep=$(curl -fsS -H "$auth" "$api/v6/deployments?projectId=$project&target=production&state=READY&limit=1&$q" | jq -r '.deployments[0] | "\(.url) \(.uid)" // empty')
+url=${dep% *}; uid=${dep#* }; [ "$url" != null ] || { url=""; uid=""; }
 if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
   url=""
   echo "No ready production deployment: starting one from main"
@@ -25,7 +26,7 @@ if [ -n "${FORCE_DEPLOY:-}" ] || [ -z "$url" ]; then
   for _ in $(seq 1 60); do
     d=$(curl -fsS -H "$auth" "$api/v13/deployments/$id?$q")
     state=$(jq -r .readyState <<<"$d"); echo "deployment $id: $state"
-    case "$state" in READY) url=$(jq -r .url <<<"$d"); break ;; ERROR|CANCELED) echo "deployment failed: $(jq -r .inspectorUrl <<<"$d")"; dump_logs "$id"; exit 1 ;; esac
+    case "$state" in READY) url=$(jq -r .url <<<"$d"); uid=$id; break ;; ERROR|CANCELED) echo "deployment failed: $(jq -r .inspectorUrl <<<"$d")"; dump_logs "$id"; exit 1 ;; esac
     sleep 10
   done
   [ -n "$url" ] || { echo "deployment timed out"; exit 1; }
@@ -37,9 +38,13 @@ check() { # path, expected status
   if [ "$got" = "$2" ]; then echo "ok $1 -> $got"; return 0; fi
   echo "FAIL $1 -> $got (want $2); body: $(head -c 400 /tmp/smoke.body | tr '\n' ' ')"; return 1
 }
+runtime_logs() { # last runtime log messages of the deployment (stream is cut after 25s)
+  pid=$(curl -fsS -H "$auth" "$api/v9/projects/$project?$q" | jq -r .id)
+  curl -sS --max-time 25 -H "$auth" "$api/v1/projects/$pid/deployments/$uid/runtime-logs?$q" | jq -r '.message // empty' 2>/dev/null | tail -n 40 | cut -c1-400 || true
+}
 rc=0
 check /health/live 200 || rc=1
 check /health/ready 200 || rc=1
 check /internal/cron/nightly 401 || rc=1
-[ "$rc" = 0 ] && echo "OK"
+if [ "$rc" = 0 ]; then echo OK; else echo "Runtime logs of $uid:"; runtime_logs; fi
 exit "$rc"
