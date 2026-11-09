@@ -46,5 +46,9 @@ rc=0
 check /health/live 200 || rc=1
 check /health/ready 200 || rc=1
 check /internal/cron/nightly 401 || rc=1
+if [ "$rc" = 0 ] && [ -n "${PILOT_COACH_PASSWORD:-}" ]; then
+  echo "Acceptance pass against the Neon test branch:"
+  "$(dirname "$0")/vercel-api-acceptance.sh" "https://$url" || rc=1
+fi
 if [ "$rc" = 0 ]; then echo OK; else echo "Runtime logs of $uid:"; runtime_logs; fi
 exit "$rc"
