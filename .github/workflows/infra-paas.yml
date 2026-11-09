@@ -72,6 +72,8 @@ jobs:
         with: { tofu_version: '${{ env.TOFU_VERSION }}', tofu_wrapper: false }
       - name: Read the Neon role password
         run: scripts/infra/neon-role-password.sh
+      - name: TEMP Neon endpoint diagnostics
+        run: scripts/infra/neon-diag.sh
       - name: Init (R2 backend)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
