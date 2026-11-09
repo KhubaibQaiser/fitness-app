@@ -47,8 +47,8 @@ import {
 
 # --- API on Vercel (ADR-0016) -------------------------------------------------
 # Secrets come from CI (TF_VAR_*) and live only in the encrypted R2 state. Nothing is set by hand
-# in the dashboard. The build copies the tenant manifest into the project root so includeFiles
-# needs no "files outside the Root Directory" setting (the provider cannot express it).
+# in the dashboard. The build bundles the workspace TypeScript and the tenant manifest into the
+# function (Vercel's zero-config functions cannot run workspace packages).
 
 resource "random_password" "api_cron" {
   count   = var.manage_vercel_api ? 1 : 0
@@ -57,7 +57,7 @@ resource "random_password" "api_cron" {
 }
 
 locals {
-  api_database_url = var.api_use_production_db ? neon_project.pilot.connection_uri_pooler : local.vercel_test_pooled_url
+  api_database_url = var.api_use_production_db ? local.production_pooled_url : local.vercel_test_pooled_url
 
   api_env_plain = {
     AI_MODE              = "fallback"
@@ -81,8 +81,9 @@ resource "vercel_project" "api" {
   name            = var.api_project_name
   root_directory  = "apps/api"
   install_command = "cd ../.. && corepack enable && pnpm install --frozen-lockfile --filter @gymos/api..."
-  build_command   = "mkdir -p tenants && cp ../../infra/tenants/*.json tenants/"
-  node_version    = "22.x"
+  # Bundles the API into .vercel/output (Build Output API); see apps/api/scripts/build-vercel.mjs.
+  build_command = "node scripts/build-vercel.mjs"
+  node_version  = "22.x"
 
   serverless_function_region = var.api_serverless_region
 
@@ -108,8 +109,8 @@ resource "vercel_project" "api" {
       error_message = "The Vercel API needs a database: enable manage_neon_test_branch or api_use_production_db."
     }
     precondition {
-      condition     = length(var.api_jwt_access_secret) >= 32 && var.api_otp_pepper != "" && var.api_resend_api_key != "" && var.api_email_from != ""
-      error_message = "Set api_jwt_access_secret (>= 32 chars), api_otp_pepper, api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
+      condition     = length(var.api_jwt_access_secret) >= 32 && length(var.api_otp_pepper) >= 32 && var.api_resend_api_key != "" && var.api_email_from != ""
+      error_message = "Set api_jwt_access_secret and api_otp_pepper (both >= 32 chars, as the API requires), api_resend_api_key and api_email_from (TF_VAR_* from CI secrets)."
     }
   }
 }
