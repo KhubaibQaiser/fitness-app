@@ -20,6 +20,10 @@ on:
         description: 'Apply the plan (default: plan only)'
         type: boolean
         default: false
+      show_logs:
+        description: 'Print recent runtime logs of the production API (read-only)'
+        type: boolean
+        default: false
       redeploy_web:
         description: 'After applying, redeploy the production web app (needed for API_ORIGIN changes: it is baked in at build time)'
         type: boolean
@@ -162,3 +166,16 @@ jobs:
           VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
         run: scripts/infra/vercel-redeploy.sh gymos-pilot
+
+  logs:
+    name: API runtime logs
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.show_logs }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Recent runtime logs (newest production deployment)
+        env:
+          VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+        run: scripts/infra/vercel-logs.sh gymos-api
