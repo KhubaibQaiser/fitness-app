@@ -105,6 +105,10 @@ resource "vercel_project" "api" {
 
   lifecycle {
     precondition {
+      condition     = can(regex("^([^<>@\\s][^<>]*<[^<>@\\s]+@[^<>@\\s]+>|[^<>@\\s]+@[^<>@\\s]+)$", var.api_email_from))
+      error_message = "api_email_from must be 'Name <user@domain>' or 'user@domain'; Resend rejects anything else, e.g. a name followed by a bare address."
+    }
+    precondition {
       condition     = var.manage_neon_test_branch || var.api_use_production_db
       error_message = "The Vercel API needs a database: enable manage_neon_test_branch or api_use_production_db."
     }
