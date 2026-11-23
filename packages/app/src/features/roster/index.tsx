@@ -17,14 +17,12 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useClients } from '../../api';
+import { needsAttention } from '../../lib/attention';
 import { AppScreen } from '../shell/app-screen';
 import { RosterRow } from './roster-row';
 import { RosterListSkeleton } from './roster-skeleton';
 
 type FilterId = 'all' | 'attention' | 'on-track' | 'new';
-
-const isAttention = (reasons: { code: string }[]) =>
-  reasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG');
 
 const isNew = (reasons: { code: string }[]) => reasons.some((r) => r.code === 'NEW_CLIENT');
 
@@ -54,23 +52,23 @@ export const RosterScreen = () => {
 
   const items = clients.data?.items ?? [];
   const counts = useMemo(() => {
-    const attention = items.filter((c) => isAttention(c.attentionReasons)).length;
+    const attention = items.filter((c) => needsAttention(c.attentionReasons)).length;
     const neu = items.filter((c) => isNew(c.attentionReasons)).length;
     const onTrack = items.filter(
-      (c) => !isAttention(c.attentionReasons) && !isNew(c.attentionReasons),
+      (c) => !needsAttention(c.attentionReasons) && !isNew(c.attentionReasons),
     ).length;
     return { all: items.length, attention, 'on-track': onTrack, new: neu } as const;
   }, [items]);
 
   const filtered = useMemo(() => {
     let list = items;
-    if (filter === 'attention') list = list.filter((c) => isAttention(c.attentionReasons));
+    if (filter === 'attention') list = list.filter((c) => needsAttention(c.attentionReasons));
     else if (filter === 'new') list = list.filter((c) => isNew(c.attentionReasons));
     else if (filter === 'on-track')
-      list = list.filter((c) => !isAttention(c.attentionReasons) && !isNew(c.attentionReasons));
+      list = list.filter((c) => !needsAttention(c.attentionReasons) && !isNew(c.attentionReasons));
     return [...list].sort((a, b) => {
       const rank = (c: (typeof list)[0]) =>
-        isAttention(c.attentionReasons) ? 0 : isNew(c.attentionReasons) ? 1 : 2;
+        needsAttention(c.attentionReasons) ? 0 : isNew(c.attentionReasons) ? 1 : 2;
       return rank(a) - rank(b) || a.name.localeCompare(b.name);
     });
   }, [items, filter]);

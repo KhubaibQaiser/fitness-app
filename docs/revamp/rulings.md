@@ -113,6 +113,13 @@ The owner's ruling and the parent's proposals that follow from it are kept apart
 - **"Human gate".** Not changed by the #99–#101 merge. O12 later added the revamp exception there.
 - **PR bodies.** #101's PR-contract check reads them, so revamp PRs follow the PR body rules in [`agents.md`](agents.md).
 
+## Rulings during Phase 1 (2026-11-24)
+
+| #   | Item                                                 | Owner's ruling                                                                                  | What follows                                                                                                                                                     |
+| --- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| O13 | Reason badges on phone-width roster rows (B1, FR-C2) | "Keep, fix in S03." Phone rows show "Needs attention" without a separate overdue badge for now. | B1 merges as specified: overdue, off-track and red-flag clients show the status badge only. S03 shows one reason in words on every row (its Status column spec). |
+| O14 | Client-side login timeout (B3)                       | "Keep platform timeouts." No client-side timeout and no contracts change for it.                | B3 maps the platform's network and timeout failures to "Can't reach GymOS. Check your connection." A client timeout stays out of the track.                      |
+
 ## Open items
 
 None. Derived rule D1 stands unless the owner overrules it.
