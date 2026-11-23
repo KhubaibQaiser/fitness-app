@@ -191,13 +191,13 @@ Useful scripts:
 | `pnpm --filter @gymos/web build`            | Production web build               |
 | `pnpm --filter @gymos/api openapi:generate` | Refresh OpenAPI; CI diffs it       |
 
-Agent contract for every tool (where code may live, alignment rules, nutrition rules, merge gates): [`AGENTS.md`](AGENTS.md). Alignment phases: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). Design tokens: [`docs/design-system-reference.md`](docs/design-system-reference.md).
+Agent contract for every tool (where code may live, alignment rules, nutrition rules, merge gates): [`AGENTS.md`](AGENTS.md). Alignment phases: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). UI/UX revamp (tasks, gates, file ownership): [`docs/revamp/`](docs/revamp/README.md). Design tokens: [`docs/design-system-reference.md`](docs/design-system-reference.md).
 
 ---
 
 ## How to work on it
 
-1. **One logical unit per PR.** Name the alignment phase or AI-native track in the PR body. Link a spec under [`docs/specs/`](docs/specs/) or an ADR under [`docs/adr/`](docs/adr/).
+1. **One logical unit per PR.** Name the alignment phase, the AI-native track or the UI revamp task id in the PR body. Link a spec under [`docs/specs/`](docs/specs/) or an ADR under [`docs/adr/`](docs/adr/).
 2. **Put domain writes in `packages/modules` public exports.** `apps/api` only composes.
 3. **Nutrition numbers stay in Layers 1–2.** Layer-3 payloads must pass `assertDeidentified`. Plans stay `DRAFT` until explicit publish.
 4. **Add a test that would have failed before the change.**
@@ -238,6 +238,7 @@ What is measured, what is not, and how to copy the setup: [`docs/ai-native-workf
 | [`docs/adr/`](docs/adr/)                                   | Accepted architecture decisions                        |
 | [`docs/specs/`](docs/specs/)                               | Machine-checkable feature invariants                   |
 | [`docs/roadmap.md`](docs/roadmap.md)                       | Current phase vs later product bets                    |
+| [`docs/revamp/`](docs/revamp/README.md)                    | UI/UX revamp: task specs, gates, status, rulings       |
 | [`docs/runbooks/`](docs/runbooks/)                         | Ops (down, OTP, generation failures, restore)          |
 | [`docs/ai/`](docs/ai/)                                     | Model card, prompt canary, LoRA ops                    |
 | [`docs/pitch/`](docs/pitch/)                               | Technical investor brief                               |

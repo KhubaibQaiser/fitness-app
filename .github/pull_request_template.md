@@ -18,6 +18,7 @@ CODEOWNERS — these paths need explicit human review (agents propose; they do n
 
 - [ ] Roadmap (Phase __ — slice __)
 - [ ] Alignment (P__ — checklist item __)
+- [ ] UI revamp (task __, `docs/revamp/`)
 - [ ] AI-native / agent eval (task: `docs/evals/agent-tasks/…`)
 - [ ] Bugfix / hotfix
 - [ ] Infra / deploy

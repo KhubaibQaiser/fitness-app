@@ -1,5 +1,7 @@
 # GymOS alignment initiative: phases and original prompt
 
+> **UI scope superseded.** The UI/UX revamp track ([`docs/revamp/`](revamp/README.md), ADR-0018) replaces this initiative's re-skin rules and its design reference (`gymos-prototype.jsx`, `gymos-components.jsx`, §0.3) for UI work. The rest of this document still applies.
+
 Moved verbatim from `CLAUDE.md` (the system-prompt blurb, Phase 0, Phases 1 to 4 and the scalability verdict). [`AGENTS.md`](../AGENTS.md) holds the locked answers, operating rules and definition of done, and **wins on conflict**; the design tokens are in [`design-system-reference.md`](design-system-reference.md).
 
 ---
