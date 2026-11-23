@@ -247,6 +247,12 @@ Architecture scorecard of the brownfield repo: [`docs/adr/0007-alignment-audit.m
 
 ---
 
+## Future work
+
+- Custom allergens beyond the fixed list. Not for now ([`docs/revamp/rulings.md`](docs/revamp/rulings.md), O1).
+
+---
+
 ## Security
 
 - **No secrets in git.** `.env.example` is placeholders. gitleaks runs pre-commit, pre-push, and in CI.

@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/clients/[clientId]/vitals/new`, `goal/new` and `dietary`; native equivalents. Presentation comes from F10: a desktop side sheet, a phone full-screen route, and native form sheets with the large detent.
 - **Owned paths:** `packages/app/src/features/vitals-entry/**`, `goal-form/**`, `dietary/**` and their route files.
-- **Depends on:** F10; F7.4 (vitals measurement date); F7.6 (dietary impact preview). The "Other allergen" row is blocked on rulings O1.
+- **Depends on:** F10; F7.4 (vitals measurement date); F7.6 (dietary impact preview).
 - **Evidence:** critique 16, 17 and 20, top-10 #4, bugs 7, 9 and 17, N7; A9.
 
 One pattern, three instances. Each sheet keeps the F10 client header, guards unsaved changes, and closes onto the hub with a toast.
@@ -49,7 +49,7 @@ One pattern, three instances. Each sheet keeps the F10 client header, guards uns
 4. **Save:**
    - Before committing, show F7.6's impact line ("Saving will mark published plan v1 as Needs review."), then confirm.
    - A version history link ("Version 2 · changed 6 Aug").
-5. **"Other allergen":** waits for rulings O1. Until then, keep the fixed list.
+5. **No custom allergens** (rulings O1): keep the fixed list.
 
 ## States
 

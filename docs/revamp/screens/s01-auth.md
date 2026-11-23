@@ -7,12 +7,12 @@
 
   The native `(auth)/_layout.tsx` belongs to F6.
 
-- **Depends on:** F6; F8 (redrawn illustration and the sized hero files).
+- **Depends on:** F6; F8 (the hero component with the current art, at sized files). L1 redraws the art after the track, behind the same component.
 - **Evidence:** critique 01–03, §9.1 #3 and #4, N6 and N8; perf (login LCP 7.1 s, of which 6.6 s is render delay); `docs/specs/public-auth-split-layout.md`.
 
 ## Goal
 
-The auth screens were the quality reference. Restyle them to Floodlight with the redrawn illustration (R5), keep their calm single focus, and surpass them on states.
+The auth screens were the quality reference. Restyle them to Floodlight (R5), keep their calm single focus, and surpass them on states. The illustration keeps today's art until L1 (rulings O6).
 
 ## Changes
 

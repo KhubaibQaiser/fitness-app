@@ -26,7 +26,7 @@ Every problem the audit found has one owning task, so nothing is fixed twice or 
 | 18  | Three date conventions                                     | F2                         | every screen                   |
 | 19  | Accessibility props reach the web DOM as unknown props     | F5                         |                                |
 | 20  | Hydration mismatch on /tools                               | S10                        |                                |
-| 21  | Intake draft in memory only                                | S08                        | F7.9 (O7)                      |
+| 21  | Intake draft in memory only                                | S08                        | F7.9                           |
 | 22  | Empty check-in can be submitted                            | F7.8 (server rule, O9)     | S07 (form)                     |
 | 23  | Verdict lost on refresh                                    | S07                        |                                |
 
@@ -45,7 +45,7 @@ Every problem the audit found has one owning task, so nothing is fixed twice or 
 | N9  | Heavy card shadows                                 | F1 (tokens)         | F5 (card)              |
 | N10 | Web-shaped controls, no haptics                    | F4 (haptics, press) | F5, F6                 |
 | N11 | Inverted selected state in dark segmented controls | F5                  |                        |
-| N12 | Portrait lock with tablet support                  | F6 (after O8)       |                        |
+| N12 | Portrait lock with tablet support                  | F6 (O8)             |                        |
 | N13 | Square-cornered roster search and filter           | S03                 |                        |
 
 ## Cross-cutting (critique §6, top 10, perf)

@@ -22,7 +22,7 @@ Open Dependabot PRs overlap this work: #78, #79, #80, #81, #96, #97 and #98.
    - U3: Expo SDK 58 with React Native 0.88, React 19.3, Reanimated 4.7.1, gesture-handler 3, Skia 2.14, jest 30 and RNTL 14.
    - U4: Tamagui 3.3.3 with config v6 and a project icon set that replaces `@tamagui/lucide-icons-2`.
 2. TypeScript 6/7 and vitest 5 are deferred to future work; they don't block the revamp.
-3. Each upgrade PR lists the Dependabot PRs it supersedes. The owner decides whether those are closed (`docs/revamp/rulings.md`, open items).
+3. Each upgrade PR lists the Dependabot PRs it supersedes. After it merges, the parent closes them with a comment naming the upgrade PR (`docs/revamp/rulings.md`, O3).
 4. Native builds (iOS and Android) are verified for U3 and U4 before the foundation starts. The other MacBook runs Android, per the owner.
 
 ## Consequences

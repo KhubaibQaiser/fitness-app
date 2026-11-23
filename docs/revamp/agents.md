@@ -15,7 +15,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    - its blocking rulings are answered;
    - for visual code, its mock is approved.
 
-   Respect the concurrency cap (rulings O10).
+   At most four builders run at once, each with its reviewer (rulings O10). After the first wave of screens merges, report usage and rebase churn to the owner, who decides whether to raise it.
 
 2. **Create one worktree and branch per task,** off the latest `main`. Worktrees sit outside the main checkout and outside `/tmp` (macOS clears `/private/tmp`), for example `<workspace>/fitness-app-wt/<task-id>`.
 
@@ -44,9 +44,9 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    - CODEOWNERS paths have the owner's approval.
    - Dependency order allows it.
 
-   Use a merge commit. Then rebase every waiting branch that the merge affects and have its builder re-run verification.
+   Use a merge commit. Then rebase every waiting branch that the merge affects and have its builder re-run verification. After a U task merges, close the Dependabot PRs it supersedes, with a comment naming it (rulings O3).
 
-8. **Batch dependency installs and rulings questions** for the owner. Never work around the agent guard.
+8. **Installs and questions.** A builder runs only the installs its task's "Install" line names. Under rulings O5 each one asks the owner to confirm and waits until they do, so batch installs and run them while the owner is at the app. Batch rulings questions for the owner. Never work around the agent guard.
 9. **Update `status.md`** in a small `docs/revamp-status-<date>` PR, at most once a day. Only the parent edits it, so it never conflicts.
 
 **Stop a builder when it:**
@@ -80,7 +80,7 @@ Report back: PR number, what changed, the evidence for each done condition, anyt
 
 - **Test first:** a test that fails before the change.
 - **Commits** are authored as the owner (`khubaibqaiser`, with the owner's commit email), with no `Co-Authored-By` trailer and no PR footer (owner's rule for this repo).
-- **The PR body** follows `.github/pull_request_template.md`, with the "UI revamp" track ticked. It names:
+- **The PR body** follows `.github/pull_request_template.md`. Tick exactly one Track box: "UI revamp" for code, "Docs-only" for a docs PR (the PR-contract check from #101 counts them). Under "Spec / ADR" link `docs/adr/0018-ui-revamp-program.md` as well as the task's spec, because the check looks for a `docs/specs/` or `docs/adr/` path. Before merging, the parent pastes the last clean reviewer's `BLOCKERS: 0, NON-BLOCKING: <n>` line under "## Review". The body names:
   - the task id;
   - the spec section and the ADR;
   - the done conditions, each with its evidence;
@@ -125,4 +125,4 @@ This extends the repo's own `reviewer` agent (`.claude/agents/reviewer.md`) with
 
 ## When the track ends
 
-Q5 folds the lasting rules into `AGENTS.md` and retires this folder's process sections (ADR-0018, "Revisit when").
+Q5 folds the lasting rules into `AGENTS.md` and retires this folder's process sections (ADR-0018, "Revisit when"), except what L1 still needs (its spec section and status row) until L1 merges.

@@ -8,7 +8,7 @@ Serial. One PR each, in order, each rebased on the last. Measured breakage comes
 - `pnpm --filter @gymos/web build` and `npx expo export --platform ios` pass.
 - `pnpm audit --prod --audit-level high` passes.
 - CI green; no behaviour change visible to coaches, except where the task says so.
-- The PR body lists the Dependabot PRs it supersedes (rulings O3).
+- The PR body lists the Dependabot PRs it supersedes. After the merge, the parent closes each with a comment naming this PR (rulings O3).
 
 ---
 

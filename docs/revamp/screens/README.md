@@ -11,7 +11,7 @@ One builder and one reviewer per screen, all in parallel once their gates open (
 | [S05](s05-progress.md)     | Progress (Journey and History merged)   | F10, F9      | F7.3, F7.4                        | 8             |
 | [S06](s06-plan.md)         | Plan tab, plan editor, Review & publish | F10, F9      | F7.3, F7.5                        | 4             |
 | [S07](s07-check-in.md)     | Check-in workspace, verdict, detail     | F10, F9      | F7.8                              | 3             |
-| [S08](s08-intake.md)       | New client intake                       | F6, F9       | F7.9 (O7)                         | 6             |
+| [S08](s08-intake.md)       | New client intake                       | F6, F9       | F7.9                              | 6             |
 | [S09](s09-task-sheets.md)  | Task sheets: vitals, goal, dietary      | F10          | F7.4 (vitals date), F7.6          | 7             |
 | [S10](s10-tools-guides.md) | Tools and Guides                        | F6           | none                              | 10            |
 | [S11](s11-account.md)      | Account                                 | F6           | none                              | 10            |
@@ -25,7 +25,7 @@ Mock priority follows critique §8: Today first, then the hub and the check-in. 
   - A shared component you need goes through the kit lane, and an API change through the contracts lane ([README §6](../README.md#6-file-ownership-and-change-lanes-conflict-prevention)).
   - Importing another feature's exported component is fine. Editing it is not.
 - **Mock first** ([README §7](../README.md#7-gates)):
-  - Light and dark; web 1440 and 390; iOS native chrome; Android Material chrome for S02–S04.
+  - Light and dark; web 1440 and 390; iOS native chrome; tablet in portrait and landscape (rulings O8; the mock proposes the screen's tablet layout, which the specs below don't fix); Android Material chrome for S02–S04.
   - Real states: the overdue-heavy demo data, an empty client, loading, error, plus the states the spec lists.
   - The owner approves before screen code.
 - **Content and copy are shared across platforms; only chrome and interaction differ** (critique §9.5).

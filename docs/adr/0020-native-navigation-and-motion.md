@@ -28,7 +28,8 @@ Motion today is React Native core `Animated` plus Tamagui transitions; Reanimate
    - **Web:** CSS plus React `<ViewTransition>`.
    - **Charts:** stay on react-native-svg with Reanimated animated props. Skia comes in only if a low-end device drops frames.
 5. **Roster → hub**: system push now; a Reanimated shared avatar after the Reanimated version that turns shared transitions on by default lands. `Link.AppleZoom` is not used (alpha).
-6. **Low-end Android**: one motion system. Animations that measure badly are cut; there is no separate "lite" tier.
+6. **Low-end Android**: one motion system. Animations that measure badly are cut; there is no separate "lite" tier. The floor is a low-end phone at most five years old (rulings O2).
+7. **Tablets** (rulings O8): iPad and Android tablets rotate between portrait and landscape; phones stay portrait. The shell and each screen pick the tablet layout by window width, so split screen and web at tablet widths get it too.
 
 ## Consequences
 

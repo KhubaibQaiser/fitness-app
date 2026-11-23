@@ -32,7 +32,7 @@ Today tenant branding is compiled in from `infra/tenants/pilot.json`: only `prim
 **Harder:**
 
 - Floodlight is weaker in light mode: volt drops to olive for marks and text.
-- The auth illustration must be redrawn in Floodlight colours (owner's choice).
+- The auth illustration must be redrawn in Floodlight colours (owner's choice). The redraw comes after the track (task L1, rulings O6); until then the auth pages keep today's art.
 - Sunflower actions need an ink label and border logic.
 - Android glass needs device testing.
 

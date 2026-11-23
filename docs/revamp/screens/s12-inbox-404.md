@@ -4,7 +4,7 @@
   - Web `apps/web/app/(coach)/notifications/page.tsx` (URL stays; named Inbox) and `apps/web/app/not-found.tsx`.
   - Native `notifications` (pushed from the Today bell) and `apps/mobile/app/+not-found.tsx`.
 - **Owned paths:** `packages/app/src/features/notifications/**`, `packages/app/src/features/not-found/**` and those route files.
-- **Depends on:** F6; F7.1 (actionable items, pulse); F8 (art).
+- **Depends on:** F6; F7.1 (actionable items, pulse); F8 (the Inbox clear and 404 illustration slots).
 - **Evidence:** critique 26 and 99, bug 18, N5; A6.
 
 ## Inbox

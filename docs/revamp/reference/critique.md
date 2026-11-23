@@ -1,5 +1,7 @@
 # GymOS web UI/UX critique, ahead of the redesign
 
+> Where this report and [`../rulings.md`](../rulings.md) differ, the rulings win. For example O1 (no custom allergens for now), O8 (tablets in scope) and O9 (weight and adherence always required).
+
 Date: 2026-11-23. Scope: the coach web app, every route captured on 1440x900 desktop and 390x844 phone (light), plus 6 key screens in dark mode. The native iOS and Android screenshots are not in yet (`screens/ios/` and `screens/android/` are empty), so this document covers web only.
 
 > **Update (same day):** native iOS findings are in **section 9**, rewritten from a second, valid capture set (the first set never left the Home screen). Sections 1–8 are unchanged apart from cross-reference notes.

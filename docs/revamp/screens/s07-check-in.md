@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/clients/[clientId]/check-in/page.tsx` and `.../check-ins/[checkInId]/page.tsx`; native equivalents (form sheet, medium detent, from F10).
 - **Owned paths:** `packages/app/src/features/check-in/**` (including `detail.tsx` and `adherence.ts`) and the two route files.
-- **Depends on:** F10; F9 (mini trend); F7.8 (validation and structured reasons, blocked on rulings O9).
+- **Depends on:** F10; F9 (mini trend); F7.8 (validation and structured reasons).
 - **Evidence:** critique 18–19, top-10 #3, bugs 3, 7, 8, 22 and 23, §5.2; A8, A10; `motion.md` §5.6.
 
 ## Goal
@@ -16,10 +16,10 @@ The weekly action. One clear capture of the week, a verdict in plain words, the 
    - A mini weight trend.
    - Current targets.
 2. **Inputs:**
-   - **Weight:** in the coach's unit (bug 7), with the last value shown and a live change ("−0.6 kg in 7 days"). Required unless "No weigh-in this week" is ticked.
+   - **Weight:** in the coach's unit (bug 7), with the last value shown and a live change ("−0.6 kg in 7 days"). Required (rulings O9).
    - **Adherence:** a 5-step control in words: Off plan · A few days · About half · Most days · Every day. Required; it maps to the engine's 1–5 (A8).
    - **Notes:** optional.
-3. **Primary: Get verdict.** Validation follows rulings O9 and is enforced at the server too (bug 22).
+3. **Primary: Get verdict.** Weight and adherence are both required (rulings O9), in the form and at the server (bug 22). A missing one shows an inline error on its field, and the button stays enabled.
 
 ## Verdict
 
