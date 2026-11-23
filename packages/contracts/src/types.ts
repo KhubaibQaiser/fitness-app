@@ -378,6 +378,8 @@ export type Problem = {
   status: number;
   code: string;
   detail?: string;
+  /** Request reference the API logs under; quote it when reporting a failure. */
+  requestId?: string;
 };
 
 export type PlanOp =

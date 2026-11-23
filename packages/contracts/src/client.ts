@@ -18,6 +18,8 @@ export class ApiError extends Error {
     readonly code: string,
     readonly title: string,
     readonly detail?: string,
+    /** The server's reference for this request (problem body `requestId`), when it sent one. */
+    readonly requestId?: string,
   ) {
     super(`${code}: ${title}`);
   }
@@ -72,6 +74,7 @@ const throwApiError = async (response: Response): Promise<never> => {
     problem?.code ?? 'UNKNOWN',
     problem?.title ?? response.statusText,
     problem?.detail,
+    problem?.requestId,
   );
 };
 
@@ -119,6 +122,7 @@ const performRefresh = async (): Promise<boolean> => {
       problem?.code ?? 'UNKNOWN',
       problem?.title ?? response.statusText,
       problem?.detail,
+      problem?.requestId,
     );
   }
   const data = (await response.json()) as T.AuthTokens;
