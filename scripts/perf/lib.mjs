@@ -121,7 +121,7 @@ export const writeResults = (dir, script, scenarios) =>
 
 const fmt = (n) => {
   const abs = Math.abs(n);
-  if (abs > 0 && abs < 1) return n.toFixed(3);
+  if (abs > 0 && abs < 1) return String(+n.toFixed(3));
   return abs < 100 ? String(+n.toFixed(1)) : Math.round(n).toLocaleString('en-US');
 };
 
