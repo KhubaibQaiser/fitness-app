@@ -14,5 +14,5 @@ export const json = <S extends z.ZodType>(schema: S) => ({
 /** Spec-side documentation for error statuses (bodies are problem+json). */
 export const problemDocs = (...statuses: number[]) =>
   Object.fromEntries(
-    statuses.map((status) => [status, { description: 'Problem details', ...json(dto.anyObject) }]),
+    statuses.map((status) => [status, { description: 'Problem details', ...json(dto.problem) }]),
   );
