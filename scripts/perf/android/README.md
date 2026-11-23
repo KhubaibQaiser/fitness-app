@@ -50,7 +50,7 @@ emulator -avd gymos-pixel8 -no-snapshot-save -no-audio &
 adb reverse tcp:8080 tcp:8080 && EXPO_PUBLIC_API_URL=http://localhost:8080 npx expo run:android --variant release
 ```
 
-The per-screen captures in the audit used two audit-only edits (login autofill and a route stepper that logs `[audit-nav]` lines) that are not in this repo and must never be committed. Without them, the capture step in `android-perf.sh` that waits for `[audit-nav]` lines does not apply; cold start, jank, memory and the trace still work. Q0 replaces this with an in-repo capture script.
+The per-screen captures in the audit used two audit-only edits (login autofill and a route stepper that logs `[audit-nav]` lines) that are not in this repo and must never be committed. Without them, the capture step in `android-perf.sh` waits for `[audit-nav]` lines that never come, so the jank, memory and trace steps after it don't run; cold start still works (stop the script with Ctrl-C once `cold-start.txt` is written). The iOS capture (`scripts/visual/ios-capture.mjs`) reaches each screen by deep link instead; this Android step has not been switched to deep links yet.
 
 ## 3. Measure
 
