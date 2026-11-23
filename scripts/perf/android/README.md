@@ -50,12 +50,14 @@ emulator -avd gymos-pixel8 -no-snapshot-save -no-audio &
 adb reverse tcp:8080 tcp:8080 && EXPO_PUBLIC_API_URL=http://localhost:8080 npx expo run:android --variant release
 ```
 
-The per-screen captures in the audit used two audit-only edits (login autofill and a route stepper that logs `[audit-nav]` lines) that are not in this repo and must never be committed. Without them, the capture step in `android-perf.sh` waits for `[audit-nav]` lines that never come, so the jank, memory and trace steps after it don't run; cold start still works (stop the script with Ctrl-C once `cold-start.txt` is written). The iOS capture (`scripts/visual/ios-capture.mjs`) reaches each screen by deep link instead; this Android step has not been switched to deep links yet.
+Open the app once and sign in as the seeded coach (`coach@pilot.local`); the session persists between runs. The script reaches each screen by deep link (`gymos:///<route>`), so the app needs no audit-only edits.
 
 ## 3. Measure
 
+From the repo root of that worktree, with the API still running and `PILOT_COACH_PASSWORD` set to the password the database was seeded with (the script signs in to find which clients to open):
+
 ```bash
-bash android-perf.sh app.gymos.coach out-pixel8
+bash scripts/perf/android/android-perf.sh app.gymos.coach out-pixel8 http://localhost:8080
 ```
 
 Then switch to the budget profile, reinstall, and run it again into `out-budget`.
@@ -69,7 +71,7 @@ What it records, and how to read each:
 | `meminfo.txt`    | `dumpsys meminfo`      | Total PSS memory after visiting every screen                                                                 | stable; watch for growth between runs                                  |
 | `trace.pftrace`  | Perfetto               | A full system trace (CPU per thread, frames, binder, GC) for 20 s                                            | open at ui.perfetto.dev; look for long frames on the UI and JS threads |
 | `run.mp4`        | `screenrecord`         | A video of the whole run, for spotting blank frames and slow skeletons                                       |                                                                        |
-| `screens/*.png`  | `screencap`            | One screenshot per screen the route stepper visits, 4 s after each step                                      | compare with iOS and web                                               |
+| `screens/*.png`  | `screencap`            | One screenshot per coach screen, opened by deep link, 5 s after each                                         | compare with iOS and web                                               |
 
 ## 4. JavaScript profile (optional, debug build)
 
