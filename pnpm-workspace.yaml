@@ -36,8 +36,10 @@ auditConfig:
 # GHSA-jc66-7q78-782g / CVE-2026-118782 (PKCS#12), GHSA-8hrf-8g6f-7xwp /
 # CVE-2026-119188 and GHSA-hqq3-7jhf-c5jx / CVE-2026-119187 (TLS DoS),
 # GHSA-5x38-2vff-x55p / CVE-2026-119190 (basicConstraints). 1.4.2 also restores
-# Buffer input to pem.decode() that 1.4.1 rejected. Only @expo/cli and
-# @expo/code-signing-certificates use it.
+# Buffer input to pem.decode() that 1.4.1 rejected. 1.4.3 (2026-11-04) also fixes
+# GHSA-6889-vf6x-f3g5 (Ed25519 small-order keys), GHSA-w4xr-hqv8-ch44 and
+# GHSA-j8rw-jp99-435v (TLS client crashes) and GHSA-6cv4-p8m7-4r25 (HTTP header
+# ReDoS). Only @expo/cli and @expo/code-signing-certificates use it.
 # Drop an override once the parent package asks for a patched range.
 overrides:
   nanoid@^3: 3.3.18
@@ -53,7 +55,7 @@ overrides:
   piscina@^4: 4.9.4
   shell-quote@^1: 1.12.0
   source-map-js@^1: 1.2.2
-  node-forge@^1: 1.4.2
+  node-forge@^1: 1.4.3
 
 # pnpm 10 blocks postinstall scripts by default; allow only what we vetted.
 onlyBuiltDependencies:
