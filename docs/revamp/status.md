@@ -2,7 +2,7 @@
 
 Only the parent edits this file ([`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-23, when the specs were written, the owner answered O1–O10 and O12, and #99–#101 merged. Nothing has started.
+Last updated: 2026-11-23, when the specs were written, the owner answered O1–O12, and #99–#101 merged. Nothing has started.
 
 ## Phase 1
 
@@ -62,13 +62,13 @@ Last updated: 2026-11-23, when the specs were written, the owner answered O1–O
 
 ## Phase 4
 
-| Id  | Task                    | State         | Notes                                                             |
-| --- | ----------------------- | ------------- | ----------------------------------------------------------------- |
-| Q1  | Visual and states sweep | not started   |                                                                   |
-| Q2  | Performance             | not started   |                                                                   |
-| Q3  | Accessibility and RTL   | not started   |                                                                   |
-| Q4  | Devices                 | blocked (O11) | Physical low-end phone (at most five years old); tablet pass (O8) |
-| Q5  | Release and clean-up    | not started   |                                                                   |
+| Id  | Task                    | State       | Notes                                  |
+| --- | ----------------------- | ----------- | -------------------------------------- |
+| Q1  | Visual and states sweep | not started |                                        |
+| Q2  | Performance             | not started |                                        |
+| Q3  | Accessibility and RTL   | not started |                                        |
+| Q4  | Devices                 | not started | Google Pixel 6 (O11); tablet pass (O8) |
+| Q5  | Release and clean-up    | not started |                                        |
 
 ## After the track
 
@@ -80,12 +80,11 @@ Last updated: 2026-11-23, when the specs were written, the owner answered O1–O
 
 From [`rulings.md`](rulings.md):
 
-- **O11:** name, or lend, the low-end Android phone that runs Q4. Needed before Q4.
 - **D1** (volt only for chart marks) stands unless the owner overrules it.
 
 Order (O4): done on 2026-11-23. On the owner's word the parent merged #99, #100 and #101 into `main`, then merged `main` into this specs PR with the O4 resolution.
 
-Run start (O5): the owner starts the parent session with the install switch `AGENT_GUARD_ALLOW_INSTALL=1` set.
+Run start (O5): the install switch `AGENT_GUARD_ALLOW_INSTALL=1` is set in the main checkout's `.claude/settings.local.json` (local, not committed), so sessions started there get it. Remove it when Q5 merges.
 
 ## Android evidence pending
 

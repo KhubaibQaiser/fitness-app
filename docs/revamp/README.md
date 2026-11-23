@@ -188,7 +188,7 @@ Builder and reviewer briefs follow [`agents.md`](agents.md).
 | Roster longest task (4× CPU)           | 534 ms cold (Lighthouse); 972 ms signed-in  | ≤ 200 ms at 500 clients, signed-in     |
 | Web JS (uncompressed, shared)          | about 1.5 MB                                | ≤ 1.0 MB                               |
 | iOS JS bundle                          | 6.5 MB (7.0 MB Hermes; 9.3 MB after SDK 58) | ≤ 5.0 MB                               |
-| Android cold start (TotalTime, median) | not measured                                | ≤ 1.5 s on the low-end phone (O2, O11) |
+| Android cold start (TotalTime, median) | not measured                                | ≤ 1.5 s on the Google Pixel 6 (O2/O11) |
 | Android janky frames scrolling roster  | not measured                                | ≤ 5%                                   |
 
 ## 10. Task index
