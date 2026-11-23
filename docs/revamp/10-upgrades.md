@@ -1,6 +1,6 @@
 # Phase 1: dependency upgrades
 
-Serial. One PR each, in order, each rebased on the last. Measured breakage comes from the 2026-11-23 spikes ([`reference/upgrades.md`](reference/upgrades.md)); the spike commits sit unpushed in the `upgrade-wt` worktree and may be reused as a starting point.
+Serial. One PR each, in order, each rebased on the last. Measured breakage comes from the 2026-11-23 spikes ([`reference/upgrades.md`](reference/upgrades.md)). The spike commits are not in the repo; the builder redoes each upgrade from `main`, using `reference/upgrades.md` for the known fixes.
 
 **Global done conditions for every U task:**
 

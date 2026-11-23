@@ -50,7 +50,7 @@ emulator -avd gymos-pixel8 -no-snapshot-save -no-audio &
 adb reverse tcp:8080 tcp:8080 && EXPO_PUBLIC_API_URL=http://localhost:8080 npx expo run:android --variant release
 ```
 
-To get the same per-screen captures as iOS, copy the two audit-only edits from the audit worktree (`fitness-app-ui-revamp/mobile-wt`: login autofill in `packages/app/src/features/login/index.tsx` and the route stepper in `apps/mobile/app/(coach)/_layout.tsx`) and add `EXPO_PUBLIC_AUDIT_EMAIL`, `EXPO_PUBLIC_AUDIT_PASSWORD` and `EXPO_PUBLIC_AUDIT_ROUTES` to the build command. Never commit those edits.
+The per-screen captures in the audit used two audit-only edits (login autofill and a route stepper that logs `[audit-nav]` lines) that are not in this repo and must never be committed. Without them, the capture step in `android-perf.sh` that waits for `[audit-nav]` lines does not apply; cold start, jank, memory and the trace still work. Q0 replaces this with an in-repo capture script.
 
 ## 3. Measure
 

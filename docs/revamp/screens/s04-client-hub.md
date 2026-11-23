@@ -4,11 +4,11 @@
 - **Owned paths:**
   - `packages/app/src/features/client-detail/client-hub-overview.tsx`, `client-hub-skeleton.tsx`, `index.tsx`.
   - `packages/app/src/features/client-detail/profile/**` (new).
-  - The Overview and Profile route files.
+  - The Overview route file, and the Profile route file once F10 has created it.
 
   The header, tabs and menu belong to F10; the chart to F9; Progress to S05; the Plan tab to S06.
 
-- **Depends on:** F10; F9; F7.3 (prefetch); F7.7 (collect signature).
+- **Depends on:** F10; F9; F7.3 (prefetch helpers; S04 calls them from its route files); F7.7 (collect signature).
 - **Evidence:** critique 13–15, top-10 #5, bugs 5, 6, 13, 15 and 16, N2; perf (hub API waterfall at 1.9–2.7 s, longest task 281 ms).
 
 ## Goal
@@ -81,4 +81,4 @@ Overview for rich, single-weigh-in, empty and allergic clients; Profile; Collect
   - The collect-signature flow, against F7.7's contract.
   - Planned against actual pace.
 - Perf is recorded with the Q0 harness.
-- The B5 test still passes.
+- The B5 regression is still covered (screens README rule).

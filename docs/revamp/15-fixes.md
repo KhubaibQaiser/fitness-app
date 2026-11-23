@@ -7,15 +7,20 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 - One PR per fix. No two B tasks share a file, so all six can run at once, in parallel with U1–U3.
 - All six merge before U4 starts: its codemod rewrites style props across the tree.
 - Keep today's look. These are logic and layout fixes, not a redesign, so there are no mocks. Screenshots before and after go in the PR.
-- Each fix leaves a regression test. Later screen tasks rebuild these screens and must keep these tests passing, or replace them with equal or stronger ones.
+- Each fix leaves a regression test. Later tasks rebuild these screens and must keep these tests passing, or replace them with equal or stronger ones that cover the same bug.
+- **Web build before U1:** `next build` on 16.4.3 refuses to run under an agent (`SecurityFatalError`), so until U1 merges, B tasks and Q0 take the web build result from CI. CI is not affected.
+- **Order against U3:** U3 moves mobile tests to RNTL 14's async `render`. Whichever of a B task and U3 merges second rebases, and migrates any mobile test it adds or touches.
 - Evidence references (`D/10`, `I/13` and so on) point at the audit captures described in [`reference/critique.md`](reference/critique.md).
 
 ---
 
 ## B1: Attention count includes overdue check-ins
 
-- **Bug:** Home says "All clients are on track today" (Needs attention 0) and the roster's Attention chip shows 0 while every client is 91–109 days overdue. Attention counts only `OFF_TRACK` and `RED_FLAG` (`packages/app/src/features/home/index.tsx:53`, `packages/app/src/features/roster/roster-row.tsx:11-12`), so `CHECKIN_OVERDUE` never counts.
-- **Owned files:** the two files above, plus one shared predicate in `packages/app/src/lib/attention.ts` (new) with its test. If an equivalent rule already exists in `packages/modules`, reuse it instead of adding a second one (read first).
+- **Bug:** Home says "All clients are on track today" (Needs attention 0) and the roster's Attention chip shows 0 while every client is 91–109 days overdue. Attention counts only `OFF_TRACK` and `RED_FLAG`, so `CHECKIN_OVERDUE` never counts. The rule is copied in three places:
+  - `packages/app/src/features/home/index.tsx:57-61` (at risk and on track);
+  - `packages/app/src/features/roster/roster-row.tsx:14-15` (`isAttention`, also used at :67 and :73);
+  - `packages/app/src/features/roster/index.tsx:26` (`isAttention`, feeding the Attention chip count at :57 and the filter and sort at :67-73).
+- **Owned files:** the three files above, plus one shared predicate in `packages/app/src/lib/attention.ts` (new) with its test. If an equivalent rule already exists in `packages/modules`, reuse it instead of adding a second one (read first).
 - **Done when:**
   - Home and the roster use the same predicate.
   - `CHECKIN_OVERDUE`, `OFF_TRACK` and `RED_FLAG` count as needing attention.
@@ -43,23 +48,24 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 - **Owned files:** `packages/app/src/features/login/**`.
 - **Mapping:**
 
-  | Failure                  | Message                                                                                                           |
-  | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-  | 401                      | Email or password is incorrect                                                                                    |
-  | 429                      | The current wait message                                                                                          |
-  | Network error or timeout | "Can't reach GymOS. Check your connection." plus **Try again**                                                    |
-  | 5xx                      | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one |
-  | Anything else            | Shown as an error with the status, never as wrong credentials                                                     |
+  | Failure                                                            | Message                                                                                                           |
+  | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+  | 401                                                                | Email or password is incorrect                                                                                    |
+  | 429                                                                | The current wait message                                                                                          |
+  | Account locked (FR-C1; read the auth route for the status it uses) | The current lockout message, with when to try again                                                               |
+  | Network error or timeout                                           | "Can't reach GymOS. Check your connection." plus **Try again**                                                    |
+  | 5xx                                                                | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one |
+  | Anything else                                                      | Shown as an error with the status, never as wrong credentials                                                     |
 
   Each failure is logged with the operation, status and cause, and never the email or password.
 
-- **Done when:** one test per row fails on `main` and passes after; screenshots of the network-error state on web and iOS.
+- **Done when:** one test per row fails on `main` and passes after (the 429 and lockout rows may already pass: say so in the PR); screenshots of the network-error state on web and iOS.
 
 ## B4: Native shell: top safe area and the active tab
 
 - **Bugs:**
   - N1: titles and controls sit under the status bar and Dynamic Island on every coach screen. The shell applies only the bottom inset (`packages/app/src/features/shell/app-shell.tsx:67-77`), and `Screen` uses a fixed `paddingTop: '$5'` (`packages/ui/src/components/screen.tsx:8`).
-  - N3: the tab bar reads Solito's native `usePathname` (`app-shell.tsx:5,63`), which resolves to the layout's route. Home is always active, and the tab bar shows on task screens.
+  - N3: the tab bar reads Solito's native `usePathname` (`app-shell.tsx:5`, read at :63 and again at :125), which resolves to the layout's route. Home is always active, and the tab bar shows on task screens.
 - **Owned files:**
   - `packages/app/src/features/shell/app-shell.tsx` and `use-app-chrome.ts` with its test.
   - `packages/ui/src/components/screen.tsx`.
@@ -71,7 +77,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
   - No `Platform.OS` in `packages/app`.
 - **Done when:**
   - The chrome-policy test covers native paths.
-  - iOS simulator screenshots of all 22 coach routes (first viewport) show nothing under the system UI.
+  - iOS simulator screenshots of every coach route under `apps/mobile/app/(coach)/` (19 route files today; first viewport) show nothing under the system UI.
   - The correct tab is active on each primary route.
   - There is no tab bar on intake, vitals, goal, check-in, check-in detail, dietary or the plan editor.
   - Android screenshots are added when the owner runs the kit; they don't block the merge (tracked in `status.md`).

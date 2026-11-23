@@ -4,7 +4,7 @@
 - **Owned paths:** `packages/app/src/features/roster/**` and the two route files.
 - **Depends on:** F6; F7.2 (roster v2).
 - **Install (if chosen):** `@shopify/flash-list` for native recycling. The builder decides between it and a tuned `FlatList` by measurement, recorded in the PR.
-- **Evidence:** critique 11, bugs 1, 12 and 14, N13; perf (5,795 DOM nodes, 590 ms cold TBT, 1.4 s signed-in TBT, 534 ms longest task at 170 clients).
+- **Evidence:** critique 11, bugs 1, 12 and 14, N13; perf (5,795 DOM nodes, 590 ms cold TBT, 1.4 s signed-in TBT; longest task 534 ms cold and 972 ms signed-in at 170 clients).
 
 ## Goal
 

@@ -22,42 +22,43 @@ Last updated: 2026-11-23, when the specs were written. Nothing has started.
 
 ## Phase 2
 
-| Id   | Task                                 | Depends on | Mock                 | State        | Branch / PR | Notes                                  |
-| ---- | ------------------------------------ | ---------- | -------------------- | ------------ | ----------- | -------------------------------------- |
-| F1   | Tokens, themes, tenant               | U4         | token sheet          | not started  |             | `pilot.json` is CODEOWNERS             |
-| F2   | Type, RTL, formatters                | F1         | type sheet           | not started  |             | Font installs (O5)                     |
-| F3   | Glass                                | F1         | glass sheet          | not started  |             | Installs (O5); Android gate in Q4      |
-| F4   | Motion, haptics                      | F1         | motion demo          | not started  |             | `expo-haptics` (O5)                    |
-| F5   | Component kit                        | F2, F3, F4 | kit sheet            | not started  |             |                                        |
-| F6   | Navigation shells                    | F5         | shells               | not started  |             | O8 for orientation                     |
-| F7.1 | Today queue and pulse                | U2         |                      | not started  |             |                                        |
-| F7.2 | Roster v2                            | U2         |                      | not started  |             |                                        |
-| F7.3 | Prefetch and public config           | U2         |                      | not started  |             |                                        |
-| F7.4 | Progress series, vitals date         | U2         |                      | not started  |             |                                        |
-| F7.5 | Plan versions and review data        | U2         |                      | not started  |             |                                        |
-| F7.6 | Dietary impact preview               | U2         |                      | not started  |             |                                        |
-| F7.7 | Intake drafts, signature later       | U2         |                      | blocked (O7) |             |                                        |
-| F7.8 | Check-in validation, verdict reasons | U2         |                      | blocked (O9) |             | May touch `packages/core` (CODEOWNERS) |
-| F8   | Illustrations and images             | F1         | illustration set     | blocked (O6) |             |                                        |
-| F9   | Charts                               | F2, F4     | chart states         | not started  |             |                                        |
-| F10  | Client shell                         | F6         | header, tabs, sheets | not started  |             |                                        |
+| Id   | Task                                 | Depends on     | Mock                 | State        | Branch / PR | Notes                                  |
+| ---- | ------------------------------------ | -------------- | -------------------- | ------------ | ----------- | -------------------------------------- |
+| F1   | Tokens, themes, tenant               | U4             | token sheet          | not started  |             | `pilot.json` is CODEOWNERS             |
+| F2   | Type, RTL, formatters                | F1             | type sheet           | not started  |             | Font installs (O5)                     |
+| F3   | Glass                                | F1             | glass sheet          | not started  |             | Installs (O5); Android gate in Q4      |
+| F4   | Motion, haptics                      | F1             | motion demo          | not started  |             | `expo-haptics` (O5)                    |
+| F5   | Component kit                        | F2, F3, F4     | kit sheet            | not started  |             |                                        |
+| F6   | Navigation shells                    | F5, F7.1, F7.2 | shells               | not started  |             | O8 for orientation                     |
+| F7.1 | Today queue and pulse                | U2             |                      | not started  |             |                                        |
+| F7.2 | Roster v2                            | U2             |                      | not started  |             |                                        |
+| F7.3 | Prefetch and public config           | U2             |                      | not started  |             |                                        |
+| F7.4 | Progress series, vitals date         | U2             |                      | not started  |             |                                        |
+| F7.5 | Plan versions and review data        | U2             |                      | not started  |             |                                        |
+| F7.6 | Dietary impact preview               | U2             |                      | not started  |             |                                        |
+| F7.7 | Signature later                      | U2             |                      | not started  |             |                                        |
+| F7.8 | Check-in validation, verdict reasons | U2             |                      | blocked (O9) |             | May touch `packages/core` (CODEOWNERS) |
+| F7.9 | Intake drafts                        | U2             |                      | blocked (O7) |             |                                        |
+| F8   | Illustrations and images             | F1             | illustration set     | blocked (O6) |             |                                        |
+| F9   | Charts                               | F2, F4         | chart states         | not started  |             |                                        |
+| F10  | Client shell                         | F6             | header, tabs, sheets | not started  |             |                                        |
 
 ## Phase 3
 
-| Id  | Screen                   | Starts after        | Mock        | State       | Branch / PR | Notes                         |
-| --- | ------------------------ | ------------------- | ----------- | ----------- | ----------- | ----------------------------- |
-| S01 | Auth                     | F6, F8              | not started | not started |             |                               |
-| S02 | Today                    | F6, F8, F7.1        | not started | not started |             | Mock priority 1               |
-| S03 | Clients                  | F6, F7.2            | not started | not started |             |                               |
-| S04 | Hub overview and profile | F10, F9, F7.3, F7.7 | not started | not started |             |                               |
-| S05 | Progress                 | F10, F9, F7.4       | not started | not started |             |                               |
-| S06 | Plan                     | F10, F9, F7.5       | not started | not started |             |                               |
-| S07 | Check-in                 | F10, F9, F7.8       | not started | not started |             |                               |
-| S08 | Intake                   | F6, F9, F7.7        | not started | not started |             |                               |
-| S09 | Task sheets              | F10, F7.4, F7.6     | not started | not started |             | "Other allergen" waits for O1 |
-| S10 | Tools and guides         | F6                  | not started | not started |             |                               |
-| S11 | Account                  | F6                  | not started | not started |             |                               |
-| S12 | Inbox and 404            | F6, F8, F7.1        | not started | not started |             |                               |
+| Id  | Screen                   | Starts after                       | Mock        | State                  | Branch / PR | Notes                                          |
+| --- | ------------------------ | ---------------------------------- | ----------- | ---------------------- | ----------- | ---------------------------------------------- |
+| S01 | Auth                     | F6, F8                             | not started | not started            |             |                                                |
+| S02 | Today                    | F6, F8, F7.1 (F7.9 for draft rows) | not started | not started            |             | Mock priority 1. Intake-draft rows wait for O7 |
+| S03 | Clients                  | F6, F7.2                           | not started | not started            |             |                                                |
+| S04 | Hub overview and profile | F10, F9, F7.3, F7.7                | not started | not started            |             |                                                |
+| S05 | Progress                 | F10, F9, F7.3, F7.4                | not started | not started            |             |                                                |
+| S06 | Plan                     | F10, F9, F7.3, F7.5                | not started | not started            |             |                                                |
+| S07 | Check-in                 | F10, F9, F7.8                      | not started | blocked (O9, via F7.8) |             | Mock can start                                 |
+| S08 | Intake                   | F6, F9, F7.9                       | not started | blocked (O7, via F7.9) |             | Mock can start                                 |
+| S09 | Task sheets              | F10, F7.4, F7.6                    | not started | not started            |             | "Other allergen" waits for O1                  |
+| S10 | Tools and guides         | F6                                 | not started | not started            |             |                                                |
+| S11 | Account                  | F6                                 | not started | not started            |             |                                                |
+| S12 | Inbox and 404            | F6, F8, F7.1                       | not started | not started            |             |                                                |
 
 ## Phase 4
 

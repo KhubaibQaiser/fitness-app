@@ -13,7 +13,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 - **Goal:** one generated Floodlight token source for web and native, with the Sunflower brand derived at runtime from one hex per tenant.
 - **Depends on:** U4.
 - **Evidence:** ADR-0019; [`reference/tokens.md`](reference/tokens.md) §2, §4.3, §5.2, §6.3–6.4, §11; [`reference/tokens.floodlight.json`](reference/tokens.floodlight.json).
-- **Also owns:** `packages/platform/src/theme-mode*` (follow system, three states).
+- **Also owns:** `packages/platform/src/theme-mode*` (follow system, three states) and the provider files the runtime theme needs: `packages/app/src/provider/**`, `apps/web/components/NextTamaguiProvider*`, and the theme part of `apps/mobile/src/mobile-providers.tsx`. F2 edits the font part of that file after F1 merges.
 - **Requirements:**
   1. **Three layers:**
      - Primitives in `tokens.color`.
@@ -73,7 +73,8 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   5. **RTL-ready:**
      - `<html lang dir>` on web, from the locale.
      - A lint rule bans physical direction props (`marginLeft`, `paddingRight`, `left`, `right`, `borderLeftWidth` and the rest) in `packages/app` and `packages/ui`.
-     - Convert the existing 24 uses, except in files F3 and F4 own, which convert their own.
+     - Convert the existing uses: 36 in 15 files, measured on 2026-11-23 (`pace-slider.tsx` 10; `weight-chart-layout.ts` 4; `app-shell.tsx` 4; 2 each in `weight-chart.tsx`, `notification-row.tsx`, `gymos-sheet.tsx`, `form-field.tsx`, `client-hub-more-menu.tsx` and `auth-hero-column.tsx`; 1 each in `pace-slider-math.ts`, `vitals-entry-skeleton.tsx`, `client-journey-map.tsx`, `client-hub-skeleton.tsx`, `check-in-detail-skeleton.tsx` and `auth-form-column.tsx`). Re-count at the start; the PR lists every file.
+     - **One-time ownership exception:** F2 may edit those files, and only their direction props. No other task is active in them while F2 runs (F3, F4 and F8 own none of them), and their later owners (F5, F6, F9, F10, S01, S04, S05, S07, S09) start after F2 merges.
      - Directional icons get a mirror flag, which F5 applies.
      - Digits stay Western (T7).
   6. **Formatters** in `packages/app/src/lib/format/` (new), with hoisted `Intl` instances and locale en-PK:
@@ -91,10 +92,12 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - **Status words.** One exhaustive mapping from every engine enum to label, icon and tone: client status, check-in verdict, plan status, notification kind. Unknown values throw.
        - Examples: "Check-in 109 d overdue", "Not enough data yet", "On track", "Draft v2", "Needs review".
        - A client with no weigh-ins since the start reads "No weigh-ins since 6 Aug", not "Needs focus" (bug 13).
+     - **Pace.** One label source for a goal's pace (Gentle · Standard · Faster · Custom) and its kg/week display, built on `lib/goal-pace.ts` and `lib/pace-control.ts`. The goal form, the Plan tab, intake and Tools all read it. Find why one client reads "Custom pace" on the goal form and "Standard · 0.51 kg/wk" on the Plan tab (bug 9) and fix the cause here; S09 and S06 switch their screens to this formatter.
 - **Mock:** type sheet. Scale on web, iOS and Android; Latin and Urdu samples with line heights; tabular numbers; label-fit examples at large Dynamic Type.
 - **Done when:**
   - The global conditions hold.
   - Formatter unit tests run under `TZ=Asia/Karachi` and `TZ=UTC`, with exhaustive enum tests.
+  - A pace test: the bug-9 client's goal gives the same label from every entry point.
   - The physical-props lint passes with zero exceptions.
   - The iOS login screenshot shows Inter.
   - Font files are not in the English web bundle (bundle report).
@@ -136,7 +139,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 - **Install:** `expo-haptics` (SDK 58 version).
 - **Requirements:**
   1. **`packages/ui/src/motion/tokens.ts`:**
-     - Durations: 80, 140, 220, 320, `draw` 600, `stamp` 520, `reducedFade` 120.
+     - Durations: `instant` 80, `fast` 140, `base` 220, `slow` 320, `draw` 600, `stamp` 520, `reducedFade` 120 (names and uses in `motion.md` §3.1).
      - Easings: standard, emphasized, exit, ink, linear.
      - Springs: `snappy` and `soft`, with explicit `mass`.
      - Stagger 30 ms × 5; distances `nudge` 2, `rise` 8, `shift` 24, `travel` 32; press scale 0.97 for buttons and 0.98 for cards.
@@ -195,7 +198,6 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   | Icon               | Project icon set (U4) with a mirror-in-RTL flag.                                                                                                                                                            |
   | Switch             | iOS switch on iOS, Material switch on Android and web.                                                                                                                                                      |
   | Pace slider        | Labelled stops (Gentle · Standard · Faster) and a labelled floor marker; `select` and `bound` haptics.                                                                                                      |
-  | Macro bar          | Value against target with the tolerance band. Replaces rings (motion.md §5.5).                                                                                                                              |
   | States             | Empty state with an F8 illustration slot; error with retry (`role="alert"`); loading (`role="status"`).                                                                                                     |
 
 - **Kit-wide requirements:**
@@ -207,14 +209,14 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   - The global conditions hold.
   - Every component has render, role and label tests and state tests.
   - A web test renders the kit with React's console watched: no unknown-prop warnings.
-  - The roster CPU profile is recorded before and after on the 170-client synthetic data (Q0 harness), with `@tamagui/web`'s share reported. The screen budget is enforced in S03.
+  - The roster CPU profile is recorded before and after on the 170-client synthetic data (Q0 harness), and `@tamagui/web`'s share of roster script time is below the 55% baseline. The screen budget itself is enforced in S03.
   - The date picker dependency is gone from the bundle.
 - **Reviewer focus:** pre-disabled buttons, colour-only states, physical props, missing web ARIA mapping, per-render style objects in rows.
 
 ## F6: Navigation shells
 
 - **Goal:** the Today · Clients · Tools · Account IA (A6) as a real native app on iOS and Android, and a fast, keyboard-friendly web shell. Screens stay shared; only the shell splits (ADR-0020).
-- **Depends on:** F5 (and the B4 pathname façade).
+- **Depends on:** F5; F7.1 (the bell reads the pulse) and F7.2 (`⌘K` client search); the B4 pathname façade.
 - **Evidence:** critique §4, §9.1, §9.3 (N1, N3, N4, N10, N12) and §9.5; `motion.md` §4.
 - **Install:** none expected. The native tabs and stacks ship with Expo Router.
 - **Requirements:**
@@ -252,7 +254,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 
 ## F7: Data lane
 
-The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>`) against `apps/api`, `packages/modules`, `packages/contracts` and `packages/app/src/api`. Screens consume merged contracts and never edit them.
+The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>`) against `apps/api`, `packages/modules`, `packages/contracts`, `packages/app/src/api` and `apps/web/lib/prefetch-*`. Screens consume merged contracts and never edit them.
 
 **Every slice:**
 
@@ -262,17 +264,20 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
 - Luxon only in `packages/modules`, never `new Date()`.
 - Read the existing module functions first, and reuse rather than duplicate.
 - Any change under `packages/core` needs the owner's review (CODEOWNERS).
+- **Additive only.** A slice adds endpoints or optional fields and never removes or changes a shape that live screens still read (today's roster, Home, `prefetch-coach.ts` and the shell read `/v1/clients`, the due check-ins and the unread count). The task that migrates the last consumer, or Q5, removes the old shape.
+- **Call sites belong to the screen.** A slice delivers hooks and prefetch helpers. The task that owns a route file wires them in: F6 for `(coach)/layout.tsx`, S02 for Today, S03 for Clients, S04–S06 for the hub routes. The slice merges first.
 
-| Slice                                            | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | For                    |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| **F7.1 Today queue and pulse**                   | `GET /v1/today` returns the grouped queue and the counts from one source: red flags, plans blocked (NEEDS_REVIEW), overdue (sorted by days), due today, drafts awaiting publish, intake drafts (after F7.7). Each item carries a reason in data (kind, days overdue, last weight date) for the UI to phrase. `GET /v1/pulse` returns the unread count, the Today counts and an ETag; it answers `304` to `If-None-Match`. The client polls with backoff (30 s active, 2 min idle, paused in background), replaces today's separate pollers, and invalidates queries when the ETag changes. | S02, S12, F6 bell      |
-| **F7.2 Roster v2**                               | Keyset pagination (50 per page), server-side search, status filter and sort. Row fields: status reason (same rule as F7.1), last check-in date, next due date, current weight and change since start (metric), plan status and version, last adherence (1–5). Remove anything only the "Progress" placeholder used.                                                                                                                                                                                                                                                                        | S03, F6 palette search |
-| **F7.3 Prefetch and public config**              | Server prefetch for the hub, Progress, Plan and Profile routes in the pattern of `apps/web/lib/prefetch-coach.ts`. `/v1/config/public` served with the HTML or cached (ETag and `Cache-Control`).                                                                                                                                                                                                                                                                                                                                                                                          | S04, S05, S06          |
-| **F7.4 Progress series**                         | Check-ins with weight, change and adherence on one time axis with vitals and plan events. Date-only fields cross the API as `YYYY-MM-DD`. Find the cause of the one-day shift between History and Journey (bug 4), fix it at its source, and test it. A measurement date on vitals entries so a reading can be back-dated, if the contract lacks one.                                                                                                                                                                                                                                      | S05, S09               |
-| **F7.5 Plan versions and review data**           | All versions with status (live, draft, needs review, superseded); per-day drift against target; the allergen check result before and after solving (FR-C7); enough data for a diff against the live version (or proof that the client can compute it from two payloads); discarding a draft, if no endpoint exists.                                                                                                                                                                                                                                                                        | S06                    |
-| **F7.6 Dietary impact preview**                  | A dry run of a dietary profile change that reports which live plans would flip to NEEDS_REVIEW, without writing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | S09                    |
-| **F7.7 Intake drafts and signature later**       | Blocked on rulings O7. Draft save, resume, list and discard, scoped to the coach. A "collect signature" endpoint for an existing unsigned client that stores the signed intake exactly as onboarding does.                                                                                                                                                                                                                                                                                                                                                                                 | S04, S08, S02          |
-| **F7.8 Check-in validation and verdict reasons** | Blocked on rulings O9. Server-side rule: weight required unless "no weigh-in this week"; adherence required. Verdict reasons cross as structured data (code plus parameters) so the UI phrases them, fixing "have 3 over 0.04" (bug 8). If the reason text comes from `packages/core`, the change needs the owner's review.                                                                                                                                                                                                                                                                | S07                    |
+| Slice                                            | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | For                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **F7.1 Today queue and pulse**                   | `GET /v1/today` returns the grouped queue and the counts from one source: red flags, plans blocked (NEEDS_REVIEW), overdue (sorted by days), due today, drafts awaiting publish, and intake drafts once F7.9 lands. Each item carries a reason in data (kind, days overdue, last weight date) for the UI to phrase. `GET /v1/pulse` returns the unread count, the Today counts and an ETag; it answers `304` to `If-None-Match`. The client hook polls with backoff (30 s active, 2 min idle, paused in background) and invalidates queries when the ETag changes. Consumers (F6 bell, S02, S12) switch to it and drop the old pollers; the old endpoints stay (additive rule). | S02, S12, F6 bell      |
+| **F7.2 Roster v2**                               | Keyset pagination (50 per page), server-side search, status filter and sort. Row fields: status reason (same rule as F7.1), last check-in date, next due date, current weight and change since start (metric), plan status and version, last adherence (1–5). Today's `/v1/clients` shape stays until S03 and F6 have moved off it.                                                                                                                                                                                                                                                                                                                                             | S03, F6 palette search |
+| **F7.3 Prefetch and public config**              | Server prefetch helpers for the hub, Progress, Plan and Profile routes in the pattern of `apps/web/lib/prefetch-coach.ts`; S04, S05 and S06 call them from their route files. `/v1/config/public` served with the HTML or cached (ETag and `Cache-Control`).                                                                                                                                                                                                                                                                                                                                                                                                                    | S04, S05, S06          |
+| **F7.4 Progress series**                         | Check-ins with weight, change and adherence on one time axis with vitals and plan events. Date-only fields cross the API as `YYYY-MM-DD`. Find the cause of the one-day shift between History and Journey (bug 4), fix it at its source, and test it. A measurement date on vitals entries so a reading can be back-dated, if the contract lacks one.                                                                                                                                                                                                                                                                                                                           | S05, S09               |
+| **F7.5 Plan versions and review data**           | All versions with status (live, draft, needs review, superseded); per-day drift against target; the allergen check result before and after solving (FR-C7); enough data for a diff against the live version (or proof that the client can compute it from two payloads); discarding a draft, if no endpoint exists.                                                                                                                                                                                                                                                                                                                                                             | S06                    |
+| **F7.6 Dietary impact preview**                  | A dry run of a dietary profile change that reports which live plans would flip to NEEDS_REVIEW, without writing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | S09                    |
+| **F7.7 Signature later**                         | A "collect signature" endpoint for an existing unsigned client that stores the signed intake exactly as onboarding does. Not blocked.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | S04                    |
+| **F7.8 Check-in validation and verdict reasons** | Blocked on rulings O9. Server-side rule: weight required unless "no weigh-in this week"; adherence required. Verdict reasons cross as structured data (code plus parameters) so the UI phrases them, fixing "have 3 over 0.04" (bug 8). If the reason text comes from `packages/core`, the change needs the owner's review.                                                                                                                                                                                                                                                                                                                                                     | S07                    |
+| **F7.9 Intake drafts**                           | Blocked on rulings O7. Draft save, resume, list and discard, scoped to the coach, deleted on create or after the retention O7 sets.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | S08, S02 (via F7.1)    |
 
 - **Done when (per slice):** the global conditions hold, plus the tests above; the API p50 stays in the baseline range on the synthetic data (Q0 harness); for F7.2, the roster response size at 170 clients is recorded before and after.
 
@@ -289,13 +294,13 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - Inbox clear
      - 404
      - Generic error
-  3. Prefer theme-aware SVG. Where raster is needed: AVIF or WebP with responsive sizes on web through `next/image`, and optimised PNG on native.
-  4. Re-export the 512×512 app icon (385 KB, fetched on every page) with the same artwork, optimised. The login hero (435 KB) goes through `next/image`.
+  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and optimised PNG for native. The screen that shows an image owns how it's delivered: S01 serves the login hero (435 KB today, `auth-hero-column.tsx:8`) at responsive sizes in a modern format.
+  4. Re-export the 512×512 app icon (`apps/web/app/icon.png`, 385 KB, fetched on every page; and `apps/mobile/assets/icon.png`) with the same artwork, optimised.
 - **Mock:** the illustration set on light and dark surfaces next to the Floodlight UI.
 - **Done when:**
   - The global conditions hold.
-  - Lighthouse's image audits (modern formats, properly sized) pass on login and Today.
-  - Byte sizes before and after are in the PR.
+  - Byte sizes before and after are in the PR, for every image F8 replaces.
+  - Lighthouse's "modern image formats" and "properly size images" audits no longer flag the app icon on Today. The login hero is S01's done condition.
   - Every illustration has empty `alt` or an accessible label, as fits its role.
 
 ## F9: Charts
@@ -323,7 +328,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - Use the F2 date formatters.
   5. **Goal progress and macros:**
      - Goal progress becomes one line ("43% · 4.5 kg to go · on pace for 24 Jan 2027").
-     - Macro bars show value against target with the tolerance band.
+     - Macro bars (`packages/ui/src/components/macro-bar.tsx`, new; F9 is the only owner) show value against target with the tolerance band, fiber included.
      - Build the WeaveLine for the Progress tab (A20, `motion.md` §5.15).
      - Leave the old ring and donut components in place for their callers; Q5 deletes them once unused.
 - **Mock:** chart states (normal, single weigh-in, no goal, scrub, table view) in light and dark, plus the WeaveLine.
@@ -354,7 +359,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - On Android: a top app bar with overflow, and an extended FAB "Check-in" on the hub.
   3. **Hub tabs:**
      - Overview · Progress · Plan · Profile: tabs on web, a segmented control on iOS, top tabs on Android.
-     - Add `progress` and `profile` routes; `journey` and `history` redirect to `progress` on web and native.
+     - Create the `progress` and `profile` route files on web and native. Until S05 and S04 replace them, Progress renders the existing Journey and Profile renders the hub's existing identity and contact facts. Turn the `journey` and `history` route files into redirects to `progress`. F10 owns these route files until it merges; then S05 owns Progress and S04 owns Profile.
   4. **Task presentation** (vitals, goal, dietary, check-in, check-in detail):
      - **Desktop:** a 480 px side sheet over the hub, with the URL changing. A direct load renders the full page with the header (for example Next parallel and intercepting routes; record the choice).
      - **Phone web:** a full-screen route with the header and no tab bar.

@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/clients/new/page.tsx`; native `clients/new`, presented full screen with no tab bar (F6).
 - **Owned paths:** `packages/app/src/features/client-onboarding/**` (the signature pad and phone field moved to the kit in F5) and the two route files.
-- **Depends on:** F6; F9 (the projected journey); F7.7 (drafts, blocked on rulings O7).
+- **Depends on:** F6; F9 (the projected journey); F7.9 (drafts, blocked on rulings O7).
 - **Evidence:** critique 12, top-10 #9, bugs 15 and 21, §5.1; A11; `motion.md` §5.8.
 
 ## Goal
@@ -47,7 +47,7 @@ Capture a new client in five steps without losing work, show the safety picture 
 
 ## Drafts (A11)
 
-- **Autosave** on every step change, through F7.7 (or device storage, per O7).
+- **Autosave** on every step change, through F7.9 (or device storage, per O7).
 - **Resume:**
   - Today lists "Resume intake: Sara, step 3 of 5".
   - Opening it restores every field and the step.

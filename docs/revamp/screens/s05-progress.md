@@ -4,8 +4,8 @@
 - **Owned paths:**
   - `packages/app/src/features/client-journey/**`.
   - `packages/app/src/features/client-detail/client-hub-journey.tsx` and `client-hub-history.tsx` (merged, then deleted).
-  - The Progress route files.
-- **Depends on:** F10; F9 (chart, WeaveLine); F7.4 (progress series).
+  - The Progress route files, once F10 has created them (the `journey` and `history` redirects stay F10's).
+- **Depends on:** F10; F9 (chart, WeaveLine); F7.3 (prefetch helper, called from the route file); F7.4 (progress series).
 - **Evidence:** critique 21–22, bug 4, N2; A7, A20; `motion.md` §5.3 and §5.15.
 
 ## Goal

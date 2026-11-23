@@ -26,7 +26,7 @@ Calculators that show results as you type, and Guides that read like articles an
 2. **How meals are planned:** each pattern is a labelled proportional bar ("Breakfast 28% · Lunch 47% · Dinner 25%"), replacing the button-like chips.
 3. **How targets work:** keep the five numbered steps. Every section has a stable anchor for deep links from the goal form, intake and the plan editor.
 4. **Copy:** drop the "Layer 1" and "Layer 2" badges and developer phrasing ("Same keys as the generate screen").
-5. **Contextual help:** export the targets explainer so other features can show it in a side sheet (S09 hand-off).
+5. **Contextual help:** export the targets explainer so other features can show it in a side sheet (S09 hand-off). Keep the existing export's name and props, and keep existing anchors; add new ones only.
 
 ## States
 
@@ -36,6 +36,10 @@ Default; invalid input (inline, results hidden with a reason); loading of public
 
 Tools on desktop and phone; both Guides; light and dark; iOS.
 
+## Performance
+
+Cold phone LCP 2.5 s or less on `/tools`; no long task over 200 ms at 4× CPU while typing in a calculator.
+
 ## Done when
 
 - The global conditions hold.
@@ -43,3 +47,5 @@ Tools on desktop and phone; both Guides; light and dark; iOS.
 - The anchor deep-link test passes.
 - The Playwright console shows no hydration warning on `/tools`.
 - No mid-word breaks on iOS.
+- The explainer export keeps its name and props (a test imports it as S09 does).
+- Perf is recorded with the Q0 harness.

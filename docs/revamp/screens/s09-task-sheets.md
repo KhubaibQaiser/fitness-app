@@ -35,7 +35,7 @@ One pattern, three instances. Each sheet keeps the F10 client header, guards uns
      - **The projected goal date.**
      - The safety state in words.
 2. **"How it works"** opens the targets explainer in a side sheet (screens README hand-offs), so the coach never navigates away from unsaved changes.
-3. **Pace label:** the label shown here and on the Plan tab come from one F2 pace formatter. Find why this client reads "Custom pace" here but "Standard" on the Plan tab, and fix the cause (bug 9).
+3. **Pace label:** read it from the F2 pace formatter, which fixes the cause of bug 9 ("Custom pace" here against "Standard" on the Plan tab). S06 reads the same formatter.
 4. **Phone:** a single column, with the outcome card as a compact sticky bar ("2,261 kcal · goal ~24 Jan").
 5. **Copy:** drop marketing lines ("The AI never invents numbers").
 

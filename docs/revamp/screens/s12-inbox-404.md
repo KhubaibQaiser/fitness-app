@@ -45,4 +45,5 @@ Inbox desktop, phone and iOS; 404 in the shell and public; light and dark.
   - Mark read and mark all read.
   - Coach-initiated events are excluded.
   - 404 inside the shell when signed in, and public when signed out.
-- The B6 tests still pass.
+- The B6 regression is still covered (screens README rule).
+- Inbox: cold phone LCP 2.5 s or less, and no polling except the F7.1 pulse (perf recorded with the Q0 harness).

@@ -4,31 +4,31 @@ Every problem the audit found has one owning task, so nothing is fixed twice or 
 
 ## Bugs (critique §7)
 
-| #   | Bug                                                        | Owner                  | Also touches                   |
-| --- | ---------------------------------------------------------- | ---------------------- | ------------------------------ |
-| 1   | Attention ignores CHECKIN_OVERDUE                          | B1                     | S02, S03 via F7.1, F7.2        |
-| 2   | Empty draft dead end with Publish                          | B2                     | S06                            |
-| 3   | Adherence % stored as 1–5, shown as ~% or /10              | F2 (formatter)         | S07 (control), S05, S03        |
-| 4   | Journey dates one day later than History                   | F7.4 (cause)           | F2 (date-only formatting), S05 |
-| 5   | Chart window ends before the projected goal date           | F9                     | S04                            |
-| 6   | False "Onboarding incomplete" banner, no way to sign       | S04                    | F7.7                           |
-| 7   | Unit preferences ignored (vitals, check-in, roster, Home)  | F2 (formatters)        | S09, S07, S03, S02             |
-| 8   | Verdict reason missing its unit                            | F7.8                   | S07                            |
-| 9   | "Custom pace" against "Standard" for the same client       | S09                    | S06 uses the same formatter    |
-| 10  | Plan tab hides the live plan                               | S06                    | F7.5                           |
-| 11  | Targets styled like totals; fiber missing in the editor    | S06                    | F9 (macro bars)                |
-| 12  | Desktop roster drops CHECKIN_OVERDUE                       | S03                    |                                |
-| 13  | "Needs focus" for missing data; "−0.0 kg" in success green | F2 (status words)      | S04, F9                        |
-| 14  | Roster "Progress" placeholder column                       | S03                    | F7.2                           |
-| 15  | Age 30 assumed silently                                    | S08                    | S04 (Profile, Next steps)      |
-| 16  | Phone numbers render raw                                   | F2                     | S04                            |
-| 17  | "Picked by the AI planner" copy                            | S09                    |                                |
-| 18  | Three date conventions                                     | F2                     | every screen                   |
-| 19  | Accessibility props reach the web DOM as unknown props     | F5                     |                                |
-| 20  | Hydration mismatch on /tools                               | S10                    |                                |
-| 21  | Intake draft in memory only                                | S08                    | F7.7 (O7)                      |
-| 22  | Empty check-in can be submitted                            | F7.8 (server rule, O9) | S07 (form)                     |
-| 23  | Verdict lost on refresh                                    | S07                    |                                |
+| #   | Bug                                                        | Owner                      | Also touches                   |
+| --- | ---------------------------------------------------------- | -------------------------- | ------------------------------ |
+| 1   | Attention ignores CHECKIN_OVERDUE                          | B1                         | S02, S03 via F7.1, F7.2        |
+| 2   | Empty draft dead end with Publish                          | B2                         | S06                            |
+| 3   | Adherence % stored as 1–5, shown as ~% or /10              | F2 (formatter)             | S07 (control), S05, S03        |
+| 4   | Journey dates one day later than History                   | F7.4 (cause)               | F2 (date-only formatting), S05 |
+| 5   | Chart window ends before the projected goal date           | F9                         | S04                            |
+| 6   | False "Onboarding incomplete" banner, no way to sign       | S04                        | F7.7                           |
+| 7   | Unit preferences ignored (vitals, check-in, roster, Home)  | F2 (formatters)            | S09, S07, S03, S02             |
+| 8   | Verdict reason missing its unit                            | F7.8                       | S07                            |
+| 9   | "Custom pace" against "Standard" for the same client       | F2 (pace formatter, cause) | S09 and S06 switch to it       |
+| 10  | Plan tab hides the live plan                               | S06                        | F7.5                           |
+| 11  | Targets styled like totals; fiber missing in the editor    | S06                        | F9 (macro bars)                |
+| 12  | Desktop roster drops CHECKIN_OVERDUE                       | S03                        |                                |
+| 13  | "Needs focus" for missing data; "−0.0 kg" in success green | F2 (status words)          | S04, F9                        |
+| 14  | Roster "Progress" placeholder column                       | S03                        | F7.2                           |
+| 15  | Age 30 assumed silently                                    | S08                        | S04 (Profile, Next steps)      |
+| 16  | Phone numbers render raw                                   | F2                         | S04                            |
+| 17  | "Picked by the AI planner" copy                            | S09                        |                                |
+| 18  | Three date conventions                                     | F2                         | every screen                   |
+| 19  | Accessibility props reach the web DOM as unknown props     | F5                         |                                |
+| 20  | Hydration mismatch on /tools                               | S10                        |                                |
+| 21  | Intake draft in memory only                                | S08                        | F7.9 (O7)                      |
+| 22  | Empty check-in can be submitted                            | F7.8 (server rule, O9)     | S07 (form)                     |
+| 23  | Verdict lost on refresh                                    | S07                        |                                |
 
 ## Native (critique §9.3)
 

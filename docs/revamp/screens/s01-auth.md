@@ -35,7 +35,7 @@ Idle; field errors; submitting; wrong credentials; can't reach GymOS; server tro
 
 ## Performance
 
-Login LCP 2.5 s or less on a cold phone load (baseline 7.1 s). The LCP text must paint from server HTML without waiting for client JavaScript.
+Login LCP 2.5 s or less on a cold phone load (baseline 7.1 s). The LCP text must paint from server HTML without waiting for client JavaScript. The hero image (435 KB today, `auth-hero-column.tsx:8`) is served at responsive sizes in a modern format from F8's assets; record the mechanism in the PR.
 
 ## Mock
 
@@ -51,4 +51,5 @@ Login, signup and forgot password with OTP; light and dark; web 1440 and 390; iO
   - The error mapping per status still passes.
   - Focus moves to the first error.
 - Login LCP is recorded with the Q0 harness and meets the budget.
+- Lighthouse's "modern image formats" and "properly size images" audits pass on login.
 - Screenshots of every state.

@@ -5,7 +5,7 @@
   - `packages/app/src/features/plan/**`.
   - `packages/app/src/features/client-detail/client-hub-plan.tsx`.
   - The two route files.
-- **Depends on:** F10; F9 (macro bars); F4 (`stamp`); F7.5 (versions and review data).
+- **Depends on:** F10; F9 (macro bars); F4 (`stamp`); F7.3 (prefetch helpers, called from the route files); F7.5 (versions and review data); the F2 pace formatter for the goal context.
 - **Evidence:** critique 23–25, top-10 #2, bugs 2, 10 and 11, §5.3; A19; `motion.md` §5.7; ADR-0001.
 - **Out of scope:**
   - Custom food items and count-based portions ("3 boiled egg whites"): a separate meal-planner track.
@@ -100,5 +100,5 @@ Plan tab (each status), editor desktop and phone, the Review & publish sheet, ne
   - Undo restores the prior days.
   - Publish requires the review checkbox.
 - Safety: numbers come only from API data; nothing is computed from the language model.
-- The B2 tests still pass.
+- The B2 regressions are still covered (screens README rule).
 - Perf is recorded.

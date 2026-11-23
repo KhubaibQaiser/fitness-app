@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/page.tsx` (`/`); native: the Today tab root (route file placed by F6).
 - **Owned paths:** `packages/app/src/features/home/**` and the two route files.
-- **Depends on:** F6; F7.1 (queue and pulse); F7.7 for intake-draft rows (render them once F7.7 merges); F8 (first-run art).
+- **Depends on:** F6; F7.1 (queue and pulse); F7.9 for intake-draft rows (blocked on O7; render them once F7.9 merges); F8 (first-run art).
 - **Evidence:** critique 10, top-10 #1, §4, §5.2, §8 #1; `motion.md` §5.1; perf (Today LCP 3.5 s cold phone).
 
 ## Goal
@@ -68,4 +68,4 @@ Populated, all clear, first run, loading, error; light and dark; web 1440 and 39
   - First-run and error states.
   - Keyboard shortcuts.
 - Perf is recorded with the Q0 harness.
-- The B1 test still passes.
+- The B1 regression is still covered (screens README rule).

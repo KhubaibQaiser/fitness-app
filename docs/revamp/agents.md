@@ -51,7 +51,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
 
 **Stop a builder when it:**
 
-- edits a path it doesn't own;
+- edits a path it doesn't own (the only exceptions are the shared config files in README §6 and a one-time exception a spec grants by name, such as F2's direction-prop conversion);
 - adds a dependency;
 - changes a contract outside F7;
 - reaches into another task's scope.
