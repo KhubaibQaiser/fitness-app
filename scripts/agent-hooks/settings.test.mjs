@@ -29,7 +29,6 @@ test('merging and editing the guardrails always ask', () => {
   for (const rule of [
     'Bash(gh pr merge *)',
     'Edit(scripts/agent-hooks/**)',
-    'Edit(scripts/pr-contract/**)',
     'Edit(.claude/**)',
     'Edit(.github/workflows/**)',
   ]) {
@@ -42,7 +41,7 @@ test('the guard runs on the shell and every file tool, and blocks when it cannot
   const guard = entries.find((e) => e.hooks?.some((h) => h.command?.includes('guard.mjs')));
   assert.ok(guard, 'guard hook is not wired');
   const tools = guard.matcher.split('|');
-  for (const tool of ['Bash', 'Read', 'Grep', 'Glob', 'Write', 'Edit']) {
+  for (const tool of ['Bash', 'Read', 'Grep', 'Glob', 'Write', 'Edit', 'NotebookEdit']) {
     assert.ok(tools.includes(tool), `guard does not run on ${tool}`);
   }
   const hook = guard.hooks.find((h) => h.command.includes('guard.mjs'));

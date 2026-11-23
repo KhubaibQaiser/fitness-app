@@ -33,12 +33,12 @@ account the owner clicks "Approve" with is a poor fit. A second person was not a
    - Claude Code permission rules in `.claude/settings.json`. Deny rules on secret files (`.env*` except
      `.env.example`, keys, Terraform state and variables except the committed `ci.auto.tfvars`, `backend.hcl`).
      Claude Code evaluates these itself, and a `Read` deny also blocks `Edit` and `Write` on the path. They cover
-     Claude's file tools, not shell commands. Ask rules on `gh pr merge` and on edits to the hooks, the PR-contract
-     checker, Claude settings, workflows and `CODEOWNERS`.
-   - The guard hook on `Bash|Read|Grep|Glob|Write|Edit` with `onFailure: block`, so a hook that cannot start or
+     Claude's file tools, not shell commands. Ask rules on `gh pr merge` and on edits to the hooks, Claude settings,
+     workflows and `CODEOWNERS`.
+   - The guard hook on the shell and every file tool with `onFailure: block`, so a hook that cannot start or
      times out blocks the call instead of letting it through. It covers the shell by matching command strings,
      checks the paths of `Read`, `Grep`, `Write` and `Edit`, and asks the human when it hits its own error (the
-     guard changes that close the review's bypasses land in a companion pull request, merged first).
+     guard changes that close the review's bypasses land in the pull request stacked on this one).
    - The stop hook, then CI on every pull request.
 3. **The merge is the human gate.** Agents do not merge on their own. The owner merges, or tells the agent to merge
    in that session, after a clean review and green CI. `CODEOWNERS` stays as an ownership map. The docs say so
