@@ -29,6 +29,7 @@ test('merging and editing the guardrails always ask', () => {
   for (const rule of [
     'Bash(gh pr merge *)',
     'Edit(scripts/agent-hooks/**)',
+    'Edit(scripts/pr-contract/**)',
     'Edit(.claude/**)',
     'Edit(.github/workflows/**)',
     'Edit(lefthook.yml)',

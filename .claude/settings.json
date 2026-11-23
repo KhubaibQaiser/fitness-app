@@ -17,6 +17,7 @@
     "ask": [
       "Bash(gh pr merge *)",
       "Edit(scripts/agent-hooks/**)",
+      "Edit(scripts/pr-contract/**)",
       "Edit(.claude/**)",
       "Edit(.github/workflows/**)",
       "Edit(.github/CODEOWNERS)",

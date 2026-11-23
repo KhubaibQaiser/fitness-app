@@ -6,8 +6,8 @@ The idea behind all of it: **rules are advice; hooks and CI are enforcement.** C
 
 ## 1. Instructions: short, one source, only what an agent cannot infer
 
-- [`AGENTS.md`](../AGENTS.md) (77 lines) is the single contract for every agent: where code may live, the locked product answers and operating rules, what is denied, required outputs, the definition of done and the merge gates. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) is five lines that import it with `@AGENTS.md`. No tool gets different rules.
-- Two things moved out of the always-loaded files because they are reference data, not rules: the phase-by-phase plan ([`alignment-initiative.md`](alignment-initiative.md)) and the design token tables ([`design-system-reference.md`](design-system-reference.md)). `AGENTS.md` links to both. Imports do not reduce context cost, because imported files load with the file that imports them, so Claude Code now loads 5 + 77 = 82 lines at session start. Before this change it loaded 276 lines and never saw the execution contract.
+- [`AGENTS.md`](../AGENTS.md) (79 lines) is the single contract for every agent: where code may live, the locked product answers and operating rules, what is denied, required outputs, the definition of done and the merge gates. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) is five lines that import it with `@AGENTS.md`. No tool gets different rules.
+- Two things moved out of the always-loaded files because they are reference data, not rules: the phase-by-phase plan ([`alignment-initiative.md`](alignment-initiative.md)) and the design token tables ([`design-system-reference.md`](design-system-reference.md)). `AGENTS.md` links to both. Imports do not reduce context cost, because imported files load with the file that imports them, so Claude Code now loads 5 + 79 = 84 lines at session start. Before this change it loaded 276 lines and never saw the execution contract.
 - Four Cursor rules (56 lines in total, all always on, Cursor only): module boundaries, nutrition safety, verification, minimal diffs. The lines in them that `AGENTS.md` did not already say were copied into `AGENTS.md`, so Claude Code gets them too.
 - The repo pins one skill (`archify`, locked by hash in `skills-lock.json`) for the architecture diagrams and one MCP server, for Cursor only (version pinned in `.cursor/mcp.json`), that gives read-only access to the OpenAPI folder. Claude Code reads the spec file directly. `.cursorignore` keeps `.env`, key files and Terraform state out of the editor's context.
 
@@ -22,7 +22,7 @@ Plain Node scripts with no dependencies, wired for both tools: [`.cursor/hooks.j
 [`.claude/settings.json`](../.claude/settings.json) also holds permission rules, which Claude Code evaluates itself, so they hold even if a hook script breaks ([permissions docs](https://code.claude.com/docs/en/permissions)).
 
 - **Denied:** reading `.env*` (except `.env.example`), key files (`*.pem`, `*.key`, `*.p12`, `*.pfx`), Terraform state and variables (except the committed `ci.auto.tfvars`), `backend.hcl` and `credentials*.json`. A `Read` deny also blocks `Edit` and `Write` on the same path. These rules cover Claude's file tools; shell commands are the guard's job.
-- **Asks first:** `gh pr merge`, and edits to `scripts/agent-hooks/`, `.claude/`, `.github/workflows/`, `CODEOWNERS`, `lefthook.yml` and `.cursor/hooks.json`, so an agent cannot quietly loosen its own guardrails or merge.
+- **Asks first:** `gh pr merge`, and edits to `scripts/agent-hooks/`, `scripts/pr-contract/`, `.claude/`, `.github/workflows/`, `CODEOWNERS`, `lefthook.yml` and `.cursor/hooks.json`, so an agent cannot quietly loosen its own guardrails or merge.
 
 ### Guard: [`scripts/agent-hooks/guard.mjs`](../scripts/agent-hooks/guard.mjs)
 
@@ -51,7 +51,8 @@ Runs when an agent says it is done. It runs `format:check`, `lint`, `typecheck` 
 
 ## 4. CI and supply chain
 
-- **Merge gates** (`.github/workflows/ci.yml`): gitleaks over the full history, format, lint with module boundaries, typecheck, OpenAPI drift, tests, hook tests, web build, Playwright login smoke, production dependency audit, iOS Metro export.
+- **Merge gates** (`.github/workflows/ci.yml`): gitleaks over the full history, format, lint with module boundaries, typecheck, OpenAPI drift, tests, hook tests, PR-contract tests, the agent diff scorer's bans and `app.ts` line budget, web build, Playwright login smoke, production dependency audit, iOS Metro export.
+- **PR contract** ([`pr-contract.yml`](../.github/workflows/pr-contract.yml)): reads the pull request body and fails unless exactly one Track is ticked, a spec or ADR is linked under "Spec / ADR", and the reviewer's `BLOCKERS: <n>, NON-BLOCKING: <n>` line sits under "Review" with zero blockers. Docs-only PRs need only the Track, and Dependabot is skipped. It turns the PR template's three required parts from advice into a check. It cannot tell whether the review really ran, only that the author says so, and a PR can edit the checker it runs (the owner's merge catches that).
 - **Actions are pinned to commit SHAs**, with the release tag in a comment, and every job has a `timeout-minutes`. Dependabot updates both the actions and npm dependencies monthly ([`dependabot.yml`](../.github/dependabot.yml)). Packages bound to the Expo SDK are left out on purpose: they move together with the SDK.
 - **The production audit is a gate, not a report.** `pnpm audit --prod --audit-level high` fails CI. Transitive fixes are `overrides` in `pnpm-workspace.yaml` with the advisory ids; an advisory with no usable patch goes in `auditConfig.ignoreCves` with a reason and a removal condition. The gate earned its place on 2026-10-24: new advisories had turned it red on every PR, and [#67](https://github.com/KhubaibQaiser/fitness-app/pull/67) took the tree from 43 findings (5 critical, 16 high) to 13 (0 critical; the 4 high ones are ignored with reasons).
 - **Secrets:** gitleaks runs pre-commit, pre-push and in CI. GitHub secret scanning with push protection is on as a second net.
@@ -59,7 +60,7 @@ Runs when an agent says it is done. It runs `format:check`, `lint`, `typecheck` 
 
 ## 5. Evals for agent work
 
-[`docs/evals/`](evals/) holds frozen task tickets (three so far) and a deterministic scorer, [`scripts/eval-agent-diff.sh`](../scripts/eval-agent-diff.sh). It reuses the merge gates and adds bans: `new Date()` in persistence packages, raw `fetch` in `packages/app`, and a line budget for `apps/api/src/app.ts`. No LLM judge. One run is recorded so far (2026-08-19).
+[`docs/evals/`](evals/) holds frozen task tickets (three so far) and a deterministic scorer, [`scripts/eval-agent-diff.sh`](../scripts/eval-agent-diff.sh). It reuses the merge gates and adds bans: `new Date()` in persistence packages, raw `fetch` in `packages/app`, and a line budget for `apps/api/src/app.ts`. No LLM judge. CI runs the bans and the line budget on every pull request (`EVAL_SKIP_TURBO=1`, since CI already runs the gates); the full scorer runs locally when scoring an agent task. One task run is recorded so far (2026-08-19).
 
 ## What is measured, and what is not
 
@@ -67,8 +68,8 @@ Measured:
 
 | What                                      | Number                                                                     | How                                                          |
 | ----------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Claude Code instructions at session start | 276 lines (no contract) → 82 lines (with contract)                         | line counts                                                  |
-| `AGENTS.md`, always loaded                | 41 → 77 lines (now includes the alignment rules)                           | line counts                                                  |
+| Claude Code instructions at session start | 276 lines (no contract) → 84 lines (with contract)                         | line counts                                                  |
+| `AGENTS.md`, always loaded                | 41 → 79 lines (now includes the alignment rules)                           | line counts                                                  |
 | Hook and settings tests                   | 40 pass, run in CI                                                         | `pnpm test:agent-hooks`                                      |
 | Stop hook, full gates on this repo        | 26 seconds                                                                 | one run on the author's laptop, warm caches                  |
 | Production audit                          | 43 findings (5 critical, 16 high) → 13 (0 critical, 4 high, all 4 ignored) | `pnpm audit --prod --audit-level high`, before and after #67 |

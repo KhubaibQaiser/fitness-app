@@ -16,6 +16,7 @@
     "lint": "eslint . --max-warnings 0",
     "test": "turbo run test",
     "test:agent-hooks": "node --test \"scripts/agent-hooks/*.test.mjs\"",
+    "test:pr-contract": "node --test \"scripts/pr-contract/*.test.mjs\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "security:secrets": "gitleaks git --redact",

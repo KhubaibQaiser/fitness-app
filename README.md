@@ -224,7 +224,7 @@ Claude Code is the main agent and Cursor a backup. Both read the same contract, 
 | Stop hook               | Runs format, lint, typecheck and tests before an agent may finish.                                                                           | [`scripts/agent-hooks/`](scripts/agent-hooks/)     |
 | Reviewer subagent       | Reviews a diff in a fresh context, read-only, against `AGENTS.md`. The owner's merge is the human gate.                                      | `.cursor/agents/`, `.claude/agents/`               |
 | CI and repository rules | The merge gates above are required on `main`. Actions are pinned to commits and the production audit is a gate.                              | [`.github/`](.github/)                             |
-| Agent evals             | Frozen tickets scored by a deterministic script, no LLM judge.                                                                               | [`docs/evals/`](docs/evals/)                       |
+| Agent evals             | Frozen tickets scored by a deterministic script, no LLM judge. CI runs its bans on every PR and checks the PR body against the contract.     | [`docs/evals/`](docs/evals/)                       |
 
 What is measured, what is not, and how to copy the setup: [`docs/ai-native-workflow.md`](docs/ai-native-workflow.md).
 
