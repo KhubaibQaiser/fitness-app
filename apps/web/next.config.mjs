@@ -10,6 +10,9 @@ const nextConfig = {
   // VERCEL=1 and expects default Next output + NFT traces; standalone makes
   // onBuildComplete look for missing `.next/next-server.js.nft.json`.
   ...(process.env.VERCEL ? {} : { output: 'standalone' }),
+  // Stop `next dev` from rewriting apps/web/AGENTS.md on every run; the repo-root
+  // AGENTS.md is the agent contract.
+  agentRules: false,
   transpilePackages: [
     'react-native',
     'react-native-web',

@@ -4,7 +4,7 @@ Read this before any edit. It is the single set of rules for every coding agent 
 
 Phase sequencing: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). Design tokens and component inventory (read before UI work): [`docs/design-system-reference.md`](docs/design-system-reference.md). Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-alignment-audit.md). Nutrition safety: [`docs/adr/0001-hybrid-ai-nutrition.md`](docs/adr/0001-hybrid-ai-nutrition.md). Feature specs: [`docs/specs/`](docs/specs/).
 
-`apps/web/AGENTS.md` is Next.js auto-generated boilerplate. Do not treat it as this repo's harness.
+`apps/web/AGENTS.md` is a short pointer back to this file plus a note to read Next.js's bundled docs. Do not treat it as this repo's harness. `agentRules: false` in `apps/web/next.config.mjs` stops `next dev` from rewriting it.
 
 ## Product alignment (locked answers: do not re-ask, do not silently reverse)
 
