@@ -204,7 +204,7 @@ Agent contract for every tool (where code may live, alignment rules, nutrition r
 5. **Verify** `pnpm lint`, `pnpm typecheck`, and scoped `pnpm test` (full workspace if `packages/contracts` or shared types changed). Touching web/app/ui/platform also needs `pnpm --filter @gymos/web build`.
 6. **UI changes need screenshots in the PR body.** Use a direct `raw.githubusercontent.com` URL or a GitHub-uploaded image. A relative path does not render on the pull request page.
 
-`CODEOWNERS` requires human review on `packages/core`, `packages/ai`, and `infra/`. Agents propose; they do not bypass that.
+The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` records who owns `packages/core`, `packages/ai` and `infra/`. Agents propose; the owner's merge, after a fresh-context review and green CI, is the human gate ([ADR-0017](docs/adr/0017-claude-code-primary-and-agent-guardrails.md)).
 
 ### CI merge gates
 

@@ -54,8 +54,9 @@ docs/architecture/*.visual-check.*
 .claude/settings.local.json
 CLAUDE.local.md
 
-# Agent transcripts saved by editor extensions (SpecStory). Local only.
+# Agent transcripts and plugin state saved by editor extensions and agent plugins. Local only.
 .specstory/
+.impeccable/
 
 # Graphify output is local (rebuild with `graphify`). Do not commit the dump.
 graphify-out/

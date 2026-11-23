@@ -21,8 +21,8 @@ Plain Node scripts with no dependencies, wired for both tools: [`.cursor/hooks.j
 
 [`.claude/settings.json`](../.claude/settings.json) also holds permission rules, which Claude Code evaluates itself, so they hold even if a hook script breaks ([permissions docs](https://code.claude.com/docs/en/permissions)).
 
-- **Denied:** reading `.env*` (except `.env.example`), key files (`*.pem`, `*.key`, `*.p12`, `*.pfx`), Terraform state and variables, `backend.hcl` and `credentials*.json`. A `Read` deny also blocks `Edit` and `Write` on the same path.
-- **Asks first:** `gh pr merge`, and edits to `scripts/agent-hooks/`, `.claude/`, `.github/workflows/` and `CODEOWNERS`, so an agent cannot quietly loosen its own guardrails or merge.
+- **Denied:** reading `.env*` (except `.env.example`), key files (`*.pem`, `*.key`, `*.p12`, `*.pfx`), Terraform state and variables (except the committed `ci.auto.tfvars`), `backend.hcl` and `credentials*.json`. A `Read` deny also blocks `Edit` and `Write` on the same path. These rules cover Claude's file tools; shell commands are the guard's job.
+- **Asks first:** `gh pr merge`, and edits to `scripts/agent-hooks/`, `scripts/pr-contract/`, `.claude/`, `.github/workflows/` and `CODEOWNERS`, so an agent cannot quietly loosen its own guardrails or merge.
 
 ### Guard: [`scripts/agent-hooks/guard.mjs`](../scripts/agent-hooks/guard.mjs)
 

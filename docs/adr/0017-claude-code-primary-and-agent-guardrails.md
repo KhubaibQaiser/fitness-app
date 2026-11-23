@@ -31,24 +31,30 @@ account the owner clicks "Approve" with is a poor fit. A second person was not a
    reviewer and MCP server stay as they are.
 2. **Guardrails in layers, each covering the others' gaps:**
    - Claude Code permission rules in `.claude/settings.json`. Deny rules on secret files (`.env*` except
-     `.env.example`, keys, Terraform state and variables, `backend.hcl`). Claude Code evaluates these itself, and a
-     `Read` deny also blocks `Edit` and `Write` on the path. Ask rules on `gh pr merge` and on edits to the hooks,
-     Claude settings, workflows and `CODEOWNERS`.
+     `.env.example`, keys, Terraform state and variables except the committed `ci.auto.tfvars`, `backend.hcl`).
+     Claude Code evaluates these itself, and a `Read` deny also blocks `Edit` and `Write` on the path. They cover
+     Claude's file tools, not shell commands. Ask rules on `gh pr merge` and on edits to the hooks, the PR-contract
+     checker, Claude settings, workflows and `CODEOWNERS`.
    - The guard hook on `Bash|Read|Grep|Glob|Write|Edit` with `onFailure: block`, so a hook that cannot start or
-     times out blocks the call instead of letting it through.
+     times out blocks the call instead of letting it through. It covers the shell by matching command strings,
+     checks the paths of `Read`, `Grep`, `Write` and `Edit`, and asks the human when it hits its own error (the
+     guard changes that close the review's bypasses land in a companion pull request, merged first).
    - The stop hook, then CI on every pull request.
-3. **The merge is the human gate.** Agents never merge on their own. The owner merges, or tells the agent to merge
+3. **The merge is the human gate.** Agents do not merge on their own. The owner merges, or tells the agent to merge
    in that session, after a clean review and green CI. `CODEOWNERS` stays as an ownership map. The docs say so
-   plainly.
-4. **Local agent transcripts stay out of git.** `.specstory/` and `CLAUDE.local.md` are ignored.
+   plainly. This is policy backed by prompts, not a lock: Claude Code asks before `gh pr merge`, and the guard asks
+   before GitHub API writes, but an agent determined to merge could still find another route.
+4. **Local agent transcripts and plugin state stay out of git.** `.specstory/`, `.impeccable/` and
+   `CLAUDE.local.md` are ignored.
 
 ## Consequences
 
 - Easier: one tool to configure and test. Secrets are protected by a layer that does not depend on a script. The
   docs match what GitHub enforces.
 - Harder: Claude Code prompts before every merge and before edits to its own guardrails. Agents cannot read
-  or edit real env files, key files or Terraform variables (including the committed `ci.auto.tfvars`), even when
-  a task seems to need them. A human handles those.
+  or edit real env files, key files or Terraform state and variables with their file tools, even when a task
+  seems to need them. A human handles those. Through the shell, only the guard's string matching stands in the
+  way, and a script that builds a file name at run time gets past it; a sandbox is the next step if that matters.
 - Cursor can drift from Claude Code because only Claude Code is exercised day to day.
 - The human gate rests on the owner reading each pull request before merging. Nothing on GitHub stops an admin
   merge without review.

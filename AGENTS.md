@@ -71,7 +71,7 @@ The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` onl
 
 ## Agent hooks and permissions
 
-- `.claude/settings.json` denies reading or writing secret files (`.env*` except `.env.example`, keys, Terraform state and variables) and asks before `gh pr merge` and before edits to hooks, Claude settings, workflows and `CODEOWNERS`. Cursor's copy of the hooks is `.cursor/hooks.json`.
+- `.claude/settings.json` denies reading or writing secret files with Claude's file tools (`.env*` except `.env.example`, keys, Terraform state and variables except the committed `ci.auto.tfvars`) and asks before `gh pr merge` and before edits to hooks, the PR-contract checker, Claude settings, workflows and `CODEOWNERS`. Cursor's copy of the hooks is `.cursor/hooks.json`.
 - The guard (`scripts/agent-hooks/guard.mjs`) runs before shell commands and file tools. It blocks reading secrets, force-push, pushing to `main` and adding dependencies. When it blocks something, ask the user to run it. Do not retry it in another form.
 - The stop hook runs `format:check`, `lint`, `typecheck` and `test` before you finish. Fix what it reports.
 - Run the `reviewer` subagent on your diff before you open a PR, and put its last line (`BLOCKERS: <n>, NON-BLOCKING: <n>`) in the PR body.

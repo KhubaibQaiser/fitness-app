@@ -8,7 +8,7 @@ const root = new URL('../../', import.meta.url);
 const settings = JSON.parse(readFileSync(new URL('.claude/settings.json', root), 'utf8'));
 const { deny = [], ask = [] } = settings.permissions ?? {};
 
-test('secret files are denied, with .env.example carved out after the .env rule', () => {
+test('secret files are denied, with committed examples carved out after the rule they narrow', () => {
   for (const rule of [
     'Read(.env*)',
     'Read(*.pem)',
@@ -19,14 +19,17 @@ test('secret files are denied, with .env.example carved out after the .env rule'
   ]) {
     assert.ok(deny.includes(rule), `missing deny rule ${rule}`);
   }
-  // A "!" rule carves nothing out unless it comes after the rule it narrows.
+  // A "!" rule carves nothing out unless it comes after the rule it narrows. Both carved files are
+  // committed and hold no secrets, so agents may read them.
   assert.ok(deny.indexOf('Read(!.env.example)') > deny.indexOf('Read(.env*)'));
+  assert.ok(deny.indexOf('Read(!ci.auto.tfvars)') > deny.indexOf('Read(*.tfvars)'));
 });
 
 test('merging and editing the guardrails always ask', () => {
   for (const rule of [
     'Bash(gh pr merge *)',
     'Edit(scripts/agent-hooks/**)',
+    'Edit(scripts/pr-contract/**)',
     'Edit(.claude/**)',
     'Edit(.github/workflows/**)',
   ]) {
@@ -48,7 +51,12 @@ test('the guard runs on the shell and every file tool, and blocks when it cannot
 
 test('local agent files stay out of git', () => {
   const ignore = readFileSync(new URL('.gitignore', root), 'utf8').split('\n');
-  for (const entry of ['.specstory/', 'CLAUDE.local.md', '.claude/settings.local.json']) {
+  for (const entry of [
+    '.specstory/',
+    '.impeccable/',
+    'CLAUDE.local.md',
+    '.claude/settings.local.json',
+  ]) {
     assert.ok(ignore.includes(entry), `${entry} is not ignored`);
   }
 });

@@ -10,12 +10,14 @@
       "Read(*.tfstate)",
       "Read(*.tfstate.*)",
       "Read(*.tfvars)",
+      "Read(!ci.auto.tfvars)",
       "Read(backend.hcl)",
       "Read(credentials*.json)"
     ],
     "ask": [
       "Bash(gh pr merge *)",
       "Edit(scripts/agent-hooks/**)",
+      "Edit(scripts/pr-contract/**)",
       "Edit(.claude/**)",
       "Edit(.github/workflows/**)",
       "Edit(.github/CODEOWNERS)"
