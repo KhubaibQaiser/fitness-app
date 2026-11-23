@@ -809,6 +809,7 @@ export type PublishOptions = {
 export type PublishError =
   | { code: 'PLAN_NOT_FOUND' }
   | { code: 'PLAN_NOT_PUBLISHABLE'; status: string }
+  | { code: 'PLAN_EMPTY' }
   | { code: 'REVIEW_REQUIRED' }
   | {
       code: 'DRIFT_ACK_REQUIRED';
@@ -891,6 +892,8 @@ export const publishPlan = async (
   if (plan.status !== 'DRAFT' && plan.status !== 'NEEDS_REVIEW') {
     return err({ code: 'PLAN_NOT_PUBLISHABLE', status: plan.status });
   }
+  // Drift checks only days that have items, so an empty plan would otherwise pass.
+  if (items.length === 0) return err({ code: 'PLAN_EMPTY' });
 
   const drift = driftedDays(
     plan.targets,
