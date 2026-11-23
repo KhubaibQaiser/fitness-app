@@ -571,7 +571,9 @@ export const PaceSlider = ({
 
       <YStack width="100%" height={HIT + OVERLAY} position="relative" marginBottom="$4">
         <YStack
-          ref={(node: TrackNode | null) => {
+          ref={(el) => {
+            // RN 0.88 widened TamaguiElement; the node is still the host view we measure.
+            const node = el as unknown as TrackNode | null;
             trackRef.current = node;
             setHost((current) => (current === node ? current : node));
           }}
