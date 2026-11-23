@@ -30,7 +30,10 @@ export const describeLoginFailure = (error: unknown): LoginFailure => {
     }
     // The login route has no account lockout; this per-IP limit (10 a minute) is its only one.
     if (error.status === 429) return failure('Too many attempts. Wait a minute and try again.');
-    if (error.status >= 500) return failure('GymOS is having trouble. Try again in a minute.');
+    if (error.status >= 500) {
+      const reference = error.requestId === undefined ? '' : ` Reference: ${error.requestId}`;
+      return failure(`GymOS is having trouble. Try again in a minute.${reference}`);
+    }
     return failure(`Sign-in failed (error ${error.status}).`);
   }
   // No response arrived (offline, refused, DNS, timeout). Browsers and React Native's fetch

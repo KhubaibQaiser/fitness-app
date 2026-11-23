@@ -63,6 +63,15 @@ describe('describeLoginFailure (B3: login says what actually failed)', () => {
     });
   });
 
+  it('5xx with a request reference in the problem body: the message quotes it', () => {
+    const error = new ApiError(500, 'INTERNAL', 'Something went wrong', undefined, 'req-7f3a');
+    expect(describeLoginFailure(error)).toEqual({
+      message: 'GymOS is having trouble. Try again in a minute. Reference: req-7f3a',
+      credentials: false,
+      retry: false,
+    });
+  });
+
   it.each([400, 403, 404, 422])(
     '%i: an error with the status, never wrong credentials',
     (status) => {
