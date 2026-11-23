@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ClientListItem } from '@gymos/contracts';
-import { isAttentionCode, needsAttention } from './attention';
+import { badgeReasons, isAttentionCode, needsAttention } from './attention';
 
 const client = (name: string, ...codes: string[]): ClientListItem => ({
   id: name,
@@ -34,5 +34,19 @@ describe('needsAttention (Home and roster share it)', () => {
 
   it('any attention reason among others is enough', () => {
     expect(needsAttention([{ code: 'NEW_CLIENT' }, { code: 'CHECKIN_OVERDUE' }])).toBe(true);
+  });
+});
+
+describe('badgeReasons (roster row reason badges)', () => {
+  it('skips codes the status badges cover before taking two', () => {
+    const reasons = [{ code: 'OFF_TRACK' }, { code: 'RED_FLAG' }, { code: 'CHECKIN_DUE' }];
+    expect(badgeReasons(reasons)).toEqual([{ code: 'CHECKIN_DUE' }]);
+  });
+
+  it('drops CHECKIN_OVERDUE and NEW_CLIENT and keeps at most two others', () => {
+    const reasons = ['CHECKIN_OVERDUE', 'NEW_CLIENT', 'CHECKIN_DUE', 'OTHER_A', 'OTHER_B'].map(
+      (code) => ({ code }),
+    );
+    expect(badgeReasons(reasons)).toEqual([{ code: 'CHECKIN_DUE' }, { code: 'OTHER_A' }]);
   });
 });

@@ -3,7 +3,7 @@
 import { Link } from 'solito/link';
 import type { ClientListItem } from '@gymos/contracts';
 import { Avatar, Badge, Card, ChevronRight, GoalTag, Muted, Text, XStack, YStack } from '@gymos/ui';
-import { isAttentionCode, needsAttention } from '../../lib/attention';
+import { badgeReasons, needsAttention } from '../../lib/attention';
 
 const GOAL_LABEL: Record<string, string> = {
   LOSE: 'Lose',
@@ -31,10 +31,7 @@ type Props = {
 export const RosterRow = ({ client, desktop }: Props) => {
   const attention = needsAttention(client.attentionReasons);
   const neu = isNew(client.attentionReasons);
-  // "Needs attention" and "New" already cover those codes; the rest get their own badge.
-  const reasonBadges = client.attentionReasons
-    .filter((r) => !isAttentionCode(r.code) && r.code !== 'NEW_CLIENT')
-    .slice(0, 2);
+  const reasonBadges = badgeReasons(client.attentionReasons);
   const goalText = client.goalPreset ? (GOAL_LABEL[client.goalPreset] ?? client.goalPreset) : '-';
 
   if (!desktop) {
