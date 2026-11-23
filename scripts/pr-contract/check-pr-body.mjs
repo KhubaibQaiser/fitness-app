@@ -19,7 +19,7 @@ export const checkPrBody = (body) => {
   // Template guidance (HTML comments) and fenced examples are not the author's answers.
   const text = String(body ?? '')
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/^```[\s\S]*?^```/gm, '');
+    .replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
   const problems = [];
 
   const ticked = [...section(text, 'Track').matchAll(/^\s*[-*]\s*\[[xX]\]\s*(.+)$/gm)].map((m) =>

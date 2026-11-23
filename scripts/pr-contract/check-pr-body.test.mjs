@@ -69,6 +69,7 @@ test('the review line must be exact, under "Review", and every copy must report 
     '```\nBLOCKERS: 0, NON-BLOCKING: 2\n```',
   );
   assert.match(checkPrBody(fenced)[0], /reviewer subagent/);
+  assert.match(checkPrBody(fenced.replace(/```/g, '~~~'))[0], /reviewer subagent/);
   const inProse = filled.replace(
     'BLOCKERS: 0, NON-BLOCKING: 2',
     'The template says BLOCKERS: 0, NON-BLOCKING: 2',
