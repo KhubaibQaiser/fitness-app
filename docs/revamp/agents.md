@@ -1,6 +1,6 @@
 # How agents deliver the revamp
 
-Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus) per task and one **reviewer** (Sonnet) per task (R10). This file is the operating manual for all three. It adds to `AGENTS.md`; it never relaxes it.
+Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus) per task and one **reviewer** (Sonnet) per task (R10). This file is the operating manual for all three. It adds to `AGENTS.md` and never relaxes it. The one merge exception it relies on is written in `AGENTS.md` itself (rulings O12).
 
 ## Parent
 
@@ -38,10 +38,11 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    - A mock change that alters a spec also updates the spec, in a docs PR, the same day.
 5. **When a builder reports "PR ready",** brief a fresh reviewer with the template below. The reviewer gets the diff and the spec, never the builder's reasoning.
 6. **Pass the reviewer's findings back to the builder as a fix list.** Repeat with a fresh reviewer until it reports `BLOCKERS: 0` and no unaddressed non-blocking item. A finding is fixed unless the builder shows with evidence that it is wrong; the parent decides.
-7. **Merge** when all of these hold:
+7. **Merge** (rulings R9 and O12) when all of these hold:
    - The review is clean.
    - CI is green.
-   - CODEOWNERS paths have the owner's approval.
+   - The owner has reviewed any CODEOWNERS paths.
+   - The PR carries no ADR, and for screen code the mock is approved.
    - Dependency order allows it.
 
    Use a merge commit. Then rebase every waiting branch that the merge affects and have its builder re-run verification. After a U task merges, close the Dependabot PRs it supersedes, with a comment naming it (rulings O3).

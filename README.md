@@ -204,7 +204,7 @@ Agent contract for every tool (where code may live, alignment rules, nutrition r
 5. **Verify** `pnpm lint`, `pnpm typecheck`, and scoped `pnpm test` (full workspace if `packages/contracts` or shared types changed). Touching web/app/ui/platform also needs `pnpm --filter @gymos/web build`.
 6. **UI changes need screenshots in the PR body.** Use a direct `raw.githubusercontent.com` URL or a GitHub-uploaded image. A relative path does not render on the pull request page.
 
-The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` records who owns `packages/core`, `packages/ai` and `infra/`. Agents propose; the owner's merge, after a fresh-context review and green CI, is the human gate ([ADR-0017](docs/adr/0017-claude-code-primary-and-agent-guardrails.md)).
+The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` records who owns `packages/core`, `packages/ai` and `infra/`. Agents propose; the owner's merge, after a fresh-context review and green CI, is the human gate ([ADR-0017](docs/adr/0017-claude-code-primary-and-agent-guardrails.md)). The UI revamp track has one standing exception, set out in `AGENTS.md` (Human gate).
 
 ### CI merge gates
 
@@ -222,7 +222,7 @@ Claude Code is the main agent and Cursor a backup. Both read the same contract, 
 | Permission rules        | Claude Code denies reading or writing secret files and asks before merging or editing its own guardrails.                                    | [`.claude/settings.json`](.claude/settings.json)   |
 | Guard hook              | Blocks reading secrets, force-push, pushes to `main`, piping a download into a shell and new dependencies. Asks before destructive commands. | [`scripts/agent-hooks/`](scripts/agent-hooks/)     |
 | Stop hook               | Runs format, lint, typecheck and tests before an agent may finish.                                                                           | [`scripts/agent-hooks/`](scripts/agent-hooks/)     |
-| Reviewer subagent       | Reviews a diff in a fresh context, read-only, against `AGENTS.md`. The owner's merge is the human gate.                                      | `.cursor/agents/`, `.claude/agents/`               |
+| Reviewer subagent       | Reviews a diff in a fresh context, read-only, against `AGENTS.md`. The owner's merge is the human gate (revamp exception in `AGENTS.md`).    | `.cursor/agents/`, `.claude/agents/`               |
 | CI and repository rules | The merge gates above are required on `main`. Actions are pinned to commits and the production audit is a gate.                              | [`.github/`](.github/)                             |
 | Agent evals             | Frozen tickets scored by a deterministic script, no LLM judge. CI runs its bans on every PR and checks the PR body against the contract.     | [`docs/evals/`](docs/evals/)                       |
 

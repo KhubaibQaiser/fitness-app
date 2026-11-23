@@ -69,7 +69,7 @@ Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (need
 
 ## Human gate
 
-The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` only records who owns `packages/core`, `packages/ai` and `infra/`. The human gate is the merge: agents open the pull request, a fresh-context review runs, CI must be green, and the owner decides to merge. Never merge without the owner's word in the session. In Claude Code, `gh pr merge` always asks.
+The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` only records who owns `packages/core`, `packages/ai` and `infra/`. The human gate is the merge: agents open the pull request, a fresh-context review runs, CI must be green, and the owner decides to merge. Never merge without the owner's word in the session. In Claude Code, `gh pr merge` always asks. One standing exception, the UI revamp track ([`docs/revamp/`](docs/revamp/README.md), rulings R9 and O12): the owner's word is "feel free to merge once you have the confidence and CI is green", so the parent agent merges a revamp PR when its fresh review is clean and CI is green, except for a PR that carries an ADR, a PR that touches a CODEOWNERS path, and a screen PR whose mock the owner has not approved.
 
 ## Agent hooks and permissions
 
