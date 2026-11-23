@@ -45,6 +45,10 @@ export const KeyboardToolbar = ({
   onNext,
   onDone,
 }: KeyboardToolbarProps) => (
+  // Disabled 2026-11-24 (U3, Expo SDK 58): RN 0.88 deprecates InputAccessoryView with no core
+  // replacement; it still works. Replace before the RN release that removes it (the 0.88 notes
+  // point to react-native-keyboard-controller, a new dependency the owner has not approved).
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the dated note above
   <InputAccessoryView nativeID={nativeID}>
     <XStack
       backgroundColor="$elevatedBg"
