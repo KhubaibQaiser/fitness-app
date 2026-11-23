@@ -295,6 +295,13 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
             `days=${result.error.days.join(',')}`,
           );
         }
+        if (result.error.code === 'PLAN_EMPTY') {
+          throw new ProblemError(
+            422,
+            'PLAN_EMPTY',
+            'Plan has no meals. Add food before publishing',
+          );
+        }
         if (result.error.code === 'REVIEW_REQUIRED') {
           throw new ProblemError(422, 'REVIEW_REQUIRED', 'Coach review confirmation required');
         }
