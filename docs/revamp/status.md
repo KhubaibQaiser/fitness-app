@@ -16,11 +16,12 @@ Last updated: 2026-11-24, during Phase 1. U1, U2, B1, B3, B4 and two contracts-l
 | B2  | Empty draft                    | docs       | in review   | #113                                          | The server now refuses an empty publish (`PLAN_EMPTY`). Follow-ups: O16 (below) and O17 (F7.5, S06) |
 | B3  | Login errors                   | docs       | merged      | #108, with contracts-lane #110 and #112 (O15) | The login route has no lockout, so 429 covers it. O14: platform timeouts                            |
 | B4  | Native top inset and tab route | docs       | merged      | #111                                          | O18: the thin inset band stays until F6                                                             |
-| B5  | Native hub header              | docs       | building    | `fix/b5-native-hub-header`                    |                                                                                                     |
+| B5  | Native hub header              | docs       | in review   | #119                                          | Also fixes the loading skeleton's sticky header (same N2 bug)                                       |
 | B6  | Invalid Date                   | docs       | building    | `fix/b6-invalid-date`                         |                                                                                                     |
 | Q0  | Measurement harness            | docs       | building    | `chore/q0-measurement-harness`                | O20: Lighthouse 12.8.2 as a root devDependency. Its five-run medians wait for a quiet machine       |
-| O16 | Allergens on manual add, swap  | docs       | building    | `fix/allergen-manual-add`                     | Nutrition-safety fix found in B2 (O16)                                                              |
+| O16 | Allergens on manual add, swap  | docs       | in review   | #116                                          | Nutrition-safety fix found in B2 (O16); also checks copy-day-to-week                                |
 | O21 | node-forge override            | U2         | in review   | #117                                          | Clears 4 node-forge findings (O21)                                                                  |
+| —   | Lint fix after #112 and #114   | U2         | merged      | #118                                          | #112's test stub clashed with U2's typescript-eslint 8.74                                           |
 
 ## Phase 2
 
@@ -90,4 +91,4 @@ Run start (O5): the install switch `AGENT_GUARD_ALLOW_INSTALL=1` is set in the m
 
 Each task that defers Android screenshots to the owner's kit run (the Pixel 6, O11):
 
-- B2 (#113), B3 (#108), B4 (#111); B5 and B6 when their PRs open.
+- B2 (#113), B3 (#108), B4 (#111), B5 (#119); B6 when its PR opens.
