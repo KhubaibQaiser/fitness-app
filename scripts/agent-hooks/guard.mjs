@@ -171,31 +171,39 @@ const secretGlob = (token) => {
   );
 };
 
-// Bash brace expansion, as in .e{n,m}v or .env{,.bak}: expanded to a bounded number of words so
-// the secrets checks see what the shell would.
-const MAX_EXPANSIONS = 64;
+// Bash brace expansion, as in .e{n,m}v, .env{,.bak} or .{a,{e,f}}nv: expanded innermost group
+// first so the secrets checks see what the shell would. ${VAR} is not a brace group. Returns
+// undefined when the expansion is too large to check, so the caller can ask instead of guessing.
+const MAX_EXPANSIONS = 256;
+const BRACE_GROUP = /(?<!\$)\{([^{}]*,[^{}]*)\}/;
 const expandBraces = (token) => {
+  if (token.length > MAX_TOKEN) return undefined;
   let out = [token];
-  for (let round = 0; round < 8; round += 1) {
+  for (let round = 0; round < 16; round += 1) {
     let changed = false;
     const next = [];
     for (const w of out) {
-      const m = w.match(/^([^{]*(?:\{[^{}]*\}[^{]*)*?)\{([^{}]*,[^{}]*)\}(.*)$/);
+      const m = BRACE_GROUP.exec(w);
       if (!m) next.push(w);
       else {
         changed = true;
-        for (const part of m[2].split(',')) next.push(`${m[1]}${part}${m[3]}`);
+        const before = w.slice(0, m.index);
+        const after = w.slice(m.index + m[0].length);
+        for (const part of m[1].split(',')) next.push(`${before}${part}${after}`);
       }
     }
-    out = next.slice(0, MAX_EXPANSIONS);
-    if (!changed) break;
+    if (next.length > MAX_EXPANSIONS) return undefined;
+    out = next;
+    if (!changed) return out;
   }
-  return out;
+  return undefined;
 };
-const touchesSecret = (t) =>
-  (t.includes('{') && t.length <= MAX_TOKEN ? expandBraces(t) : [t]).some(
-    (w) => sensitivePath(w) || secretGlob(w),
-  );
+// 'secret', 'unknown' (too large to expand) or undefined.
+const secretToken = (t) => {
+  const words = t.includes('{') ? expandBraces(t) : [t];
+  if (words === undefined) return 'unknown';
+  return words.some((w) => sensitivePath(w) || secretGlob(w)) ? 'secret' : undefined;
+};
 
 // Commands an env dump may hide behind, and an optional path such as /usr/bin/.
 const ENV_PREFIX = String.raw`(?:(?:time|nohup|exec|command|builtin|sudo|xargs|npx)\s+|(?:pnpm|npm|yarn)\s+exec\s+)*\\?(?:\S*\/)?`;
@@ -434,8 +442,8 @@ const decide = ({ command: written, paths, globs = [], writing = false, cwd }, d
     if (sensitivePath(g) || secretGlob(g)) return ['deny', `searching secrets files ${SECRETS}`];
   }
   if (!written) return ['allow'];
-  // A backslash at the end of a line joins it to the next one.
-  const raw = written.replace(/\\\r?\n/g, ' ');
+  // A backslash at the end of a line joins it to the next one, even in the middle of a word.
+  const raw = written.replace(/\\\r?\n/g, '');
   const command = raw.replace(GIT_GLOBAL_OPTS, 'git');
   // Three views: as written, with quote characters removed (".e""nv" reads as .env), and with
   // quoted strings blanked out (a commit message is not a command).
@@ -445,8 +453,12 @@ const decide = ({ command: written, paths, globs = [], writing = false, cwd }, d
   const structural = blanked.replace(GIT_GLOBAL_OPTS, 'git');
 
   const tokens = [...words(command), ...words(unquoted)];
-  if (!/\.gitignore\b/.test(command) && tokens.some(touchesSecret)) {
-    return ['deny', `touching a secrets file ${SECRETS}`];
+  if (!/\.gitignore\b/.test(command)) {
+    const found = tokens.map(secretToken);
+    if (found.includes('secret')) return ['deny', `touching a secrets file ${SECRETS}`];
+    if (found.includes('unknown')) {
+      return ['ask', 'a brace expansion too large to check for secrets files'];
+    }
   }
   if (depth < 2) {
     for (const m of raw.matchAll(SHELL_STRING)) {

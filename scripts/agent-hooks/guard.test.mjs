@@ -437,7 +437,15 @@ test('brace expansion, key files and line continuations cannot hide a secret or 
   for (const command of ['ls src/{a,b}.ts', 'echo ${HOME}', 'cp x.{ts,bak}']) {
     assert.equal(decision(shell(command)), 'allow', command);
   }
-  assert.equal(decision(shell(`echo ${'{a,b}'.repeat(40)}`)), 'allow');
+  // Nested groups expand innermost first, as in bash.
+  assert.equal(decision(shell('cat .{a,{e,f}}nv')), 'deny');
+  assert.equal(decision(shell('cat .e{{n,m},k}v')), 'deny');
+  // A backslash-newline inside a word joins the word.
+  assert.equal(decision(shell('cat .e\\\nnv')), 'deny');
+  // Too large to expand: the guard asks instead of checking only part of it.
+  assert.equal(decision(shell(`echo ${'{a,b}'.repeat(40)}`)), 'ask');
+  const eight = '{a,b,c,d,e,f,g,h}';
+  assert.equal(decision(shell(`cat ${eight}${eight}${eight}{.env,x}`)), 'ask');
 });
 
 test('quoted git config keys, aliases, push targets from variables and env variants', () => {
