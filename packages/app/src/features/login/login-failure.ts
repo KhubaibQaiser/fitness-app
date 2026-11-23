@@ -45,3 +45,29 @@ export const describeLoginFailure = (error: unknown): LoginFailure => {
   }
   return failure('Sign-in failed unexpectedly. Try again.');
 };
+
+/** What the login form renders for the current failure. The screen only reads these fields. */
+export type LoginView = {
+  /** The password field's error, which marks it invalid: wrong credentials only. */
+  fieldError: string | null;
+  /** A role="alert" line under the password field: every other failure. */
+  alert: string | null;
+  buttonLabel: 'Sign in' | 'Signing in…' | 'Try again';
+  /**
+   * Spoken once when the failure appears. Native screen readers need the explicit call;
+   * react-native-web's announceForAccessibility is an empty function, so on web only
+   * role="alert" speaks and nothing is announced twice.
+   */
+  announcement: string | null;
+};
+
+export const loginView = (failure: LoginFailure | null, busy: boolean): LoginView => ({
+  fieldError: failure?.credentials === true ? failure.message : null,
+  alert: failure !== null && !failure.credentials ? failure.message : null,
+  buttonLabel: busy ? 'Signing in…' : failure?.retry === true ? 'Try again' : 'Sign in',
+  announcement: failure?.message ?? null,
+});
+
+/** Editing a field after a failure turns "Try again" back into "Sign in"; the message stays. */
+export const afterFieldEdit = (failure: LoginFailure | null): LoginFailure | null =>
+  failure?.retry === true ? { ...failure, retry: false } : failure;

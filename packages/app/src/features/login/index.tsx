@@ -21,7 +21,12 @@ import {
 import { qk } from '../../api';
 import { AuthFormCard } from '../auth/auth-form-card';
 import { setSessionPresence } from '../shell/session-presence';
-import { describeLoginFailure, type LoginFailure } from './login-failure';
+import {
+  afterFieldEdit,
+  describeLoginFailure,
+  loginView,
+  type LoginFailure,
+} from './login-failure';
 
 export const LoginScreen = () => (
   <AppErrorBoundary>
@@ -37,6 +42,11 @@ const LoginForm = () => {
   const [failure, setFailure] = useState<LoginFailure | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
+  const view = loginView(failure, busy);
+  const edit = (set: (value: string) => void) => (value: string) => {
+    set(value);
+    setFailure(afterFieldEdit);
+  };
 
   const submit = async () => {
     if (email.trim().length < 3 || password.length < 8 || busy) return;
@@ -53,8 +63,8 @@ const LoginForm = () => {
       setSessionPresence(false);
       const next = describeLoginFailure(e);
       setFailure(next);
-      // role="alert" announces on web; native screen readers need the explicit call.
-      AccessibilityInfo.announceForAccessibility(next.message);
+      const { announcement } = loginView(next, false);
+      if (announcement !== null) AccessibilityInfo.announceForAccessibility(announcement);
     } finally {
       setBusy(false);
     }
@@ -93,7 +103,7 @@ const LoginForm = () => {
             <FormField
               label="Email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={edit(setEmail)}
               placeholder="coach@example.com"
               autoCapitalize="none"
               autoCorrect={false}
@@ -106,18 +116,18 @@ const LoginForm = () => {
               <FormField
                 label="Password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={edit(setPassword)}
                 placeholder="Your password"
                 autoCapitalize="none"
                 autoCorrect={false}
                 secureTextEntry
                 required
-                error={failure?.credentials === true ? failure.message : null}
+                error={view.fieldError}
                 {...chain.bind('password')}
               />
-              {failure !== null && !failure.credentials ? (
+              {view.alert !== null ? (
                 <Body color="$danger" fontSize={12} fontWeight="600" lineHeight={16} role="alert">
-                  {failure.message}
+                  {view.alert}
                 </Body>
               ) : null}
             </YStack>
@@ -126,7 +136,7 @@ const LoginForm = () => {
               onPress={() => void submit()}
               width="100%"
             >
-              {busy ? 'Signing in…' : failure?.retry === true ? 'Try again' : 'Sign in'}
+              {view.buttonLabel}
             </PrimaryButton>
             <YStack gap="$2" alignItems="center" marginTop="$2">
               <Link href="/signup">

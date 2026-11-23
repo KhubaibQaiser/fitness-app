@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@gymos/contracts';
-import { describeLoginFailure } from './login-failure';
+import { afterFieldEdit, describeLoginFailure, loginView } from './login-failure';
 
 const WRONG_CREDENTIALS = 'Email or password is incorrect.';
 
@@ -98,5 +98,76 @@ describe('describeLoginFailure (B3: login says what actually failed)', () => {
       status: null,
       cause: networkError,
     });
+  });
+});
+
+describe('loginView: what the screen renders for each failure', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const wrongPassword = () =>
+    describeLoginFailure(
+      new ApiError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect'),
+    );
+  const offline = () => describeLoginFailure(new TypeError('Failed to fetch'));
+  const serverDown = () => describeLoginFailure(new ApiError(500, 'INTERNAL', 'Server error'));
+
+  it('no failure: nothing shown, nothing announced', () => {
+    expect(loginView(null, false)).toEqual({
+      fieldError: null,
+      alert: null,
+      buttonLabel: 'Sign in',
+      announcement: null,
+    });
+  });
+
+  it('401: the message marks the password field, with no separate alert', () => {
+    expect(loginView(wrongPassword(), false)).toEqual({
+      fieldError: WRONG_CREDENTIALS,
+      alert: null,
+      buttonLabel: 'Sign in',
+      announcement: WRONG_CREDENTIALS,
+    });
+  });
+
+  it('network failure: an alert under the field, the field left valid, and Try again', () => {
+    expect(loginView(offline(), false)).toEqual({
+      fieldError: null,
+      alert: "Can't reach GymOS. Check your connection.",
+      buttonLabel: 'Try again',
+      announcement: "Can't reach GymOS. Check your connection.",
+    });
+  });
+
+  it('5xx: an alert, the field left valid, and the normal button', () => {
+    expect(loginView(serverDown(), false)).toEqual({
+      fieldError: null,
+      alert: 'GymOS is having trouble. Try again in a minute.',
+      buttonLabel: 'Sign in',
+      announcement: 'GymOS is having trouble. Try again in a minute.',
+    });
+  });
+
+  it('while signing in the button says so, even after a network failure', () => {
+    expect(loginView(offline(), true).buttonLabel).toBe('Signing in…');
+  });
+
+  it('editing a field after a network failure turns Try again back into Sign in', () => {
+    const edited = afterFieldEdit(offline());
+    expect(loginView(edited, false)).toMatchObject({
+      alert: "Can't reach GymOS. Check your connection.",
+      buttonLabel: 'Sign in',
+    });
+  });
+
+  it('editing leaves other failures, and no failure, as they were', () => {
+    const failure = wrongPassword();
+    expect(afterFieldEdit(failure)).toBe(failure);
+    expect(afterFieldEdit(null)).toBeNull();
   });
 });
