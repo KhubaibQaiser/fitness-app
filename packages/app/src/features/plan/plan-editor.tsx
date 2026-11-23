@@ -58,6 +58,9 @@ const SLOT_LABEL: Record<PlanItem['mealSlot'], string> = {
  * stores no meal count: with items, the pattern is the largest solver template they fit, so the
  * picker can't reshape the plan and a partly emptied plan never loses a meal; with no items, it
  * is the meals-per-day choice.
+ * Known limit: when the items fit several templates (only breakfast left, say), a 3-meal plan
+ * shows the 5-meal sections. Nothing is dropped and each extra snack offers Add food. F7.5
+ * exposes the generation's meal count, which removes the guess.
  */
 const mealSections = (
   items: readonly PlanItem[],
@@ -159,6 +162,9 @@ export const PlanEditor = ({
   const empty = items.length === 0;
   const dayItems = items.filter((i) => i.day === day);
   const meals = mealSections(items, mealCount);
+  // regenerateMeal infers the template from the day's distinct meal count, so offer it only on a
+  // day that holds every meal of the pattern; otherwise it could rebuild a snack as dinner.
+  const dayHasFullPattern = new Set(dayItems.map((i) => i.mealIndex)).size === meals.length;
   const dayTotals = dayItems.reduce(
     (acc, i) => ({
       kcal: acc.kcal + i.macros.kcal,
@@ -266,7 +272,7 @@ export const PlanEditor = ({
           </Muted>
           {generateControls('Generate meals')}
           <GhostButton
-            disabled={patch.isPending}
+            disabled={patch.isPending || generatePending}
             onPress={() => setAddMealIndex(meals[0]?.[0] ?? null)}
           >
             Add food manually
@@ -409,8 +415,7 @@ export const PlanEditor = ({
                 >
                   {addMealIndex === mealIndex ? 'Cancel add' : 'Add food'}
                 </GhostButton>
-                {/* The server regenerates only a meal that has items (MEAL_NOT_FOUND otherwise). */}
-                {dayItems.some((i) => i.mealIndex === mealIndex) ? (
+                {dayHasFullPattern ? (
                   <GhostButton
                     flex={1}
                     minWidth={140}

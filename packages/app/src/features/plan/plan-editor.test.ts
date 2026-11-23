@@ -99,10 +99,13 @@ const render = (overrides: Partial<Props>) => {
     }),
   );
   const all = (type: string) => tree.filter((el) => el.type === type);
-  const press = (type: string, label: string) => {
+  const find = (type: string, label: string) => {
     const button = all(type).find((el) => text(el) === label);
     if (button === undefined) throw new Error(`no ${type} labelled "${label}"`);
-    (button.props.onPress as () => void)();
+    return button;
+  };
+  const press = (type: string, label: string) => {
+    (find(type, label).props.onPress as () => void)();
   };
   const pickMealCount = (count: 3 | 4 | 5) => {
     const picker = all('SegmentedControl').find((el) => el.props.ariaLabel === 'Meals per day');
@@ -112,6 +115,7 @@ const render = (overrides: Partial<Props>) => {
   return {
     has: (copy: string) => tree.some((el) => text(el) === copy),
     labels: (type: string) => all(type).map(text),
+    find,
     press,
     pickMealCount,
   };
@@ -149,6 +153,11 @@ describe('PlanEditor with an empty draft (B2)', () => {
     expect(setState).toHaveBeenCalledWith(0); // opens the food picker on the first meal
   });
 
+  it('disables Add food manually while meals are generating', () => {
+    const view = render({ generatePending: true });
+    expect(view.find('GhostButton', 'Add food manually').props.disabled).toBe(true);
+  });
+
   it('shows every meal of the chosen pattern with Add food', () => {
     const view = render({ mealCount: 4 });
     expect(view.labels('SectionTitle')).toEqual(['Breakfast', 'Lunch', 'Snack', 'Dinner']);
@@ -184,6 +193,19 @@ describe('PlanEditor meal sections', () => {
     expect(view.labels('SectionTitle')).toEqual(['Breakfast', 'Lunch', 'Snack', 'Dinner']);
     expect(view.has('This draft has no meals yet')).toBe(false);
     expect(view.labels('PlanPublishConfirm')).toHaveLength(1);
+    expect(view.labels('GhostButton').filter((label) => label === 'Regenerate meal')).toHaveLength(
+      4,
+    );
+  });
+
+  it('hide Regenerate meal on a day whose meals are not the full pattern', () => {
+    // Breakfast and lunch left from a 3-meal plan fit the 4-meal template, so the editor offers a
+    // snack; once one is added, the server would infer 3 meals and rebuild that snack as dinner.
+    const view = render({
+      items: [item(1, 0, 'breakfast'), item(1, 1, 'lunch'), item(1, 2, 'snack')],
+    });
+    expect(view.labels('SectionTitle')).toEqual(['Breakfast', 'Lunch', 'Snack', 'Dinner']);
+    expect(view.labels('GhostButton')).not.toContain('Regenerate meal');
   });
 
   it('keep every meal of a partly emptied plan, whatever the picker says', () => {
@@ -196,6 +218,18 @@ describe('PlanEditor meal sections', () => {
     expect(render({ items: breakfastOnly, mealCount: 4 }).labels('SectionTitle')).toEqual(
       fiveMeals,
     );
+  });
+
+  it('show the largest pattern when the items cannot tell (known limit)', () => {
+    // A 3-meal plan cut down to breakfast looks the same as a 5-meal one: no meal is dropped, and
+    // the two extra snacks offer Add food. F7.5 exposes the generation's meal count to fix this.
+    expect(render({ items: [item(1, 0, 'breakfast')] }).labels('SectionTitle')).toEqual([
+      'Breakfast',
+      'Snack',
+      'Lunch',
+      'Snack',
+      'Dinner',
+    ]);
   });
 
   it('keep Add food on a day that has no items', () => {
