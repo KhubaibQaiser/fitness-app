@@ -59,7 +59,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 
   Each failure is logged with the operation, status and cause, and never the email or password.
 
-- **Done when:** one test per row fails on `main` and passes after (the 429 and lockout rows may already pass: say so in the PR); screenshots of the network-error state on web and iOS.
+- **Done when:** one test per row fails on `main` and passes after (the 429 row may already pass, and it also covers the lockout row: say so in the PR); screenshots of the network-error state on web and iOS.
 
 ## B4: Native shell: top safe area and the active tab
 
