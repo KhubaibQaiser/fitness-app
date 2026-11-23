@@ -1,15 +1,15 @@
 # AI-native workflow
 
-How GymOS is built with coding agents: what is configured, what enforces it, and what has and has not been measured. Cursor is the primary tool and Claude Code the second. Everything here lives in the repo, except the repository settings, which live on GitHub and are listed at the end with commands to check them.
+How GymOS is built with coding agents: what is configured, what enforces it, and what has and has not been measured. Claude Code is the primary tool and Cursor is kept as a backup ([ADR-0017](adr/0017-claude-code-primary-and-agent-guardrails.md)). Everything here lives in the repo, except the repository settings, which live on GitHub and are listed at the end with commands to check them.
 
 The idea behind all of it: **rules are advice; hooks and CI are enforcement.** Claude Code's docs say the same thing about instruction files: they are "context, not enforced configuration", and a `PreToolUse` hook is how you block an action whatever the model decides ([memory docs](https://code.claude.com/docs/en/memory)).
 
 ## 1. Instructions: short, one source, only what an agent cannot infer
 
-- [`AGENTS.md`](../AGENTS.md) (74 lines) is the single contract for every agent: where code may live, the locked product answers and operating rules, what is denied, required outputs, the definition of done and the merge gates. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) is five lines that import it with `@AGENTS.md`. No tool gets different rules.
-- Two things moved out of the always-loaded files because they are reference data, not rules: the phase-by-phase plan ([`alignment-initiative.md`](alignment-initiative.md)) and the design token tables ([`design-system-reference.md`](design-system-reference.md)). `AGENTS.md` links to both. Imports do not reduce context cost, because imported files load with the file that imports them, so Claude Code now loads 5 + 74 = 79 lines at session start. Before this change it loaded 276 lines and never saw the execution contract.
-- Four Cursor rules (56 lines in total, all always on): module boundaries, nutrition safety, verification, minimal diffs.
-- The repo pins one skill (`archify`, locked by hash in `skills-lock.json`) for the architecture diagrams and one MCP server (version pinned in `.cursor/mcp.json`) that gives read-only access to the OpenAPI folder. `.cursorignore` keeps `.env`, key files and Terraform state out of the editor's context.
+- [`AGENTS.md`](../AGENTS.md) (77 lines) is the single contract for every agent: where code may live, the locked product answers and operating rules, what is denied, required outputs, the definition of done and the merge gates. Cursor reads it natively ([rules docs](https://cursor.com/docs/rules)). Claude Code reads `AGENTS.md` by itself only when a repo has no `CLAUDE.md`, so [`CLAUDE.md`](../CLAUDE.md) is five lines that import it with `@AGENTS.md`. No tool gets different rules.
+- Two things moved out of the always-loaded files because they are reference data, not rules: the phase-by-phase plan ([`alignment-initiative.md`](alignment-initiative.md)) and the design token tables ([`design-system-reference.md`](design-system-reference.md)). `AGENTS.md` links to both. Imports do not reduce context cost, because imported files load with the file that imports them, so Claude Code now loads 5 + 77 = 82 lines at session start. Before this change it loaded 276 lines and never saw the execution contract.
+- Four Cursor rules (56 lines in total, all always on, Cursor only): module boundaries, nutrition safety, verification, minimal diffs. The lines in them that `AGENTS.md` did not already say were copied into `AGENTS.md`, so Claude Code gets them too.
+- The repo pins one skill (`archify`, locked by hash in `skills-lock.json`) for the architecture diagrams and one MCP server, for Cursor only (version pinned in `.cursor/mcp.json`), that gives read-only access to the OpenAPI folder. Claude Code reads the spec file directly. `.cursorignore` keeps `.env`, key files and Terraform state out of the editor's context.
 
 Why short. Gloaguen et al. tested repository context files with coding agents and found that providing them "does not generally improve task success rates" and raises inference cost by over 20% on average. The files are useful for describing non-standard coding practices; repository overviews did not help ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)). Vercel's eval on Next.js 16 APIs that models do not know found that a compressed docs index in `AGENTS.md` passed 100% of the cases, against 53% for no docs and 79% for a skill that was told explicitly to run; the skill was never invoked in 56% of cases ([Vercel, 2026-01-27](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals)). Both studies are on other codebases and tasks. They are the reason this repo lists what it does differently (boundaries, banned patterns, how to verify) and points to docs by path, instead of describing the architecture.
 
@@ -17,9 +17,16 @@ Why short. Gloaguen et al. tested repository context files with coding agents an
 
 Plain Node scripts with no dependencies, wired for both tools: [`.cursor/hooks.json`](../.cursor/hooks.json) and [`.claude/settings.json`](../.claude/settings.json). Cursor runs project hooks only in a trusted workspace ([hooks docs](https://cursor.com/docs/hooks)); Claude Code's hook reference is [here](https://code.claude.com/docs/en/hooks).
 
+### Permission rules (Claude Code)
+
+[`.claude/settings.json`](../.claude/settings.json) also holds permission rules, which Claude Code evaluates itself, so they hold even if a hook script breaks ([permissions docs](https://code.claude.com/docs/en/permissions)).
+
+- **Denied:** reading `.env*` (except `.env.example`), key files (`*.pem`, `*.key`, `*.p12`, `*.pfx`), Terraform state and variables, `backend.hcl` and `credentials*.json`. A `Read` deny also blocks `Edit` and `Write` on the same path.
+- **Asks first:** `gh pr merge`, and edits to `scripts/agent-hooks/`, `.claude/`, `.github/workflows/` and `CODEOWNERS`, so an agent cannot quietly loosen its own guardrails or merge.
+
 ### Guard: [`scripts/agent-hooks/guard.mjs`](../scripts/agent-hooks/guard.mjs)
 
-Runs before every shell command and file read.
+Runs before every shell command and file read. In Claude Code it runs on `Bash`, `Read`, `Grep`, `Glob`, `Write` and `Edit`, with `onFailure: block`, so a hook that cannot start or times out blocks the call instead of letting it through.
 
 - **Denied:** reading `.env`, SSH or AWS keys, PEM files and Terraform state; force-push; any push to `main` or `master`; piping a download into a shell; `chmod 777`; writing to a block device; recursive delete of root, home, or the current or parent directory; adding a dependency by name (`npm`, `pnpm`, `yarn`, `bun`, `pip`, `uv`). Installs from a lockfile or a requirements file pass.
 - **Asks first:** `git reset --hard`, `git clean`, discarding all changes, force-deleting a branch, `sudo`, publishing a package, CDK or Terraform apply and destroy, destructive AWS calls, `kubectl delete`, `docker` prune, deleting a repo or release, production deploys, SQL `DROP`, recursive delete outside build and cache folders.
@@ -32,11 +39,13 @@ Runs when an agent says it is done. It runs `format:check`, `lint`, `typecheck` 
 
 ### Tests
 
-16 `node:test` tests cover both scripts (9 guard, 7 stop). `pnpm test:agent-hooks` runs them, and CI runs them in the "Agent hook tests" step.
+20 `node:test` tests cover both scripts and the Claude Code settings (9 guard, 7 stop, 4 settings). `pnpm test:agent-hooks` runs them, and CI runs them in the "Agent hook tests" step.
 
 ## 3. Review: a second pair of eyes in a fresh context
 
 [`reviewer`](../.cursor/agents/reviewer.md) subagents (one per tool, read-only) review the diff against `AGENTS.md` without the author's context. They report bugs, unmet requirements, missing tests, violations of the "Denied" list and the PR template's safety sections, and security issues, and end with `BLOCKERS: <n>, NON-BLOCKING: <n>`. Style opinions are out of scope. Subagent docs: [Cursor](https://cursor.com/docs/subagents), [Claude Code](https://code.claude.com/docs/en/sub-agents).
+
+**The human gate is the merge.** The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` records ownership only. An agent opens the pull request, the reviewer runs, CI must be green, and the owner merges or tells the agent to merge in that session. Claude Code asks before every `gh pr merge`. Nothing on GitHub stops an admin from merging without reading, so this gate is only as good as the owner's review ([ADR-0017](adr/0017-claude-code-primary-and-agent-guardrails.md)).
 
 ## 4. CI and supply chain
 
@@ -56,9 +65,9 @@ Measured:
 
 | What                                      | Number                                                                     | How                                                          |
 | ----------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Claude Code instructions at session start | 276 lines (no contract) → 79 lines (with contract)                         | line counts                                                  |
-| Cursor `AGENTS.md`, always loaded         | 41 → 74 lines (now includes the alignment rules)                           | line counts                                                  |
-| Hook tests                                | 16 pass, run in CI                                                         | `pnpm test:agent-hooks`                                      |
+| Claude Code instructions at session start | 276 lines (no contract) → 82 lines (with contract)                         | line counts                                                  |
+| `AGENTS.md`, always loaded                | 41 → 77 lines (now includes the alignment rules)                           | line counts                                                  |
+| Hook and settings tests                   | 20 pass, run in CI                                                         | `pnpm test:agent-hooks`                                      |
 | Stop hook, full gates on this repo        | 26 seconds                                                                 | one run on the author's laptop, warm caches                  |
 | Production audit                          | 43 findings (5 critical, 16 high) → 13 (0 critical, 4 high, all 4 ignored) | `pnpm audit --prod --audit-level high`, before and after #67 |
 | Third-party action references             | 29, all pinned to a commit                                                 | `grep uses: .github/workflows`                               |
@@ -74,12 +83,12 @@ Not measured:
 
 The intended configuration, with a command to check each:
 
-| Setting                                                                                                                                                                                                                                                                                        | Check                                                                                                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ruleset `MainBranch` on the default branch: pull request required, three required checks (`Format · lint · typecheck · test`, `Secret scan (gitleaks)`, `Mobile Metro bundle check`), conversation resolution, no deletion, no force-push. Repo admins can bypass through a pull request only. | `gh api repos/KhubaibQaiser/fitness-app/rulesets/21030958`                                                                                         |
-| Secret scanning and push protection                                                                                                                                                                                                                                                            | `gh api repos/KhubaibQaiser/fitness-app --jq .security_and_analysis`                                                                               |
-| Private vulnerability reporting                                                                                                                                                                                                                                                                | `gh api repos/KhubaibQaiser/fitness-app/private-vulnerability-reporting`                                                                           |
-| Dependabot alerts and security updates                                                                                                                                                                                                                                                         | `gh api -i repos/KhubaibQaiser/fitness-app/vulnerability-alerts` (204 means on), `gh api repos/KhubaibQaiser/fitness-app/automated-security-fixes` |
+| Setting                                                                                                                                                                                                                                                                                                                                              | Check                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ruleset `MainBranch` on the default branch: pull request required, three required checks (`Format · lint · typecheck · test`, `Secret scan (gitleaks)`, `Mobile Metro bundle check`), conversation resolution, no deletion, no force-push, no required approvals (one maintainer, see ADR-0017). Repo admins can bypass through a pull request only. | `gh api repos/KhubaibQaiser/fitness-app/rulesets/21030958`                                                                                         |
+| Secret scanning and push protection                                                                                                                                                                                                                                                                                                                  | `gh api repos/KhubaibQaiser/fitness-app --jq .security_and_analysis`                                                                               |
+| Private vulnerability reporting                                                                                                                                                                                                                                                                                                                      | `gh api repos/KhubaibQaiser/fitness-app/private-vulnerability-reporting`                                                                           |
+| Dependabot alerts and security updates                                                                                                                                                                                                                                                                                                               | `gh api -i repos/KhubaibQaiser/fitness-app/vulnerability-alerts` (204 means on), `gh api repos/KhubaibQaiser/fitness-app/automated-security-fixes` |
 
 ## Use it in another repo
 
