@@ -129,7 +129,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   - Playwright screenshots exist with `backdrop-filter` disabled and with reduced transparency emulated.
   - iOS screenshots exist with Reduce Transparency on and off.
   - Android API 31+ and below-31 screenshots are added when the owner runs the kit (status board).
-  - The low-end Android device pass is a release gate in Q4, not a merge gate.
+  - The Android baseline-device (Pixel 6, rulings O11) pass is a release gate in Q4, not a merge gate.
 - **Reviewer focus:** glass on content surfaces, secondary text on chrome glass, a missing fallback path.
 
 ## F4: Motion package, haptics and feedback primitives
@@ -349,7 +349,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
   - The global conditions hold.
   - The existing path and layout tests still pass, with new tests for the window and the states.
   - The hub CPU profile shows neither hotspot, and its longest task is 200 ms or less at 4× CPU (Q0 harness).
-  - The low-end Android frame check is recorded in Q4.
+  - The Android baseline-device (Pixel 6, rulings O11) frame check is recorded in Q4.
 
 ## F10: Client shell
 
