@@ -1,23 +1,37 @@
 {
+  "permissions": {
+    "deny": [
+      "Read(.env*)",
+      "Read(!.env.example)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(*.p12)",
+      "Read(*.pfx)",
+      "Read(*.tfstate)",
+      "Read(*.tfstate.*)",
+      "Read(*.tfvars)",
+      "Read(!ci.auto.tfvars)",
+      "Read(backend.hcl)",
+      "Read(credentials*.json)"
+    ],
+    "ask": [
+      "Bash(gh pr merge *)",
+      "Edit(scripts/agent-hooks/**)",
+      "Edit(.claude/**)",
+      "Edit(.github/workflows/**)",
+      "Edit(.github/CODEOWNERS)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|Read|Grep|Glob|Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/agent-hooks/guard.mjs\" --tool claude",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/agent-hooks/guard.mjs\" --tool claude",
-            "timeout": 10
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       }
