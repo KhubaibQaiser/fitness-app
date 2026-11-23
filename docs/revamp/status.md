@@ -2,24 +2,24 @@
 
 Only the parent edits this file ([`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-24, during Phase 1. U1, B1, B3 and two contracts-lane PRs have merged; the other Phase 1 tasks are in review or building.
+Last updated: 2026-11-24, during Phase 1. U1, B1, B3, B4 and two contracts-lane PRs have merged; the other Phase 1 tasks are in review or building.
 
 ## Phase 1
 
-| Id  | Task                           | Depends on | State                                | Branch / PR                                   | Notes                                                                                               |
-| --- | ------------------------------ | ---------- | ------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| U1  | Next.js 16.4.6                 | docs       | merged                               | #106                                          | #98 closed (O3)                                                                                     |
-| U2  | Patch and minor bumps          | U1         | in review (waiting on the owner)     | #114                                          | Removes one no-op line in `packages/ai` (CODEOWNERS). Supersedes #78, #96, #97                      |
-| U3  | Expo SDK 58                    | U2         | not started                          |                                               | Supersedes #79, #81; Android smoke on the owner's MacBook                                           |
-| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started                          |                                               | Supersedes #80                                                                                      |
-| B1  | Attention count                | docs       | merged                               | #107                                          | O13: phone rows keep the status badge only; S03 shows reasons in words                              |
-| B2  | Empty draft                    | docs       | in review                            | #113                                          | The server now refuses an empty publish (`PLAN_EMPTY`). Follow-ups: O16 (below) and O17 (F7.5, S06) |
-| B3  | Login errors                   | docs       | merged                               | #108, with contracts-lane #110 and #112 (O15) | The login route has no lockout, so 429 covers it. O14: platform timeouts                            |
-| B4  | Native top inset and tab route | docs       | in review (merging once CI is green) | #111                                          | O18: the thin inset band stays until F6                                                             |
-| B5  | Native hub header              | docs       | building                             | `fix/b5-native-hub-header`                    |                                                                                                     |
-| B6  | Invalid Date                   | docs       | building                             | `fix/b6-invalid-date`                         |                                                                                                     |
-| Q0  | Measurement harness            | docs       | building                             | `chore/q0-measurement-harness`                | Its five-run medians wait for a quiet machine                                                       |
-| O16 | Allergens on manual add, swap  | docs       | building                             | `fix/allergen-manual-add`                     | Nutrition-safety fix found in B2 (O16)                                                              |
+| Id  | Task                           | Depends on | State                            | Branch / PR                                   | Notes                                                                                               |
+| --- | ------------------------------ | ---------- | -------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| U1  | Next.js 16.4.6                 | docs       | merged                           | #106                                          | #98 closed (O3)                                                                                     |
+| U2  | Patch and minor bumps          | U1         | in review (waiting on the owner) | #114                                          | Removes one no-op line in `packages/ai` (CODEOWNERS). Supersedes #78, #96, #97                      |
+| U3  | Expo SDK 58                    | U2         | not started                      |                                               | Supersedes #79, #81; Android smoke on the owner's MacBook                                           |
+| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started                      |                                               | Supersedes #80                                                                                      |
+| B1  | Attention count                | docs       | merged                           | #107                                          | O13: phone rows keep the status badge only; S03 shows reasons in words                              |
+| B2  | Empty draft                    | docs       | in review                        | #113                                          | The server now refuses an empty publish (`PLAN_EMPTY`). Follow-ups: O16 (below) and O17 (F7.5, S06) |
+| B3  | Login errors                   | docs       | merged                           | #108, with contracts-lane #110 and #112 (O15) | The login route has no lockout, so 429 covers it. O14: platform timeouts                            |
+| B4  | Native top inset and tab route | docs       | merged                           | #111                                          | O18: the thin inset band stays until F6                                                             |
+| B5  | Native hub header              | docs       | building                         | `fix/b5-native-hub-header`                    |                                                                                                     |
+| B6  | Invalid Date                   | docs       | building                         | `fix/b6-invalid-date`                         |                                                                                                     |
+| Q0  | Measurement harness            | docs       | building                         | `chore/q0-measurement-harness`                | Its five-run medians wait for a quiet machine                                                       |
+| O16 | Allergens on manual add, swap  | docs       | building                         | `fix/allergen-manual-add`                     | Nutrition-safety fix found in B2 (O16)                                                              |
 
 ## Phase 2
 
