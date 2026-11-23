@@ -61,7 +61,9 @@ Do not dump the whole monorepo. Start from the owning package `index.ts` plus it
 
 ## Merge gates that exist
 
-CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, web build, Playwright login smoke, prod audit, iOS Metro export.
+CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, hook and PR-contract tests, the agent diff scorer's bans and `app.ts` line budget, web build, Playwright login smoke, prod audit, iOS Metro export.
+
+The "PR contract" check (`.github/workflows/pr-contract.yml`) reads the PR body and follows the PR template: exactly one Track ticked, a spec or ADR link under "Spec / ADR", and the reviewer's `BLOCKERS: 0, NON-BLOCKING: <n>` line under "Review". Docs-only PRs need only the Track.
 
 Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (needs a running API). Do not claim those as merge gates.
 
@@ -71,7 +73,7 @@ The repo has one maintainer, so GitHub requires no approval and `CODEOWNERS` onl
 
 ## Agent hooks and permissions
 
-- `.claude/settings.json` denies reading or writing secret files with Claude's file tools (`.env*` except `.env.example`, keys, Terraform state and variables except the committed `ci.auto.tfvars`) and asks before `gh pr merge` and before edits to hooks, Claude settings, workflows and `CODEOWNERS`. Cursor's copy of the hooks is `.cursor/hooks.json`.
+- `.claude/settings.json` denies reading or writing secret files with Claude's file tools (`.env*` except `.env.example`, keys, Terraform state and variables except the committed `ci.auto.tfvars`) and asks before `gh pr merge` and before edits to hooks, the PR-contract checker, Claude settings, workflows and `CODEOWNERS`. Cursor's copy of the hooks is `.cursor/hooks.json`.
 - The guard (`scripts/agent-hooks/guard.mjs`) runs before shell commands and file tools. It blocks reading secrets, force-push, pushing to `main` and adding dependencies. When it blocks something, ask the user to run it. Do not retry it in another form.
 - The stop hook runs `format:check`, `lint`, `typecheck` and `test` before you finish. Fix what it reports.
 - Run the `reviewer` subagent on your diff before you open a PR, and put its last line (`BLOCKERS: <n>, NON-BLOCKING: <n>`) in the PR body.

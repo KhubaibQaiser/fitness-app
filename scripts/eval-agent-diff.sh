@@ -10,13 +10,14 @@ fail() {
   exit 1
 }
 
+# --exclude-dir=node_modules: GNU grep -R (CI) follows pnpm's symlinks into dependency sources; macOS grep doesn't.
 echo "== banned: new Date() in persistence packages (tests excluded) =="
-if grep -R --include='*.ts' --exclude='*.test.ts' -n 'new Date(' packages/modules packages/db; then
+if grep -R --exclude-dir=node_modules --include='*.ts' --exclude='*.test.ts' -n 'new Date(' packages/modules packages/db; then
   fail "new Date() in packages/modules or packages/db (use Luxon)"
 fi
 
 echo "== banned: raw fetch() in packages/app (tests excluded) =="
-if grep -R --include='*.ts' --include='*.tsx' --exclude='*.test.ts' --exclude='*.test.tsx' -nE '(^|[[:space:]=(])fetch\(' packages/app; then
+if grep -R --exclude-dir=node_modules --include='*.ts' --include='*.tsx' --exclude='*.test.ts' --exclude='*.test.tsx' -nE '(^|[[:space:]=(])fetch\(' packages/app; then
   fail "raw fetch() in packages/app"
 fi
 
