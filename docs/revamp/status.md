@@ -2,23 +2,24 @@
 
 Only the parent edits this file ([`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-23, when the specs were written, the owner answered O1–O12, and #99–#101 merged. Nothing has started.
+Last updated: 2026-11-24, during Phase 1. U1, B1, B3 and two contracts-lane PRs have merged; the other Phase 1 tasks are in review or building.
 
 ## Phase 1
 
-| Id  | Task                           | Depends on | State       | Branch / PR | Notes                                                     |
-| --- | ------------------------------ | ---------- | ----------- | ----------- | --------------------------------------------------------- |
-| U1  | Next.js 16.4.6                 | docs       | not started |             | Supersedes #98 (O3)                                       |
-| U2  | Patch and minor bumps          | U1         | not started |             | Supersedes #78, #96, #97                                  |
-| U3  | Expo SDK 58                    | U2         | not started |             | Supersedes #79, #81; Android smoke on the owner's MacBook |
-| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started |             | Supersedes #80                                            |
-| B1  | Attention count                | docs       | not started |             |                                                           |
-| B2  | Empty draft                    | docs       | not started |             |                                                           |
-| B3  | Login errors                   | docs       | not started |             |                                                           |
-| B4  | Native top inset and tab route | docs       | not started |             | Android screenshots pending the kit                       |
-| B5  | Native hub header              | docs       | not started |             |                                                           |
-| B6  | Invalid Date                   | docs       | not started |             |                                                           |
-| Q0  | Measurement harness            | docs       | not started |             |                                                           |
+| Id  | Task                           | Depends on | State                                | Branch / PR                                   | Notes                                                                                               |
+| --- | ------------------------------ | ---------- | ------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| U1  | Next.js 16.4.6                 | docs       | merged                               | #106                                          | #98 closed (O3)                                                                                     |
+| U2  | Patch and minor bumps          | U1         | in review (waiting on the owner)     | #114                                          | Removes one no-op line in `packages/ai` (CODEOWNERS). Supersedes #78, #96, #97                      |
+| U3  | Expo SDK 58                    | U2         | not started                          |                                               | Supersedes #79, #81; Android smoke on the owner's MacBook                                           |
+| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started                          |                                               | Supersedes #80                                                                                      |
+| B1  | Attention count                | docs       | merged                               | #107                                          | O13: phone rows keep the status badge only; S03 shows reasons in words                              |
+| B2  | Empty draft                    | docs       | in review                            | #113                                          | The server now refuses an empty publish (`PLAN_EMPTY`). Follow-ups: O16 (below) and O17 (F7.5, S06) |
+| B3  | Login errors                   | docs       | merged                               | #108, with contracts-lane #110 and #112 (O15) | The login route has no lockout, so 429 covers it. O14: platform timeouts                            |
+| B4  | Native top inset and tab route | docs       | in review (merging once CI is green) | #111                                          | O18: the thin inset band stays until F6                                                             |
+| B5  | Native hub header              | docs       | building                             | `fix/b5-native-hub-header`                    |                                                                                                     |
+| B6  | Invalid Date                   | docs       | building                             | `fix/b6-invalid-date`                         |                                                                                                     |
+| Q0  | Measurement harness            | docs       | building                             | `chore/q0-measurement-harness`                | Its five-run medians wait for a quiet machine                                                       |
+| O16 | Allergens on manual add, swap  | docs       | building                             | `fix/allergen-manual-add`                     | Nutrition-safety fix found in B2 (O16)                                                              |
 
 ## Phase 2
 
@@ -78,9 +79,8 @@ Last updated: 2026-11-23, when the specs were written, the owner answered O1–O
 
 ## Waiting on the owner
 
-From [`rulings.md`](rulings.md):
-
-- **D1** (volt only for chart marks) stands unless the owner overrules it.
+- **U2 (#114):** review the one removed no-op line in `packages/ai/src/narrate-adjustment.ts` (CODEOWNERS). Keep the resolved versions (three were released on 2026-11-23), or pin back to #78's.
+- **D1** (volt only for chart marks) stands unless the owner overrules it, per [`rulings.md`](rulings.md).
 
 Order (O4): done on 2026-11-23. On the owner's word the parent merged #99, #100 and #101 into `main`, then merged `main` into this specs PR with the O4 resolution.
 
@@ -88,4 +88,6 @@ Run start (O5): the install switch `AGENT_GUARD_ALLOW_INSTALL=1` is set in the m
 
 ## Android evidence pending
 
-None yet. Each task that defers Android screenshots to the owner's kit run is listed here.
+Each task that defers Android screenshots to the owner's kit run (the Pixel 6, O11):
+
+- B2 (#113), B3 (#108), B4 (#111); B5 and B6 when their PRs open.
