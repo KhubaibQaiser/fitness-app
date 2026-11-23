@@ -14,12 +14,18 @@ const ALERT_TIME = new Intl.DateTimeFormat('en-PK', {
   minute: '2-digit',
 });
 
+/** A createdAt the API sent in a shape other than ISO 8601 with an offset. */
+export class AlertTimeError extends Error {
+  constructor(readonly value: string) {
+    super(`notification createdAt is not ISO 8601 with an offset: ${value}`);
+    this.name = 'AlertTimeError';
+  }
+}
+
 /** Epoch milliseconds of an alert's createdAt. Throws on any other shape rather than show "Invalid Date". */
 export const alertMillis = (createdAt: string): number => {
   const ms = API_TIMESTAMP.test(createdAt) ? Date.parse(createdAt) : Number.NaN;
-  if (Number.isNaN(ms)) {
-    throw new Error(`notification createdAt is not ISO 8601 with an offset: ${createdAt}`);
-  }
+  if (Number.isNaN(ms)) throw new AlertTimeError(createdAt);
   return ms;
 };
 
@@ -35,3 +41,26 @@ export const sortAlerts = (items: readonly Notification[]): Notification[] =>
       a.n.priority !== b.n.priority ? (a.n.priority === 'HIGH' ? -1 : 1) : b.ms - a.ms,
     )
     .map(({ n }) => n);
+
+export type AlertRows = { ok: true; rows: { alert: Notification; time: string }[] } | { ok: false };
+
+/**
+ * The alerts in display order with their times. A createdAt that breaks the contract is logged
+ * with its value and returned as not ok, so the screen shows its error state with Try again.
+ */
+export const alertRows = (items: readonly Notification[]): AlertRows => {
+  try {
+    const rows = sortAlerts(items).map((alert) => ({
+      alert,
+      time: formatAlertTime(alert.createdAt),
+    }));
+    return { ok: true, rows };
+  } catch (error) {
+    if (!(error instanceof AlertTimeError)) throw error;
+    console.warn('[notifications.list] alert time is not ISO 8601 with an offset', {
+      operation: 'notifications.list',
+      value: error.value,
+    });
+    return { ok: false };
+  }
+};

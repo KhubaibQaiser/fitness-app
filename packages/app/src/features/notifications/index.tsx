@@ -15,7 +15,7 @@ import {
 } from '@gymos/ui';
 import { useMarkAllRead, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
-import { formatAlertTime, sortAlerts } from './alert-time';
+import { alertRows } from './alert-time';
 import { NotificationsSkeleton } from './notifications-skeleton';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -40,15 +40,16 @@ export const NotificationsScreen = () => {
       </AppScreen>
     );
   }
-  if (notifications.isError) {
+  // A failed fetch and an alert time that breaks the contract both get the retry state.
+  const alerts = notifications.isError ? null : alertRows(notifications.data.items);
+  if (!alerts?.ok) {
     return (
       <AppScreen>
         <ErrorState message="Could not load alerts." retry={() => void notifications.refetch()} />
       </AppScreen>
     );
   }
-
-  const items = sortAlerts(notifications.data.items);
+  const items = alerts.rows;
 
   return (
     <AppScreen>
@@ -56,7 +57,7 @@ export const NotificationsScreen = () => {
         title="Notifications"
         subtitle="Check-ins, safety flags, plan blocks"
         action={
-          items.some((n) => n.readAt === null) ? (
+          items.some(({ alert }) => alert.readAt === null) ? (
             <GhostButton onPress={() => markAll.mutate()}>Mark all read</GhostButton>
           ) : (
             <YStack width={1} height={48} />
@@ -67,7 +68,7 @@ export const NotificationsScreen = () => {
         <EmptyState title="No alerts" hint="Check-in reminders and safety flags land here." />
       ) : (
         <Card padding="$2" gap={0}>
-          {items.map((n) => {
+          {items.map(({ alert: n, time }) => {
             const clientName =
               typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
             const high = n.priority === 'HIGH';
@@ -75,7 +76,7 @@ export const NotificationsScreen = () => {
             const body = (
               <NotificationRow
                 title={TYPE_LABEL[n.type] ?? n.type}
-                time={formatAlertTime(n.createdAt)}
+                time={time}
                 {...(clientName !== null ? { subtitle: clientName } : {})}
                 unread={unread}
                 priority={high ? 'high' : 'normal'}

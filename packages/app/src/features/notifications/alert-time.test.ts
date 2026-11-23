@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Notification } from '@gymos/contracts';
-import { alertMillis, formatAlertTime, sortAlerts } from './alert-time';
+import { alertMillis, alertRows, formatAlertTime, sortAlerts } from './alert-time';
 
 const alert = (
   id: string,
@@ -67,5 +67,34 @@ describe('formatAlertTime', () => {
     expect(formatAlertTime('2026-08-06T17:48:00.000Z')).toMatch(
       /^\d{1,2} Aug, \d{1,2}:\d{2}\s[ap]m$/,
     );
+  });
+});
+
+describe('alertRows', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns the alerts in display order with readable times', () => {
+    const result = alertRows([
+      alert('normal', 'NORMAL', '2026-08-06T10:00:00.000Z'),
+      alert('high', 'HIGH', '2026-08-05T10:00:00.000Z'),
+    ]);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.rows.map((r) => r.alert.id)).toEqual(['high', 'normal']);
+    for (const row of result.rows) expect(row.time).toMatch(/^\d{1,2} Aug, \d{1,2}:\d{2}\s[ap]m$/);
+  });
+
+  it('reports a non-ISO createdAt as an error and logs it, instead of throwing during render', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const bad = '2026-11-23 20:14:59.426903+00';
+    expect(
+      alertRows([alert('fine', 'NORMAL', '2026-08-06T10:00:00.000Z'), alert('bad', 'HIGH', bad)]),
+    ).toEqual({ ok: false });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[notifications.list]'), {
+      operation: 'notifications.list',
+      value: bad,
+    });
   });
 });
