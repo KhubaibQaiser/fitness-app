@@ -78,7 +78,7 @@ flowchart LR
 ```
 
 - **Phase 1 has two lanes.** The upgrades are serial (each rebases on the last). The six truth and shell fixes ([`15-fixes.md`](15-fixes.md)) run in parallel with U1–U3 because they touch different files; all of them merge before U4 starts, because U4's codemod rewrites style props across the tree.
-- **Phase 2 runs F1 first.** F2, F3, F4 and F8 then run in parallel, because they own different folders (§6). F5 starts when F2–F4 have merged, F9 when F2 and F4 have. F6 follows F5 and the F7.1 and F7.2 slices, and F10 follows F6. F7 (API and contracts) runs from U2 onwards in parallel with everything, one slice per PR.
+- **Phase 2 runs F1 first.** F2, F3, F4 and F8 then run in parallel, because they own different folders (§6). F5 starts when F2–F4 have merged, F9 when F2 and F4 have. F6 follows F5 and the F7.1 and F7.2 slices, and F10 follows F6 and F7.3. F7 (API and contracts) runs from U2 onwards in parallel with everything, one slice per PR.
 - **Phase 3 runs all screens in parallel.** S01–S03, S08 and S10–S12 start once F6 has merged; S04–S07 and S09 once F10 has. A screen also waits for its F7 slice (listed in its spec) and its approved mock.
 - **Mocks start early.** A screen's mock can start once the F5 kit sheet is approved, so mock review overlaps the F6–F10 builds. Only screen code waits for the gates.
 
