@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { sql } from 'drizzle-orm';
 import { getCookie } from 'hono/cookie';
@@ -21,6 +21,7 @@ import { type AppContext, type GymosVars } from './http';
 import { ProblemError, problemResponse } from './problems';
 import { createDbRateLimiter } from './rate-limit';
 import { asCoach, authorize, requireCoachId } from './rbac-http';
+import { resolveRequestId } from './request-id';
 import { type RouteBind } from './route-bind';
 import { registerAuthRoutes } from './routes/auth';
 import { registerCheckInRoutes } from './routes/check-ins';
@@ -113,7 +114,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   });
 
   app.use('*', async (c, next) => {
-    c.set('requestId', c.req.header('x-request-id') ?? randomUUID());
+    c.set('requestId', resolveRequestId(c.req.header('x-request-id')));
     await next();
     c.header('x-request-id', c.get('requestId'));
     c.header('x-content-type-options', 'nosniff');

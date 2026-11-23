@@ -293,11 +293,25 @@ export const updateMeBody = z
       body.currencyPref !== undefined ||
       body.unitPrefs !== undefined ||
       body.defaultCountry !== undefined,
-    { message: 'Provide at least one preference to update' },
+    { error: 'Provide at least one preference to update' },
   );
 
 /** Loose-but-typed response envelopes (tightened in the contracts milestone). */
 export const anyObject = z.record(z.string(), z.unknown());
+
+/** RFC 9457-shaped body every error status returns (see `problemResponse` in problems.ts). */
+export const problem = z
+  .object({
+    type: z.string(),
+    title: z.string(),
+    status: z.number().int(),
+    code: z.string(),
+    detail: z.string().optional(),
+    requestId: z.string().optional().openapi({
+      description: 'Request reference the API logs under; also sent as the x-request-id header.',
+    }),
+  })
+  .openapi('Problem');
 export const objectList = z.object({ items: z.array(anyObject) });
 export const okResponse = z.object({ ok: z.boolean() });
 

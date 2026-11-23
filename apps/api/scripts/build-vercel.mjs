@@ -26,10 +26,8 @@ await build({
   format: 'esm',
   target: 'node22',
   alias: {
-    pdfkit: path.join(
-      path.dirname(require.resolve('pdfkit/package.json')),
-      'js/pdfkit.standalone.js',
-    ),
+    // pdfkit 0.20's exports map hides package.json, so find the standalone build next to the main entry.
+    pdfkit: path.join(path.dirname(require.resolve('pdfkit')), 'pdfkit.standalone.js'),
   },
   // CommonJS dependencies inside an ESM bundle need require/__dirname.
   banner: {
