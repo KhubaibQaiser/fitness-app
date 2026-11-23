@@ -2,7 +2,7 @@
 
 Shared layers every screen builds on. Owned paths are in [README §6](README.md#6-file-ownership-and-change-lanes-conflict-prevention); a task never edits outside them. Each task also meets the global definition of done ([README §8](README.md#8-global-definition-of-done-every-task)).
 
-Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after F2 and F4, F6 after F5, F10 after F6. F7 runs from U2 onwards, one slice per PR.
+Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after F2 and F4, F6 after F5 and the F7.1 and F7.2 slices, F10 after F6 and F7.3. F7 runs from U2 onwards, one slice per PR.
 
 "Install" lines name packages the agent guard blocks (rulings O5). The builder stops and the parent batches them for the owner.
 
@@ -13,7 +13,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 - **Goal:** one generated Floodlight token source for web and native, with the Sunflower brand derived at runtime from one hex per tenant.
 - **Depends on:** U4.
 - **Evidence:** ADR-0019; [`reference/tokens.md`](reference/tokens.md) §2, §4.3, §5.2, §6.3–6.4, §11; [`reference/tokens.floodlight.json`](reference/tokens.floodlight.json).
-- **Also owns:** `packages/platform/src/theme-mode*` (follow system, three states) and the provider files the runtime theme needs: `packages/app/src/provider/**`, `apps/web/components/NextTamaguiProvider*`, and the theme part of `apps/mobile/src/mobile-providers.tsx`. F2 edits the font part of that file after F1 merges.
+- **Also owns:** `packages/platform/src/theme-mode*` (follow system, three states) and the provider files the runtime theme needs: `packages/app/src/provider/**`, `apps/web/components/next-tamagui-provider*`, and the theme part of `apps/mobile/src/mobile-providers.tsx`. F2 edits the font part of that file after F1 merges.
 - **Requirements:**
   1. **Three layers:**
      - Primitives in `tokens.color`.
@@ -72,7 +72,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   4. **Label fit (N7):** text components never break mid-word. Controls that can't fit a label on one line at the default size switch layout (F5 handles segmented controls).
   5. **RTL-ready:**
      - `<html lang dir>` on web, from the locale.
-     - A lint rule bans physical direction props (`marginLeft`, `paddingRight`, `left`, `right`, `borderLeftWidth` and the rest) in `packages/app` and `packages/ui`.
+     - A lint rule in `eslint.config.mjs` (F2 owns that edit) bans physical direction props in `packages/app` and `packages/ui`: `marginLeft`/`Right`, `paddingLeft`/`Right`, `left`, `right`, `borderLeft*`/`borderRight*` and the corner radii. `textAlign` values are outside the rule (one `textAlign="right"` exists in `nutrition-criteria/criteria-row.tsx:39`); Q3's RTL smoke checks text alignment.
      - Convert the existing uses: 36 in 15 files, measured on 2026-11-23 (`pace-slider.tsx` 10; `weight-chart-layout.ts` 4; `app-shell.tsx` 4; 2 each in `weight-chart.tsx`, `notification-row.tsx`, `gymos-sheet.tsx`, `form-field.tsx`, `client-hub-more-menu.tsx` and `auth-hero-column.tsx`; 1 each in `pace-slider-math.ts`, `vitals-entry-skeleton.tsx`, `client-journey-map.tsx`, `client-hub-skeleton.tsx`, `check-in-detail-skeleton.tsx` and `auth-form-column.tsx`). Re-count at the start; the PR lists every file.
      - **One-time ownership exception:** F2 may edit those files, and only their direction props. No other task is active in them while F2 runs (F3, F4 and F8 own none of them), and their later owners (F5, F6, F9, F10, S01, S04, S05, S07, S09) start after F2 merges.
      - Directional icons get a mirror flag, which F5 applies.
@@ -98,7 +98,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   - The global conditions hold.
   - Formatter unit tests run under `TZ=Asia/Karachi` and `TZ=UTC`, with exhaustive enum tests.
   - A pace test: the bug-9 client's goal gives the same label from every entry point.
-  - The physical-props lint passes with zero exceptions.
+  - The physical-props lint passes with zero exceptions for the props it covers.
   - The iOS login screenshot shows Inter.
   - Font files are not in the English web bundle (bundle report).
 - **Reviewer focus:** any new `toLocaleString`/ISO display, units still hard-coded, percent adherence, enum text reaching the UI, a time-zone shift on date-only values.
@@ -264,8 +264,13 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
 - Luxon only in `packages/modules`, never `new Date()`.
 - Read the existing module functions first, and reuse rather than duplicate.
 - Any change under `packages/core` needs the owner's review (CODEOWNERS).
-- **Additive only.** A slice adds endpoints or optional fields and never removes or changes a shape that live screens still read (today's roster, Home, `prefetch-coach.ts` and the shell read `/v1/clients`, the due check-ins and the unread count). The task that migrates the last consumer, or Q5, removes the old shape.
-- **Call sites belong to the screen.** A slice delivers hooks and prefetch helpers. The task that owns a route file wires them in: F6 for `(coach)/layout.tsx`, S02 for Today, S03 for Clients, S04–S06 for the hub routes. The slice merges first.
+- **Additive only.** A slice adds endpoints or optional fields and never removes or changes a shape that live screens still read (today's roster, Home, `prefetch-coach.ts` and the shell read `/v1/clients`, the due check-ins and the unread count). Once the last consumer has migrated, the parent removes the old shape in its own `feature/data-` PR. Q5 lists any old shape still left.
+- **B tasks first.** B2 (publish handler) and B6 (notification serializer and contract) edit files in this lane. A slice that touches the same file waits for that B task to merge, or rebases on it.
+- **Call sites belong to the screen.** A slice delivers hooks and prefetch helpers. The task that owns a route file wires them in, after the slice merges:
+  - F6: `(coach)/layout.tsx` (the bell and palette data);
+  - F10: `clients/[clientId]/layout.tsx` (the client record for the header);
+  - S02: Today; S03: Clients; S04–S06: the hub tab routes.
+- **Public config.** F7.3 caches `/v1/config/public` at the API (ETag and `Cache-Control`). If it is also inlined into the HTML, F6 wires that in `apps/web/app/layout.tsx`.
 
 | Slice                                            | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | For                    |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
@@ -294,7 +299,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - Inbox clear
      - 404
      - Generic error
-  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and optimised PNG for native. The screen that shows an image owns how it's delivered: S01 serves the login hero (435 KB today, `auth-hero-column.tsx:8`) at responsive sizes in a modern format.
+  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and optimised PNG for native. F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at the widths S01's layout uses, under `apps/web/public/auth/`). The screen that shows an image chooses how it's delivered: S01 references those files from `auth-hero-column.tsx:8` and adds no image files itself.
   4. Re-export the 512×512 app icon (`apps/web/app/icon.png`, 385 KB, fetched on every page; and `apps/mobile/assets/icon.png`) with the same artwork, optimised.
 - **Mock:** the illustration set on light and dark surfaces next to the Floodlight UI.
 - **Done when:**
@@ -341,7 +346,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
 ## F10: Client shell
 
 - **Goal:** the client is never lost. The same header sits on every client route, with the loop's actions in reach. The hub has four tabs, and task screens open as sheets over it.
-- **Depends on:** F6.
+- **Depends on:** F6; F7.3 (client prefetch helper for the layout).
 - **Evidence:** critique top-10 #4 and #5, screens 13–15, §4, §9.5; A9, A18, M3.
 - **Requirements:**
   1. **Header:**
@@ -351,6 +356,8 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - A labelled **WhatsApp** button.
      - Primary **Start check-in**, secondary **Log vitals**, and an overflow "…" (Edit goal, Dietary profile, Intake PDF). The hamburger goes.
      - Present on every client route, including tasks and the plan editor.
+     - **Data:** the client layout (`[clientId]/layout.tsx` on web, the client stack layout on native) reads the client record through the existing `useClientDetail` hook and F7.3's prefetch helper. Screens below it read the same query, so the record is fetched once.
+     - **Hub composition:** F10 rewrites `packages/app/src/features/client-detail/index.tsx` to the four tabs and the new header; it owns that file until it merges, then S04 does.
      - Glass when sticky on web.
   2. **Native header:**
      - The client name is the native large title, collapsing on scroll.

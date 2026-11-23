@@ -5,7 +5,7 @@
 
 ## Context
 
-The token study (`docs/revamp/reference/tokens.md`, explorer [GymOS Design Tokens](https://claude.ai/artifact/5CtV8ocVdgxBLyjXdsrL7a)) proposed two palettes and a glass variant. It recommended "Gym Floor Print, evolved". The owner chose **Floodlight**, with **glass on**, the tenant preview **Sunflower**, and a dark-first design that follows the system setting.
+The token study (`docs/revamp/reference/tokens.md`, explorer [GymOS Design Tokens](https://claude.ai/artifact/5CtV8ocVdgxBLyjXdsrL7a), owner-only) proposed two palettes and a glass variant. It recommended "Gym Floor Print, evolved". The owner chose **Floodlight**, with **glass on**, the tenant preview **Sunflower**, and a dark-first design that follows the system setting.
 
 Today tenant branding is compiled in from `infra/tenants/pilot.json`: only `primary` reaches the theme, so a second tenant cannot recolour the app. Faint text and several status chips fail contrast (2.07–2.94:1).
 

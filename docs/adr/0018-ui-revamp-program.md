@@ -5,7 +5,7 @@
 
 ## Context
 
-The 2026-11-23 audit ([report](https://claude.ai/artifact/6kqJfdnEayt5dLkbgyKwUn), evidence in `docs/revamp/reference/`) found that the coach app looks plain and, more importantly, contradicts itself: Home says everyone is on track while every client is overdue, the plan editor dead-ends at Publish, and the native app draws under the status bar with no native navigation. The owner chose a full revamp and treats the app as greenfield for UI purposes.
+The 2026-11-23 audit ([report](https://claude.ai/artifact/6kqJfdnEayt5dLkbgyKwUn), owner-only; evidence in `docs/revamp/reference/`) found that the coach app looks plain and, more importantly, contradicts itself: Home says everyone is on track while every client is overdue, the plan editor dead-ends at Publish, and the native app draws under the status bar with no native navigation. The owner chose a full revamp and treats the app as greenfield for UI purposes.
 
 `AGENTS.md` describes a brownfield alignment project ("adapt, not replace"), locks `gym-app/files 2/gymos-components.jsx` and `gymos-prototype.jsx` as the canonical design, and limits restyles to "no change to fetch, routing or business conditionals". The revamp changes all three, so it needs its own track.
 

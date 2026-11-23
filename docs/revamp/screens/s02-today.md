@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/page.tsx` (`/`); native: the Today tab root (route file placed by F6).
 - **Owned paths:** `packages/app/src/features/home/**` and the two route files.
-- **Depends on:** F6; F7.1 (queue and pulse); F7.9 for intake-draft rows (blocked on O7; render them once F7.9 merges); F8 (first-run art).
+- **Depends on:** F6; F7.1 (queue and pulse, plus its prefetch helper, which S02 calls from its route file); F7.9 for intake-draft rows (blocked on O7; render them once F7.9 merges); F8 (first-run art).
 - **Evidence:** critique 10, top-10 #1, §4, §5.2, §8 #1; `motion.md` §5.1; perf (Today LCP 3.5 s cold phone).
 
 ## Goal

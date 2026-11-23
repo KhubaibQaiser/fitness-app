@@ -1,6 +1,6 @@
 # Performance baseline (measured 2026-11-23)
 
-Snapshot of the performance report ([artifact](https://claude.ai/artifact/XdpFBdPKfKyxdZjQMQchkR)). Q2 fills in the "After" columns on the release candidate. Budgets are in [README §9](../README.md#9-performance-budgets-from-the-baseline).
+Snapshot of the performance report ([artifact](https://claude.ai/artifact/XdpFBdPKfKyxdZjQMQchkR), owner-only). Q2 fills in the "After" columns on the release candidate. Budgets are in [README §9](../README.md#9-performance-budgets-from-the-baseline).
 
 ## Environment and limits
 

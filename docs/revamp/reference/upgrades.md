@@ -1,7 +1,6 @@
 # GymOS upgrade spikes (measured 2026-11-23)
 
-Worktree: `fitness-app-ui-revamp/upgrade-wt` (detached from origin/main c82192c). Three local commits, in this order, nothing pushed:
-`567fdf6` Next 16.4.6, `e9c57de` Expo SDK 58, `05c2b59` Tamagui 3.3.3 (WIP). Logs: `fitness-app-ui-revamp/upgrade-logs/`.
+Spikes ran in a local throwaway worktree off origin/main c82192c, in this order: Next 16.4.6, Expo SDK 58, Tamagui 3.3.3 (WIP). The spike commits and logs are not in this repo.
 
 ## Baseline (origin/main, `--force`, no turbo cache)
 
@@ -27,7 +26,7 @@ Worktree: `fitness-app-ui-revamp/upgrade-wt` (detached from origin/main c82192c)
 | solito                       | 5.0.0       | 5.0.0                                             | no          | none                                                                         | 0                          | current                                                            | skip                                                     |
 | react-native-web             | 0.21.2      | 0.21.4                                            | patch       | not measured                                                                 | minutes                    | fixes                                                              | with SDK or Tamagui                                      |
 
-## Spike 3: Next.js 16.4.3 → 16.4.6 (commit 567fdf6)
+## Spike 3: Next.js 16.4.3 → 16.4.6
 
 - Command: edit `apps/web/package.json` `next ^16.4.6`, `pnpm install --no-frozen-lockfile --ignore-scripts`.
 - Results: typecheck 12/12, lint 0, test all pass, `pnpm --filter @gymos/web build` **passes** (Next 16.4.6 Turbopack, compiled in 2.4 s).
@@ -35,9 +34,9 @@ Worktree: `fitness-app-ui-revamp/upgrade-wt` (detached from origin/main c82192c)
 - Release dates: 16.4.4 2026-11-02, 16.4.5 2026-11-03, 16.4.6 2026-11-09 (npm). Release notes not read.
 - Risk: low.
 
-## Spike 1: Expo SDK 57 → 58 (commit e9c57de)
+## Spike 1: Expo SDK 57 → 58
 
-- Commands: `npx expo install expo@^58.0.0`, `npx expo install --fix` (in apps/mobile), then a script to align shared deps across `apps/web`, `packages/app|platform|ui` (`upgrade-logs/align.mjs`), then pnpm install.
+- Commands: `npx expo install expo@^58.0.0`, `npx expo install --fix` (in apps/mobile), then a script to align shared deps across `apps/web`, `packages/app|platform|ui` (a local script, not in the repo), then pnpm install.
 - Versions: expo 57.0.2 → 58.0.26; react-native 0.86.2 → 0.88.1; react 19.2.8 → 19.3.x; **reanimated 4.5.1 → 4.7.1** (SDK 58 pins 4.7.1, not 4.8.0, so shared-element-by-default is NOT included; I did not test bumping past the SDK pin); worklets 0.10.1 → 0.13.0; screens 4.26 → 4.30.1; gesture-handler 2.32 → 3.3.0; skia 2.6.2 → 2.14.0; expo-router 57.0.12 → 58.0.32; svg 15.15.4 → 15.16.0; webview 13.16.1 → 14.0.1; jest 29 → 30, jest-expo 58. `expo install --fix` also added `expo-sharing` and `expo-status-bar` to app.json plugins. It also moved mobile TypeScript to ^6.0.3; I reverted that to keep this spike separable.
 - Results after fixes: typecheck 12/12, test all pass, web build passes, `npx expo export --platform ios` passes (20 s, one Hermes bundle 9.3 MB).
 - Fixed: `packages/ui/src/components/pace-slider.tsx:574` TS2322, `TamaguiElement` widened, so the ref callback now casts to `TrackNode`; `packages/platform/src/download-blob.native.ts:14` `file.write` is now async, so it is awaited; `react-test-renderer` pinned to 19.3.0 (RNTL peer check failed against 19.3.1).
@@ -46,7 +45,7 @@ Worktree: `fitness-app-ui-revamp/upgrade-wt` (detached from origin/main c82192c)
 - Not verified: any native build, any runtime behaviour on device (gesture-handler 3 and webview 14 are major jumps), OTA/EAS config. Native compile was out of scope.
 - Risk: medium (gesture-handler 3, webview 14, jest 30).
 
-## Spike 2: Tamagui 2.7.2 → 3.3.3 (commit 05c2b59, WIP, not green)
+## Spike 2: Tamagui 2.7.2 → 3.3.3 (WIP, not green)
 
 - Bumped `tamagui`, `@tamagui/config`, `@tamagui/next-plugin`, `@tamagui/helpers-icon`, `@tamagui/react-native-svg` to 3.3.3. `@tamagui/lucide-icons-2` has no v3 (latest 2.7.7).
 - Before codemod: 80 unique type errors in 32 files (TS2322 62, TS2339 6, TS2353 5, TS18046 3, TS2375 2, TS2307 2). The Dependabot 3.1.7 number was 32 in 14 files of packages/ui only; the unique count here includes packages/app.

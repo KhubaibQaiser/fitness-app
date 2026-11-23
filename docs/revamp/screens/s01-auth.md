@@ -7,7 +7,7 @@
 
   The native `(auth)/_layout.tsx` belongs to F6.
 
-- **Depends on:** F6; F8 (redrawn illustration).
+- **Depends on:** F6; F8 (redrawn illustration and the sized hero files).
 - **Evidence:** critique 01–03, §9.1 #3 and #4, N6 and N8; perf (login LCP 7.1 s, of which 6.6 s is render delay); `docs/specs/public-auth-split-layout.md`.
 
 ## Goal

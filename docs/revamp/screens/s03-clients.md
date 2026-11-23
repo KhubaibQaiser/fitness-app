@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/clients/page.tsx`; native: the Clients tab root (placed by F6).
 - **Owned paths:** `packages/app/src/features/roster/**` and the two route files.
-- **Depends on:** F6; F7.2 (roster v2).
+- **Depends on:** F6; F7.2 (roster v2, plus its prefetch helper, which S03 calls from its route file).
 - **Install (if chosen):** `@shopify/flash-list` for native recycling. The builder decides between it and a tuned `FlatList` by measurement, recorded in the PR.
 - **Evidence:** critique 11, bugs 1, 12 and 14, N13; perf (5,795 DOM nodes, 590 ms cold TBT, 1.4 s signed-in TBT; longest task 534 ms cold and 972 ms signed-in at 170 clients).
 

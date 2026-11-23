@@ -18,7 +18,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 
 - **Bug:** Home says "All clients are on track today" (Needs attention 0) and the roster's Attention chip shows 0 while every client is 91–109 days overdue. Attention counts only `OFF_TRACK` and `RED_FLAG`, so `CHECKIN_OVERDUE` never counts. The rule is copied in three places:
   - `packages/app/src/features/home/index.tsx:57-61` (at risk and on track);
-  - `packages/app/src/features/roster/roster-row.tsx:14-15` (`isAttention`, also used at :67 and :73);
+  - `packages/app/src/features/roster/roster-row.tsx:14-15` (`isAttention`, used at :34; the reason badges at :66-74 exclude `OFF_TRACK` and `RED_FLAG` inline and must follow the same rule);
   - `packages/app/src/features/roster/index.tsx:26` (`isAttention`, feeding the Attention chip count at :57 and the filter and sort at :67-73).
 - **Owned files:** the three files above, plus one shared predicate in `packages/app/src/lib/attention.ts` (new) with its test. If an equivalent rule already exists in `packages/modules`, reuse it instead of adding a second one (read first).
 - **Done when:**
@@ -65,7 +65,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 
 - **Bugs:**
   - N1: titles and controls sit under the status bar and Dynamic Island on every coach screen. The shell applies only the bottom inset (`packages/app/src/features/shell/app-shell.tsx:67-77`), and `Screen` uses a fixed `paddingTop: '$5'` (`packages/ui/src/components/screen.tsx:8`).
-  - N3: the tab bar reads Solito's native `usePathname` (`app-shell.tsx:5`, read at :63 and again at :125), which resolves to the layout's route. Home is always active, and the tab bar shows on task screens.
+  - N3: the tab bar reads Solito's native `usePathname` (`app-shell.tsx:5`, read at :63 by the tab bar and at :125 by the web `SideNav`; both switch to the façade), which resolves to the layout's route. Home is always active, and the tab bar shows on task screens.
 - **Owned files:**
   - `packages/app/src/features/shell/app-shell.tsx` and `use-app-chrome.ts` with its test.
   - `packages/ui/src/components/screen.tsx`.

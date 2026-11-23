@@ -41,24 +41,24 @@ Last updated: 2026-11-23, when the specs were written. Nothing has started.
 | F7.9 | Intake drafts                        | U2             |                      | blocked (O7) |             |                                        |
 | F8   | Illustrations and images             | F1             | illustration set     | blocked (O6) |             |                                        |
 | F9   | Charts                               | F2, F4         | chart states         | not started  |             |                                        |
-| F10  | Client shell                         | F6             | header, tabs, sheets | not started  |             |                                        |
+| F10  | Client shell                         | F6, F7.3       | header, tabs, sheets | not started  |             |                                        |
 
 ## Phase 3
 
-| Id  | Screen                   | Starts after                       | Mock        | State                  | Branch / PR | Notes                                          |
-| --- | ------------------------ | ---------------------------------- | ----------- | ---------------------- | ----------- | ---------------------------------------------- |
-| S01 | Auth                     | F6, F8                             | not started | not started            |             |                                                |
-| S02 | Today                    | F6, F8, F7.1 (F7.9 for draft rows) | not started | not started            |             | Mock priority 1. Intake-draft rows wait for O7 |
-| S03 | Clients                  | F6, F7.2                           | not started | not started            |             |                                                |
-| S04 | Hub overview and profile | F10, F9, F7.3, F7.7                | not started | not started            |             |                                                |
-| S05 | Progress                 | F10, F9, F7.3, F7.4                | not started | not started            |             |                                                |
-| S06 | Plan                     | F10, F9, F7.3, F7.5                | not started | not started            |             |                                                |
-| S07 | Check-in                 | F10, F9, F7.8                      | not started | blocked (O9, via F7.8) |             | Mock can start                                 |
-| S08 | Intake                   | F6, F9, F7.9                       | not started | blocked (O7, via F7.9) |             | Mock can start                                 |
-| S09 | Task sheets              | F10, F7.4, F7.6                    | not started | not started            |             | "Other allergen" waits for O1                  |
-| S10 | Tools and guides         | F6                                 | not started | not started            |             |                                                |
-| S11 | Account                  | F6                                 | not started | not started            |             |                                                |
-| S12 | Inbox and 404            | F6, F8, F7.1                       | not started | not started            |             |                                                |
+| Id  | Screen                   | Starts after                       | Mock        | State                  | Branch / PR | Notes                                                               |
+| --- | ------------------------ | ---------------------------------- | ----------- | ---------------------- | ----------- | ------------------------------------------------------------------- |
+| S01 | Auth                     | F6, F8                             | not started | blocked (O6, via F8)   |             | Mock waits for F8 art                                               |
+| S02 | Today                    | F6, F8, F7.1 (F7.9 for draft rows) | not started | blocked (O6, via F8)   |             | Mock priority 1; mock can start. Intake-draft rows also wait for O7 |
+| S03 | Clients                  | F6, F7.2                           | not started | not started            |             |                                                                     |
+| S04 | Hub overview and profile | F10, F9, F7.3, F7.7                | not started | not started            |             |                                                                     |
+| S05 | Progress                 | F10, F9, F7.3, F7.4                | not started | not started            |             |                                                                     |
+| S06 | Plan                     | F10, F9, F7.3, F7.5                | not started | not started            |             |                                                                     |
+| S07 | Check-in                 | F10, F9, F7.8                      | not started | blocked (O9, via F7.8) |             | Mock can start                                                      |
+| S08 | Intake                   | F6, F9, F7.9                       | not started | blocked (O7, via F7.9) |             | Mock can start                                                      |
+| S09 | Task sheets              | F10, F7.4, F7.6                    | not started | not started            |             | "Other allergen" waits for O1                                       |
+| S10 | Tools and guides         | F6                                 | not started | not started            |             |                                                                     |
+| S11 | Account                  | F6                                 | not started | not started            |             |                                                                     |
+| S12 | Inbox and 404            | F6, F8, F7.1                       | not started | blocked (O6, via F8)   |             | Mock can start                                                      |
 
 ## Phase 4
 
@@ -72,7 +72,7 @@ Last updated: 2026-11-23, when the specs were written. Nothing has started.
 
 ## Waiting on the owner
 
-From [`rulings.md`](rulings.md), open items: O1 custom allergens, O2 test device, O3 Dependabot closures, O4 land #99/#100/#101 first or rebase, O5 dependency installs, O6 illustration source, O7 intake drafts, O8 iPad orientation, O9 check-in validation, O10 concurrency cap; and derived rule D1.
+From [`rulings.md`](rulings.md), open items: O1 custom allergens, O2 test device, O3 Dependabot closures, O4 land #99/#100/#101 first or rebase (the parent removes O4 here after this PR merges), O5 dependency installs, O6 illustration source, O7 intake drafts, O8 iPad orientation, O9 check-in validation, O10 concurrency cap; and derived rule D1.
 
 ## Android evidence pending
 

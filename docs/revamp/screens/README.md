@@ -21,7 +21,7 @@ Mock priority follows critique §8: Today first, then the hub and the check-in. 
 
 ## Rules for every screen
 
-- **Own only the listed paths.**
+- **Own only the listed paths.** Native route files are placed by F6; the parent puts their exact paths in the builder brief.
   - A shared component you need goes through the kit lane, and an API change through the contracts lane ([README §6](../README.md#6-file-ownership-and-change-lanes-conflict-prevention)).
   - Importing another feature's exported component is fine. Editing it is not.
 - **Mock first** ([README §7](../README.md#7-gates)):

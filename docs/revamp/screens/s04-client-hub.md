@@ -2,7 +2,7 @@
 
 - **Routes:** web `apps/web/app/(coach)/clients/[clientId]/page.tsx` (Overview) and `.../profile/page.tsx` (created by F10); the native equivalents.
 - **Owned paths:**
-  - `packages/app/src/features/client-detail/client-hub-overview.tsx`, `client-hub-skeleton.tsx`, `index.tsx`.
+  - `packages/app/src/features/client-detail/client-hub-overview.tsx`, `client-hub-skeleton.tsx`, and `index.tsx` (F10 rewrites it first; S04 owns it after F10 merges).
   - `packages/app/src/features/client-detail/profile/**` (new).
   - The Overview route file, and the Profile route file once F10 has created it.
 
