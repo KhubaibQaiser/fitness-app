@@ -45,16 +45,23 @@ export const HomeScreen = () => {
       </AppScreen>
     );
   }
-  if (due.isError) {
+  // Without the client list there is no attention count, so no all-clear either.
+  if (due.isError || clients.isError) {
     return (
       <AppScreen>
-        <ErrorState message="Could not load your day." retry={() => void due.refetch()} />
+        <ErrorState
+          message="Could not load your day."
+          retry={() => {
+            void due.refetch();
+            void clients.refetch();
+          }}
+        />
       </AppScreen>
     );
   }
 
   const dueItems = due.data.items;
-  const allClients = clients.data?.items ?? [];
+  const allClients = clients.data.items;
   const atRisk = allClients.filter((c) => needsAttention(c.attentionReasons));
   const onTrack = allClients.length - atRisk.length;
   const highAlerts = (notifications.data?.items ?? []).filter(
