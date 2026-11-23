@@ -32,6 +32,7 @@ export {
 export { IosSwitch } from './components/ios-switch';
 export { PageHeader } from './components/page-header';
 export { StickyFormFooter } from './components/sticky-form-footer';
+export { StickyHeader } from './components/sticky-header';
 export { Stat, DeltaChip, Avatar, ListRow } from './components/stat';
 export { StatPill } from './components/stat-pill';
 export { GoalTag } from './components/goal-tag';
