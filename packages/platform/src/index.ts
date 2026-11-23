@@ -7,3 +7,4 @@ export { downloadBlob } from './download-blob';
 export { useSafeAreaInsets } from './safe-area';
 export type { SafeAreaInsets } from './safe-area';
 export { isWeb } from './is-web';
+export { PathnameProvider, usePathname } from './pathname';

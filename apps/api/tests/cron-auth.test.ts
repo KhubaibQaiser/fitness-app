@@ -17,7 +17,7 @@ const SECRET = 'cron-secret-at-least-16-chars';
 
 const app = (cronSecret?: string) =>
   buildApp({
-    db: {} as Db,
+    db: {} as unknown as Db,
     manifest,
     env: {
       JWT_ACCESS_SECRET: 'a-test-jwt-access-secret-that-is-long-enough',
