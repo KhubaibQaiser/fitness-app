@@ -72,6 +72,16 @@ describe('describeLoginFailure (B3: login says what actually failed)', () => {
     });
   });
 
+  it.each([
+    ['an empty', ''],
+    ['a whitespace-only', '   '],
+  ])('5xx with %s requestId: no dangling "Reference:"', (_label, requestId) => {
+    const error = new ApiError(500, 'INTERNAL', 'Something went wrong', undefined, requestId);
+    expect(describeLoginFailure(error).message).toBe(
+      'GymOS is having trouble. Try again in a minute.',
+    );
+  });
+
   it.each([400, 403, 404, 422])(
     '%i: an error with the status, never wrong credentials',
     (status) => {
