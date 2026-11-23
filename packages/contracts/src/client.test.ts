@@ -268,3 +268,62 @@ describe('contracts client — logout', () => {
     expect(refreshToken).toBeNull();
   });
 });
+
+describe('contracts client — problem request reference', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    configureApiClient({
+      baseUrl: '',
+      clientPlatform: 'web',
+      getAccessToken: () => null,
+      setAccessToken: () => undefined,
+    });
+  });
+
+  const problem = (extra: Record<string, unknown>) => ({
+    type: 'https://gymos.app/problems/internal',
+    title: 'Something went wrong on our side',
+    status: 500,
+    code: 'INTERNAL',
+    ...extra,
+  });
+
+  it('exposes the problem body requestId on ApiError', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve(jsonResponse(problem({ requestId: 'req-7f3a' }), 500)),
+    );
+
+    await expect(api.login('coach@pilot.local', 'any-password')).rejects.toMatchObject({
+      status: 500,
+      code: 'INTERNAL',
+      requestId: 'req-7f3a',
+    });
+  });
+
+  it('leaves requestId undefined when the body has none (e.g. a proxy error page)', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve(new Response('Internal Server Error', { status: 500 })),
+    );
+
+    const error: unknown = await api
+      .login('coach@pilot.local', 'any-password')
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error instanceof ApiError && error.requestId).toBeUndefined();
+  });
+
+  it('exposes requestId when the refresh call itself fails with a problem', async () => {
+    global.fetch = vi.fn((url: string | URL) =>
+      Promise.resolve(
+        String(url).endsWith('/v1/auth/refresh')
+          ? jsonResponse(problem({ status: 503, code: 'UPSTREAM', requestId: 'req-refresh' }), 503)
+          : jsonResponse({ code: 'AUTH_REQUIRED', title: 'Missing or expired token' }, 401),
+      ),
+    ) as unknown as typeof fetch;
+
+    await expect(api.notifications.unreadCount()).rejects.toMatchObject({
+      status: 503,
+      requestId: 'req-refresh',
+    });
+  });
+});
