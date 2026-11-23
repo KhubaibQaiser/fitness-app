@@ -764,6 +764,43 @@ describe('the pilot core loop', () => {
       expect(after).toHaveLength(before.length + 1);
       expect(after.some((i) => i.foodId === cleanId)).toBe(true);
     });
+
+    it('refuses a swap on a NEEDS_REVIEW plan, the usual state after an allergy is added', async () => {
+      // A profile change flags a published plan NEEDS_REVIEW; set it directly to keep the test short.
+      await db
+        .update(schema.mealPlans)
+        .set({ status: 'NEEDS_REVIEW' })
+        .where(eq(schema.mealPlans.id, planId));
+      const before = await planItems();
+      const res = await patch([{ op: 'swap', itemId: firstItemId, foodId: peanutId }]);
+      expect(res.status).toBe(422);
+      expect(((await res.json()) as { code: string }).code).toBe('ALLERGEN_CONFLICT');
+      expect(await planItems()).toEqual(before);
+    });
+
+    it('refuses to copy an allergen item already in the plan to the other days', async () => {
+      // An item from before this check (or a hand edit to the database): insert it directly.
+      await db.insert(schema.mealPlanItems).values({
+        planId,
+        day: 1,
+        mealIndex: 0,
+        mealSlot: 'breakfast',
+        mealName: 'breakfast, day 1',
+        foodId: peanutId,
+        portionGrams: 30,
+        macros: { kcal: 176, proteinG: 7.5, fatG: 15, carbsG: 6 },
+        macrosSource: 'food_db',
+        position: 99,
+      });
+      const before = await planItems();
+      const res = await patch([{ op: 'apply-day-to-week', day: 1 }]);
+      expect(res.status).toBe(422);
+      expect(await res.json()).toMatchObject({
+        code: 'ALLERGEN_CONFLICT',
+        detail: 'allergen=peanut',
+      });
+      expect(await planItems()).toEqual(before);
+    });
   });
 
   it('ADR-0015 D2: saves sanitized coach instructions and threads them into the next generation', async () => {

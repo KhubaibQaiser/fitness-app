@@ -94,14 +94,14 @@ type ApplyCtx = {
   readonly restrictedAllergens: readonly string[];
 };
 
-/** A coach can't add by hand what generation would exclude (ADR-0001, ruling O16). */
+/** A coach can't put into a plan by hand what generation would exclude (ADR-0001, ruling O16). */
 const assertNoAllergen = (
   ctx: ApplyCtx,
-  foodId: string,
+  items: readonly { foodId: string }[],
   foods: Awaited<ReturnType<typeof foodsById>>,
 ): void => {
-  const check = assertNoRestrictedFoods([{ foodId }], foods, ctx.restrictedAllergens);
-  if (!check.ok) throw new PatchAllergenConflict(foodId, check.error.allergen);
+  const check = assertNoRestrictedFoods(items, foods, ctx.restrictedAllergens);
+  if (!check.ok) throw new PatchAllergenConflict(check.error.foodId, check.error.allergen);
 };
 
 const requireItem = (ctx: ApplyCtx, itemId: string): PlanItemRow | null =>
@@ -141,7 +141,7 @@ const applySwap = async (ctx: ApplyCtx, op: Extract<PlanOp, { op: 'swap' }>): Pr
   const food = await foodsById(ctx.tx, [op.foodId]);
   const per100g = food.get(op.foodId)?.per100g;
   if (!per100g) throw new PatchFoodMissing(op.foodId);
-  assertNoAllergen(ctx, op.foodId, food);
+  assertNoAllergen(ctx, [{ foodId: op.foodId }], food);
   const macros = gramsMacros(per100g, item.portionGrams);
   await ctx.tx
     .update(s.mealPlanItems)
@@ -188,6 +188,8 @@ const applyDayToWeek = async (
   op: Extract<PlanOp, { op: 'apply-day-to-week' }>,
 ): Promise<void> => {
   const source = ctx.working.items.filter((i) => i.day === op.day);
+  // Fail closed on an allergen item already in the plan (from before this check), not copy it.
+  assertNoAllergen(ctx, source, await foodsById(ctx.tx, [...new Set(source.map((i) => i.foodId))]));
   await ctx.tx
     .delete(s.mealPlanItems)
     .where(and(eq(s.mealPlanItems.planId, ctx.planId), sql`${s.mealPlanItems.day} <> ${op.day}`));
@@ -211,7 +213,7 @@ const applyAdd = async (ctx: ApplyCtx, op: Extract<PlanOp, { op: 'add' }>): Prom
   const food = await foodsById(ctx.tx, [op.foodId]);
   const per100g = food.get(op.foodId)?.per100g;
   if (!per100g) throw new PatchFoodMissing(op.foodId);
-  assertNoAllergen(ctx, op.foodId, food);
+  assertNoAllergen(ctx, [{ foodId: op.foodId }], food);
   await ctx.tx.insert(s.mealPlanItems).values({
     planId: ctx.planId,
     day: op.day,
