@@ -1,7 +1,6 @@
 'use client';
 
 import { Link } from 'solito/link';
-import type { Notification } from '@gymos/contracts';
 import {
   Badge,
   Bell,
@@ -16,6 +15,7 @@ import {
 } from '@gymos/ui';
 import { useMarkAllRead, useNotifications } from '../../api';
 import { AppScreen } from '../shell/app-screen';
+import { formatAlertTime, sortAlerts } from './alert-time';
 import { NotificationsSkeleton } from './notifications-skeleton';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -27,13 +27,6 @@ const TYPE_LABEL: Record<string, string> = {
   PLAN_PUBLISHED: 'Plan published',
   MILESTONE: 'Milestone',
   SYSTEM: 'System',
-};
-
-const byPriorityThenDate = (a: Notification, b: Notification): number => {
-  if (a.priority !== b.priority) {
-    return a.priority === 'HIGH' ? -1 : 1;
-  }
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 };
 
 export const NotificationsScreen = () => {
@@ -55,7 +48,7 @@ export const NotificationsScreen = () => {
     );
   }
 
-  const items = [...notifications.data.items].sort(byPriorityThenDate);
+  const items = sortAlerts(notifications.data.items);
 
   return (
     <AppScreen>
@@ -82,7 +75,7 @@ export const NotificationsScreen = () => {
             const body = (
               <NotificationRow
                 title={TYPE_LABEL[n.type] ?? n.type}
-                time={new Date(n.createdAt).toLocaleString()}
+                time={formatAlertTime(n.createdAt)}
                 {...(clientName !== null ? { subtitle: clientName } : {})}
                 unread={unread}
                 priority={high ? 'high' : 'normal'}
