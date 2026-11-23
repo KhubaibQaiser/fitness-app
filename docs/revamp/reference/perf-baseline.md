@@ -132,11 +132,11 @@ Images: `icon.png` (512×512, 385 KB) loads on every page; `hero.jpg` is 435 KB.
 
 ## Reproduce
 
-Until Q0 lands, the scripts live in the audit workspace outside the repo:
+The scripts are in [`scripts/perf/`](../../../scripts/perf/README.md), whose README has the steps from a clean checkout. Run them against the production web build and an API on a synthetic database:
 
-- `lighthouse-run.sh`: 12 Lighthouse runs with fresh sign-in.
-- `vitals-flow.mjs`: signed-in throttled loads, filmstrips, CPU profiles.
-- `attribute-cpu.mjs`: maps profiles to source through source maps.
-- `perf-api.mjs`: synthetic roster and API benchmark.
-
-Q0 ports them to `scripts/perf/` and replaces this section with the in-repo commands.
+- **Synthetic data:** `seed-synthetic.mjs 170` (and `500` for the roster budget), each into its own local database. 170 reproduces the data above: 41 plans, with 2 more failing as "solver infeasible".
+- **Cold loads:** `lighthouse.mjs`, Lighthouse 12.8.2 (pinned in the root `package.json`), signing in fresh before each run. Hub, journey and plan editor are not run under Lighthouse (see "Limits").
+- **Signed-in loads:** `vitals-flow.mjs`, with a CPU profile and a filmstrip per route.
+- **Hotspots:** `attribute-cpu.mjs` on those profiles, against a build with browser source maps.
+- **API:** `api-bench.mjs`.
+- **Spread:** each scenario 5 times on `main` on a quiet machine, then `summarize.mjs` for the median and min–max. Later budget checks compare medians from the same scripts, data and settings.
