@@ -25,27 +25,33 @@ jest.mock('@gymos/app/features/shell/use-app-chrome', () => ({
   useAppChrome: () => ({ allowMobileTabBar: true }),
 }));
 
+// Read at render time, so each test picks the loaded or the loading hub.
+let mockDetailPending = false;
+
 jest.mock('@gymos/app/api', () => ({
-  useClientDetail: () => ({
-    isPending: false,
-    isError: false,
-    data: {
-      client: {
-        id: 'client-1',
-        name: 'Adnan (Demo)',
-        phone: null,
-        email: null,
-        intake: null,
-        medicalFlags: null,
-      },
-      goal: null,
-      latestWeightKg: null,
-      goalProgressPct: null,
-      dietaryProfile: null,
-      plans: [],
-      recentCheckIns: [],
-    },
-  }),
+  useClientDetail: () =>
+    mockDetailPending
+      ? { isPending: true, isError: false }
+      : {
+          isPending: false,
+          isError: false,
+          data: {
+            client: {
+              id: 'client-1',
+              name: 'Adnan (Demo)',
+              phone: null,
+              email: null,
+              intake: null,
+              medicalFlags: null,
+            },
+            goal: null,
+            latestWeightKg: null,
+            goalProgressPct: null,
+            dietaryProfile: null,
+            plans: [],
+            recentCheckIns: [],
+          },
+        },
   useVitals: () => ({ isPending: false, data: { items: [] } }),
   useClientCheckIns: () => ({ isPending: false, isError: false, data: { items: [] } }),
   useDownloadCredentialsPdf: () => ({ isPending: false, mutate: jest.fn() }),
@@ -59,31 +65,47 @@ const ancestorsOf = (node: Instance): Instance[] => {
   return chain;
 };
 
+// The header (found by `headerNode`) must not ride inside the page scroll view (found from `bodyNode`)
+// or under any absolutely positioned host view.
+const expectHeaderInLayout = (headerNode: Instance, bodyNode: Instance) => {
+  const headerChain = ancestorsOf(headerNode);
+  const pageScroll = ancestorsOf(bodyNode).find((node) => node.type === ScrollView);
+
+  expect(pageScroll).toBeDefined();
+  // Booleans, not the instances: a failing `toContain` would try to print the whole tree.
+  const headerScrollsWithBody = headerChain.some((node) => node === pageScroll);
+  expect(headerScrollsWithBody).toBe(false);
+  const positions = headerChain
+    .filter((node) => typeof node.type === 'string')
+    // flatten() returns undefined for a node without a style, which its type leaves out.
+    .map(
+      (node) =>
+        (StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) as ViewStyle | undefined)
+          ?.position,
+    );
+  expect(positions).not.toContain('absolute');
+};
+
+const renderHub = (tab: 'overview' | 'history') =>
+  render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <ClientDetailScreen clientId="client-1" tab={tab} />
+    </TamaguiProvider>,
+  );
+
 describe('client hub header on native (B5)', () => {
   it('sits in flow above the scroll view instead of floating over the first row', () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        <ClientDetailScreen clientId="client-1" tab="history" />
-      </TamaguiProvider>,
+    mockDetailPending = false;
+    renderHub('history');
+    expectHeaderInLayout(
+      screen.getByText('Adnan (Demo)'),
+      screen.getByText('No check-ins logged yet.'),
     );
+  });
 
-    const headerChain = ancestorsOf(screen.getByText('Adnan (Demo)'));
-    const pageScroll = ancestorsOf(screen.getByText('No check-ins logged yet.')).find(
-      (node) => node.type === ScrollView,
-    );
-
-    expect(pageScroll).toBeDefined();
-    // Booleans, not the instances: a failing `toContain` would try to print the whole tree.
-    const headerScrollsWithBody = headerChain.some((node) => node === pageScroll);
-    expect(headerScrollsWithBody).toBe(false);
-    const positions = headerChain
-      .filter((node) => typeof node.type === 'string')
-      // flatten() returns undefined for a node without a style, which its type leaves out.
-      .map(
-        (node) =>
-          (StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) as ViewStyle | undefined)
-            ?.position,
-      );
-    expect(positions).not.toContain('absolute');
+  it('keeps the loading skeleton header off the skeleton cards too', () => {
+    mockDetailPending = true;
+    renderHub('overview');
+    expectHeaderInLayout(screen.getByLabelText('More actions'), screen.getByText('Current weight'));
   });
 });

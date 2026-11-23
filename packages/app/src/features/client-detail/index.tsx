@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useRouter } from 'solito/navigation';
 import { type ClientIntake } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
@@ -17,7 +18,7 @@ import { ClientHubHistory } from './client-hub-history';
 import { ClientHubJourney } from './client-hub-journey';
 import { ClientHubOverview } from './client-hub-overview';
 import { ClientHubPlan } from './client-hub-plan';
-import { ClientHubSkeleton } from './client-hub-skeleton';
+import { ClientHubHeaderSkeleton, ClientHubSkeleton } from './client-hub-skeleton';
 import { clientHubPath, isClientHubTabId, type ClientHubTabId } from './client-hub-tabs';
 
 const hasSignedIntake = (intake: ClientIntake | null): boolean =>
@@ -46,6 +47,18 @@ const resolveHubStatus = ({
   return 'on-track';
 };
 
+/** Flush hub screen with its header held by `StickyHeader` (sticky on web, above the scroll view on native). */
+const HubLayout = ({ header, children }: { header: ReactNode; children: ReactNode }) => (
+  <StickyHeader header={header}>
+    {(stickyHeader) => (
+      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
+        {stickyHeader}
+        {children}
+      </AppScreen>
+    )}
+  </StickyHeader>
+);
+
 /** Client hub — kit layout with overview / journey / plan / history tabs. */
 export const ClientDetailScreen = ({
   clientId,
@@ -66,9 +79,11 @@ export const ClientDetailScreen = ({
 
   if (detail.isPending) {
     return (
-      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
-        <ClientHubSkeleton clientId={clientId} tab={tab} onTabChange={onTabChange} />
-      </AppScreen>
+      <HubLayout
+        header={<ClientHubHeaderSkeleton clientId={clientId} tab={tab} onTabChange={onTabChange} />}
+      >
+        <ClientHubSkeleton tab={tab} />
+      </HubLayout>
     );
   }
   if (detail.isError) {
@@ -120,7 +135,7 @@ export const ClientDetailScreen = ({
   };
 
   return (
-    <StickyHeader
+    <HubLayout
       header={
         <ClientHubHeader
           clientId={clientId}
@@ -136,58 +151,52 @@ export const ClientDetailScreen = ({
         />
       }
     >
-      {(stickyHeader) => (
-        <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
-          {stickyHeader}
+      <ScreenBody gap="$4">
+        {tab === 'overview' ? (
+          <ClientHubOverview
+            client={client}
+            goal={goal}
+            latestWeightKg={latestWeightKg}
+            goalProgressPct={goalProgressPct}
+            dietaryProfile={dietaryProfile}
+            signed={signed}
+            vitals={vitals.data?.items ?? []}
+            vitalsPending={vitals.isPending}
+          />
+        ) : null}
 
-          <ScreenBody gap="$4">
-            {tab === 'overview' ? (
-              <ClientHubOverview
-                client={client}
-                goal={goal}
-                latestWeightKg={latestWeightKg}
-                goalProgressPct={goalProgressPct}
-                dietaryProfile={dietaryProfile}
-                signed={signed}
-                vitals={vitals.data?.items ?? []}
-                vitalsPending={vitals.isPending}
-              />
-            ) : null}
+        {tab === 'journey' ? (
+          <ClientHubJourney
+            clientId={clientId}
+            client={client}
+            goal={goal}
+            latestWeightKg={latestWeightKg}
+            vitals={vitals.data?.items ?? []}
+            checkIns={checkIns.data?.items ?? []}
+          />
+        ) : null}
 
-            {tab === 'journey' ? (
-              <ClientHubJourney
-                clientId={clientId}
-                client={client}
-                goal={goal}
-                latestWeightKg={latestWeightKg}
-                vitals={vitals.data?.items ?? []}
-                checkIns={checkIns.data?.items ?? []}
-              />
-            ) : null}
+        {tab === 'plan' ? (
+          <ClientHubPlan
+            clientId={clientId}
+            client={client}
+            goal={goal}
+            latestWeightKg={latestWeightKg}
+            dietaryProfile={dietaryProfile}
+            currentPlan={currentPlan}
+          />
+        ) : null}
 
-            {tab === 'plan' ? (
-              <ClientHubPlan
-                clientId={clientId}
-                client={client}
-                goal={goal}
-                latestWeightKg={latestWeightKg}
-                dietaryProfile={dietaryProfile}
-                currentPlan={currentPlan}
-              />
-            ) : null}
-
-            {tab === 'history' ? (
-              <ClientHubHistory
-                clientId={clientId}
-                isPending={checkIns.isPending}
-                isError={checkIns.isError}
-                items={checkIns.data?.items ?? []}
-                onRetry={() => void checkIns.refetch()}
-              />
-            ) : null}
-          </ScreenBody>
-        </AppScreen>
-      )}
-    </StickyHeader>
+        {tab === 'history' ? (
+          <ClientHubHistory
+            clientId={clientId}
+            isPending={checkIns.isPending}
+            isError={checkIns.isError}
+            items={checkIns.data?.items ?? []}
+            onRetry={() => void checkIns.refetch()}
+          />
+        ) : null}
+      </ScreenBody>
+    </HubLayout>
   );
 };
