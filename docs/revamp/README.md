@@ -1,6 +1,6 @@
 # GymOS UI/UX revamp: program spec
 
-Status: **proposed** until the owner merges this folder with ADR-0018 to ADR-0021. The owner's rulings are recorded in [`rulings.md`](rulings.md).
+Status: **accepted**. The owner approved ADR-0018 to ADR-0021 on 2026-11-23. The owner's rulings are recorded in [`rulings.md`](rulings.md).
 
 This folder is the single source of truth for the revamp track. Every revamp PR names the task id it delivers (for example `F3` or `S06`) and links the task's section here.
 

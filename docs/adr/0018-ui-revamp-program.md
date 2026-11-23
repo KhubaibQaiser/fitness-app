@@ -1,6 +1,6 @@
 # ADR-0018: UI/UX revamp program and how agents deliver it
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-23
 
 ## Context

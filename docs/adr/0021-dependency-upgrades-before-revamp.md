@@ -1,6 +1,6 @@
 # ADR-0021: Upgrade dependencies before the revamp
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-23
 
 ## Context

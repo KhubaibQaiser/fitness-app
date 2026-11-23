@@ -1,6 +1,6 @@
 # ADR-0019: Floodlight design tokens, Sunflower brand, runtime tenant theming and glass chrome
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-23
 
 ## Context

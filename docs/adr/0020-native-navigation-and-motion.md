@@ -1,6 +1,6 @@
 # ADR-0020: Native navigation and the motion system
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-23
 
 ## Context
