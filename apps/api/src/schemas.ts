@@ -293,7 +293,7 @@ export const updateMeBody = z
       body.currencyPref !== undefined ||
       body.unitPrefs !== undefined ||
       body.defaultCountry !== undefined,
-    { message: 'Provide at least one preference to update' },
+    { error: 'Provide at least one preference to update' },
   );
 
 /** Loose-but-typed response envelopes (tightened in the contracts milestone). */
