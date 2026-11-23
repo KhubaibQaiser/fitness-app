@@ -97,7 +97,9 @@ Report back: PR number, what changed, the evidence for each done condition, anyt
 Review PR <number> (branch <branch>) for task <id>. You did not write it.
 Read: AGENTS.md, the spec section docs/revamp/<file>#<anchor>, docs/revamp/README.md §6-§9,
   docs/revamp/screens/README.md (screens), the approved mock <link> (visual tasks).
-Inspect: git diff origin/main...<branch>. You may run tests, builds and the app to check claims; do not edit.
+Inspect: git diff origin/main...<branch>. You may run tests, builds and the app to check claims. Stay read-only:
+  do not edit, and run nothing that changes tracked files in the builder's worktree (generators, formatters with
+  --write, installs).
 Report only:
   1. Bugs or regressions (file:line).
   2. Done conditions not met or not evidenced.
