@@ -87,7 +87,7 @@ CODEOWNERS paths (packages/core/, packages/ai/, infra/) get the owner's own read
 
 ## Verification
 
-<!-- Commands you ran locally. CI re-runs merge gates: gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, web build, Playwright login smoke, prod audit, iOS Metro export.
+<!-- Commands you ran locally. CI re-runs merge gates: gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, hook and PR-contract tests, the agent diff scorer's bans, web build, Playwright login smoke, prod audit, iOS Metro export. The "PR contract" check reads this body.
 
 Not CI-gated (do not claim these as merge gates): Maestro, Lighthouse, authenticated roster e2e. -->
 
