@@ -61,7 +61,9 @@ Do not dump the whole monorepo. Start from the owning package `index.ts` plus it
 
 ## Merge gates that exist
 
-CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, web build, Playwright login smoke, prod audit, iOS Metro export.
+CI (`.github/workflows/ci.yml`): gitleaks, format, lint (module boundaries), typecheck, OpenAPI drift, unit/integration tests, hook and PR-contract tests, the agent diff scorer's bans and `app.ts` line budget, web build, Playwright login smoke, prod audit, iOS Metro export.
+
+The "PR contract" check (`.github/workflows/pr-contract.yml`) reads the PR body: one Track ticked, a spec or ADR link, and the reviewer's `BLOCKERS: 0, NON-BLOCKING: <n>` line. Docs-only PRs need only the Track.
 
 Not CI-gated: Maestro (local device), Lighthouse, authenticated roster e2e (needs a running API). Do not claim those as merge gates.
 

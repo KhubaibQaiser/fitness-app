@@ -64,6 +64,13 @@ jobs:
         run: pnpm test
       - name: Agent hook tests
         run: pnpm test:agent-hooks
+      - name: PR contract tests
+        run: pnpm test:pr-contract
+      - name: Agent diff scorer (bans and app.ts budget)
+        # The scorer's lint, typecheck and test steps already ran above.
+        run: ./scripts/eval-agent-diff.sh
+        env:
+          EVAL_SKIP_TURBO: '1'
       - name: Build (web)
         run: pnpm --filter @gymos/web build
       - name: Install Playwright Chromium

@@ -51,7 +51,8 @@ Runs when an agent says it is done. It runs `format:check`, `lint`, `typecheck` 
 
 ## 4. CI and supply chain
 
-- **Merge gates** (`.github/workflows/ci.yml`): gitleaks over the full history, format, lint with module boundaries, typecheck, OpenAPI drift, tests, hook tests, web build, Playwright login smoke, production dependency audit, iOS Metro export.
+- **Merge gates** (`.github/workflows/ci.yml`): gitleaks over the full history, format, lint with module boundaries, typecheck, OpenAPI drift, tests, hook tests, PR-contract tests, the agent diff scorer's bans and `app.ts` line budget, web build, Playwright login smoke, production dependency audit, iOS Metro export.
+- **PR contract** ([`pr-contract.yml`](../.github/workflows/pr-contract.yml)): reads the pull request body and fails when no Track is ticked, when no spec or ADR is linked, or when the reviewer's `BLOCKERS: <n>, NON-BLOCKING: <n>` line is missing or reports a blocker. Docs-only PRs need only the Track, and Dependabot is skipped. It turns three of `AGENTS.md`'s "Required outputs" from advice into a check. It cannot tell whether the review really ran: it checks that the author says so.
 - **Actions are pinned to commit SHAs**, with the release tag in a comment, and every job has a `timeout-minutes`. Dependabot updates both the actions and npm dependencies monthly ([`dependabot.yml`](../.github/dependabot.yml)). Packages bound to the Expo SDK are left out on purpose: they move together with the SDK.
 - **The production audit is a gate, not a report.** `pnpm audit --prod --audit-level high` fails CI. Transitive fixes are `overrides` in `pnpm-workspace.yaml` with the advisory ids; an advisory with no usable patch goes in `auditConfig.ignoreCves` with a reason and a removal condition. The gate earned its place on 2026-10-24: new advisories had turned it red on every PR, and [#67](https://github.com/KhubaibQaiser/fitness-app/pull/67) took the tree from 43 findings (5 critical, 16 high) to 13 (0 critical; the 4 high ones are ignored with reasons).
 - **Secrets:** gitleaks runs pre-commit, pre-push and in CI. GitHub secret scanning with push protection is on as a second net.
@@ -59,7 +60,7 @@ Runs when an agent says it is done. It runs `format:check`, `lint`, `typecheck` 
 
 ## 5. Evals for agent work
 
-[`docs/evals/`](evals/) holds frozen task tickets (three so far) and a deterministic scorer, [`scripts/eval-agent-diff.sh`](../scripts/eval-agent-diff.sh). It reuses the merge gates and adds bans: `new Date()` in persistence packages, raw `fetch` in `packages/app`, and a line budget for `apps/api/src/app.ts`. No LLM judge. One run is recorded so far (2026-08-19).
+[`docs/evals/`](evals/) holds frozen task tickets (three so far) and a deterministic scorer, [`scripts/eval-agent-diff.sh`](../scripts/eval-agent-diff.sh). It reuses the merge gates and adds bans: `new Date()` in persistence packages, raw `fetch` in `packages/app`, and a line budget for `apps/api/src/app.ts`. No LLM judge. CI runs the bans and the line budget on every pull request (`EVAL_SKIP_TURBO=1`, since CI already runs the gates); the full scorer runs locally when scoring an agent task. One task run is recorded so far (2026-08-19).
 
 ## What is measured, and what is not
 
