@@ -220,7 +220,6 @@ export const applyPlanOp = async (ctx: ApplyCtx, op: PlanOp): Promise<void> => {
       return applyAdd(ctx, op);
     default: {
       const _exhaustive: never = op;
-      void _exhaustive;
       throw new Error('unreachable plan op');
     }
   }
