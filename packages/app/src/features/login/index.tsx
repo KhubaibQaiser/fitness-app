@@ -2,11 +2,13 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useTransition } from 'react';
+import { AccessibilityInfo } from 'react-native';
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
-import { api, ApiError } from '@gymos/contracts';
+import { api } from '@gymos/contracts';
 import {
   AppErrorBoundary,
+  Body,
   FormField,
   FormKeyboardRoot,
   Muted,
@@ -19,6 +21,7 @@ import {
 import { qk } from '../../api';
 import { AuthFormCard } from '../auth/auth-form-card';
 import { setSessionPresence } from '../shell/session-presence';
+import { describeLoginFailure, type LoginFailure } from './login-failure';
 
 export const LoginScreen = () => (
   <AppErrorBoundary>
@@ -31,14 +34,14 @@ const LoginForm = () => {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<LoginFailure | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
   const submit = async () => {
     if (email.trim().length < 3 || password.length < 8 || busy) return;
     setBusy(true);
-    setError(null);
+    setFailure(null);
     try {
       const result = await api.login(email.trim(), password);
       setSessionPresence(true);
@@ -48,11 +51,10 @@ const LoginForm = () => {
       });
     } catch (e) {
       setSessionPresence(false);
-      setError(
-        e instanceof ApiError && e.status === 429
-          ? 'Too many attempts. Wait a minute and try again.'
-          : 'Email or password is incorrect.',
-      );
+      const next = describeLoginFailure(e);
+      setFailure(next);
+      // role="alert" announces on web; native screen readers need the explicit call.
+      AccessibilityInfo.announceForAccessibility(next.message);
     } finally {
       setBusy(false);
     }
@@ -99,24 +101,32 @@ const LoginForm = () => {
               required
               {...chain.bind('email')}
             />
-            <FormField
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Your password"
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry
-              required
-              error={error}
-              {...chain.bind('password')}
-            />
+            {/* Same gap as the field's own error, so a non-credential failure sits where it always did. */}
+            <YStack gap="$1.5">
+              <FormField
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Your password"
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry
+                required
+                error={failure?.credentials === true ? failure.message : null}
+                {...chain.bind('password')}
+              />
+              {failure !== null && !failure.credentials ? (
+                <Body color="$danger" fontSize={12} fontWeight="600" lineHeight={16} role="alert">
+                  {failure.message}
+                </Body>
+              ) : null}
+            </YStack>
             <PrimaryButton
               disabled={busy || email.trim().length < 3 || password.length < 8}
               onPress={() => void submit()}
               width="100%"
             >
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy ? 'Signing in…' : failure?.retry === true ? 'Try again' : 'Sign in'}
             </PrimaryButton>
             <YStack gap="$2" alignItems="center" marginTop="$2">
               <Link href="/signup">
