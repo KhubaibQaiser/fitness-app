@@ -3,7 +3,7 @@
 import { useRouter } from 'solito/navigation';
 import { type ClientIntake } from '@gymos/contracts';
 import { downloadBlob } from '@gymos/platform';
-import { ErrorState } from '@gymos/ui';
+import { ErrorState, StickyHeader } from '@gymos/ui';
 import {
   useClientCheckIns,
   useClientDetail,
@@ -120,66 +120,74 @@ export const ClientDetailScreen = ({
   };
 
   return (
-    <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
-      <ClientHubHeader
-        clientId={clientId}
-        name={client.name}
-        phone={client.phone}
-        email={client.email}
-        status={status}
-        tab={tab}
-        onTabChange={onTabChange}
-        signed={signed}
-        pdfPending={downloadPdf.isPending}
-        onDownloadPdf={onDownloadPdf}
-      />
+    <StickyHeader
+      header={
+        <ClientHubHeader
+          clientId={clientId}
+          name={client.name}
+          phone={client.phone}
+          email={client.email}
+          status={status}
+          tab={tab}
+          onTabChange={onTabChange}
+          signed={signed}
+          pdfPending={downloadPdf.isPending}
+          onDownloadPdf={onDownloadPdf}
+        />
+      }
+    >
+      {(stickyHeader) => (
+        <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
+          {stickyHeader}
 
-      <ScreenBody gap="$4">
-        {tab === 'overview' ? (
-          <ClientHubOverview
-            client={client}
-            goal={goal}
-            latestWeightKg={latestWeightKg}
-            goalProgressPct={goalProgressPct}
-            dietaryProfile={dietaryProfile}
-            signed={signed}
-            vitals={vitals.data?.items ?? []}
-            vitalsPending={vitals.isPending}
-          />
-        ) : null}
+          <ScreenBody gap="$4">
+            {tab === 'overview' ? (
+              <ClientHubOverview
+                client={client}
+                goal={goal}
+                latestWeightKg={latestWeightKg}
+                goalProgressPct={goalProgressPct}
+                dietaryProfile={dietaryProfile}
+                signed={signed}
+                vitals={vitals.data?.items ?? []}
+                vitalsPending={vitals.isPending}
+              />
+            ) : null}
 
-        {tab === 'journey' ? (
-          <ClientHubJourney
-            clientId={clientId}
-            client={client}
-            goal={goal}
-            latestWeightKg={latestWeightKg}
-            vitals={vitals.data?.items ?? []}
-            checkIns={checkIns.data?.items ?? []}
-          />
-        ) : null}
+            {tab === 'journey' ? (
+              <ClientHubJourney
+                clientId={clientId}
+                client={client}
+                goal={goal}
+                latestWeightKg={latestWeightKg}
+                vitals={vitals.data?.items ?? []}
+                checkIns={checkIns.data?.items ?? []}
+              />
+            ) : null}
 
-        {tab === 'plan' ? (
-          <ClientHubPlan
-            clientId={clientId}
-            client={client}
-            goal={goal}
-            latestWeightKg={latestWeightKg}
-            dietaryProfile={dietaryProfile}
-            currentPlan={currentPlan}
-          />
-        ) : null}
+            {tab === 'plan' ? (
+              <ClientHubPlan
+                clientId={clientId}
+                client={client}
+                goal={goal}
+                latestWeightKg={latestWeightKg}
+                dietaryProfile={dietaryProfile}
+                currentPlan={currentPlan}
+              />
+            ) : null}
 
-        {tab === 'history' ? (
-          <ClientHubHistory
-            clientId={clientId}
-            isPending={checkIns.isPending}
-            isError={checkIns.isError}
-            items={checkIns.data?.items ?? []}
-            onRetry={() => void checkIns.refetch()}
-          />
-        ) : null}
-      </ScreenBody>
-    </AppScreen>
+            {tab === 'history' ? (
+              <ClientHubHistory
+                clientId={clientId}
+                isPending={checkIns.isPending}
+                isError={checkIns.isError}
+                items={checkIns.data?.items ?? []}
+                onRetry={() => void checkIns.refetch()}
+              />
+            ) : null}
+          </ScreenBody>
+        </AppScreen>
+      )}
+    </StickyHeader>
   );
 };
