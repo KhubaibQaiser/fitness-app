@@ -48,14 +48,14 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 - **Owned files:** `packages/app/src/features/login/**`.
 - **Mapping:**
 
-  | Failure                                                            | Message                                                                                                           |
-  | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-  | 401                                                                | Email or password is incorrect                                                                                    |
-  | 429                                                                | The current wait message                                                                                          |
-  | Account locked (FR-C1; read the auth route for the status it uses) | The current lockout message, with when to try again                                                               |
-  | Network error or timeout                                           | "Can't reach GymOS. Check your connection." plus **Try again**                                                    |
-  | 5xx                                                                | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one |
-  | Anything else                                                      | Shown as an error with the status, never as wrong credentials                                                     |
+  | Failure                                                            | Message                                                                                                                                                                           |
+  | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | 401                                                                | Email or password is incorrect                                                                                                                                                    |
+  | 429                                                                | The current wait message                                                                                                                                                          |
+  | Account locked (FR-C1; read the auth route for the status it uses) | The current lockout message, with when to try again. Read on 2026-11-24: the login route has no account lockout (FR-C1's lock is the signup OTP), so the per-IP 429 row covers it |
+  | Network error or timeout                                           | "Can't reach GymOS. Check your connection." plus **Try again**                                                                                                                    |
+  | 5xx                                                                | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one                                                                 |
+  | Anything else                                                      | Shown as an error with the status, never as wrong credentials                                                                                                                     |
 
   Each failure is logged with the operation, status and cause, and never the email or password.
 
