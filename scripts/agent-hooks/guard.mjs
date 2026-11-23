@@ -2,14 +2,21 @@
 // Guard for agent tool calls. One script serves Cursor hooks (beforeShellExecution,
 // beforeReadFile) and Claude Code PreToolUse hooks. No dependencies.
 //
-// On an internal error or unreadable input it asks the human instead of deciding, so a failure is
-// never silent and never locks anyone out. It is a seatbelt, not a sandbox: an interpreter or a broad
-// glob can still reach a secret, and changing this file through the shell only asks.
+// Input that is not what a hook sends, or an internal error, makes it ask the human instead of
+// deciding: a failure is never silent and never a lockout. It is a seatbelt, not a sandbox. It
+// matches command text, so a script that builds a file name at run time, a bare "*" or ".*" glob,
+// or deliberate quoting tricks can still get past it.
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
+const TOOLS = new Set(['claude', 'cursor']);
 const argv = process.argv.slice(2);
 const tool = argv.includes('--tool') ? argv[argv.indexOf('--tool') + 1] : 'cursor';
+if (!TOOLS.has(tool)) {
+  process.stderr.write(`[agent-guard] unknown --tool "${tool}": use claude or cursor\n`);
+  process.exit(2);
+}
 
 // Policy switches. Dependency adds are denied for agents (supply-chain risk, and hallucinated
 // package names): a human runs them. Set AGENT_GUARD_ALLOW_INSTALL=1 in the environment of the
@@ -17,12 +24,6 @@ const tool = argv.includes('--tool') ? argv[argv.indexOf('--tool') + 1] : 'curso
 const POLICY = {
   denyDependencyAdds: process.env.AGENT_GUARD_ALLOW_INSTALL !== '1',
   denyPushToMain: true,
-};
-
-const readInput = () => {
-  const raw = readFileSync(0, 'utf8');
-  if (raw.trim() === '') throw new Error('empty hook input');
-  return JSON.parse(raw);
 };
 
 const SAFE_EXAMPLE = /\.(example|sample|template|dist)$/i;
@@ -61,11 +62,16 @@ const JS_ADD = new Set(['add', 'install', 'i', 'up', 'update', 'upgrade']);
 const PY_ADD = new Set(['add', 'install']);
 const REDIRECTION = /\d*[<>]+&?\d*\s*[^\s;&|]*/g;
 // Git options that may sit between "git" and its subcommand, as in "git -C dir push".
-const GIT_GLOBAL_OPTS = /\bgit((?:\s+(?:-[Cc]\s+\S+|--[\w-]+(?:=\S+)?|-[pP]))+)(?=\s+[a-z])/g;
+const GIT_GLOBAL_OPTS = /\bgit((?:\s+(?:-[Cc]\s*\S+|--[\w-]+(?:=\S+)?|-[pP]))+)(?=\s+[a-z])/g;
 const GUARDRAIL_PATH =
-  /(scripts\/agent-hooks\/|\.claude\/settings(\.local)?\.json|\.cursor\/hooks\.json|lefthook\.yml|\.github\/workflows\/)/;
+  /(scripts\/agent-hooks\/|scripts\/pr-contract\/|\.claude\/settings(\.local)?\.json|\.cursor\/hooks\.json|lefthook\.yml|\.github\/workflows\/)/;
 const SHELL_WRITE =
   /(>{1,2}|\bsed\s+-[a-zA-Z]*i|\btee\b|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bchmod\b|\bperl\s+-[a-zA-Z]*i|\bgit\s+(checkout|restore)\b)/;
+// A quoted string, double or single. Unbalanced quotes are left alone.
+const QUOTED = /"(?:[^"\\]|\\.)*"|'[^']*'/g;
+// "sh -c '...'" and the like: the quoted script is checked as a command of its own.
+const SHELL_STRING = /\b(?:ba|z|da|k)?sh\s+-[a-zA-Z]*c\s+("(?:[^"\\]|\\.)*"|'[^']*'|[^\s;&|'"]+)/g;
+const MAX_TOKEN = 512;
 // Names a glob is tested against: if a glob could expand to one of these, it can reach a secret.
 const SECRET_SAMPLES = [
   '.env',
@@ -87,46 +93,105 @@ const sensitivePath = (p) => {
     .replace(/^['"]|['"]$/g, '')
     .replace(/^~(?=\/|$)/, '$HOME');
   const base = s.split('/').pop();
-  if (/^\.env(\..+)?$/.test(base)) return !SAFE_EXAMPLE.test(base);
-  if (/(^|\/)\.(ssh|gnupg)\//.test(s) && !/\.pub$/.test(base)) return true;
-  if (/(^|\/)\.aws\/(credentials|config)$/.test(s)) return true;
-  if (/^id_(rsa|ed25519|ecdsa|dsa)$/.test(base)) return true;
+  // macOS file systems ignore case, so .ENV is the same file as .env.
+  if (/^\.env(\..+)?$/i.test(base)) return !SAFE_EXAMPLE.test(base);
+  if (/(^|\/)\.(ssh|gnupg)\//i.test(s) && !/\.pub$/i.test(base)) return true;
+  if (/(^|\/)\.aws\/(credentials|config)$/i.test(s)) return true;
+  if (/^id_(rsa|ed25519|ecdsa|dsa)$/i.test(base)) return true;
   if (/\.(pem|p12|pfx|keystore)$/i.test(base)) return true;
-  if (/^\.(netrc|pgpass)$/.test(base)) return true;
-  if (/\.tfstate(\..+)?$/.test(base) || /\.tfvars$/.test(base)) return true;
+  if (/^\.(netrc|pgpass)$/i.test(base)) return true;
+  if (/\.tfstate(\..+)?$/i.test(base) || /\.tfvars$/i.test(base)) return true;
   return false;
 };
 
-// A glob with at least two literal characters, such as ".en*" or "*.pem", that could expand to a
-// secret file. Bare "*" and ".*" are left alone: they match too much to block safely.
+// Shell-style glob match (* ? [...]) without building a RegExp from the token, so a long or
+// malformed token can neither hang nor throw. Case-insensitive, like the file systems it guards.
+const globMatch = (pattern, name) => {
+  const p = pattern.toLowerCase();
+  const s = name.toLowerCase();
+  const classAt = (i, ch) => {
+    const end = p.indexOf(']', i + 2);
+    if (end === -1) return undefined;
+    let body = p.slice(i + 1, end);
+    const negate = body[0] === '!' || body[0] === '^';
+    if (negate) body = body.slice(1);
+    let hit = false;
+    for (let k = 0; k < body.length; k += 1) {
+      if (body[k + 1] === '-' && k + 2 < body.length) {
+        if (ch >= body[k] && ch <= body[k + 2]) hit = true;
+        k += 2;
+      } else if (body[k] === ch) hit = true;
+    }
+    return [hit !== negate, end + 1];
+  };
+  let pi = 0;
+  let si = 0;
+  let starP = -1;
+  let starS = 0;
+  while (si < s.length) {
+    const pc = p[pi];
+    if (pc === '*') {
+      starP = pi;
+      pi += 1;
+      starS = si;
+      continue;
+    }
+    let matched = false;
+    let next = pi + 1;
+    if (pc === '?') matched = true;
+    else if (pc === '[') {
+      const c = classAt(pi, s[si]);
+      if (c) [matched, next] = c;
+      else matched = s[si] === '[';
+    } else matched = pc !== undefined && pc === s[si];
+    if (matched) {
+      pi = next;
+      si += 1;
+    } else if (starP !== -1) {
+      pi = starP + 1;
+      starS += 1;
+      si = starS;
+    } else return false;
+  }
+  while (p[pi] === '*') pi += 1;
+  return pi === p.length;
+};
+
+// A glob that could expand to a secret file: one with at least two literal characters, such as
+// ".en*" or "*.pem", or any glob inside ~/.ssh, ~/.aws or ~/.gnupg. Bare "*" and ".*" are left
+// alone: they match too much to block safely.
 const secretGlob = (token) => {
+  if (token.length > MAX_TOKEN || !/[*?[]/.test(token)) return false;
+  if (/(^|\/)\.(ssh|aws|gnupg)\//i.test(token)) return true;
   const base = token.split('/').pop();
   if (!/[*?[]/.test(base) || base.replace(/[*?]|\[[^\]]*\]/g, '').length < 2) return false;
-  const re = new RegExp(
-    `^${base
-      .replace(/[.+^${}()|\\]/g, '\\$&')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.')}$`,
-  );
   return SECRET_SAMPLES.some(
-    (name) => (name.startsWith('.') ? base.startsWith('.') : true) && re.test(name),
+    (name) => (name.startsWith('.') ? base.startsWith('.') : true) && globMatch(base, name),
   );
 };
 
+// Commands an env dump may hide behind, and an optional path such as /usr/bin/.
+const ENV_PREFIX = String.raw`(?:(?:time|nohup|exec|command|builtin|sudo|xargs)\s+)*\\?(?:\S*\/)?`;
+const STATEMENT = String.raw`(?:^|[;&|(\x60]\s*|\$\(\s*)`;
+
+// Checked against the command with quoted strings blanked out, so a commit message or PR text that
+// mentions one of these does not trip it.
 const DENY = [
   [
-    /\bgit\s+push\b[^;&|\n]*(\s--force(?!-with-lease)(\s|=|$)|\s-f(\s|$))/,
+    /\bgit\s+push\b[^;&|\n]*\s(--force(?!-with-lease)(?:\s|=|$|[;&|)])|-[a-zA-Z]*f[a-zA-Z]*(?:\s|$|[;&|)]))/,
     'force push (use --force-with-lease, and only on your own branch)',
   ],
-  [/\bcore\.hooksPath\b/, 'changing where git hooks live (turns off gitleaks, format and lint)'],
+  [/core\.hookspath/i, 'changing where git hooks live (turns off gitleaks, format and lint)'],
   [/\bLEFTHOOK=0\b/, 'turning off lefthook (gitleaks, format and lint)'],
-  [/\bgit\b[^;&|\n]*\s--no-verify\b/, 'skipping git hooks (gitleaks, format and lint)'],
+  [/\bgit\b[^;&|\n]*\s--no-veri(?:fy?)?\b/, 'skipping git hooks (gitleaks, format and lint)'],
   [
     /\bgit\s+commit\b[^;&|\n]*\s-[a-zA-Z]*n[a-zA-Z]*(\s|$)/,
     'skipping git hooks with commit -n (gitleaks, format and lint)',
   ],
   [
-    /(^|[;&|(`]\s*|\$\(\s*)(printenv\b|env\s*($|[|;&>)]))|\/proc\/[^\s/]+\/environ\b/,
+    new RegExp(
+      `${STATEMENT}${ENV_PREFIX}(printenv\\b|env\\s*($|[|;&>)])|export\\s+-p\\b|declare\\s+-x\\b|set\\s*($|[|;&>)]))|\\/proc\\/[^\\s/]+\\/environ\\b`,
+    ),
     'printing environment variables (they hold secrets)',
   ],
   [
@@ -137,9 +202,14 @@ const DENY = [
     /\|\s*(sudo\s+)?(ba|z|da|k)?sh(\s+-s)?\s*($|[;&|)])/,
     'piping text into a shell (it hides what actually runs)',
   ],
+  [/\b(ba|z|da|k)?sh\s+<\(/, 'running a script from a process substitution'],
   [/\bchmod\b[^;&|\n]*\b0?777\b/, 'chmod 777'],
   [/\bdd\b[^;&|\n]*\bof=\/dev\//, 'writing to a block device'],
 ];
+
+// A gh command, allowing "-R owner/repo" or "--repo owner/repo" before the subcommand.
+const GH = String.raw`\bgh\s+(?:(?:-R|--repo)(?:\s+|=)\S+\s+)*`;
+const GITHUB_STATE = 'changing GitHub state (the owner decides)';
 
 const ASK = [
   [/\bgit\s+reset\s+--hard\b/, 'git reset --hard discards local changes'],
@@ -154,18 +224,29 @@ const ASK = [
   [/\baws\s+s3\s+rm\b[^;&|\n]*--recursive/, 'recursive S3 delete'],
   [/\bkubectl\s+delete\b/, 'kubectl delete'],
   [/\bdocker\s+(system|volume|image)\s+prune\b/, 'docker prune'],
-  [/\bgh\s+(repo|release)\s+delete\b/, 'deleting a GitHub repo or release'],
+  [new RegExp(`${GH}(repo|release)\\s+delete\\b`), 'deleting a GitHub repo or release'],
   [/\bvercel\b[^;&|\n]*--prod\b/, 'production deploy'],
   [/\bdrop\s+(table|database|schema)\b/i, 'SQL DROP'],
   [
     /\bgrep\s+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)\b[^;&|\n]*\s\.\/?\s*($|[;&|>)])/,
     'recursive grep from the repo root also reads ignored secret files (use rg, the Grep tool or a narrower path)',
   ],
-  [/\bgh\s+pr\s+merge\b/, 'merging a pull request (the owner decides)'],
   [
-    /\bgh\s+api\b[^;&|\n]*(-X|--method)[\s=]*(DELETE|PUT|PATCH)\b/i,
-    'changing GitHub state through the API',
+    /\brg\b[^;&|\n]*\s(-u{2,}|--no-ignore(?:-vcs)?)\b/,
+    'rg that ignores .gitignore also reads secret files',
   ],
+  [new RegExp(`${GH}pr\\s+merge\\b`), 'merging a pull request (the owner decides)'],
+  [
+    new RegExp(`${GH}api\\b[^;&|\\n]*(-X|--method)[\\s=]*(DELETE|PUT|PATCH|POST)\\b`, 'i'),
+    GITHUB_STATE,
+  ],
+  [
+    new RegExp(
+      `${GH}(secret\\s+(set|delete)|variable\\s+(set|delete)|workflow\\s+(run|enable|disable)|release\\s+(create|edit|upload)|alias\\s+set|repo\\s+(edit|rename|archive))\\b`,
+    ),
+    GITHUB_STATE,
+  ],
+  [/(^|[;&|(]\s*)eval\b/, 'eval runs text built at run time'],
   [
     /\b(npm|pnpm|yarn|bun)\s+(up|update|upgrade)\b[^;&|\n]*--latest\b/,
     'upgrading dependencies to their latest versions',
@@ -199,20 +280,28 @@ const PUSH_TO_MAIN = 'pushing to main or master (open a pull request from a bran
 
 const currentBranch = (cwd) => {
   // symbolic-ref also works before the first commit; a detached HEAD has no branch.
-  const r = spawnSync(
-    'git',
-    ['-C', cwd || process.cwd(), 'symbolic-ref', '--short', '-q', 'HEAD'],
-    {
-      encoding: 'utf8',
-      timeout: 3000,
-    },
-  );
-  return r.status === 0 ? r.stdout.trim() : undefined;
+  const r = spawnSync('git', ['-C', cwd, 'symbolic-ref', '--short', '-q', 'HEAD'], {
+    encoding: 'utf8',
+    timeout: 3000,
+  });
+  if (r.status === 0) return { branch: r.stdout.trim() };
+  const cause =
+    r.error?.message ??
+    (r.signal ? `killed by ${r.signal}` : r.stderr.trim() || 'detached HEAD or not a repository');
+  process.stderr.write(`[agent-guard] could not read the branch in ${cwd}: ${cause}\n`);
+  return { cause };
 };
 
-const checkPush = (cmd, cwd) => {
+// cmd: quote characters removed, so "main" reads as main. structural: quoted strings blanked, so
+// text inside a commit message is not taken for a push.
+const checkPush = (cmd, structural, cwd, written) => {
+  if (!/\bgit\s+push\b/.test(structural)) return undefined;
   for (const m of cmd.matchAll(/\bgit\s+push\b([^;&|\n]*)/g)) {
-    const args = m[1].replace(REDIRECTION, ' ').trim().split(/\s+/).filter(Boolean);
+    const args = m[1]
+      .replace(REDIRECTION, ' ')
+      .split(/\s+/)
+      .map((t) => t.replace(/^[(\x60]+|[)\x60;]+$/g, ''))
+      .filter(Boolean);
     const refspecs = args.filter((t) => !t.startsWith('-')).slice(1); // the first one is the remote
     if (refspecs.some((r) => r.startsWith('+'))) {
       return ['deny', 'force push through a +refspec (use --force-with-lease on your own branch)'];
@@ -224,9 +313,21 @@ const checkPush = (cmd, cwd) => {
     if (refspecs.some((r) => isMainRef(r.split(':').pop()))) return ['deny', PUSH_TO_MAIN];
     // No refspec, or plain HEAD, pushes the branch that is checked out.
     if (refspecs.length === 0 || refspecs.includes('HEAD')) {
-      const branch = currentBranch(cwd);
+      const before = cmd.slice(0, m.index);
+      if (/(^|[;&|(]\s*)cd\s|\bgit\s+(checkout|switch)\b/.test(before)) {
+        return [
+          'ask',
+          'git push without a branch name after a cd or branch change in the same command',
+        ];
+      }
+      const dir = written.match(/\bgit\s+(?:-c\s*\S+\s+)*-C\s*(\S+)[^;&|\n]*\bpush\b/)?.[1];
+      const where = resolve(cwd ?? process.cwd(), dir ?? '.');
+      const { branch, cause } = currentBranch(where);
       if (branch === undefined) {
-        return ['ask', 'git push without a branch name, and the current branch could not be read'];
+        return [
+          'ask',
+          `git push without a branch name, and the current branch could not be read (${cause})`,
+        ];
       }
       if (isMainRef(branch)) return ['deny', PUSH_TO_MAIN];
     }
@@ -273,32 +374,52 @@ const checkInstall = (cmd) => {
 };
 
 const SECRETS = '(.env, SSH or AWS keys, PEM, Terraform state)';
+const words = (s) => s.split(/[\s'"`=<>|;&()@:]+/).filter(Boolean);
 
-const decide = ({ command: raw, paths, writing, cwd }) => {
+const decide = ({ command: raw, paths, globs = [], writing = false, cwd }, depth = 0) => {
   for (const p of paths) {
     if (sensitivePath(p))
       return ['deny', `${writing ? 'writing' : 'reading'} a secrets file ${SECRETS}`];
   }
+  for (const g of globs) {
+    if (sensitivePath(g) || secretGlob(g)) return ['deny', `searching secrets files ${SECRETS}`];
+  }
   if (!raw) return ['allow'];
   const command = raw.replace(GIT_GLOBAL_OPTS, 'git');
-  // Quotes and backslashes join a word back together in the shell, as in .e""nv or .e\nv.
-  const words = (s) => s.split(/[\s'"`=<>|;&()]+/).filter(Boolean);
-  const tokens = [...words(command), ...words(command.replace(/["'`\\]/g, ''))];
+  // Three views: as written, with quote characters removed (".e""nv" reads as .env), and with
+  // quoted strings blanked out (a commit message is not a command).
+  const plain = raw.replace(/["'`\\]/g, '');
+  const unquoted = plain.replace(GIT_GLOBAL_OPTS, 'git');
+  const blanked = raw.replace(QUOTED, 'Q');
+  const structural = blanked.replace(GIT_GLOBAL_OPTS, 'git');
+
+  const tokens = [...words(command), ...words(unquoted)];
   if (!/\.gitignore\b/.test(command) && tokens.some((t) => sensitivePath(t) || secretGlob(t))) {
     return ['deny', `touching a secrets file ${SECRETS}`];
   }
+  if (depth < 2) {
+    for (const m of raw.matchAll(SHELL_STRING)) {
+      const quoted = /^["']/.test(m[1]);
+      const script = quoted ? m[1].slice(1, -1).replace(/\\(["\\])/g, '$1') : m[1];
+      const inner = decide({ command: script, paths: [], cwd }, depth + 1);
+      if (inner[0] !== 'allow') return inner;
+    }
+  }
   const rm = checkRm(command);
   if (rm) return rm;
-  // Raw too: normalising "git -c core.hooksPath=... commit" would hide the option.
-  for (const [re, why] of DENY) if (re.test(command) || re.test(raw)) return ['deny', why];
-  const push = checkPush(command, cwd);
+  // Before normalising too: "git -c core.hooksPath=... commit" would lose the option.
+  for (const [re, why] of DENY) if (re.test(structural) || re.test(blanked)) return ['deny', why];
+  const push = checkPush(unquoted, structural, cwd, plain);
   if (push) return push;
-  const install = checkInstall(command);
+  const install = checkInstall(structural);
   if (install) return install;
-  if (GUARDRAIL_PATH.test(command) && SHELL_WRITE.test(command.replace(/\d*>&\d+/g, ''))) {
+  if (GUARDRAIL_PATH.test(unquoted) && SHELL_WRITE.test(structural.replace(/\d*>&\d+/g, ''))) {
     return ['ask', 'changing the agent guardrails (hooks, agent settings, git hooks or workflows)'];
   }
-  for (const [re, why] of ASK) if (re.test(command)) return ['ask', why];
+  // The GraphQL merge sits inside a quoted query, so look for it in the text as written.
+  if (/\bgh\s+api\b/.test(structural) && /mergePullRequest/i.test(raw))
+    return ['ask', GITHUB_STATE];
+  for (const [re, why] of ASK) if (re.test(structural)) return ['ask', why];
   return ['allow'];
 };
 
@@ -329,32 +450,61 @@ const respond = (decision, why) => {
   );
 };
 
+// The hook input is a trust boundary: anything that is not the shape a hook sends is an error.
+const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
+const str = (value, name, required = false) => {
+  if (value === undefined && !required) return undefined;
+  if (typeof value !== 'string') throw new Error(`${name} is not a string`);
+  return value;
+};
+const parseInput = () => {
+  const raw = readFileSync(0, 'utf8');
+  if (raw.trim() === '') throw new Error('empty hook input');
+  const input = JSON.parse(raw);
+  if (!isObject(input)) throw new Error('hook input is not a JSON object');
+  return input;
+};
+const FILE_WRITERS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+
 try {
-  const input = readInput();
-  let command = '';
-  const paths = [];
-  let writing = false;
-  const cwd = typeof input.cwd === 'string' ? input.cwd : undefined;
+  const input = parseInput();
+  const cwd = str(input.cwd, 'cwd');
+  const call = { command: '', paths: [], globs: [], writing: false, cwd };
   if (tool === 'cursor') {
-    if (typeof input.command === 'string') command = input.command;
-    if (typeof input.file_path === 'string') paths.push(input.file_path);
+    call.command = str(input.command, 'command') ?? '';
+    const file = str(input.file_path, 'file_path');
+    if (file !== undefined) call.paths.push(file);
+    if (input.command === undefined && file === undefined) {
+      throw new Error('neither command nor file_path in the hook input');
+    }
   } else {
     // Cursor also imports Claude hooks and translates tool names. Its native hooks already cover
     // that call, so stay silent instead of running twice.
     const fromCursor =
       input.conversation_id || input.generation_id || input.model_id || input.workspace_roots;
     if (fromCursor || input.tool_name === 'Shell') process.exit(0);
+    const name = str(input.tool_name, 'tool_name', true);
     const toolInput = input.tool_input ?? {};
-    if (input.tool_name === 'Bash') command = String(toolInput.command ?? '');
-    if (input.tool_name === 'Read' || input.tool_name === 'Grep') {
-      paths.push(String(toolInput.file_path ?? toolInput.path ?? ''));
+    if (!isObject(toolInput)) throw new Error('tool_input is not an object');
+    if (name === 'Bash') call.command = str(toolInput.command, 'command', true);
+    if (name === 'Read' || name === 'Grep' || name === 'Glob') {
+      const p = str(toolInput.file_path, 'file_path') ?? str(toolInput.path, 'path');
+      if (p !== undefined) call.paths.push(p);
     }
-    if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].includes(input.tool_name)) {
-      paths.push(String(toolInput.file_path ?? toolInput.notebook_path ?? ''));
-      writing = true;
+    if (name === 'Grep' || name === 'Glob') {
+      for (const key of ['glob', 'pattern']) {
+        const g = str(toolInput[key], key);
+        if (g !== undefined && (name === 'Glob' || key === 'glob')) call.globs.push(g);
+      }
+    }
+    if (FILE_WRITERS.has(name)) {
+      const p =
+        str(toolInput.file_path, 'file_path') ?? str(toolInput.notebook_path, 'notebook_path');
+      if (p !== undefined) call.paths.push(p);
+      call.writing = true;
     }
   }
-  const [decision, why] = decide({ command, paths, writing, cwd });
+  const [decision, why] = decide(call);
   respond(decision, why);
 } catch (error) {
   // Never silent and never a lockout: say what broke and let the human decide.
