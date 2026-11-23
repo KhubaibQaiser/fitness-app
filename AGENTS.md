@@ -2,7 +2,7 @@
 
 Read this before any edit. It is the single set of rules for every coding agent in this repo. Claude Code is the primary agent and Cursor is kept as a backup ([ADR-0017](docs/adr/0017-claude-code-primary-and-agent-guardrails.md)). `CLAUDE.md` only imports this file, so both tools get the same rules.
 
-Phase sequencing: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). Design tokens and component inventory (read before UI work): [`docs/design-system-reference.md`](docs/design-system-reference.md). Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-alignment-audit.md). Nutrition safety: [`docs/adr/0001-hybrid-ai-nutrition.md`](docs/adr/0001-hybrid-ai-nutrition.md). Feature specs: [`docs/specs/`](docs/specs/).
+Phase sequencing: [`docs/alignment-initiative.md`](docs/alignment-initiative.md). UI revamp track (tasks, gates, file ownership): [`docs/revamp/`](docs/revamp/README.md), per ADR-0018. Design tokens and component inventory (read before UI work): [`docs/design-system-reference.md`](docs/design-system-reference.md). Architecture scorecard: [`docs/adr/0007-alignment-audit.md`](docs/adr/0007-alignment-audit.md). Nutrition safety: [`docs/adr/0001-hybrid-ai-nutrition.md`](docs/adr/0001-hybrid-ai-nutrition.md). Feature specs: [`docs/specs/`](docs/specs/).
 
 `apps/web/AGENTS.md` is a short pointer back to this file plus a note to read Next.js's bundled docs. Do not treat it as this repo's harness. `agentRules: false` in `apps/web/next.config.mjs` stops `next dev` from rewriting it.
 
@@ -11,7 +11,7 @@ Phase sequencing: [`docs/alignment-initiative.md`](docs/alignment-initiative.md)
 - This contract is the final alignment prompt and **wins on conflict** with architecture v4.
 - Three sources live only on the author's machine, not in this repo: the architecture reference v4 (`gym-app/3-gymos-system-prompt-v4.md`, subordinate to this file), the PRD (`Downloads/GymOS-PRD.md`) and the design prototypes (`gym-app/files 2/gymos-components.jsx`, `gymos-prototype.jsx`). An agent without them works from this file, `docs/` and the token tables in [`docs/design-system-reference.md`](docs/design-system-reference.md), and asks instead of guessing what they say.
 - Current product is **coach-only**. No client/member app yet. Phase 4 is greenfield.
-- Figma is out of scope until reopened.
+- Canonical design: the Floodlight tokens (ADR-0019) and the owner-approved mocks of the UI revamp track (ADR-0018). They supersede the design prototypes listed above. Until revamp task F1 replaces [`docs/design-system-reference.md`](docs/design-system-reference.md), its token tables describe the current build. Figma is out of scope until reopened.
 - `docs/roadmap.md` is current state / history. v5 then v4 are the target.
 - Phase 0 audit path is `docs/adr/0007-alignment-audit.md` (not `0000-alignment-audit.md`; `0000` is the ADR template).
 
@@ -30,10 +30,10 @@ Non-negotiable behaviors, all carried forward from v4 and still binding here:
 
 ## Allowed
 
-- One logical unit per PR. Name the alignment phase (from `docs/alignment-initiative.md`) or this AI-native track in the PR body.
+- One logical unit per PR. Name the alignment phase (from `docs/alignment-initiative.md`), this AI-native track, or the UI revamp task id (from `docs/revamp/`) in the PR body.
 - Domain logic in `packages/core` or `packages/modules` public barrels only.
 - Nutrition numbers: Layers 1–2 (`packages/core` solver / physiology) only. Layer-3 (`packages/ai`) names meals and writes prep notes. Never emit kcal or macros from an LLM. Layer-3 payloads pass `assertDeidentified` (no PII) and fail closed to `fallbackNarrative`. Plans stay DRAFT until a coach publishes.
-- Restyle presentational UI without changing fetch, routing, or business conditionals (alignment P1 rule).
+- Restyle presentational UI without changing fetch, routing, or business conditionals (alignment P1 rule). Inside the UI revamp track, a PR may change routing, navigation and presentation logic when its `docs/revamp/` task spec says so (ADR-0018); nutrition safety rules don't change.
 
 ## Denied
 
