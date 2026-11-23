@@ -3,6 +3,7 @@
 import { Link } from 'solito/link';
 import type { ClientListItem } from '@gymos/contracts';
 import { Avatar, Badge, Card, ChevronRight, GoalTag, Muted, Text, XStack, YStack } from '@gymos/ui';
+import { isAttentionCode, needsAttention } from '../../lib/attention';
 
 const GOAL_LABEL: Record<string, string> = {
   LOSE: 'Lose',
@@ -10,9 +11,6 @@ const GOAL_LABEL: Record<string, string> = {
   MAINTAIN: 'Maintain',
   RECOMP: 'Recomp',
 };
-
-const isAttention = (reasons: { code: string }[]) =>
-  reasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG');
 
 const isNew = (reasons: { code: string }[]) => reasons.some((r) => r.code === 'NEW_CLIENT');
 
@@ -31,8 +29,12 @@ type Props = {
 
 /** Single roster row — kit card with aligned desktop columns. */
 export const RosterRow = ({ client, desktop }: Props) => {
-  const attention = isAttention(client.attentionReasons);
+  const attention = needsAttention(client.attentionReasons);
   const neu = isNew(client.attentionReasons);
+  // "Needs attention" and "New" already cover those codes; the rest get their own badge.
+  const reasonBadges = client.attentionReasons
+    .filter((r) => !isAttentionCode(r.code) && r.code !== 'NEW_CLIENT')
+    .slice(0, 2);
   const goalText = client.goalPreset ? (GOAL_LABEL[client.goalPreset] ?? client.goalPreset) : '-';
 
   if (!desktop) {
@@ -63,19 +65,11 @@ export const RosterRow = ({ client, desktop }: Props) => {
             </YStack>
             <ChevronRight size={14} color="$textMuted" />
           </XStack>
-          {client.attentionReasons.some(
-            (r) => r.code !== 'OFF_TRACK' && r.code !== 'RED_FLAG' && r.code !== 'NEW_CLIENT',
-          ) ? (
+          {reasonBadges.length > 0 ? (
             <XStack gap="$1" flexWrap="wrap">
-              {client.attentionReasons
-                .slice(0, 2)
-                .map((r) =>
-                  r.code === 'OFF_TRACK' ||
-                  r.code === 'RED_FLAG' ||
-                  r.code === 'NEW_CLIENT' ? null : (
-                    <Badge key={r.code} tone="danger" label={r.code.replaceAll('_', ' ')} />
-                  ),
-                )}
+              {reasonBadges.map((r) => (
+                <Badge key={r.code} tone="danger" label={r.code.replaceAll('_', ' ')} />
+              ))}
             </XStack>
           ) : null}
         </Card>
