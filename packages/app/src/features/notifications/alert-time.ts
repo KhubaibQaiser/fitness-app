@@ -37,9 +37,11 @@ export const formatAlertTime = (createdAt: string): string =>
 export const sortAlerts = (items: readonly Notification[]): Notification[] =>
   items
     .map((n) => ({ n, ms: alertMillis(n.createdAt) }))
-    .sort((a, b) =>
-      a.n.priority !== b.n.priority ? (a.n.priority === 'HIGH' ? -1 : 1) : b.ms - a.ms,
-    )
+    .sort((a, b) => {
+      if (a.n.priority !== b.n.priority) return a.n.priority === 'HIGH' ? -1 : 1;
+      // Same instant: higher id first (UUIDv7, so the later insert), never the API's row order.
+      return b.ms - a.ms || (b.n.id > a.n.id ? 1 : -1);
+    })
     .map(({ n }) => n);
 
 export type AlertRows = { ok: true; rows: { alert: Notification; time: string }[] } | { ok: false };

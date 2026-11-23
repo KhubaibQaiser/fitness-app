@@ -33,6 +33,18 @@ describe('sortAlerts', () => {
     ]);
   });
 
+  it('breaks a tie on the same instant by id, whatever the input order', () => {
+    const older = alert('01a20a0b-0000-7000-8000-000000000001', 'NORMAL', '2026-08-06T10:00:00Z');
+    const newer = alert(
+      '01a20a0b-0000-7000-8000-000000000002',
+      'NORMAL',
+      '2026-08-06T15:00:00+05:00',
+    );
+    const expected = [newer.id, older.id];
+    expect(sortAlerts([older, newer]).map((n) => n.id)).toEqual(expected);
+    expect(sortAlerts([newer, older]).map((n) => n.id)).toEqual(expected);
+  });
+
   it('does not mutate its input', () => {
     const items = [
       alert('old', 'NORMAL', '2026-08-01T00:00:00.000Z'),
