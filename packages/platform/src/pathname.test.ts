@@ -28,7 +28,13 @@ const mountProvider = (pathname: string) => {
   const element = PathnameProvider({ pathname, children: null }) as ReactElement<{
     value: unknown;
   }>;
-  env.mounted.set(element.type, element.props.value);
+  // The stub keys values by context, so this relies on React 19 making a context its own Provider.
+  const context = element.type as unknown as { $$typeof: symbol; Provider: unknown };
+  expect(context.$$typeof, 'PathnameProvider should render the context itself').toBe(
+    Symbol.for('react.context'),
+  );
+  expect(context.Provider, 'the context should be its own Provider (React 19)').toBe(context);
+  env.mounted.set(context, element.props.value);
 };
 
 describe('pathname façade', () => {
