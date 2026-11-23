@@ -1,5 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
+import { assertNoRestrictedFoods } from '@gymos/core/nutrition';
 import { schema as s, type Db, type DbOrTx } from '@gymos/db';
+import { getActiveProfile, restrictedAllergenCodes } from './dietary';
 import { foodsById } from './foods';
 
 export type PlanOp =
@@ -28,6 +30,15 @@ export type PlanItemRow = typeof s.mealPlanItems.$inferSelect & { foodName?: str
 export class PatchFoodMissing extends Error {
   constructor(readonly foodId: string) {
     super(`food not found: ${foodId}`);
+  }
+}
+
+export class PatchAllergenConflict extends Error {
+  constructor(
+    readonly foodId: string,
+    readonly allergen: string,
+  ) {
+    super(`food ${foodId} contains restricted allergen ${allergen}`);
   }
 }
 
@@ -79,6 +90,18 @@ type ApplyCtx = {
   readonly planId: string;
   readonly coachId: string;
   readonly working: { items: PlanItemRow[] };
+  /** The client's allergen codes, by the same rule as the solver's Layer-2 filter. */
+  readonly restrictedAllergens: readonly string[];
+};
+
+/** A coach can't add by hand what generation would exclude (ADR-0001, ruling O16). */
+const assertNoAllergen = (
+  ctx: ApplyCtx,
+  foodId: string,
+  foods: Awaited<ReturnType<typeof foodsById>>,
+): void => {
+  const check = assertNoRestrictedFoods([{ foodId }], foods, ctx.restrictedAllergens);
+  if (!check.ok) throw new PatchAllergenConflict(foodId, check.error.allergen);
 };
 
 const requireItem = (ctx: ApplyCtx, itemId: string): PlanItemRow | null =>
@@ -118,6 +141,7 @@ const applySwap = async (ctx: ApplyCtx, op: Extract<PlanOp, { op: 'swap' }>): Pr
   const food = await foodsById(ctx.tx, [op.foodId]);
   const per100g = food.get(op.foodId)?.per100g;
   if (!per100g) throw new PatchFoodMissing(op.foodId);
+  assertNoAllergen(ctx, op.foodId, food);
   const macros = gramsMacros(per100g, item.portionGrams);
   await ctx.tx
     .update(s.mealPlanItems)
@@ -187,6 +211,7 @@ const applyAdd = async (ctx: ApplyCtx, op: Extract<PlanOp, { op: 'add' }>): Prom
   const food = await foodsById(ctx.tx, [op.foodId]);
   const per100g = food.get(op.foodId)?.per100g;
   if (!per100g) throw new PatchFoodMissing(op.foodId);
+  assertNoAllergen(ctx, op.foodId, food);
   await ctx.tx.insert(s.mealPlanItems).values({
     planId: ctx.planId,
     day: op.day,
@@ -236,11 +261,19 @@ export const applyPlanOps = async (
 ): Promise<void> => {
   const working = { items: [...existingItems] };
   await db.transaction(async (tx) => {
+    const [plan] = await tx
+      .select({ clientId: s.mealPlans.clientId })
+      .from(s.mealPlans)
+      .where(eq(s.mealPlans.id, planId))
+      .limit(1);
+    if (!plan) throw new Error(`applyPlanOps: plan ${planId} not found`);
+    const profile = await getActiveProfile(tx, plan.clientId);
     const ctx: ApplyCtx = {
       tx,
       planId,
       coachId: principal.coachId,
       working,
+      restrictedAllergens: restrictedAllergenCodes(profile?.restrictions ?? []),
     };
     for (const op of ops) {
       await applyPlanOp(ctx, op);

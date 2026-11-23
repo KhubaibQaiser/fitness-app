@@ -184,6 +184,14 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
         if (result.error.code === 'PLAN_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
         }
+        if (result.error.code === 'ALLERGEN_CONFLICT') {
+          throw new ProblemError(
+            422,
+            'ALLERGEN_CONFLICT',
+            'This food contains an allergen the client must avoid',
+            `allergen=${result.error.allergen}`,
+          );
+        }
         throw new ProblemError(
           422,
           result.error.code,
