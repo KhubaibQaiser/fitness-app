@@ -54,16 +54,21 @@ const SLOT_LABEL: Record<PlanItem['mealSlot'], string> = {
 };
 
 /**
- * Meal sections follow the plan's meal pattern, the solver template its items fit (the
- * meals-per-day choice when there are no items), so an empty meal keeps its "Add food".
+ * Meal sections follow the plan's meal pattern, so an empty meal keeps its "Add food". The plan
+ * stores no meal count: with items, the pattern is the largest solver template they fit, so the
+ * picker can't reshape the plan and a partly emptied plan never loses a meal; with no items, it
+ * is the meals-per-day choice.
  */
 const mealSections = (
   items: readonly PlanItem[],
   mealCount: 3 | 4 | 5,
 ): (readonly [number, PlanItem['mealSlot']])[] => {
-  const pattern = ([mealCount, 3, 4, 5] as const).find((n) =>
-    items.every((i) => MEAL_TEMPLATES[n][i.mealIndex]?.slot === i.mealSlot),
-  );
+  const pattern =
+    items.length === 0
+      ? mealCount
+      : ([5, 4, 3] as const).find((n) =>
+          items.every((i) => MEAL_TEMPLATES[n][i.mealIndex]?.slot === i.mealSlot),
+        );
   if (pattern === undefined) {
     // Items that fit no template: show the meals they hold.
     return [...new Map(items.map((i) => [i.mealIndex, i.mealSlot] as const))].sort(

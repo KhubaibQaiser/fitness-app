@@ -104,10 +104,16 @@ const render = (overrides: Partial<Props>) => {
     if (button === undefined) throw new Error(`no ${type} labelled "${label}"`);
     (button.props.onPress as () => void)();
   };
+  const pickMealCount = (count: 3 | 4 | 5) => {
+    const picker = all('SegmentedControl').find((el) => el.props.ariaLabel === 'Meals per day');
+    if (picker === undefined) throw new Error('no meals-per-day picker');
+    (picker.props.onChange as (n: number) => void)(count);
+  };
   return {
     has: (copy: string) => tree.some((el) => text(el) === copy),
     labels: (type: string) => all(type).map(text),
     press,
+    pickMealCount,
   };
 };
 
@@ -150,6 +156,19 @@ describe('PlanEditor with an empty draft (B2)', () => {
     expect(view.labels('GhostButton')).not.toContain('Regenerate meal');
     expect(view.labels('GhostButton')).not.toContain('Apply this day to all days');
   });
+
+  it('reshapes its sections when the meals-per-day picker changes', () => {
+    const setMealCount = vi.fn();
+    render({ mealCount: 3, setMealCount }).pickMealCount(5);
+    expect(setMealCount).toHaveBeenCalledWith(5);
+    expect(render({ mealCount: 5, setMealCount }).labels('SectionTitle')).toEqual([
+      'Breakfast',
+      'Snack',
+      'Lunch',
+      'Snack',
+      'Dinner',
+    ]);
+  });
 });
 
 describe('PlanEditor meal sections', () => {
@@ -165,6 +184,18 @@ describe('PlanEditor meal sections', () => {
     expect(view.labels('SectionTitle')).toEqual(['Breakfast', 'Lunch', 'Snack', 'Dinner']);
     expect(view.has('This draft has no meals yet')).toBe(false);
     expect(view.labels('PlanPublishConfirm')).toHaveLength(1);
+  });
+
+  it('keep every meal of a partly emptied plan, whatever the picker says', () => {
+    // A 5-meal plan with only breakfast left also fits the 3- and 4-meal templates.
+    const breakfastOnly = [item(1, 0, 'breakfast')];
+    const fiveMeals = ['Breakfast', 'Snack', 'Lunch', 'Snack', 'Dinner'];
+    expect(render({ items: breakfastOnly, mealCount: 3 }).labels('SectionTitle')).toEqual(
+      fiveMeals,
+    );
+    expect(render({ items: breakfastOnly, mealCount: 4 }).labels('SectionTitle')).toEqual(
+      fiveMeals,
+    );
   });
 
   it('keep Add food on a day that has no items', () => {
