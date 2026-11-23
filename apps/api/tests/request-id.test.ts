@@ -14,7 +14,7 @@ const manifest = tenantManifestSchema.parse(
 
 // A malformed login body is rejected (422) before the database is touched.
 const app = buildApp({
-  db: {} as Db,
+  db: {} as unknown as Db,
   manifest,
   env: {
     JWT_ACCESS_SECRET: 'a-test-jwt-access-secret-that-is-long-enough',
