@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -153,7 +156,150 @@ test('Claude mode stays silent for calls Cursor imported (its native hook covers
   );
 });
 
-test('fails open on garbage input', () => {
-  assert.equal(decision(run('cursor', 'not json')), 'allow');
-  assert.equal(run('claude', 'not json'), null);
+test('unreadable input asks the human instead of deciding', () => {
+  assert.equal(decision(run('cursor', 'not json')), 'ask');
+  assert.equal(decision(run('cursor', '')), 'ask');
+  assert.equal(run('claude', 'not json').hookSpecificOutput.permissionDecision, 'ask');
+});
+
+test('quoting and globs cannot hide a secrets file', () => {
+  for (const command of [
+    'cat .e""nv',
+    "cat .e'n'v",
+    'cat .en*',
+    'head .e?v.local',
+    'cat certs/*.pem',
+    'cat infra/paas/*.tfstate',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  for (const command of ['ls *.ts', 'ls dist/*', 'cat src/*.json', 'ls -d .*']) {
+    assert.equal(decision(shell(command)), 'allow', command);
+  }
+  // grep -r ignores .gitignore, so from the root it reads secret files too; rg does not.
+  assert.equal(decision(shell('grep -rn SECRET .')), 'ask');
+  assert.equal(decision(shell('grep -R token ./ | head')), 'ask');
+  assert.equal(decision(shell('grep -rn SECRET src')), 'allow');
+  assert.equal(decision(shell('rg SECRET .')), 'allow');
+});
+
+test('text piped into a shell is denied', () => {
+  for (const command of [
+    'echo cG5wbQ== | base64 -d | sh',
+    'cat script.txt | bash',
+    'echo ls | sh -s',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  assert.equal(decision(shell('echo hi | shasum')), 'allow');
+});
+
+test('printing the environment is denied, running a command with env is not', () => {
+  for (const command of [
+    'printenv',
+    'printenv GITHUB_TOKEN',
+    'env',
+    'env | grep KEY',
+    'echo $(printenv)',
+    'cat /proc/self/environ',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  assert.equal(decision(shell('env NODE_ENV=test pnpm test')), 'allow');
+  assert.equal(decision(shell('pnpm env use 22')), 'allow');
+});
+
+test('git hooks cannot be skipped or turned off', () => {
+  for (const command of [
+    'git commit --no-verify -m x',
+    'git commit -n -m x',
+    'git push --no-verify origin feature/x',
+    'git config core.hooksPath /dev/null',
+    'git -c core.hooksPath=/dev/null commit -m x',
+    'LEFTHOOK=0 git commit -m x',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  assert.equal(decision(shell('git commit -m "add notes"')), 'allow');
+});
+
+test('git options and refspecs cannot hide a force push or a push of every branch', () => {
+  for (const command of [
+    'git -C . push --force origin feature/x',
+    'git --no-pager push -f origin feature/x',
+    'git push origin +feature/x',
+    'git push origin +HEAD:main',
+    'git push --all origin',
+    'git push --mirror origin',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+});
+
+test('a push without a branch name is checked against the branch that is checked out', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'guard-push-'));
+  const git = (...args) => spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8' });
+  git('init', '-q', '-b', 'main');
+  const push = (command) =>
+    run('cursor', { command, cwd: repo, hook_event_name: 'beforeShellExecution' });
+  assert.equal(decision(push('git push')), 'deny');
+  assert.equal(decision(push('git push -u origin')), 'deny');
+  assert.equal(decision(push('git push origin HEAD')), 'deny');
+  git('switch', '-q', '-c', 'feature/x');
+  assert.equal(decision(push('git push')), 'allow');
+  assert.equal(decision(push('git push -u origin HEAD')), 'allow');
+  rmSync(repo, { recursive: true, force: true });
+  // Outside a repository the branch is unknown, so the human decides.
+  assert.equal(decision(push('git push')), 'ask');
+});
+
+test('upgrading a named package is an add; registry runs ask', () => {
+  assert.equal(decision(shell('pnpm up zod')), 'deny');
+  assert.equal(decision(shell('pnpm --filter web update zod')), 'deny');
+  assert.equal(decision(shell('pnpm update --latest')), 'ask');
+  assert.equal(decision(shell('pnpm update')), 'allow');
+  for (const command of ['npx some-pkg', 'pnpm dlx create-x', 'bunx x', 'npm exec -y x']) {
+    assert.equal(decision(shell(command)), 'ask', command);
+  }
+  assert.equal(decision(shell('pnpm exec prettier --check .')), 'allow');
+});
+
+test('merges and GitHub API writes ask', () => {
+  assert.equal(decision(shell('gh pr merge 5 --squash')), 'ask');
+  assert.equal(decision(shell('gh api -X DELETE repos/a/b')), 'ask');
+  assert.equal(decision(shell('gh api --method PUT repos/a/b/rulesets/1')), 'ask');
+  assert.equal(decision(shell('gh api repos/a/b')), 'allow');
+  assert.equal(decision(shell('gh pr view 5')), 'allow');
+});
+
+test('changing the guardrails through the shell asks; reading and testing them does not', () => {
+  for (const command of [
+    'sed -i s/a/b/ scripts/agent-hooks/guard.mjs',
+    'echo x > .claude/settings.json',
+    'git checkout -- scripts/agent-hooks/guard.mjs',
+    'rm lefthook.yml',
+    'cp evil.yml .github/workflows/ci.yml',
+  ]) {
+    assert.equal(decision(shell(command)), 'ask', command);
+  }
+  for (const command of [
+    'cat scripts/agent-hooks/guard.mjs',
+    'node --test scripts/agent-hooks/guard.test.mjs 2>&1',
+  ]) {
+    assert.equal(decision(shell(command)), 'allow', command);
+  }
+});
+
+test('Claude file tools cannot write a secrets file', () => {
+  const write = (tool_name, file_path) =>
+    run('claude', { hook_event_name: 'PreToolUse', tool_name, tool_input: { file_path } });
+  const denied = write('Write', '/p/.env');
+  assert.equal(denied.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(denied.hookSpecificOutput.permissionDecisionReason, /writing a secrets file/);
+  assert.equal(
+    write('Edit', '/p/infra/paas/terraform.tfvars').hookSpecificOutput.permissionDecision,
+    'deny',
+  );
+  assert.equal(write('Write', '/p/src/x.ts'), null);
+  assert.equal(write('Edit', '/p/.env.example'), null);
 });
