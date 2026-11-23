@@ -661,6 +661,47 @@ describe('the pilot core loop', () => {
     expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
   });
 
+  it('B2: refuses to publish a draft with no items', async () => {
+    const create = await req('/v1/clients', {
+      method: 'POST',
+      json: {
+        name: 'Empty Draft Client',
+        sex: 'F',
+        dob: '1992-01-01',
+        heightCm: 165,
+        activityLevel: 1.375,
+      },
+    });
+    const client = (await create.json()) as { id: string };
+    await req(`/v1/clients/${client.id}/vitals`, { method: 'POST', json: { weightKg: 65 } });
+    await req(`/v1/clients/${client.id}/goals`, {
+      method: 'POST',
+      json: { preset: 'MAINTAIN', rate: 'STANDARD', startWeightKg: 65 },
+    });
+    const generated = await req(`/v1/clients/${client.id}/meal-plans/generate`, {
+      method: 'POST',
+      json: { mealCount: 3 },
+    });
+    expect(generated.status).toBe(200);
+    const { plan } = (await generated.json()) as { plan: { id: string } };
+    // A coach reaches this state by removing every item; delete them directly to keep the test short.
+    await db.delete(schema.mealPlanItems).where(eq(schema.mealPlanItems.planId, plan.id));
+
+    const res = await req(`/v1/meal-plans/${plan.id}/publish`, {
+      method: 'POST',
+      json: { reviewed: true, acknowledgeDrift: true },
+    });
+    expect(res.status).toBe(422);
+    expect(res.headers.get('content-type')).toContain('application/problem+json');
+    expect(await res.json()).toMatchObject({
+      code: 'PLAN_EMPTY',
+      title: 'Plan has no meals. Add food before publishing',
+    });
+
+    const after = await req(`/v1/meal-plans/${plan.id}`);
+    expect(((await after.json()) as { plan: { status: string } }).plan.status).toBe('DRAFT');
+  });
+
   it('ADR-0015 D2: saves sanitized coach instructions and threads them into the next generation', async () => {
     const dirty = 'Prefer <img src=x onerror="steal()"> high-protein breakfasts.\u200B';
     const saved = await req('/v1/me/meal-instructions', { method: 'PUT', json: { text: dirty } });
