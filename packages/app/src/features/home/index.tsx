@@ -19,6 +19,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useClients, useDueCheckIns, useMe, useNotifications } from '../../api';
+import { needsAttention } from '../../lib/attention';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
 import { formatCoachDate, formatCoachTitle } from './coach-greeting';
@@ -44,22 +45,25 @@ export const HomeScreen = () => {
       </AppScreen>
     );
   }
-  if (due.isError) {
+  // Without the client list there is no attention count, so no all-clear either.
+  if (due.isError || clients.isError) {
     return (
       <AppScreen>
-        <ErrorState message="Could not load your day." retry={() => void due.refetch()} />
+        <ErrorState
+          message="Could not load your day."
+          retry={() => {
+            void due.refetch();
+            void clients.refetch();
+          }}
+        />
       </AppScreen>
     );
   }
 
   const dueItems = due.data.items;
-  const allClients = clients.data?.items ?? [];
-  const atRisk = allClients.filter((c) =>
-    c.attentionReasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG'),
-  );
-  const onTrack = allClients.filter(
-    (c) => !c.attentionReasons.some((r) => r.code === 'OFF_TRACK' || r.code === 'RED_FLAG'),
-  ).length;
+  const allClients = clients.data.items;
+  const atRisk = allClients.filter((c) => needsAttention(c.attentionReasons));
+  const onTrack = allClients.length - atRisk.length;
   const highAlerts = (notifications.data?.items ?? []).filter(
     (n) => n.priority === 'HIGH' && n.readAt === null,
   ).length;
