@@ -19,7 +19,9 @@
       "Edit(scripts/agent-hooks/**)",
       "Edit(.claude/**)",
       "Edit(.github/workflows/**)",
-      "Edit(.github/CODEOWNERS)"
+      "Edit(.github/CODEOWNERS)",
+      "Edit(lefthook.yml)",
+      "Edit(.cursor/hooks.json)"
     ]
   },
   "hooks": {

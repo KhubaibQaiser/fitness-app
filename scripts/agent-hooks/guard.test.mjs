@@ -423,6 +423,52 @@ test('hook-skipping and env-dump variants are caught', () => {
   assert.equal(decision(shell('eval "$(echo ls)"')), 'ask');
 });
 
+test('brace expansion, key files and line continuations cannot hide a secret or a push', () => {
+  for (const command of [
+    'cat .env{,.bak}',
+    'cat .{e,f}nv',
+    'cat .e{n,m}v',
+    'cat {.env,x}',
+    'cat certs/*.key',
+    'git push \\\n  origin main',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  for (const command of ['ls src/{a,b}.ts', 'echo ${HOME}', 'cp x.{ts,bak}']) {
+    assert.equal(decision(shell(command)), 'allow', command);
+  }
+  assert.equal(decision(shell(`echo ${'{a,b}'.repeat(40)}`)), 'allow');
+});
+
+test('quoted git config keys, aliases, push targets from variables and env variants', () => {
+  for (const command of [
+    'git config core.hooks""Path x',
+    "git config core.hooks''Path x",
+    'declare -p',
+    'pnpm exec printenv',
+  ]) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  for (const command of [
+    "git config alias.pf 'push -f'",
+    'git config remote.origin.push refs/heads/main',
+    'git push origin $BRANCH',
+    'gh auth token',
+    'gh api repos/o/r/issues -f title=x',
+    'gh pr close 5',
+    'gh extension install x/y',
+    'pnpm create vite',
+    'brew install jq',
+  ]) {
+    assert.equal(decision(shell(command)), 'ask', command);
+  }
+  for (const command of ['cargo add serde', 'go get example.com/x', 'poetry add requests']) {
+    assert.equal(decision(shell(command)), 'deny', command);
+  }
+  assert.equal(decision(shell('git config user.name x')), 'allow');
+  assert.equal(decision(shell('npm init -y')), 'allow');
+});
+
 test('GitHub state changes ask, with or without -R', () => {
   for (const command of [
     'gh -R o/r pr merge 1',

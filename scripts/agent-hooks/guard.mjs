@@ -80,6 +80,7 @@ const SECRET_SAMPLES = [
   'id_rsa',
   'id_ed25519',
   'server.pem',
+  'server.key',
   'cert.p12',
   'terraform.tfstate',
   'prod.tfvars',
@@ -98,7 +99,7 @@ const sensitivePath = (p) => {
   if (/(^|\/)\.(ssh|gnupg)\//i.test(s) && !/\.pub$/i.test(base)) return true;
   if (/(^|\/)\.aws\/(credentials|config)$/i.test(s)) return true;
   if (/^id_(rsa|ed25519|ecdsa|dsa)$/i.test(base)) return true;
-  if (/\.(pem|p12|pfx|keystore)$/i.test(base)) return true;
+  if (/\.(pem|key|p12|pfx|keystore)$/i.test(base)) return true;
   if (/^\.(netrc|pgpass)$/i.test(base)) return true;
   if (/\.tfstate(\..+)?$/i.test(base) || /\.tfvars$/i.test(base)) return true;
   return false;
@@ -170,8 +171,34 @@ const secretGlob = (token) => {
   );
 };
 
+// Bash brace expansion, as in .e{n,m}v or .env{,.bak}: expanded to a bounded number of words so
+// the secrets checks see what the shell would.
+const MAX_EXPANSIONS = 64;
+const expandBraces = (token) => {
+  let out = [token];
+  for (let round = 0; round < 8; round += 1) {
+    let changed = false;
+    const next = [];
+    for (const w of out) {
+      const m = w.match(/^([^{]*(?:\{[^{}]*\}[^{]*)*?)\{([^{}]*,[^{}]*)\}(.*)$/);
+      if (!m) next.push(w);
+      else {
+        changed = true;
+        for (const part of m[2].split(',')) next.push(`${m[1]}${part}${m[3]}`);
+      }
+    }
+    out = next.slice(0, MAX_EXPANSIONS);
+    if (!changed) break;
+  }
+  return out;
+};
+const touchesSecret = (t) =>
+  (t.includes('{') && t.length <= MAX_TOKEN ? expandBraces(t) : [t]).some(
+    (w) => sensitivePath(w) || secretGlob(w),
+  );
+
 // Commands an env dump may hide behind, and an optional path such as /usr/bin/.
-const ENV_PREFIX = String.raw`(?:(?:time|nohup|exec|command|builtin|sudo|xargs)\s+)*\\?(?:\S*\/)?`;
+const ENV_PREFIX = String.raw`(?:(?:time|nohup|exec|command|builtin|sudo|xargs|npx)\s+|(?:pnpm|npm|yarn)\s+exec\s+)*\\?(?:\S*\/)?`;
 const STATEMENT = String.raw`(?:^|[;&|(\x60]\s*|\$\(\s*)`;
 
 // Checked against the command with quoted strings blanked out, so a commit message or PR text that
@@ -190,7 +217,7 @@ const DENY = [
   ],
   [
     new RegExp(
-      `${STATEMENT}${ENV_PREFIX}(printenv\\b|env\\s*($|[|;&>)])|export\\s+-p\\b|declare\\s+-x\\b|set\\s*($|[|;&>)]))|\\/proc\\/[^\\s/]+\\/environ\\b`,
+      `${STATEMENT}${ENV_PREFIX}(printenv\\b|env\\s*($|[|;&>)])|export\\s+-p\\b|declare\\s+-[xp]\\b|set\\s*($|[|;&>)]))|\\/proc\\/[^\\s/]+\\/environ\\b`,
     ),
     'printing environment variables (they hold secrets)',
   ],
@@ -246,13 +273,26 @@ const ASK = [
     ),
     GITHUB_STATE,
   ],
+  [new RegExp(`${GH}auth\\s+(token|status\\s+(-t|--show-token))\\b`), 'printing a GitHub token'],
+  [new RegExp(`${GH}api\\b[^;&|\\n]*\\s(-f|-F|--field|--raw-field|--input)\\b`), GITHUB_STATE],
+  [
+    new RegExp(
+      `${GH}(pr\\s+(close|reopen)|issue\\s+(close|delete|transfer)|extension\\s+install)\\b`,
+    ),
+    GITHUB_STATE,
+  ],
+  [
+    /\bgit\s+config\b[^;&|\n]*\s(alias\.|remote\.\S+\.push\b|push\.default\b)/,
+    'changing git aliases or where git pushes',
+  ],
+  [/\b(brew|apt|apt-get|dnf|yum|pacman)\s+(install|add|upgrade)\b/, 'installing system packages'],
   [/(^|[;&|(]\s*)eval\b/, 'eval runs text built at run time'],
   [
     /\b(npm|pnpm|yarn|bun)\s+(up|update|upgrade)\b[^;&|\n]*--latest\b/,
     'upgrading dependencies to their latest versions',
   ],
   [
-    /\bnpx\b|\bbunx\b|\b(pnpm|yarn)\s+dlx\b|\bnpm\s+exec\b/,
+    /\bnpx\b|\bbunx\b|\bbun\s+x\b|\b(pnpm|yarn)\s+dlx\b|\bnpm\s+exec\b|\b(pnpm|npm|yarn|bun)\s+create\b|\bnpm\s+init\s+[^-\s]/,
     'running a package that may be downloaded from the registry (use pnpm exec for repo tools)',
   ],
 ];
@@ -311,6 +351,12 @@ const checkPush = (cmd, structural, cwd, written) => {
       return ['deny', 'pushing every branch, main included'];
     }
     if (refspecs.some((r) => isMainRef(r.split(':').pop()))) return ['deny', PUSH_TO_MAIN];
+    if (refspecs.some((r) => r.includes('$'))) {
+      return [
+        'ask',
+        'git push to a branch named by a variable (the target is not known until it runs)',
+      ];
+    }
     // No refspec, or plain HEAD, pushes the branch that is checked out.
     if (refspecs.length === 0 || refspecs.includes('HEAD')) {
       const before = cmd.slice(0, m.index);
@@ -363,8 +409,11 @@ const checkInstall = (cmd) => {
   for (const m of cmd.matchAll(/\b(?:npm|pnpm|yarn|bun)\s+([^;&|\n]*)/g)) {
     found.push(...addedPackages(m[1], JS_ADD, VALUE_FLAGS));
   }
-  for (const m of cmd.matchAll(/\b(?:pip3?|uv)\s+([^;&|\n]*)/g)) {
+  for (const m of cmd.matchAll(/\b(?:pip3?|uv|poetry)\s+([^;&|\n]*)/g)) {
     found.push(...addedPackages(m[1], PY_ADD, PIP_VALUE_FLAGS));
+  }
+  for (const m of cmd.matchAll(/\b(?:cargo\s+add|go\s+get)\s+([^;&|\n]*)/g)) {
+    found.push(...m[1].split(/\s+/).filter((t) => t && !t.startsWith('-')));
   }
   if (found.length === 0) return undefined;
   const what = `adding or upgrading dependency ${found.slice(0, 3).join(', ')}`;
@@ -376,7 +425,7 @@ const checkInstall = (cmd) => {
 const SECRETS = '(.env, SSH or AWS keys, PEM, Terraform state)';
 const words = (s) => s.split(/[\s'"`=<>|;&()@:]+/).filter(Boolean);
 
-const decide = ({ command: raw, paths, globs = [], writing = false, cwd }, depth = 0) => {
+const decide = ({ command: written, paths, globs = [], writing = false, cwd }, depth = 0) => {
   for (const p of paths) {
     if (sensitivePath(p))
       return ['deny', `${writing ? 'writing' : 'reading'} a secrets file ${SECRETS}`];
@@ -384,7 +433,9 @@ const decide = ({ command: raw, paths, globs = [], writing = false, cwd }, depth
   for (const g of globs) {
     if (sensitivePath(g) || secretGlob(g)) return ['deny', `searching secrets files ${SECRETS}`];
   }
-  if (!raw) return ['allow'];
+  if (!written) return ['allow'];
+  // A backslash at the end of a line joins it to the next one.
+  const raw = written.replace(/\\\r?\n/g, ' ');
   const command = raw.replace(GIT_GLOBAL_OPTS, 'git');
   // Three views: as written, with quote characters removed (".e""nv" reads as .env), and with
   // quoted strings blanked out (a commit message is not a command).
@@ -394,7 +445,7 @@ const decide = ({ command: raw, paths, globs = [], writing = false, cwd }, depth
   const structural = blanked.replace(GIT_GLOBAL_OPTS, 'git');
 
   const tokens = [...words(command), ...words(unquoted)];
-  if (!/\.gitignore\b/.test(command) && tokens.some((t) => sensitivePath(t) || secretGlob(t))) {
+  if (!/\.gitignore\b/.test(command) && tokens.some(touchesSecret)) {
     return ['deny', `touching a secrets file ${SECRETS}`];
   }
   if (depth < 2) {
@@ -409,6 +460,10 @@ const decide = ({ command: raw, paths, globs = [], writing = false, cwd }, depth
   if (rm) return rm;
   // Before normalising too: "git -c core.hooksPath=... commit" would lose the option.
   for (const [re, why] of DENY) if (re.test(structural) || re.test(blanked)) return ['deny', why];
+  // In a git config command a quoted key is still the key: core.hooks""Path is core.hooksPath.
+  if (/\bgit\s+config\b/.test(structural) && /core\.hookspath/i.test(unquoted)) {
+    return ['deny', 'changing where git hooks live (turns off gitleaks, format and lint)'];
+  }
   const push = checkPush(unquoted, structural, cwd, plain);
   if (push) return push;
   const install = checkInstall(structural);

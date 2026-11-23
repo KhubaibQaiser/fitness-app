@@ -31,6 +31,8 @@ test('merging and editing the guardrails always ask', () => {
     'Edit(scripts/agent-hooks/**)',
     'Edit(.claude/**)',
     'Edit(.github/workflows/**)',
+    'Edit(lefthook.yml)',
+    'Edit(.cursor/hooks.json)',
   ]) {
     assert.ok(ask.includes(rule), `missing ask rule ${rule}`);
   }
