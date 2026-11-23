@@ -135,7 +135,7 @@ Images: `icon.png` (512×512, 385 KB) loads on every page; `hero.jpg` is 435 KB.
 The scripts are in [`scripts/perf/`](../../../scripts/perf/README.md), whose README has the steps from a clean checkout. Run them against the production web build and an API on a synthetic database:
 
 - **Synthetic data:** `seed-synthetic.mjs 170` (and `500` for the roster budget), each into its own local database. 170 reproduces the data above: 41 plans, with 2 more failing as "solver infeasible".
-- **Cold loads:** `lighthouse.mjs`, Lighthouse 12.8.2 (pinned in the root `package.json`), signing in fresh before each run. Hub, journey and plan editor are not run under Lighthouse (see "Limits").
+- **Cold loads:** `lighthouse.mjs`, Lighthouse 12.8.2 (pinned in the root `package.json`), signing in fresh before each run. Hub, journey and plan editor are left out: under Lighthouse's fixed Cookie header the app's token refresh trips reuse detection and those pages show "Could not load" (the same limit as above, checked again on 2026-11-24). `vitals-flow.mjs` measures them signed in.
 - **Signed-in loads:** `vitals-flow.mjs`, with a CPU profile and a filmstrip per route.
 - **Hotspots:** `attribute-cpu.mjs` on those profiles, against a build with browser source maps.
 - **API:** `api-bench.mjs`.
