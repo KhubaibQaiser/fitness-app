@@ -2,7 +2,7 @@
 
 Only the parent edits this file ([`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-23, when the specs were written and the owner answered O1–O10. Nothing has started.
+Last updated: 2026-11-23, when the specs were written, the owner answered O1–O10, and #99–#101 merged. Nothing has started.
 
 ## Phase 1
 
@@ -81,10 +81,10 @@ Last updated: 2026-11-23, when the specs were written and the owner answered O1�
 From [`rulings.md`](rulings.md):
 
 - **O11:** name, or lend, the low-end Android phone that runs Q4. Needed before Q4.
-- **O12:** decide how revamp merges fit #99's rule that only the owner's word allows a merge. Needed before the first revamp merge after #99 lands.
+- **O12:** decide how revamp merges fit #99's rule that only the owner's word allows a merge. Needed before the first revamp merge.
 - **D1** (volt only for chart marks) stands unless the owner overrules it.
 
-Order (O4): #99, #100 and #101 merge first. This specs PR is then updated onto the new `main` and merged.
+Order (O4): done on 2026-11-23. On the owner's word the parent merged #99, #100 and #101 into `main`, then merged `main` into this specs PR with the O4 resolution.
 
 Run start (O5): the owner starts the parent session with the install switch `AGENT_GUARD_ALLOW_INSTALL=1` set.
 
