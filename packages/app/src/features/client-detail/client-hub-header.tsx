@@ -21,7 +21,7 @@ type Props = {
   onDownloadPdf: () => void;
 };
 
-/** Compact client hub identity strip + section tabs. */
+/** Compact client hub identity strip + section tabs. The screen places it with `StickyHeader`. */
 export const ClientHubHeader = ({
   clientId,
   name,
@@ -39,9 +39,6 @@ export const ClientHubHeader = ({
 
   return (
     <YStack
-      position="sticky"
-      top={0}
-      zIndex={20}
       backgroundColor="$cardBg"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
