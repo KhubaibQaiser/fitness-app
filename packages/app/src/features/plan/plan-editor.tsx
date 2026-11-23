@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'solito/link';
 import { ApiError, type PlanItem, type PlanSummary } from '@gymos/contracts';
+import { MEAL_TEMPLATES } from '@gymos/core/nutrition';
 import { downloadBlob } from '@gymos/platform';
 import {
   ArrowLeft,
@@ -50,6 +51,26 @@ const SLOT_LABEL: Record<PlanItem['mealSlot'], string> = {
   lunch: 'Lunch',
   dinner: 'Dinner',
   snack: 'Snack',
+};
+
+/**
+ * Meal sections follow the plan's meal pattern, the solver template its items fit (the
+ * meals-per-day choice when there are no items), so an empty meal keeps its "Add food".
+ */
+const mealSections = (
+  items: readonly PlanItem[],
+  mealCount: 3 | 4 | 5,
+): (readonly [number, PlanItem['mealSlot']])[] => {
+  const pattern = ([mealCount, 3, 4, 5] as const).find((n) =>
+    items.every((i) => MEAL_TEMPLATES[n][i.mealIndex]?.slot === i.mealSlot),
+  );
+  if (pattern === undefined) {
+    // Items that fit no template: show the meals they hold.
+    return [...new Map(items.map((i) => [i.mealIndex, i.mealSlot] as const))].sort(
+      (a, b) => a[0] - b[0],
+    );
+  }
+  return MEAL_TEMPLATES[pattern].map((meal, mealIndex) => [mealIndex, meal.slot] as const);
 };
 
 const dietPlanDownloadName = (clientName: string): string => {
@@ -130,10 +151,9 @@ export const PlanEditor = ({
     setAddMealIndex(null);
   }, [planId]);
 
+  const empty = items.length === 0;
   const dayItems = items.filter((i) => i.day === day);
-  const meals = [
-    ...new Map(dayItems.map((i) => [i.mealIndex, i.mealSlot] as const)).entries(),
-  ].sort((a, b) => a[0] - b[0]);
+  const meals = mealSections(items, mealCount);
   const dayTotals = dayItems.reduce(
     (acc, i) => ({
       kcal: acc.kcal + i.macros.kcal,
@@ -154,6 +174,36 @@ export const PlanEditor = ({
       onError: (e) => setPdfError(e.message),
     });
   };
+
+  const generateControls = (label: string) => (
+    <>
+      <YStack gap="$2">
+        <Muted fontSize={13}>Meals per day</Muted>
+        <SegmentedControl
+          ariaLabel="Meals per day"
+          options={[...MEAL_COUNT_OPTIONS]}
+          value={mealCount}
+          onChange={setMealCount}
+        />
+      </YStack>
+      {generateBlocked && generateError instanceof ApiError ? (
+        <OverridePrompt
+          onConfirm={(reason) => onGenerate({ reason, mealCount })}
+          busy={generatePending}
+          detail={generateError.detail ?? ''}
+        />
+      ) : (
+        <PrimaryButton disabled={generatePending} onPress={() => onGenerate({ mealCount })}>
+          {generatePending ? 'Generating…' : label}
+        </PrimaryButton>
+      )}
+      {generateError && !generateBlocked ? (
+        <Body color="$danger" role="alert">
+          {generateError.message}
+        </Body>
+      ) : null}
+    </>
+  );
 
   return (
     <AppScreen>
@@ -202,7 +252,22 @@ export const PlanEditor = ({
         </Card>
       ) : null}
 
-      {editable ? (
+      {status === 'DRAFT' && empty ? (
+        <Card tone="accent" gap="$3">
+          <Body fontWeight="800">This draft has no meals yet</Body>
+          <Muted>
+            Generate meals creates draft v{nextVersion} from the client&apos;s targets. Or add food
+            to this draft yourself, meal by meal.
+          </Muted>
+          {generateControls('Generate meals')}
+          <GhostButton
+            disabled={patch.isPending}
+            onPress={() => setAddMealIndex(meals[0]?.[0] ?? null)}
+          >
+            Add food manually
+          </GhostButton>
+        </Card>
+      ) : editable ? (
         <Card tone="accent" gap="$2">
           <Body fontWeight="800">AI suggestion. Review before publish</Body>
           <Muted>
@@ -246,31 +311,7 @@ export const PlanEditor = ({
                   ? 'Creates a new draft. The current published plan stays live until you publish this one.'
                   : 'Creates a new draft version. Publish when you are ready for the client to follow it.'}
               </Muted>
-              <YStack gap="$2">
-                <Muted fontSize={13}>Meals per day</Muted>
-                <SegmentedControl
-                  ariaLabel="Meals per day"
-                  options={[...MEAL_COUNT_OPTIONS]}
-                  value={mealCount}
-                  onChange={setMealCount}
-                />
-              </YStack>
-              {generateBlocked && generateError instanceof ApiError ? (
-                <OverridePrompt
-                  onConfirm={(reason) => onGenerate({ reason, mealCount })}
-                  busy={generatePending}
-                  detail={generateError.detail ?? ''}
-                />
-              ) : (
-                <PrimaryButton disabled={generatePending} onPress={() => onGenerate({ mealCount })}>
-                  {generatePending ? 'Generating…' : `Generate draft v${nextVersion}`}
-                </PrimaryButton>
-              )}
-              {generateError && !generateBlocked ? (
-                <Body color="$danger" role="alert">
-                  {generateError.message}
-                </Body>
-              ) : null}
+              {generateControls(`Generate draft v${nextVersion}`)}
             </Card>
           ) : null}
         </>
@@ -321,7 +362,7 @@ export const PlanEditor = ({
         ) : (
           <Muted fontSize={12}>Matches daily template</Muted>
         )}
-        {editable ? (
+        {editable && dayItems.length > 0 ? (
           <GhostButton
             disabled={patch.isPending}
             onPress={() => patch.mutate([{ op: 'apply-day-to-week', day }])}
@@ -363,14 +404,17 @@ export const PlanEditor = ({
                 >
                   {addMealIndex === mealIndex ? 'Cancel add' : 'Add food'}
                 </GhostButton>
-                <GhostButton
-                  flex={1}
-                  minWidth={140}
-                  disabled={regenerateMeal.isPending}
-                  onPress={() => regenerateMeal.mutate({ day, mealIndex })}
-                >
-                  {regenerateMeal.isPending ? 'Regenerating…' : 'Regenerate meal'}
-                </GhostButton>
+                {/* The server regenerates only a meal that has items (MEAL_NOT_FOUND otherwise). */}
+                {dayItems.some((i) => i.mealIndex === mealIndex) ? (
+                  <GhostButton
+                    flex={1}
+                    minWidth={140}
+                    disabled={regenerateMeal.isPending}
+                    onPress={() => regenerateMeal.mutate({ day, mealIndex })}
+                  >
+                    {regenerateMeal.isPending ? 'Regenerating…' : 'Regenerate meal'}
+                  </GhostButton>
+                ) : null}
               </XStack>
               {addMealIndex === mealIndex ? (
                 <PlanFoodPicker
@@ -407,7 +451,7 @@ export const PlanEditor = ({
         </Body>
       ) : null}
 
-      {editable ? (
+      {editable && !empty ? (
         <PlanPublishConfirm
           busy={publish.isPending}
           error={publish.error}
