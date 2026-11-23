@@ -2,7 +2,6 @@
 
 import { type ReactElement, type ReactNode } from 'react';
 import { Link } from 'solito/link';
-import { usePathname } from 'solito/navigation';
 import { isWeb, useSafeAreaInsets } from '@gymos/platform';
 import {
   Avatar,
@@ -19,10 +18,7 @@ import {
 } from '@gymos/ui';
 import { useMe, useUnreadCount } from '../../api';
 import { PRIMARY_NAV, type PrimaryNavHref, type PrimaryNavItem } from './primary-nav';
-import { useAppChrome } from './use-app-chrome';
-
-const isActive = (pathname: string, href: string) =>
-  href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+import { isNavActive, useAppChrome } from './use-app-chrome';
 
 const navIcon = (href: PrimaryNavHref, size: number, color: string): ReactElement => {
   switch (href) {
@@ -60,10 +56,9 @@ const UnreadDot = ({ count }: { count: number }) =>
   ) : null;
 
 export const MobileTabBar = () => {
-  const pathname = usePathname() ?? '/';
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
-  const { allowMobileTabBar } = useAppChrome();
+  const { pathname, allowMobileTabBar } = useAppChrome();
   const insets = useSafeAreaInsets();
   if (!allowMobileTabBar) return null;
 
@@ -83,7 +78,7 @@ export const MobileTabBar = () => {
       $md={{ display: 'none' }}
     >
       {PRIMARY_NAV.map(({ href, label }) => {
-        const active = isActive(pathname, href);
+        const active = isNavActive(pathname, href);
         const iconColor = active ? '$primary' : '$textMuted';
         return (
           <Link key={href} href={href} style={{ flex: 1 }}>
@@ -122,14 +117,14 @@ export const MobileTabBar = () => {
 };
 
 export const SideNav = () => {
-  const pathname = usePathname() ?? '/';
+  const { pathname } = useAppChrome();
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
   const me = useMe();
   const coachName = me.data?.name ?? 'Coach';
 
   const link = ({ href, label }: PrimaryNavItem) => {
-    const active = isActive(pathname, href);
+    const active = isNavActive(pathname, href);
     return (
       <Link key={href} href={href}>
         <XStack
