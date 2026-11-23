@@ -118,6 +118,7 @@ export const MobileTabBar = () => {
 
 export const SideNav = () => {
   const { pathname } = useAppChrome();
+  const insets = useSafeAreaInsets();
   const unread = useUnreadCount();
   const count = unread.data?.count ?? 0;
   const me = useMe();
@@ -195,6 +196,7 @@ export const SideNav = () => {
       backgroundColor="$cardBg"
       borderRightWidth={1}
       borderRightColor="$borderColor"
+      marginTop={insets.top}
       paddingVertical="$4"
       paddingHorizontal="$3"
       gap="$4"
@@ -262,11 +264,25 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   // determinate size and scroll internally (native screens are already bounded
   // by the OS window, so flex={1} alone is enough there).
   const webHeight = isWeb ? { height: '100dvh' as const } : {};
+  const insets = useSafeAreaInsets();
+  const { allowMobileTabBar } = useAppChrome();
 
   return (
     <XStack flex={1} width="100%" {...webHeight} backgroundColor="$coachCanvas">
       <SideNav />
-      <YStack flex={1} minHeight={0} minWidth={0} width="100%" overflow="hidden">
+      {/* Insets as this column's padding, not the row's: iOS KeyboardAvoidingView measures its
+          frame against its parent, so the offset must sit on the screen's direct parent. The tab
+          bar pads the bottom inset itself; task screens have none, so the column keeps their
+          footer clear of the home indicator. */}
+      <YStack
+        flex={1}
+        minHeight={0}
+        minWidth={0}
+        width="100%"
+        overflow="hidden"
+        paddingTop={insets.top}
+        paddingBottom={allowMobileTabBar ? 0 : insets.bottom}
+      >
         {children}
         <MobileTabBar />
       </YStack>
