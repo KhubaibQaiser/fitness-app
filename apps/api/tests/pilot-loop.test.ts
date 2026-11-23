@@ -661,6 +661,148 @@ describe('the pilot core loop', () => {
     expect(events.some((e) => e.kind === 'REGENERATE_MEAL')).toBe(true);
   });
 
+  describe('O16: manual add and swap refuse a food with the client allergen', () => {
+    let planId = '';
+    let firstItemId = '';
+    let peanutId = '';
+    let milkId = '';
+    let cleanId = '';
+
+    type Detail = { items: { id: string; foodId: string; portionGrams: number }[] };
+    const planItems = async () =>
+      ((await (await req(`/v1/meal-plans/${planId}`)).json()) as Detail).items;
+    const patch = (ops: unknown[]) =>
+      req(`/v1/meal-plans/${planId}`, { method: 'PATCH', json: { ops } });
+    const addOp = (foodId: string) => ({
+      op: 'add',
+      day: 1,
+      mealIndex: 0,
+      mealSlot: 'breakfast',
+      foodId,
+      portionGrams: 50,
+    });
+
+    beforeAll(async () => {
+      const create = await req('/v1/clients', {
+        method: 'POST',
+        json: {
+          name: 'Allergen Client',
+          sex: 'M',
+          dob: '1990-01-01',
+          heightCm: 175,
+          activityLevel: 1.55,
+        },
+      });
+      const client = (await create.json()) as { id: string };
+      await req(`/v1/clients/${client.id}/vitals`, { method: 'POST', json: { weightKg: 75 } });
+      await req(`/v1/clients/${client.id}/goals`, {
+        method: 'POST',
+        json: { preset: 'MAINTAIN', rate: 'STANDARD', startWeightKg: 75 },
+      });
+      const profile = await req(`/v1/clients/${client.id}/dietary-profile`, {
+        method: 'PUT',
+        json: {
+          restrictions: [
+            { type: 'ALLERGY_SEVERE', code: 'allergen:peanut' },
+            { type: 'ALLERGY_MILD', code: 'allergen:milk' },
+          ],
+        },
+      });
+      expect(profile.status).toBe(200);
+      const generated = await req(`/v1/clients/${client.id}/meal-plans/generate`, {
+        method: 'POST',
+        json: { mealCount: 3 },
+      });
+      expect(generated.status, await generated.clone().text()).toBe(200);
+      planId = ((await generated.json()) as { plan: { id: string } }).plan.id;
+      firstItemId = (await planItems())[0]?.id ?? '';
+
+      const foods = await db.select().from(schema.foods);
+      peanutId = foods.find((f) => f.name === 'Peanut butter')?.id ?? '';
+      milkId = foods.find((f) => f.allergenTags.includes('milk'))?.id ?? '';
+      cleanId = foods.find((f) => f.allergenTags.length === 0)?.id ?? '';
+      expect([firstItemId, peanutId, milkId, cleanId]).not.toContain('');
+    });
+
+    it('refuses a manual add of a severe-allergen food and rolls back the whole batch', async () => {
+      const before = await planItems();
+      const first = before[0];
+      expect(first).toBeDefined();
+      if (!first) return;
+      const res = await patch([
+        { op: 'set-portion', itemId: first.id, portionGrams: first.portionGrams * 2 },
+        addOp(peanutId),
+      ]);
+      expect(res.status).toBe(422);
+      expect(res.headers.get('content-type')).toContain('application/problem+json');
+      expect(await res.json()).toMatchObject({
+        code: 'ALLERGEN_CONFLICT',
+        detail: 'allergen=peanut',
+      });
+      expect(await planItems()).toEqual(before);
+    });
+
+    it('refuses a swap to a severe-allergen food', async () => {
+      const before = await planItems();
+      const res = await patch([{ op: 'swap', itemId: firstItemId, foodId: peanutId }]);
+      expect(res.status).toBe(422);
+      expect(((await res.json()) as { code: string }).code).toBe('ALLERGEN_CONFLICT');
+      expect(await planItems()).toEqual(before);
+    });
+
+    it('refuses a mild allergy too, as the solver filter does', async () => {
+      const res = await patch([addOp(milkId)]);
+      expect(res.status).toBe(422);
+      expect(((await res.json()) as { code: string }).code).toBe('ALLERGEN_CONFLICT');
+    });
+
+    it('still adds a food without the allergen', async () => {
+      const before = await planItems();
+      const res = await patch([addOp(cleanId)]);
+      expect(res.status).toBe(200);
+      const after = ((await res.json()) as Detail).items;
+      expect(after).toHaveLength(before.length + 1);
+      expect(after.some((i) => i.foodId === cleanId)).toBe(true);
+    });
+
+    it('refuses a swap on a NEEDS_REVIEW plan, the usual state after an allergy is added', async () => {
+      // A profile change flags a published plan NEEDS_REVIEW; set it directly to keep the test short.
+      await db
+        .update(schema.mealPlans)
+        .set({ status: 'NEEDS_REVIEW' })
+        .where(eq(schema.mealPlans.id, planId));
+      const before = await planItems();
+      const res = await patch([{ op: 'swap', itemId: firstItemId, foodId: peanutId }]);
+      expect(res.status).toBe(422);
+      expect(((await res.json()) as { code: string }).code).toBe('ALLERGEN_CONFLICT');
+      expect(await planItems()).toEqual(before);
+    });
+
+    it('refuses to copy an allergen item already in the plan to the other days', async () => {
+      // An item from before this check (or a hand edit to the database): insert it directly.
+      await db.insert(schema.mealPlanItems).values({
+        planId,
+        day: 1,
+        mealIndex: 0,
+        mealSlot: 'breakfast',
+        mealName: 'breakfast, day 1',
+        foodId: peanutId,
+        portionGrams: 30,
+        macros: { kcal: 176, proteinG: 7.5, fatG: 15, carbsG: 6 },
+        macrosSource: 'food_db',
+        position: 99,
+      });
+      const before = await planItems();
+      const res = await patch([{ op: 'apply-day-to-week', day: 1 }]);
+      expect(res.status).toBe(422);
+      expect(await res.json()).toMatchObject({
+        code: 'ALLERGEN_CONFLICT',
+        detail: 'allergen=peanut',
+      });
+      expect(await planItems()).toEqual(before);
+    });
+  });
+
   it('B2: refuses to publish a draft with no items', async () => {
     const create = await req('/v1/clients', {
       method: 'POST',

@@ -26,7 +26,7 @@ import { weeklyDeltaKgFromManifest, type TenantManifest } from '../tenancy';
 import { getActiveInstructions } from './coach-instructions';
 import { getActiveProfile, restrictedAllergenCodes } from './dietary';
 import { candidatesForRestrictions, foodsById } from './foods';
-import { applyPlanOps, PatchFoodMissing, type PlanOp } from './plan-ops';
+import { applyPlanOps, PatchAllergenConflict, PatchFoodMissing, type PlanOp } from './plan-ops';
 
 export type { PlanOp } from './plan-ops';
 
@@ -562,6 +562,7 @@ export type PatchError =
   | { code: 'PLAN_NOT_EDITABLE'; status: string }
   | { code: 'ITEM_NOT_FOUND'; itemId: string }
   | { code: 'FOOD_NOT_FOUND'; foodId: string }
+  | { code: 'ALLERGEN_CONFLICT'; foodId: string; allergen: string }
   | { code: 'DAY_NOT_FOUND'; day: number };
 
 /** Coach edits — food_db macros from catalog; override-macros is audited coach judgment. */
@@ -599,6 +600,9 @@ export const patchPlan = async (
   } catch (error) {
     if (error instanceof PatchFoodMissing) {
       return err({ code: 'FOOD_NOT_FOUND', foodId: error.foodId });
+    }
+    if (error instanceof PatchAllergenConflict) {
+      return err({ code: 'ALLERGEN_CONFLICT', foodId: error.foodId, allergen: error.allergen });
     }
     throw error;
   }
