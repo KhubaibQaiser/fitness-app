@@ -121,7 +121,7 @@ Images: `icon.png` (512×512, 385 KB) loads on every page; `hero.jpg` is 435 KB.
 - **iOS:**
   - Measured: bundle composition only.
   - Not measured: launch time, Instruments time profiles and memory. A Release build needs about 4 GB of build output, more than the disk had free. Q4 measures them on a real iPhone.
-- **Android:** not run. The kit (`android-kit/`) automates:
+- **Android:** not run. The kit ([`scripts/perf/android/`](../../../scripts/perf/android/README.md)) automates:
   - cold start ×10;
   - roster scroll jank;
   - memory;
