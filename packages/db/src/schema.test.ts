@@ -61,6 +61,30 @@ describe('migrations + seed', () => {
     expect(due).toHaveLength(1);
   });
 
+  it('stores a full engine verdict on every completed check-in (Verdict contract)', async () => {
+    const rows = await db
+      .select({ verdict: s.checkIns.engineOutput })
+      .from(s.checkIns)
+      .where(eq(s.checkIns.status, 'COMPLETED'));
+    expect(rows).toHaveLength(7);
+    // The required fields of `Verdict` in packages/contracts/src/types.ts.
+    const types = [
+      'INSUFFICIENT_DATA',
+      'HOLD',
+      'ADHERENCE_FOCUS',
+      'PLATEAU_PROTOCOL',
+      'ADJUST_TARGETS',
+      'REFER_REVIEW',
+    ];
+    for (const { verdict } of rows) {
+      expect(types).toContain(verdict?.type);
+      expect(verdict?.confidence).toBeTypeOf('number');
+      expect(verdict?.reasons).toSatisfy(
+        (r: unknown) => Array.isArray(r) && r.length > 0 && r.every((x) => typeof x === 'string'),
+      );
+    }
+  });
+
   it('stores the dietary profile with severe-allergy and religious codes', async () => {
     const restrictions = await db
       .select({ type: s.dietaryRestrictions.type, code: s.dietaryRestrictions.code })

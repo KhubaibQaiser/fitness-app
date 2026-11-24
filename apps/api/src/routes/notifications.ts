@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { toStrictIso } from '@gymos/db';
 import {
   listNotifications,
   markAllRead,
@@ -20,7 +21,14 @@ export const registerNotificationRoutes = (app: GymosApp, bind: RouteBind): void
     }),
     async (c) => {
       authorize(c, 'notification.read', { ownerUserId: c.get('principal').userId });
-      return c.json({ items: await listNotifications(db, c.get('principal').userId) });
+      const rows = await listNotifications(db, c.get('principal').userId);
+      // Postgres returns '2026-08-06 10:46:52.235+00', which Hermes parses as Invalid Date (B6).
+      const items = rows.map((n) => ({
+        ...n,
+        createdAt: toStrictIso(n.createdAt),
+        readAt: n.readAt === null ? null : toStrictIso(n.readAt),
+      }));
+      return c.json({ items });
     },
   );
 

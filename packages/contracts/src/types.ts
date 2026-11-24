@@ -351,7 +351,9 @@ export type Notification = {
   priority: 'HIGH' | 'NORMAL';
   payload: Record<string, unknown>;
   deepLink: string | null;
+  /** ISO 8601 with 'T' and an offset, as createdAt. */
   readAt: string | null;
+  /** ISO 8601 with 'T' and an offset, e.g. '2026-08-06T17:48:12.345Z' (B6: Hermes rejects other shapes). */
   createdAt: string;
 };
 
