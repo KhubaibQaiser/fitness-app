@@ -21,13 +21,15 @@ for i in $(seq 1 10); do
 done
 awk '/TotalTime/ {for (i=1;i<=NF;i++) if ($i=="TotalTime:") print $(i+1)}' "$OUT/cold-start.txt" | sort -n | awk '{a[NR]=$1} END {print "median TotalTime ms:", a[int((NR+1)/2)]}' | tee -a "$OUT/cold-start.txt"
 
-echo "== full run: screen recording, Perfetto trace, frame stats, per-screen screenshots"
+echo "== full run: screen recording, per-screen screenshots, frame stats, Perfetto trace of the roster scroll"
 adb shell am force-stop "$PKG"
 adb shell dumpsys gfxinfo "$PKG" reset >/dev/null
-adb shell screenrecord --bit-rate 8000000 --time-limit 170 /sdcard/gymos-run.mp4 &
+# Long enough for the route loop (about 7 s a screen) plus the roster swipes; screenrecord caps at 180 s.
+ROUTE_COUNT=$(printf '%s\n' "$ROUTES" | wc -l | tr -d ' ')
+REC_LIMIT=$((ROUTE_COUNT * 7 + 30))
+if [ "$REC_LIMIT" -gt 180 ]; then REC_LIMIT=180; fi
+adb shell screenrecord --bit-rate 8000000 --time-limit "$REC_LIMIT" /sdcard/gymos-run.mp4 &
 REC=$!
-adb shell perfetto -o /data/misc/perfetto-traces/gymos.pftrace -t 20s sched freq idle am wm gfx view binder_driver dalvik input res memory >/dev/null 2>&1 &
-TRACE=$!
 adb shell am start -n "$ACTIVITY" >/dev/null
 sleep 5
 # adb reads stdin, so every adb call inside the loop gets /dev/null or it would eat the route list.
@@ -39,16 +41,21 @@ while read -r key path; do
   adb exec-out screencap -p </dev/null > "$OUT/screens/$key.png"
   echo "shot $key"
 done <<< "$ROUTES"
-# Scroll the roster a few times for frame stats.
+# Scroll the roster a few times for frame stats, with a Perfetto trace around the swipes.
 open_route /clients
 sleep 4
+adb shell perfetto -o /data/misc/perfetto-traces/gymos.pftrace -t 15s sched freq idle am wm gfx view binder_driver dalvik input res memory >/dev/null 2>&1 &
+TRACE=$!
+sleep 2 # let tracing start before the first swipe
 for i in 1 2 3 4 5; do adb shell input swipe 500 1600 500 500 250; sleep 0.6; done
 adb shell dumpsys gfxinfo "$PKG" > "$OUT/gfxinfo-run.txt"
 adb shell dumpsys meminfo "$PKG" > "$OUT/meminfo.txt"
-wait "$TRACE" || true   # perfetto exits on its own after 20 s; a non-zero exit here only means it already finished
+wait "$TRACE" || true # perfetto stops itself after 15 s; its exit status says nothing about the file, and the pull below fails if there is none
 adb pull /data/misc/perfetto-traces/gymos.pftrace "$OUT/trace.pftrace" >/dev/null
-kill "$REC" 2>/dev/null || true   # stop the recording early if the run finished first
-sleep 2
+# SIGINT makes screenrecord finish the MP4 (a plain kill of the local adb leaves it unplayable).
+adb shell pkill -INT screenrecord || true # exits 1 when the time limit already stopped it
+wait "$REC" || true # adb returns screenrecord's signal status; the pull below fails if there is no file
+sleep 2 # give the device a moment to flush the finished file
 adb pull /sdcard/gymos-run.mp4 "$OUT/run.mp4" >/dev/null
 grep -E "Janky frames|50th|90th|95th|99th" "$OUT/gfxinfo-run.txt" | head -6
 grep -E "TOTAL PSS|TOTAL:" "$OUT/meminfo.txt" | head -2

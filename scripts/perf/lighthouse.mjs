@@ -4,9 +4,9 @@
 // Usage: PILOT_COACH_PASSWORD=... pnpm exec node scripts/perf/lighthouse.mjs <webBase> <outDir>
 //        (pnpm exec puts the lighthouse binary on PATH; CHROME_PATH picks the Chrome it drives)
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { apiClient, findFixtures, writeResults } from './lib.mjs';
+import { apiClient, findFixtures, redactLighthouseReport, writeResults } from './lib.mjs';
 
 const [base, out] = process.argv.slice(2);
 if (!base || !out) throw new Error('usage: lighthouse.mjs <webBase> <outDir>');
@@ -31,14 +31,25 @@ const RUNS = [
 ];
 
 const headersFile = join(out, 'headers.json');
+// headers.json holds a live session cookie: remove it on Ctrl-C or kill too, not only at the end.
+for (const [signal, code] of [
+  ['SIGINT', 130],
+  ['SIGTERM', 143],
+]) {
+  process.on(signal, () => {
+    rmSync(headersFile, { force: true });
+    process.exit(code);
+  });
+}
 const scenarios = {};
 const failed = [];
 try {
   for (const [name, path, preset, signedIn] of RUNS) {
     const flags = [];
+    let cookie = '';
     if (signedIn) {
       const { headers } = await apiClient(base).signIn();
-      const cookie = headers
+      cookie = headers
         .getSetCookie()
         .map((c) => c.split(';')[0])
         .join('; ');
@@ -65,10 +76,19 @@ try {
       throw new Error('could not start lighthouse: run this through `pnpm exec`', {
         cause: run.error,
       });
-    const lhr = run.status === 0 ? JSON.parse(readFileSync(`${report}.json`, 'utf8')) : null;
-    if (!lhr || lhr.runtimeError) {
+    const reportFile = `${report}.json`;
+    const lhr = existsSync(reportFile) ? JSON.parse(readFileSync(reportFile, 'utf8')) : null;
+    if (lhr) {
+      try {
+        writeFileSync(reportFile, redactLighthouseReport(lhr, cookie));
+      } catch (error) {
+        rmSync(reportFile, { force: true }); // never leave an unredacted report behind
+        throw error;
+      }
+    }
+    if (run.status !== 0 || !lhr || lhr.runtimeError) {
       failed.push(`${name}-${preset}`);
-      const why = lhr ? lhr.runtimeError.code : `exit ${run.status}: ${run.stderr.slice(-400)}`;
+      const why = lhr?.runtimeError?.code ?? `exit ${run.status}: ${run.stderr.slice(-400)}`;
       console.error(`FAILED ${name}-${preset} (${why})`);
     } else {
       const a = (id) => lhr.audits[id]?.numericValue;

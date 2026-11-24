@@ -69,8 +69,8 @@ What it records, and how to read each:
 | `cold-start.txt` | `am start -W`, 10 runs | Time to first frame after a cold launch (TotalTime)                                                          | under 1.5 s median on a mid-range phone                                |
 | `gfxinfo-*.txt`  | `dumpsys gfxinfo`      | Janky frames % and 50/90/95/99th percentile frame time while scrolling the roster and moving between screens | under 5% janky; 90th percentile under 16 ms (60 Hz)                    |
 | `meminfo.txt`    | `dumpsys meminfo`      | Total PSS memory after visiting every screen                                                                 | stable; watch for growth between runs                                  |
-| `trace.pftrace`  | Perfetto               | A full system trace (CPU per thread, frames, binder, GC) for 20 s                                            | open at ui.perfetto.dev; look for long frames on the UI and JS threads |
-| `run.mp4`        | `screenrecord`         | A video of the whole run, for spotting blank frames and slow skeletons                                       |                                                                        |
+| `trace.pftrace`  | Perfetto               | A full system trace (CPU per thread, frames, binder, GC) for 15 s around the roster scroll                   | open at ui.perfetto.dev; look for long frames on the UI and JS threads |
+| `run.mp4`        | `screenrecord`         | A video of the screen walk and the scroll (up to 180 s), for spotting blank frames and slow skeletons        |                                                                        |
 | `screens/*.png`  | `screencap`            | One screenshot per coach screen, opened by deep link, 5 s after each                                         | compare with iOS and web                                               |
 
 ## 4. JavaScript profile (optional, debug build)

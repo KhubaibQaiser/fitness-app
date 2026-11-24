@@ -19,7 +19,7 @@ The scripts behind the 2026-11-23 performance baseline ([`docs/revamp/reference/
 - **This machine only.** Every database URL and base URL must name `localhost`, `127.0.0.1` or `::1`, including a `?host=` override; anything else stops the script before it connects.
 - **Synthetic data stays in its own database.** `seed-synthetic.mjs` refuses the everyday `gymos` database, and the seed it runs refuses a database that already holds data.
 - **No credentials in files.** Scripts sign in as the seeded coach (`coach@pilot.local`) with `PILOT_COACH_PASSWORD`, the variable the seed hashed. Choose any local value of 12 or more characters and keep it in your shell, not in a file in the repo.
-- Outputs are large (screenshots, profiles, reports) and are never committed. Write them outside the repo.
+- Outputs are large (screenshots, profiles, reports) and stay on your machine: never commit them or attach them anywhere. Write them outside the repo. `lighthouse.mjs` strips the session cookie that Lighthouse copies into each report and deletes its `headers.json` when it ends, fails or is interrupted, but treat its output folder as local-only anyway.
 
 ## From a clean checkout
 
@@ -41,7 +41,7 @@ DATABASE_URL=postgres://gymos:gymos@localhost:5432/gymos_perf_170 node scripts/p
 DATABASE_URL=postgres://gymos:gymos@localhost:5432/gymos_perf_500 node scripts/perf/seed-synthetic.mjs 500
 ```
 
-**2. The API** against the database you are measuring (170 for the baseline tables, 500 for the roster budget):
+**2. The API** against the database you are measuring (170 for the baseline tables, 500 for the roster budget). Steps 2 and 3 start long-running servers: give each its own terminal (or run it in the background), and run the scripts in a terminal where `PILOT_COACH_PASSWORD` is exported.
 
 ```bash
 cd apps/api && DATABASE_URL=postgres://gymos:gymos@localhost:5432/gymos_perf_170 \
@@ -49,7 +49,7 @@ cd apps/api && DATABASE_URL=postgres://gymos:gymos@localhost:5432/gymos_perf_170
   TENANT_MANIFEST_PATH=../../infra/tenants/pilot.json PORT=8080 node --import tsx src/index.ts
 ```
 
-**3. The production web build**, standalone, as deployed. `API_ORIGIN` is needed both at build time (the `/v1` proxy) and at run time (server-side prefetch):
+**3. The production web build**, standalone, as deployed, from the repo root. `API_ORIGIN` is needed both at build time (the `/v1` proxy) and at run time (server-side prefetch):
 
 ```bash
 API_ORIGIN=http://127.0.0.1:8080 pnpm --filter @gymos/web build
@@ -60,7 +60,7 @@ API_ORIGIN=http://127.0.0.1:8080 PORT=3000 HOSTNAME=127.0.0.1 node apps/web/.nex
 
 `next build` rewrites `apps/web/next-env.d.ts`; restore it with `git checkout apps/web/next-env.d.ts` before committing.
 
-**4. Measure** (output folders outside the repo):
+**4. Measure**, from the repo root in another terminal, with output folders outside the repo:
 
 ```bash
 pnpm exec node scripts/perf/lighthouse.mjs http://127.0.0.1:3000 ~/gymos-perf/lh-1

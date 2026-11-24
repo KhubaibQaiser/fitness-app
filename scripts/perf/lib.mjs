@@ -32,10 +32,17 @@ export const assertLocalUrl = (value, what) => {
 /** The synthetic seeder's database: local, named, and never the everyday `gymos` dev database. */
 export const assertSyntheticDatabaseUrl = (value) => {
   assertLocalUrl(value, 'DATABASE_URL');
-  const name = decodeURIComponent(new URL(value).pathname.slice(1));
-  if (name === '' || name === 'gymos') {
+  const url = new URL(value);
+  // ?dbname= (libpq) and ?database= can name the database instead of the path, so check all three.
+  const names = [
+    decodeURIComponent(url.pathname.slice(1)),
+    ...url.searchParams.getAll('dbname'),
+    ...url.searchParams.getAll('database'),
+  ];
+  const bad = names.includes('gymos') ? 'gymos' : names.every((n) => n === '') ? '(none)' : null;
+  if (bad) {
     throw new Error(
-      `synthetic data needs its own database (for example gymos_perf_170), not "${name || '(none)'}"`,
+      `synthetic data needs its own database (for example gymos_perf_170), not "${bad}"`,
     );
   }
   return value;
@@ -112,6 +119,22 @@ export const median = (xs) => {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 };
 
+/**
+ * Lighthouse copies --extra-headers (the session cookie) into every report. Returns the report text
+ * with that copy removed and any cookie value redacted; throws if a Cookie header survives.
+ */
+export const redactLighthouseReport = (lhr, cookieHeader) => {
+  if (lhr.configSettings) delete lhr.configSettings.extraHeaders;
+  let text = JSON.stringify(lhr);
+  const values = cookieHeader
+    .split(';')
+    .map((pair) => pair.slice(pair.indexOf('=') + 1).trim())
+    .filter(Boolean);
+  for (const v of values) text = text.replaceAll(v, '[redacted]');
+  if (/"Cookie"\s*:/.test(text)) throw new Error('Lighthouse report still holds a Cookie header');
+  return text;
+};
+
 /** Every perf script writes results.json in this shape; summarize.mjs reads repeated runs of it. */
 export const writeResults = (dir, script, scenarios) =>
   writeFileSync(
@@ -130,8 +153,11 @@ export const summaryTable = (runs) => {
   const scripts = new Set(runs.map((r) => r.script));
   if (scripts.size !== 1)
     throw new Error(`mixed scripts in one summary: ${[...scripts].join(', ')}`);
-  const names = Object.keys(runs[0].scenarios);
-  const metrics = [...new Set(names.flatMap((n) => Object.keys(runs[0].scenarios[n])))];
+  // Union across runs, in first-seen order, so nothing missing from run 1 is dropped.
+  const names = [...new Set(runs.flatMap((r) => Object.keys(r.scenarios)))];
+  const metrics = [
+    ...new Set(runs.flatMap((r) => Object.values(r.scenarios).flatMap((m) => Object.keys(m)))),
+  ];
   const rows = names.map((name) => {
     const cells = metrics.map((m) => {
       const xs = runs.map((r) => r.scenarios[name]?.[m]).filter((x) => typeof x === 'number');

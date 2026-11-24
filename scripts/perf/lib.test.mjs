@@ -5,6 +5,7 @@ import {
   assertSyntheticDatabaseUrl,
   coachCredentials,
   median,
+  redactLighthouseReport,
   summaryTable,
 } from './lib.mjs';
 
@@ -74,6 +75,35 @@ test('synthetic data never goes into the dev database or a remote one', () => {
   );
 });
 
+test('a ?dbname= or ?database= override cannot point synthetic data at gymos', () => {
+  const base = 'postgres://gymos:gymos@localhost:5432/gymos_perf_170';
+  assert.throws(() => assertSyntheticDatabaseUrl(`${base}?dbname=gymos`), /not "gymos"/);
+  assert.throws(() => assertSyntheticDatabaseUrl(`${base}?database=gymos`), /not "gymos"/);
+  const named = 'postgres://gymos:gymos@localhost:5432/?dbname=gymos_perf_500';
+  assert.equal(assertSyntheticDatabaseUrl(named), named);
+});
+
+test('Lighthouse reports lose the session cookie Lighthouse copies into them', () => {
+  const cookie = 'gymos_at=eyJhbGciOi.payload.sig; gymos_rt=0f9e8d7c6b5a';
+  const lhr = {
+    configSettings: { formFactor: 'mobile', extraHeaders: { Cookie: cookie } },
+    audits: { note: { details: { url: 'http://127.0.0.1/?t=0f9e8d7c6b5a' } } },
+  };
+  const text = redactLighthouseReport(lhr, cookie);
+  assert.doesNotMatch(text, /"Cookie"/);
+  assert.doesNotMatch(text, /eyJhbGciOi\.payload\.sig|0f9e8d7c6b5a/);
+  assert.equal(JSON.parse(text).configSettings.formFactor, 'mobile');
+  assert.match(text, /\[redacted\]/);
+  // An anonymous run has no cookie to redact and still parses.
+  assert.deepEqual(JSON.parse(redactLighthouseReport({ configSettings: {} }, '')), {
+    configSettings: {},
+  });
+  assert.throws(
+    () => redactLighthouseReport({ configSettings: {}, other: { Cookie: 'x' } }, ''),
+    /still holds a Cookie header/,
+  );
+});
+
 test('credentials come only from the seed variable', () => {
   assert.throws(() => coachCredentials({}), /PILOT_COACH_PASSWORD/);
   assert.deepEqual(coachCredentials({ PILOT_COACH_PASSWORD: 'x'.repeat(12) }), {
@@ -102,5 +132,22 @@ test('summary table shows median (min–max) and flags runs missing a metric', (
   assert.throws(
     () => summaryTable([run(1, 1), { script: 'api-bench', scenarios: {} }]),
     /mixed scripts/,
+  );
+});
+
+test('summary keeps a scenario or metric that run 1 lacks', () => {
+  const first = { script: 'vitals-flow', scenarios: { roster: { lcp: 300 } } };
+  const second = {
+    script: 'vitals-flow',
+    scenarios: { roster: { lcp: 340, tbt: 600 }, hub: { lcp: 900 } },
+  };
+  assert.equal(
+    summaryTable([first, second]),
+    [
+      '| Scenario | lcp | tbt |',
+      '| --- | --- | --- |',
+      '| roster | 320 (300–340) | 600 (600–600) (n=1) |',
+      '| hub | 900 (900–900) (n=1) | — |',
+    ].join('\n'),
   );
 });
