@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'solito/navigation';
-import { type Verdict } from '@gymos/contracts';
 import {
   AlertTriangle,
   Badge,
@@ -28,7 +27,7 @@ import { MacroDonut, ProgressRing } from '../charts';
 import { AppScreen } from '../shell/app-screen';
 import { adherenceBarTone, adherencePctToRating, adherenceRatingToPct } from './adherence';
 import { CheckInDetailSkeleton } from './check-in-detail-skeleton';
-import { parseStoredVerdict } from './stored-verdict';
+import { shownVerdict } from './stored-verdict';
 import { VERDICT_COPY } from './verdict-copy';
 
 const asAdherence = (n: number | null): 1 | 2 | 3 | 4 | 5 | null =>
@@ -65,23 +64,26 @@ export const CheckInDetailScreen = ({
   const [adherencePct, setAdherencePct] = useState('');
   const [notes, setNotes] = useState('');
   const [weightError, setWeightError] = useState<string | null>(null);
-  const [rerunVerdict, setRerunVerdict] = useState<Verdict | null>(null);
+  // The re-run's verdict as the API returned it; checked with the stored one below.
+  const [rerunVerdict, setRerunVerdict] = useState<unknown>(undefined);
   const [hydrated, setHydrated] = useState(false);
   const pctNum = Math.max(0, Math.min(100, Number(adherencePct) || 0));
   const barTone = adherenceBarTone(pctNum);
-  const stored = useMemo(
-    () => (detail.data === undefined ? undefined : parseStoredVerdict(detail.data.engineOutput)),
-    [detail.data],
+  const shown = useMemo(
+    () =>
+      detail.data === undefined ? undefined : shownVerdict(detail.data.engineOutput, rerunVerdict),
+    [detail.data, rerunVerdict],
   );
 
   useEffect(() => {
-    if (stored?.ok !== false) return;
-    console.error('[checkIn.detail] stored verdict does not match the Verdict contract', {
+    if (shown?.ok !== false) return;
+    console.error('[checkIn.detail] verdict does not match the Verdict contract', {
       operation: 'checkIn.detail.verdict',
       checkInId,
-      issues: stored.issues,
+      source: rerunVerdict === undefined ? 'stored' : 'rerun',
+      issues: shown.issues,
     });
-  }, [checkInId, stored]);
+  }, [checkInId, rerunVerdict, shown]);
 
   useEffect(() => {
     if (!detail.data || hydrated) return;
@@ -127,17 +129,24 @@ export const CheckInDetailScreen = ({
   if (detail.isPending) {
     return <CheckInDetailSkeleton clientId={clientId} />;
   }
-  // A stored verdict that breaks the contract is bad data: show the error state, not a guess.
-  if (detail.isError || stored?.ok !== true) {
+  // A verdict that breaks the contract is bad data: show the error state, not a guess.
+  if (detail.isError || shown?.ok !== true) {
     return (
       <AppScreen>
-        <ErrorState message="Could not load this check-in." retry={() => void detail.refetch()} />
+        <ErrorState
+          message="Could not load this check-in."
+          retry={() => {
+            // Drop a bad re-run result so the retry shows the freshly fetched stored verdict.
+            setRerunVerdict(undefined);
+            void detail.refetch();
+          }}
+        />
       </AppScreen>
     );
   }
 
   const checkIn = detail.data;
-  const verdict = rerunVerdict ?? stored.verdict;
+  const verdict = shown.verdict;
   const editable = checkIn.status === 'COMPLETED';
   const copy = verdict !== null ? VERDICT_COPY[verdict.type] : null;
   const narrative = verdict?.narrative;

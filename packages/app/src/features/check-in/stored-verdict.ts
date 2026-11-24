@@ -22,7 +22,9 @@ type OptionalKey = {
 
 // Typed against the contract, so adding or removing a `Verdict` field fails the typecheck here.
 const REQUIRED: Record<Exclude<keyof Verdict, OptionalKey>, Check> = {
-  type: (value) => typeof value === 'string' && Object.hasOwn(VERDICT_COPY, value),
+  // Not Object.hasOwn, which older Hermes builds lack.
+  type: (value) =>
+    typeof value === 'string' && Object.prototype.hasOwnProperty.call(VERDICT_COPY, value),
   confidence: isNumber,
   reasons: isStringArray,
 };
@@ -65,4 +67,15 @@ export const parseStoredVerdict = (value: unknown): StoredVerdict => {
   ];
   // Every field was checked above, so the cast is safe.
   return issues.length === 0 ? { ok: true, verdict: value as Verdict } : { ok: false, issues };
+};
+
+/**
+ * The verdict the detail screen shows: the re-run's once there is one (`undefined` until then),
+ * else the stored one. Both come from the API, so both are checked.
+ */
+export const shownVerdict = (stored: unknown, rerun: unknown): StoredVerdict => {
+  if (rerun === undefined) return parseStoredVerdict(stored);
+  // A re-run always returns a verdict, so null is malformed here.
+  if (rerun === null) return { ok: false, issues: ['verdict: missing'] };
+  return parseStoredVerdict(rerun);
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStoredVerdict } from './stored-verdict';
+import { parseStoredVerdict, shownVerdict } from './stored-verdict';
 
 /** What `evaluateProgress` stores for an on-track week (no narrative: older rows and the seed). */
 const hold = {
@@ -82,5 +82,24 @@ describe('parseStoredVerdict', () => {
     const text = result.issues.join('\n');
     expect(text).not.toContain('MAYBE');
     expect(text).not.toContain('84.2');
+  });
+});
+
+describe('shownVerdict', () => {
+  it('shows the stored verdict until a re-run returns', () => {
+    expect(shownVerdict(hold, undefined)).toEqual({ ok: true, verdict: hold });
+    expect(shownVerdict(null, undefined)).toEqual({ ok: true, verdict: null });
+  });
+
+  it("shows a valid re-run's verdict instead of the stored one", () => {
+    expect(shownVerdict(hold, adjust)).toEqual({ ok: true, verdict: adjust });
+  });
+
+  it('rejects a malformed re-run verdict even when the stored one is valid', () => {
+    expect(shownVerdict(hold, without('reasons', adjust))).toMatchObject({
+      ok: false,
+      issues: ['reasons: missing or invalid'],
+    });
+    expect(shownVerdict(hold, null)).toEqual({ ok: false, issues: ['verdict: missing'] });
   });
 });
