@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Notification } from '@gymos/contracts';
-import { alertMillis, alertRows, formatAlertTime, sortAlerts } from './alert-time';
+import {
+  ALERT_CLOCK_OPTIONS,
+  ALERT_DAY_OPTIONS,
+  alertMillis,
+  alertRows,
+  formatAlertTime,
+  joinAlertTime,
+  sortAlerts,
+} from './alert-time';
 
 const alert = (
   id: string,
@@ -77,8 +85,27 @@ describe('formatAlertTime', () => {
   it('formats as day, short month and 12-hour time', () => {
     // The device zone decides the hour (CI runs in UTC), so check the shape: "6 Aug, 10:48 pm".
     expect(formatAlertTime('2026-08-06T17:48:00.000Z')).toMatch(
-      /^\d{1,2} Aug, \d{1,2}:\d{2}\s[ap]m$/,
+      /^\d{1,2} Aug, \d{1,2}:\d{2} [ap]m$/,
     );
+  });
+});
+
+describe('joinAlertTime', () => {
+  it('gives the exact string for a fixed instant (V8, Karachi time)', () => {
+    const at = Date.UTC(2026, 7, 6, 17, 48);
+    const inKarachi = (options: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat('en-PK', { ...options, timeZone: 'Asia/Karachi' }).format(at);
+    expect(joinAlertTime(inKarachi(ALERT_DAY_OPTIONS), inKarachi(ALERT_CLOCK_OPTIONS))).toBe(
+      '6 Aug, 10:48 pm',
+    );
+  });
+
+  it('gives the same string from the halves Hermes on iOS produces ("10:48 PM")', () => {
+    expect(joinAlertTime('6 Aug', '10:48 PM')).toBe('6 Aug, 10:48 pm');
+  });
+
+  it('turns a narrow no-break space before am/pm (newer ICU) into a plain space', () => {
+    expect(joinAlertTime('6 Aug', '10:48 pm')).toBe('6 Aug, 10:48 pm');
   });
 });
 
@@ -95,7 +122,7 @@ describe('alertRows', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.rows.map((r) => r.alert.id)).toEqual(['high', 'normal']);
-    for (const row of result.rows) expect(row.time).toMatch(/^\d{1,2} Aug, \d{1,2}:\d{2}\s[ap]m$/);
+    for (const row of result.rows) expect(row.time).toMatch(/^\d{1,2} Aug, \d{1,2}:\d{2} [ap]m$/);
   });
 
   it('reports a non-ISO createdAt as an error and logs it, instead of throwing during render', () => {
@@ -104,9 +131,9 @@ describe('alertRows', () => {
     expect(
       alertRows([alert('fine', 'NORMAL', '2026-08-06T10:00:00.000Z'), alert('bad', 'HIGH', bad)]),
     ).toEqual({ ok: false });
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[notifications.list]'), {
-      operation: 'notifications.list',
-      value: bad,
-    });
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('[notifications.list]'),
+      expect.objectContaining({ operation: 'notifications.list', value: bad }),
+    );
   });
 });
