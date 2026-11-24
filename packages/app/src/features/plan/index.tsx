@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from 'solito/link';
 import { ApiError, type PlanSummary } from '@gymos/contracts';
 import {
   ArrowLeft,
@@ -16,6 +15,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useClientDetail, useGeneratePlan, usePlan } from '../../api';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanEditor } from './plan-editor';

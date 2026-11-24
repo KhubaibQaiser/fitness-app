@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from 'solito/link';
 import {
   Adapt,
   Check,
@@ -22,6 +21,7 @@ import {
   X,
   YStack,
 } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { ClientHubMenuRow } from './client-hub-menu-row';
 
 type Props = {
@@ -45,7 +45,8 @@ export const ClientHubMoreMenu = ({ clientId, signed, pdfPending, onDownloadPdf 
 
   return (
     <Popover open={open} onOpenChange={setOpen} placement="bottom-end" allowFlip>
-      <Popover.Trigger>
+      {/* asChild: the IconButton is the only press owner (a wrapping trigger lost the tap on SDK 58). */}
+      <Popover.Trigger asChild>
         <IconButton
           aria-label="More actions"
           aria-expanded={open}

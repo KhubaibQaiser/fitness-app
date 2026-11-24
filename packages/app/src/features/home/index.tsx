@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Link } from 'solito/link';
 import {
   Avatar,
   Badge,
@@ -20,6 +19,7 @@ import {
 } from '@gymos/ui';
 import { useClients, useDueCheckIns, useMe, useNotifications } from '../../api';
 import { needsAttention } from '../../lib/attention';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { ScreenBody } from '../shell/screen-body';
 import { formatCoachDate, formatCoachTitle } from './coach-greeting';

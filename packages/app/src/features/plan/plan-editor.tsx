@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Link } from 'solito/link';
 import { ApiError, type PlanItem, type PlanSummary } from '@gymos/contracts';
 import { MEAL_TEMPLATES } from '@gymos/core/nutrition';
 import { downloadBlob } from '@gymos/platform';
@@ -22,6 +21,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useDownloadDietPlanPdf, usePatchPlan, usePublishPlan, useRegenerateMeal } from '../../api';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { OverridePrompt } from './override-prompt';
 import { PlanFoodPicker } from './plan-food-picker';

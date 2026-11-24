@@ -1,6 +1,5 @@
 'use client';
 
-import { Link } from 'solito/link';
 import type { Client, DietaryProfile, Goal, PlanSummary } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import {
@@ -16,6 +15,7 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
+import { Link } from '../../lib/link';
 
 const PLAN_TONE = {
   PUBLISHED: 'success',

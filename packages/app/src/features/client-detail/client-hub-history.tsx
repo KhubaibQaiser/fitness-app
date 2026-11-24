@@ -1,8 +1,8 @@
 'use client';
 
-import { Link } from 'solito/link';
 import type { CheckIn } from '@gymos/contracts';
 import { Badge, Card, ErrorState, Muted, SkeletonRegion, Text, XStack, YStack } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { adherenceRatingToPct } from '../check-in/adherence';
 import { ClientHubHistorySkeleton } from './client-hub-skeleton';
 
