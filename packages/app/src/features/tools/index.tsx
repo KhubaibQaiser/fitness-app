@@ -1,7 +1,7 @@
 'use client';
 
-import { Link } from 'solito/link';
 import { Body, Card, ChevronRight, Muted, PageHeader, XStack, YStack } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { ToolsCalculators } from './tools-calculators';
 

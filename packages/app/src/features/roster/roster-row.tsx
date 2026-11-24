@@ -1,9 +1,9 @@
 'use client';
 
-import { Link } from 'solito/link';
 import type { ClientListItem } from '@gymos/contracts';
 import { Avatar, Badge, Card, ChevronRight, GoalTag, Muted, Text, XStack, YStack } from '@gymos/ui';
 import { badgeReasons, needsAttention } from '../../lib/attention';
+import { Link } from '../../lib/link';
 
 const GOAL_LABEL: Record<string, string> = {
   LOSE: 'Lose',

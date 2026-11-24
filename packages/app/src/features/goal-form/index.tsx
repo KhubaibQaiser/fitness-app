@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
 import { ApiError } from '@gymos/contracts';
 import { formatWeight } from '@gymos/core/units';
@@ -21,6 +20,7 @@ import { useClientDetail, useMe, usePublicConfig, useSaveActiveGoal } from '../.
 import { ACTIVITY_LEVELS, type ActivityLevelValue } from '../../lib/activity-levels';
 import { weeklyDeltaKgFromPublicConfig } from '../../lib/goal-pace';
 import { ageYearsFromDob } from '../../lib/goal-preview';
+import { Link } from '../../lib/link';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { resolveWeightKg } from '../client-onboarding/validate-step';

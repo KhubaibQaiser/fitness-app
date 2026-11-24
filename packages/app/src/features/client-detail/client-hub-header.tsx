@@ -1,7 +1,7 @@
 'use client';
 
-import { Link } from 'solito/link';
 import { Avatar, IconButton, MessageCircle, Muted, Tabs, Text, XStack, YStack } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { formatInternational, whatsappDigits } from '../../lib/phone';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
 import { CLIENT_HUB_TABS } from './client-hub-tabs';

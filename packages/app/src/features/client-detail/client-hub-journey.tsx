@@ -1,9 +1,9 @@
 'use client';
 
-import { Link } from 'solito/link';
 import type { CheckIn, Client, Goal, Vitals } from '@gymos/contracts';
 import { PrimaryButton } from '@gymos/ui';
 import { useMe, usePublicConfig } from '../../api';
+import { Link } from '../../lib/link';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
 import { buildLiveJourney } from '../client-journey/client-journey';
 import { ClientJourneyMap } from '../client-journey/client-journey-map';

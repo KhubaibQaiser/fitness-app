@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from 'solito/link';
 import { ArrowLeft, Badge, IconButton, PageHeader, Tabs, YStack } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { BreakfastPanel } from './breakfast-panel';
 import { DinnerPanel } from './dinner-panel';
