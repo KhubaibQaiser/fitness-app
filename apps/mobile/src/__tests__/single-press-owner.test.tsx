@@ -40,6 +40,13 @@ beforeEach(() => {
   mockPush.mockClear();
 });
 
+// Restores the Linking, Alert and console spies even when an assertion fails mid-test. Linking.openURL
+// is already a jest mock in the preset, so spyOn returns it and its calls must be cleared too.
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.clearAllMocks();
+});
+
 describe('one press owner per control', () => {
   it('a roster row card owns its press and opens the client once', async () => {
     const user = userEvent.setup();
@@ -105,35 +112,42 @@ describe('one press owner per control', () => {
     await user.press(button);
     expect(openURL).toHaveBeenCalledWith('https://wa.me/923001234567');
     expect(mockPush).not.toHaveBeenCalled();
-    openURL.mockRestore();
   });
 
-  it('tells the coach when no app can open an external link, and logs it without the number', async () => {
-    const openURL = jest
-      .spyOn(Linking, 'openURL')
-      .mockRejectedValue(new Error('Unable to open URL: https://wa.me/923001234567'));
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const user = userEvent.setup();
-    renderWithTheme(
-      <Link href="https://wa.me/923001234567" target="_blank">
-        <IconButton aria-label="Open WhatsApp" />
-      </Link>,
-    );
+  const encodedError = Object.assign(
+    new Error('Unable to open URL: https%3A%2F%2Fwa.me%2F%2B92%20300%201234567'),
+    { code: 'E_UNABLE_TO_OPEN' },
+  );
 
-    await user.press(screen.getByLabelText('Open WhatsApp'));
-    await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
-    expect(alert).toHaveBeenCalledWith("Couldn't open the link", expect.any(String));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('link.openExternal'), {
-      operation: 'link.openExternal',
-      target: 'https://wa.me',
-      cause: 'Unable to open URL: https://wa.me',
-    });
-    expect(JSON.stringify(warn.mock.calls)).not.toContain('923001234567');
-    openURL.mockRestore();
-    alert.mockRestore();
-    warn.mockRestore();
-  });
+  it.each([
+    ['the URL', new Error('Unable to open URL: https://wa.me/923001234567'), {}],
+    ['an encoded URL and a code', encodedError, { code: 'E_UNABLE_TO_OPEN' }],
+  ])(
+    'tells the coach when no app can open an external link; an error message with %s stays out of the log',
+    async (_name, error, codeField) => {
+      jest.spyOn(Linking, 'openURL').mockRejectedValue(error);
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const user = userEvent.setup();
+      renderWithTheme(
+        <Link href="https://wa.me/923001234567" target="_blank">
+          <IconButton aria-label="Open WhatsApp" />
+        </Link>,
+      );
+
+      await user.press(screen.getByLabelText('Open WhatsApp'));
+      await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
+      expect(alert).toHaveBeenCalledWith("Couldn't open the link", expect.any(String));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('link.openExternal'), {
+        operation: 'link.openExternal',
+        target: 'https://wa.me',
+        cause: 'Error',
+        ...codeField,
+      });
+      const logged = JSON.stringify(warn.mock.calls);
+      for (const digits of ['923001234567', '1234567', '300']) expect(logged).not.toContain(digits);
+    },
+  );
 
   it("runs a plain card's own onPress first, then navigates once", async () => {
     const calls: string[] = [];
@@ -177,7 +191,6 @@ describe('one press owner per control', () => {
       expect(event.defaultPrevented).toBe(true);
       expect(mockPush).not.toHaveBeenCalled();
       expect(openURL).not.toHaveBeenCalled();
-      openURL.mockRestore();
     },
   );
 

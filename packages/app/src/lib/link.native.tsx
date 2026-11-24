@@ -21,16 +21,15 @@ const openExternal = async (href: string) => {
   try {
     await Linking.openURL(href);
   } catch (cause) {
-    // Scheme and host only: the path can carry a client's phone number (wa.me/<number>).
+    // Scheme, host and error name/code only: the path, and OS messages that echo it in any
+    // encoding, can carry a client's phone number (wa.me/<number>).
     const target = ABSOLUTE_URL.exec(href)?.[0] ?? 'unknown';
-    const reason = (cause instanceof Error ? cause.message : String(cause)).replaceAll(
-      href,
-      target,
-    );
+    const code = typeof cause === 'object' && cause !== null && 'code' in cause ? cause.code : null;
     console.warn('[link.openExternal] could not open the link', {
       operation: 'link.openExternal',
       target,
-      cause: reason,
+      cause: cause instanceof Error ? cause.name : typeof cause,
+      ...(typeof code === 'string' || typeof code === 'number' ? { code } : {}),
     });
     Alert.alert("Couldn't open the link", 'No app on this device can open it.');
   }
