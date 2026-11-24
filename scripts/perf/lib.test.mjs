@@ -102,6 +102,12 @@ test('Lighthouse reports lose the session cookie Lighthouse copies into them', (
     () => redactLighthouseReport({ configSettings: {}, other: { Cookie: 'x' } }, ''),
     /still holds a Cookie header/,
   );
+  // A short cookie value is not replaced across the report; the header copy is still stripped.
+  const short = redactLighthouseReport(
+    { configSettings: { extraHeaders: { Cookie: 'theme=1' } }, audits: { score: 1, n: 10 } },
+    'theme=1',
+  );
+  assert.deepEqual(JSON.parse(short), { configSettings: {}, audits: { score: 1, n: 10 } });
 });
 
 test('credentials come only from the seed variable', () => {

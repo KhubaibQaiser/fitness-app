@@ -129,7 +129,8 @@ export const redactLighthouseReport = (lhr, cookieHeader) => {
   const values = cookieHeader
     .split(';')
     .map((pair) => pair.slice(pair.indexOf('=') + 1).trim())
-    .filter(Boolean);
+    // Only token-length values: a short one (say "1") would also hit unrelated text in the report.
+    .filter((v) => v.length >= 8);
   for (const v of values) text = text.replaceAll(v, '[redacted]');
   if (/"Cookie"\s*:/.test(text)) throw new Error('Lighthouse report still holds a Cookie header');
   return text;

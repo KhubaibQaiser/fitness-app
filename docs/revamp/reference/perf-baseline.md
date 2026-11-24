@@ -139,7 +139,7 @@ The scripts are in [`scripts/perf/`](../../../scripts/perf/README.md), whose REA
 - **Signed-in loads:** `vitals-flow.mjs`, with a CPU profile and a filmstrip per route.
 - **Hotspots:** `attribute-cpu.mjs` on those profiles, against a build with browser source maps.
 - **API:** `api-bench.mjs`.
-- **Spread:** each scenario 5 times on `main` on a quiet machine, then `summarize.mjs` for the median and min–max. Later budget checks compare medians from the same scripts, data and settings.
+- **Spread:** each scenario 5 times on `main`, then `summarize.mjs` for the median and min–max. Later budget checks compare medians from the same scripts, data and settings.
 
 ### Five runs on `main` (2026-11-24)
 
