@@ -147,8 +147,9 @@ Each scenario ran 5 times in a row; cells are **median (min–max)**. Later budg
 
 - **Code:** `main` at de46b0c, merged into the Q0 branch (scripts only, no app change). Production web build, standalone server; API without watch mode (`AI_MODE=fallback`); Postgres 17 in Docker.
 - **Data:** `seed-synthetic.mjs 170` (171 clients with the seed's demo client), and `500` for the last table.
-- **Machine:** the same MacBook, with other builders' work paused. One-minute load average from `uptime`, logged after every run: 3.1–4.0 during Lighthouse (02:24–02:34), 2.5–6.4 during the signed-in flow (02:34–02:41; 6.4 once, after run 4), 4.5–4.7 during the API runs, 3.6–4.4 for the 500-client roster (02:42–02:43).
-- **Spread to expect:** on Lighthouse mobile, every route except the roster had one run (intake two) about 1.2–1.3 s slower on LCP, a different run each time; the roster's LCP was 7.1 s in four runs and 3.4 s in one. In the signed-in flow, one hub run had a single 823 ms task. Compare medians, not single runs.
+- **Machine:** the same MacBook (Apple M3 Pro, 11 cores: 5 performance and 6 efficiency, from `sysctl`), with other builders' heavy work paused but their idle dev servers still running. It was not a fully quiet machine. One-minute load average from `uptime`, logged after every run: 3.1–4.0 during Lighthouse (02:24–02:34), 2.5–6.4 during the signed-in flow (02:34–02:41; 6.4 once, after run 4), 4.5–4.7 during the API runs, 3.6–4.4 for the 500-client roster (02:42–02:43).
+- **Spread to expect:** on Lighthouse mobile, every route except the roster had one run (intake two) about 1.2–1.3 s slower on LCP, a different run each time; the roster's LCP was 7.1 s in four runs and 3.4 s in one. In the signed-in flow, one hub run had a single 823 ms task. The signed-in flow throttles the real CPU (4× through DevTools), so it is the most sensitive to other load; Lighthouse's throttling is simulated. A re-baseline on an idle machine should tighten these ranges.
+- **How to use these numbers:** budget checks compare medians from the same scripts, data and settings. The min–max range shows run-to-run spread on this machine; it is not a floor, and one run inside it is not a pass.
 
 **Cold loads (Lighthouse 12.8.2; mobile 4× CPU, slow 4G).** CLS was 0 on every run.
 
