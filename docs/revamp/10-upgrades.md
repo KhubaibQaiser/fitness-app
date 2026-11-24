@@ -42,7 +42,7 @@ Serial. One PR each, in order, each rebased on the last. Measured breakage comes
 - **Test migration:** RNTL 14's `render` is async; await it in every mobile test (precedent: #79).
 - **Native verification (required):**
   - An iOS debug build that runs on the simulator.
-  - An Android release build and launch on the owner's other MacBook (`reference/android-kit/README.md` §2).
+  - An Android release build and launch on the owner's other MacBook ([`scripts/perf/android/README.md`](../../scripts/perf/android/README.md) §2).
   - Smoke: sign in, open Clients, a client hub, a plan, a check-in.
   - Gesture-handler 3 and WebView 14 are major jumps: exercise the pace slider, sheets and the signature pad.
 - **Done when:** the global conditions hold; native smoke passes on iOS and Android with screenshots in the PR; no peer warnings for packages in scope.

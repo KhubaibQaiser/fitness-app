@@ -30,7 +30,7 @@ Nutrition safety rules do not change: numbers come only from Layers 1–2, publi
 | Motion system and per-widget catalogue                     | [`reference/motion.md`](reference/motion.md), [gallery](https://claude.ai/artifact/LXhg7Dni3NLU8X5HgzqgvS) (owner-only)                                                                          |
 | Performance baseline and ranked fixes                      | [`reference/perf-baseline.md`](reference/perf-baseline.md), [report](https://claude.ai/artifact/XdpFBdPKfKyxdZjQMQchkR) (owner-only)                                                             |
 | Upgrade spikes                                             | [`reference/upgrades.md`](reference/upgrades.md)                                                                                                                                                 |
-| Android measurement kit                                    | [`reference/android-kit/`](reference/android-kit/)                                                                                                                                               |
+| Android measurement kit                                    | [`scripts/perf/android/`](../../scripts/perf/android/)                                                                                                                                           |
 
 `reference/` files are snapshots from 2026-11-23. The artifact links are private to the owner; everything a builder needs is in `reference/`. Where they recommend Gym Floor Print, the rulings override them with Floodlight.
 
