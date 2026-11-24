@@ -1,6 +1,6 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
-import { Linking } from 'react-native';
-import { IconButton, tamaguiConfig, TamaguiProvider } from '@gymos/ui';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { Alert, Linking } from 'react-native';
+import { Card, IconButton, tamaguiConfig, TamaguiProvider, Text } from '@gymos/ui';
 import { ClientHubMoreMenu } from '../../../../packages/app/src/features/client-detail/client-hub-more-menu';
 import { RosterRow } from '../../../../packages/app/src/features/roster/roster-row';
 import { Link } from '../../../../packages/app/src/lib/link';
@@ -106,5 +106,95 @@ describe('one press owner per control', () => {
     expect(openURL).toHaveBeenCalledWith('https://wa.me/923001234567');
     expect(mockPush).not.toHaveBeenCalled();
     openURL.mockRestore();
+  });
+
+  it('tells the coach when no app can open an external link, and logs it without the number', async () => {
+    const openURL = jest
+      .spyOn(Linking, 'openURL')
+      .mockRejectedValue(new Error('Unable to open URL: https://wa.me/923001234567'));
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    renderWithTheme(
+      <Link href="https://wa.me/923001234567" target="_blank">
+        <IconButton aria-label="Open WhatsApp" />
+      </Link>,
+    );
+
+    await user.press(screen.getByLabelText('Open WhatsApp'));
+    await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
+    expect(alert).toHaveBeenCalledWith("Couldn't open the link", expect.any(String));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('link.openExternal'), {
+      operation: 'link.openExternal',
+      target: 'https://wa.me',
+      cause: 'Unable to open URL: https://wa.me',
+    });
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('923001234567');
+    openURL.mockRestore();
+    alert.mockRestore();
+    warn.mockRestore();
+  });
+
+  it("runs a plain card's own onPress first, then navigates once", async () => {
+    const calls: string[] = [];
+    mockPush.mockImplementation(() => calls.push('navigate'));
+    const user = userEvent.setup();
+    renderWithTheme(
+      <Link href="/tools/targets">
+        <Card interactive onPress={() => calls.push('card')}>
+          <Text>How targets are calculated</Text>
+        </Card>
+      </Link>,
+    );
+
+    const label = screen.getByText('How targets are calculated');
+    expect(pressOwners(label)).toBe(1);
+    await user.press(label);
+    expect(calls).toEqual(['card', 'navigate']);
+    mockPush.mockReset();
+  });
+
+  it.each(['/tools/targets', 'https://wa.me/923001234567'])(
+    'does not open %s when the child prevents the default',
+    (href) => {
+      const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+      renderWithTheme(
+        <Link href={href}>
+          <Card interactive onPress={(e) => e.preventDefault()}>
+            <Text>How targets are calculated</Text>
+          </Card>
+        </Link>,
+      );
+
+      // The shape of RN's press event: preventDefault() sets defaultPrevented.
+      const event = {
+        defaultPrevented: false,
+        preventDefault() {
+          this.defaultPrevented = true;
+        },
+      };
+      fireEvent.press(screen.getByText('How targets are calculated'), event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(openURL).not.toHaveBeenCalled();
+      openURL.mockRestore();
+    },
+  );
+
+  it.each([
+    ['disabled', { disabled: true }],
+    ['aria-disabled', { 'aria-disabled': true }],
+  ])('does not navigate from a %s child', (_name, disabledProps) => {
+    const onPress = jest.fn();
+    renderWithTheme(
+      <Link href="/clients/client-1/plan">
+        <Card interactive onPress={onPress} {...disabledProps}>
+          <Text>Open plan</Text>
+        </Card>
+      </Link>,
+    );
+
+    fireEvent.press(screen.getByText('Open plan'));
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
