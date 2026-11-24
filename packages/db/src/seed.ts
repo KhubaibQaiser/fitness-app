@@ -1,9 +1,11 @@
 import { DateTime } from 'luxon';
 import {
   computeTargets,
+  evaluateProgress,
   resolveWeeklyDeltaKg,
   type GoalPreset,
   type GoalRate,
+  type WeighIn,
 } from '@gymos/core/nutrition';
 import { type Db } from './client';
 import * as s from './schema';
@@ -196,6 +198,7 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
 
   // Twice-weekly weigh-ins trending ≈ −0.45 kg/week with deterministic jitter.
   const weighDays = Array.from({ length: 16 }, (_, i) => i * 3.5);
+  const weighIns: WeighIn[] = [];
   for (const [i, dayOffset] of weighDays.entries()) {
     const jitter = ((i * 7919) % 5) * 0.05 - 0.1; // deterministic, ±0.1..0.15 kg
     const weight = Number((startWeight - (dayOffset / 7) * 0.45 + jitter).toFixed(2));
@@ -210,20 +213,44 @@ export const seed = async (db: Db, options: SeedOptions = {}): Promise<SeedResul
       ...(i % 4 === 0 ? { waistCm: Number((98 - dayOffset * 0.05).toFixed(1)) } : {}),
       ...(i % 8 === 0 ? { restingHr: 66, bpSystolic: 122, bpDiastolic: 80 } : {}),
     });
+    weighIns.push({ t: at.toMillis(), weightKg: weight });
   }
 
-  // Weekly check-ins: 7 completed, 1 due today.
+  // Weekly check-ins: 7 completed, 1 due today. Each stores the adaptive engine's own verdict
+  // for the history up to that week (the inputs completeCheckIn gives it: weigh-ins, the last
+  // four adherence ratings, the goal's targets), so it is a full `Verdict`. No narrative: that
+  // is Layer 3 (packages/ai), and the contract makes it optional.
+  const adherenceRatings: number[] = [];
   for (let week = 1; week <= 7; week += 1) {
     const scheduled = eightWeeksAgo.plus({ weeks: week });
+    const now = scheduled.toMillis();
+    const adherenceRating = 3 + ((week * 7919) % 3);
+    adherenceRatings.unshift(adherenceRating);
+    const engineOutput = evaluateProgress({
+      sex: 'M',
+      weightKg: weighIns.findLast((w) => w.t <= now)?.weightKg ?? startWeight,
+      goal: {
+        preset: 'LOSE',
+        rate: 'CONSERVATIVE',
+        expectedWeeklyDeltaKg: computation.value.expectedWeeklyDeltaKg,
+      },
+      currentTargets: computation.value.targets,
+      tdeeEstimate: computation.value.tdee,
+      weighIns,
+      // This week's rating and the three before it, newest first.
+      adherenceRatings: adherenceRatings.slice(0, 4),
+      hasMedicalFlags: false,
+      now,
+    });
     await db.insert(s.checkIns).values({
       clientId: demo.id,
       outletId: outlet.id,
       goalId: goal.id,
       scheduledFor: isoDate(scheduled),
       completedAt: iso(scheduled.plus({ hours: 10 })),
-      adherenceRating: 3 + ((week * 7919) % 3),
+      adherenceRating,
       status: 'COMPLETED',
-      engineOutput: { type: week < 3 ? 'INSUFFICIENT_DATA' : 'HOLD', seeded: true },
+      engineOutput,
     });
   }
   const today = isoDate(DateTime.utc());
