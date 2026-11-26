@@ -113,7 +113,7 @@ Images: `icon.png` (512×512, 385 KB) loads on every page; `hero.jpg` is 435 KB.
   - due check-ins: 17.7 ms / 29.3 ms
   - unread count: 14 ms / 15.5 ms
 - **Plan generation:** 12.9 ms p50, 19.8 ms p95 over 30 plans.
-- **Solver failures:** 2 of about 39 generations failed as "solver infeasible" on synthetic clients. That is a product follow-up, not a speed issue.
+- **Solver failures:** 2 of about 39 generations failed as "solver infeasible" on synthetic clients. That is a product follow-up, not a speed issue, tracked in #137.
 - **Roster size:** the response is 40 KB at 170 clients and grows linearly, because it isn't paginated (F7.2).
 
 ## Native

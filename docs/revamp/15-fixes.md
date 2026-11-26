@@ -48,18 +48,18 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
 - **Owned files:** `packages/app/src/features/login/**`.
 - **Mapping:**
 
-  | Failure                                                            | Message                                                                                                                                                                           |
-  | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | 401                                                                | Email or password is incorrect                                                                                                                                                    |
-  | 429                                                                | The current wait message                                                                                                                                                          |
-  | Account locked (FR-C1; read the auth route for the status it uses) | The current lockout message, with when to try again. Read on 2026-11-24: the login route has no account lockout (FR-C1's lock is the signup OTP), so the per-IP 429 row covers it |
-  | Network error or timeout                                           | "Can't reach GymOS. Check your connection." plus **Try again**                                                                                                                    |
-  | 5xx                                                                | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one                                                                 |
-  | Anything else                                                      | Shown as an error with the status, never as wrong credentials                                                                                                                     |
+  | Failure                                                            | Message                                                                                                           |
+  | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+  | 401                                                                | Email or password is incorrect                                                                                    |
+  | 429                                                                | The current wait message                                                                                          |
+  | Account locked (FR-C1; read the auth route for the status it uses) | The current lockout message, with when to try again. Tracked privately                                            |
+  | Network error or timeout                                           | "Can't reach GymOS. Check your connection." plus **Try again**                                                    |
+  | 5xx                                                                | "GymOS is having trouble. Try again in a minute." plus the request reference, if the problem response carries one |
+  | Anything else                                                      | Shown as an error with the status, never as wrong credentials                                                     |
 
   Each failure is logged with the operation, status and cause, and never the email or password.
 
-- **Done when:** one test per row fails on `main` and passes after (the 429 row may already pass, and it also covers the lockout row: say so in the PR); screenshots of the network-error state on web and iOS.
+- **Done when:** one test per row fails on `main` and passes after (the 429 row may already pass: say so in the PR); screenshots of the network-error state on web and iOS.
 
 ## B4: Native shell: top safe area and the active tab
 
@@ -80,7 +80,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
   - iOS simulator screenshots of every coach route under `apps/mobile/app/(coach)/` (19 route files today; first viewport) show nothing under the system UI.
   - The correct tab is active on each primary route.
   - There is no tab bar on intake, vitals, goal, check-in, check-in detail, dietary or the plan editor.
-  - Android screenshots are added when the owner runs the kit; they don't block the merge (tracked in `status.md`).
+  - Android screenshots are added when the owner runs the kit; they don't block the merge (tracked in #139).
 - **Note:** F6 later replaces this shell with native tabs and stacks. Keep the fix small; the pathname façade may be reused there.
 
 ## B5: Native hub header stays in the layout
