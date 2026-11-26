@@ -11,7 +11,7 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const file = new File(Paths.cache, safeName);
     file.create({ overwrite: true });
-    file.write(bytes);
+    await file.write(bytes);
 
     const available = await Sharing.isAvailableAsync();
     if (!available) {

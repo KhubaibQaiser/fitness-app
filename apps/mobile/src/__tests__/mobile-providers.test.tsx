@@ -19,25 +19,24 @@ jest.mock('@gymos/platform', () => ({
 const mockedUseFonts = jest.mocked(useFonts);
 
 describe('MobileProviders', () => {
-  it('keeps Tamagui theme context while fonts load', () => {
+  it('keeps Tamagui theme context while fonts load', async () => {
     mockedUseFonts.mockReturnValue([false, null]);
 
-    expect(() => {
-      render(
-        <MobileProviders>
-          <Text>child</Text>
-        </MobileProviders>,
-      );
-    }).not.toThrow();
+    // RNTL 14's render is async; a render error rejects and fails the test.
+    await render(
+      <MobileProviders>
+        <Text>child</Text>
+      </MobileProviders>,
+    );
 
     expect(screen.getByText('Loading…')).toBeTruthy();
     expect(screen.getByText('child')).toBeTruthy();
   });
 
-  it('renders children after fonts load', () => {
+  it('renders children after fonts load', async () => {
     mockedUseFonts.mockReturnValue([true, null]);
 
-    render(
+    await render(
       <MobileProviders>
         <Text>ready</Text>
       </MobileProviders>,

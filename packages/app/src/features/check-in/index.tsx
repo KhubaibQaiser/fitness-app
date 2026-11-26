@@ -23,6 +23,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useApplyAdjustment, useCompleteCheckIn } from '../../api';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { AppScreen } from '../shell/app-screen';
 import { adherenceBarTone, adherencePctToRating } from './adherence';
 import { VERDICT_COPY } from './verdict-copy';
@@ -51,6 +52,7 @@ const BAR_COLOR = {
 /** Weekly check-in: capture → deterministic verdict → one-tap apply. */
 export const CheckInScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const goBack = useBackOr(`/clients/${clientId}`);
   const complete = useCompleteCheckIn(clientId);
   const apply = useApplyAdjustment(clientId);
   const [weight, setWeight] = useState('');
@@ -182,7 +184,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton flex={1} disabled={complete.isPending} onPress={submit}>

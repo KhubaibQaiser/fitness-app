@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react-native';
-import { ScrollView, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { ClientDetailScreen } from '@gymos/app/features/client-detail';
 import { tamaguiConfig, TamaguiProvider } from '@gymos/ui';
 
@@ -69,7 +69,8 @@ const ancestorsOf = (node: Instance): Instance[] => {
 // or under any absolutely positioned host view.
 const expectHeaderInLayout = (headerNode: Instance, bodyNode: Instance) => {
   const headerChain = ancestorsOf(headerNode);
-  const pageScroll = ancestorsOf(bodyNode).find((node) => node.type === ScrollView);
+  // RNTL 14's tree holds host views only, so ScrollView shows up as its host component.
+  const pageScroll = ancestorsOf(bodyNode).find((node) => node.type === 'RCTScrollView');
 
   expect(pageScroll).toBeDefined();
   // Booleans, not the instances: a failing `toContain` would try to print the whole tree.
@@ -94,18 +95,18 @@ const renderHub = (tab: 'overview' | 'history') =>
   );
 
 describe('client hub header on native (B5)', () => {
-  it('sits in flow above the scroll view instead of floating over the first row', () => {
+  it('sits in flow above the scroll view instead of floating over the first row', async () => {
     mockDetailPending = false;
-    renderHub('history');
+    await renderHub('history');
     expectHeaderInLayout(
       screen.getByText('Adnan (Demo)'),
       screen.getByText('No check-ins logged yet.'),
     );
   });
 
-  it('keeps the loading skeleton header off the skeleton cards too', () => {
+  it('keeps the loading skeleton header off the skeleton cards too', async () => {
     mockDetailPending = true;
-    renderHub('overview');
+    await renderHub('overview');
     expectHeaderInLayout(screen.getByLabelText('More actions'), screen.getByText('Current weight'));
   });
 });

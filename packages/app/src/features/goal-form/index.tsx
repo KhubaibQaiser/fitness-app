@@ -23,6 +23,7 @@ import { ageYearsFromDob } from '../../lib/goal-preview';
 import { Link } from '../../lib/link';
 import { buildPaceControlView } from '../../lib/pace-control';
 import { unitPrefsFrom } from '../../lib/unit-prefs';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { resolveWeightKg } from '../client-onboarding/validate-step';
 import { AppScreen } from '../shell/app-screen';
 import { GoalFields, type GoalFieldsValue } from './goal-fields';
@@ -33,6 +34,7 @@ const activityLevelFrom = (value: number | null): ActivityLevelValue =>
 /** Goal setup/edit — presets in, deterministic Layer-1 targets out. */
 export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
   const router = useRouter();
+  const goBack = useBackOr(`/clients/${clientId}`);
   const detail = useClientDetail(clientId);
   const me = useMe();
   const config = usePublicConfig();
@@ -163,7 +165,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton

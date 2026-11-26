@@ -39,7 +39,8 @@ export default function RootLayout() {
       <MobileProviders>
         <StatusBar style="auto" />
         <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
-          <Stack.Protected guard={signedIn}>
+          {/* expo-router 58 renders a failed guard as a redirect; (auth) has no index, so name the target. */}
+          <Stack.Protected guard={signedIn} redirectTo="/login">
             <Stack.Screen name="(coach)" />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>

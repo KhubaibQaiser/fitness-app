@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'solito/navigation';
 import {
   Card,
   FormSection,
@@ -15,6 +14,7 @@ import {
   XStack,
   YStack,
 } from '@gymos/ui';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { AppScreen } from '../shell/app-screen';
 
 const FieldBone = ({ label, unit }: { label: string; unit: string }) => (
@@ -65,14 +65,14 @@ const CARDIO = [
 ] as const;
 
 /** Twin of VitalsEntryScreen — static labels, 48px inputs, sticky footer. */
-export const VitalsEntrySkeleton = () => {
-  const router = useRouter();
+export const VitalsEntrySkeleton = ({ clientId }: { clientId: string }) => {
+  const goBack = useBackOr(`/clients/${clientId}`);
 
   return (
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton flex={1} disabled>

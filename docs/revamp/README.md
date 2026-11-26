@@ -154,11 +154,11 @@ Builder and reviewer briefs follow [`agents.md`](agents.md).
    - Tablet in portrait and landscape (rulings O8).
    - Real states: populated with overdue-heavy data, empty, loading, error.
 
-   The owner approves.
+   The owner approves. Mocks reach the owner as HTML in a docs PR, checked first by a fresh reviewer (rulings O29).
 
 3. **Review gate.** A fresh reviewer reports clean against the spec, `AGENTS.md`, the global done conditions (§8) and the task's own. Findings are fixed, not argued, unless the reviewer is wrong with evidence.
 4. **CI gate.** All required checks green. Lighthouse and device runs are recorded in the PR but are not CI gates.
-5. **Merge.** The parent merges with a merge commit in dependency order. CODEOWNERS paths wait for the owner.
+5. **Merge.** The parent merges with a merge commit in dependency order. CODEOWNERS paths wait for the owner, and a mock PR merges only on the owner's explicit approval (rulings O29).
 
 ## 8. Global definition of done (every task)
 
