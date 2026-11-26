@@ -11,55 +11,65 @@ const socketAddress = (c: AppContext): string | null => {
   return incoming.socket?.remoteAddress ?? null;
 };
 
-const header =
-  (name: string): ClientIp =>
-  (c) => {
-    const value = c.req.header(name)?.trim();
-    return value !== undefined && isIP(value) !== 0 ? value : null;
-  };
-
 /**
- * The caller's IP, read only from a source the host sets itself, never from a header a caller can
- * write (so not the first `x-forwarded-for` hop):
- * - Vercel (`VERCEL=1`): `x-real-ip`, which Vercel sets to the visitor's public IP and overwrites
+ * Reads the client IP from the host's documented client-IP header; elsewhere uses the socket
+ * address. Returns null when none applies, and callers then use the per-account limit and the
+ * route-wide cap.
+ * - Vercel (`VERCEL=1`): `x-real-ip`, the visitor's public IP
  *   (https://vercel.com/docs/headers/request-headers#x-real-ip), also on rewrites from the web app
  *   (https://vercel.com/docs/rewrites#identifying-the-visitor-at-your-origin).
- * - Render (`RENDER=true`): `cf-connecting-ip`, set by Cloudflare in front of Render's public traffic,
- *   which rejects a caller's own value (https://render.com/articles/host-pocketbase-on-render).
- * - Anywhere else: the Node server's socket address, if there is one.
- * Null when none applies; callers then use the per-account and global limits, never a shared bucket.
+ * - Render (`RENDER=true`): null. Render's docs don't name a client-IP header, and the socket
+ *   address there is Render's proxy.
+ * - Anywhere else: the Node server's socket address.
  */
-export const createClientIpResolver = (platform: {
+export const createClientIpResolver = (host: {
   VERCEL?: string | undefined;
   RENDER?: string | undefined;
 }): ClientIp => {
-  if (platform.VERCEL === '1') return header('x-real-ip');
-  if (platform.RENDER === 'true') return header('cf-connecting-ip');
+  if (host.VERCEL === '1') {
+    return (c) => {
+      const value = c.req.header('x-real-ip')?.trim();
+      return value !== undefined && isIP(value) !== 0 ? value : null;
+    };
+  }
+  if (host.RENDER === 'true') return () => null;
+  // ponytail: behind a reverse proxy this is the proxy's address, so callers share one per-IP key;
+  // fine for a Node server facing callers directly, needs a trusted-proxy setting behind a proxy.
   return (c) => {
     const address = socketAddress(c);
     return address !== null && isIP(address) !== 0 ? address : null;
   };
 };
 
-const hextets = (part: string): string[] =>
-  part === '' ? [] : part.split(':').flatMap((g) => (g.includes('.') ? ['0', '0'] : [g]));
+/** The eight 16-bit groups of a valid IPv6 address (zone id already removed). */
+const ipv6Groups = (address: string): number[] => {
+  const groups = (part: string): number[] =>
+    part === ''
+      ? []
+      : part.split(':').flatMap((group) => {
+          if (!group.includes('.')) return [Number.parseInt(group, 16)];
+          const [a = 0, b = 0, c = 0, d = 0] = group.split('.').map(Number);
+          return [(a << 8) | b, (c << 8) | d];
+        });
+  const [head = '', tail] = address.split('::');
+  const left = groups(head);
+  const right = tail === undefined ? [] : groups(tail);
+  return [...left, ...Array<number>(8 - left.length - right.length).fill(0), ...right];
+};
 
 /**
  * The per-IP limiter key: IPv4 per address; IPv6 grouped by /64, as is standard practice for rate
- * limits, since one subscriber is usually given a whole /64. An IPv4-mapped IPv6 address counts as
- * its IPv4 address.
+ * limits. An IPv4-mapped IPv6 address (`::ffff:a.b.c.d` in any form) counts as its IPv4 address.
  */
 export const rateLimitKey = (ip: string): string => {
   if (isIP(ip) !== 6) return ip;
-  const address = (ip.split('%')[0] ?? ip).toLowerCase();
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(address)?.[1];
-  if (mapped !== undefined) return mapped;
-  const [head = '', tail] = address.split('::');
-  const left = hextets(head);
-  const right = tail === undefined ? [] : hextets(tail);
-  const full = [...left, ...Array<string>(8 - left.length - right.length).fill('0'), ...right];
-  return `${full
+  const groups = ipv6Groups((ip.split('%')[0] ?? ip).toLowerCase());
+  const [g0, g1, g2, g3, g4, g5, g6 = 0, g7 = 0] = groups;
+  if ([g0, g1, g2, g3, g4].every((g) => g === 0) && g5 === 0xffff) {
+    return [g6 >> 8, g6 & 0xff, g7 >> 8, g7 & 0xff].join('.');
+  }
+  return `${groups
     .slice(0, 4)
-    .map((g) => Number.parseInt(g, 16).toString(16))
+    .map((g) => g.toString(16))
     .join(':')}::/64`;
 };

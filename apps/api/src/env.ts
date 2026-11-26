@@ -40,6 +40,10 @@ const envSchema = z.object({
   AI_API_KEY: z.string().optional(),
   AI_ADAPTER_VERSION: z.string().min(1).optional(),
   PORT: z.coerce.number().int().positive().default(8080),
+  /** Set by Vercel at runtime (`1`); selects the client-IP header (see client-ip.ts). */
+  VERCEL: z.string().optional(),
+  /** Set by Render at runtime (`true`). */
+  RENDER: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

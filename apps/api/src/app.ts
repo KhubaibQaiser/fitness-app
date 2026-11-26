@@ -96,7 +96,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   const signupDeps = { ...otpDeps, mail };
   const resetDeps = { ...otpDeps, mail };
 
-  const clientIp = createClientIpResolver(process.env);
+  const clientIp = createClientIpResolver(env);
 
   const app = new OpenAPIHono<{ Variables: GymosVars }>({
     defaultHook: (result, c) => {

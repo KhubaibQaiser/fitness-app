@@ -24,6 +24,8 @@ export type AppDeps = {
         | 'NODE_ENV'
         | 'CRON_SECRET'
         | 'TENANT_TIMEZONE'
+        | 'VERCEL'
+        | 'RENDER'
       >
     >;
   /** Test seam — inject a memory mailer. */

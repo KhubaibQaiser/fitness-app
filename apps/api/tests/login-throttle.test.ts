@@ -33,10 +33,12 @@ const manifest = tenantManifestSchema.parse(
 );
 
 let db: Db;
-/** Built with VERCEL=1, so `x-real-ip` is the trusted client IP. */
+/** VERCEL=1: the client IP is `x-real-ip`. */
 let onVercel: App;
-/** No platform and no Node socket (app.request), so callers have no trusted IP. */
-let noTrustedIp: App;
+/** RENDER=true: no client IP, so the per-account limit and the route-wide cap apply. */
+let onRender: App;
+/** No host and no Node socket (app.request): no client IP either. */
+let noClientIp: App;
 
 const login = async (
   app: App,
@@ -66,17 +68,32 @@ beforeAll(async () => {
     tenantSlug: manifest.slug,
   });
   const env = { JWT_ACCESS_SECRET: JWT_SECRET, AI_MODE: 'fallback' as const };
-  vi.stubEnv('VERCEL', '1');
-  onVercel = buildApp({ db, manifest, env });
-  vi.unstubAllEnvs();
-  vi.stubEnv('VERCEL', '');
-  vi.stubEnv('RENDER', '');
-  noTrustedIp = buildApp({ db, manifest, env });
-  vi.unstubAllEnvs();
+  onVercel = buildApp({ db, manifest, env: { ...env, VERCEL: '1' } });
+  onRender = buildApp({ db, manifest, env: { ...env, RENDER: 'true' } });
+  noClientIp = buildApp({ db, manifest, env });
 });
+
+/** Logs in `count` times as different unknown emails, so only the IP limits can trip. */
+const manyCallers = async (
+  app: App,
+  count: number,
+  headers: (k: number) => Record<string, string>,
+) => {
+  const statuses: number[] = [];
+  for (let k = 0; k < count; k += 1) {
+    statuses.push(
+      (await login(app, `caller${k}@example.com`, 'wrong-password-1', headers(k))).status,
+    );
+  }
+  return statuses;
+};
+const all401 = (n: number) => Array.from({ length: n }, () => 401);
 
 beforeEach(async () => {
   await db.delete(s.rateLimits);
+  // A frozen clock keeps every attempt in one fixed-window minute.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-26T08:00:05Z'));
 });
 
 afterEach(() => {
@@ -84,31 +101,20 @@ afterEach(() => {
 });
 
 describe('login rate limiting', () => {
-  it('keys the per-IP limit on the trusted IP, not on x-forwarded-for', async () => {
-    const statuses: number[] = [];
-    for (let k = 0; k < 11; k += 1) {
-      // A different unknown email each time, so only the per-IP limit can trip.
-      const res = await login(onVercel, `nobody${k}@example.com`, 'wrong-password-1', {
-        ...ip(7),
-        'x-forwarded-for': `198.51.100.${k}`,
-      });
-      statuses.push(res.status);
-    }
-    expect(statuses.slice(0, 10)).toEqual(Array.from({ length: 10 }, () => 401));
-    expect(statuses[10]).toBe(429);
+  it('counts the per-IP limit by the host-provided IP', async () => {
+    const statuses = await manyCallers(onVercel, 11, (k) => ({
+      ...ip(7),
+      'x-forwarded-for': `198.51.100.${k}`,
+    }));
+    expect(statuses).toEqual([...all401(10), 429]);
   });
 
   it('counts IPv6 addresses in one /64 as one caller, and another /64 separately', async () => {
     const sameSubnet = ['2001:db8:1:2::a', '2001:DB8:1:2:ffff::b', '2001:db8:0001:0002:0:0:0:c'];
-    const statuses: number[] = [];
-    for (let k = 0; k < 11; k += 1) {
-      const res = await login(onVercel, `v6-${k}@example.com`, 'wrong-password-1', {
-        'x-real-ip': sameSubnet[k % sameSubnet.length] ?? '',
-      });
-      statuses.push(res.status);
-    }
-    expect(statuses.slice(0, 10)).toEqual(Array.from({ length: 10 }, () => 401));
-    expect(statuses[10]).toBe(429);
+    const statuses = await manyCallers(onVercel, 11, (k) => ({
+      'x-real-ip': sameSubnet[k % sameSubnet.length] ?? '',
+    }));
+    expect(statuses).toEqual([...all401(10), 429]);
     const otherSubnet = await login(onVercel, 'v6-other@example.com', 'wrong-password-1', {
       'x-real-ip': '2001:db8:1:3::a',
     });
@@ -142,7 +148,6 @@ describe('login rate limiting', () => {
   });
 
   it('accepts the right password again once the back-off has passed', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-26T09:00:00Z'));
     for (let k = 0; k < 5; k += 1) await login(onVercel, COACH, 'nope-nope-1', ip(k));
     expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(429);
@@ -153,16 +158,44 @@ describe('login rate limiting', () => {
     expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(200);
   });
 
-  it('never puts callers without a trusted IP in one shared bucket', async () => {
-    // Caller A, with x-forwarded-for values that must be ignored, trips its own account's limit.
+  it('gives callers with no client IP their own account limits, not one per-IP bucket', async () => {
     for (let k = 0; k < 11; k += 1) {
-      await login(noTrustedIp, 'caller-a@example.com', 'wrong-password-1', {
+      await login(noClientIp, 'caller-a@example.com', 'wrong-password-1', {
         'x-forwarded-for': '127.0.0.1',
       });
     }
-    expect((await login(noTrustedIp, 'caller-a@example.com', 'wrong-password-1')).status).toBe(429);
-    // Caller B still signs in.
-    expect((await login(noTrustedIp, COACH, PASSWORD)).status).toBe(200);
+    expect((await login(noClientIp, 'caller-a@example.com', 'wrong-password-1')).status).toBe(429);
+    expect((await login(noClientIp, COACH, PASSWORD)).status).toBe(200);
+  });
+
+  it('caps sign-ins with no client IP at 60 a minute for the route', async () => {
+    expect(await manyCallers(noClientIp, 61, () => ({}))).toEqual([...all401(60), 429]);
+  });
+
+  it('on Render, uses the route-wide cap whatever the request headers say', async () => {
+    const statuses = await manyCallers(onRender, 61, (k) => ({
+      'cf-connecting-ip': '198.51.100.3',
+      'x-real-ip': `198.51.100.${k % 2}`,
+      'x-forwarded-for': `198.51.100.${k}`,
+    }));
+    expect(statuses).toEqual([...all401(60), 429]);
+    expect((await login(onRender, COACH, PASSWORD)).status).toBe(429);
+  });
+
+  it('doubles the back-off after each further failure, up to 15 minutes', async () => {
+    let at = Date.parse('2026-11-26T09:00:00Z');
+    vi.setSystemTime(at);
+    for (let k = 0; k < 5; k += 1) await login(onVercel, COACH, 'nope-nope-1', ip(k));
+    for (const minutes of [1, 2, 4, 8, 15]) {
+      vi.setSystemTime(at + minutes * 60_000 - 1_000);
+      expect((await login(onVercel, COACH, PASSWORD, ip(9))).status, `${minutes} min`).toBe(429);
+      at += minutes * 60_000 + 1_000;
+      vi.setSystemTime(at);
+      expect((await login(onVercel, COACH, 'nope-nope-1', ip(9))).status, `${minutes} min`).toBe(
+        401,
+      );
+    }
+    expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(200);
   });
 
   it('keeps the 429 body the login screen maps', async () => {
@@ -195,18 +228,18 @@ describe('createClientIpResolver', () => {
     'cf-connecting-ip': '198.51.100.3',
   };
 
-  it('reads x-real-ip on Vercel and cf-connecting-ip on Render, nothing else', async () => {
+  it('reads x-real-ip on Vercel; on Render returns null', async () => {
     expect(await resolve({ VERCEL: '1' }, forwardingHeaders)).toBe('198.51.100.2');
-    expect(await resolve({ RENDER: 'true' }, forwardingHeaders)).toBe('198.51.100.3');
     expect(await resolve({ VERCEL: '1' }, { 'x-forwarded-for': '198.51.100.1' })).toBeNull();
+    expect(await resolve({ RENDER: 'true' }, forwardingHeaders, '10.0.0.5')).toBeNull();
   });
 
-  it('rejects a header that is not one IP address', async () => {
+  it('returns null for an x-real-ip that is not one IP address', async () => {
     expect(await resolve({ VERCEL: '1' }, { 'x-real-ip': '198.51.100.2, 10.0.0.1' })).toBeNull();
-    expect(await resolve({ RENDER: 'true' }, { 'cf-connecting-ip': 'local' })).toBeNull();
+    expect(await resolve({ VERCEL: '1' }, { 'x-real-ip': 'local' })).toBeNull();
   });
 
-  it('uses the socket address elsewhere and ignores forwarding headers', async () => {
+  it('uses the socket address elsewhere, not the forwarding headers', async () => {
     expect(await resolve({}, forwardingHeaders, '192.0.2.10')).toBe('192.0.2.10');
     expect(await resolve({}, forwardingHeaders)).toBeNull();
   });
@@ -218,7 +251,11 @@ describe('rateLimitKey', () => {
     ['IPv6 groups by /64', '2001:DB8:0:0:1::1', '2001:db8:0:0::/64'],
     ['full IPv6 form', '2001:0db8:0001:0002:0003:0004:0005:0006', '2001:db8:1:2::/64'],
     ['loopback', '::1', '0:0:0:0::/64'],
-    ['IPv4-mapped IPv6 counts as IPv4', '::ffff:192.0.2.1', '192.0.2.1'],
+    ['IPv4-mapped, dotted', '::ffff:192.0.2.1', '192.0.2.1'],
+    ['IPv4-mapped, full form', '0:0:0:0:0:ffff:192.0.2.1', '192.0.2.1'],
+    ['IPv4-mapped, hex form', '::ffff:c000:201', '192.0.2.1'],
+    ['IPv4-mapped, full hex form', '0:0:0:0:0:FFFF:C000:0201', '192.0.2.1'],
+    ['not mapped (ffff in another group)', '::ffff:0:c000:201', '0:0:0:0::/64'],
     ['zone id is dropped', 'fe80::1%eth0', 'fe80:0:0:0::/64'],
   ])('%s', (_label, ip, key) => {
     expect(rateLimitKey(ip)).toBe(key);
