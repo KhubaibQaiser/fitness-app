@@ -52,8 +52,10 @@ export const registerTodayRoutes = (app: GymosApp, bind: RouteBind): void => {
       },
     }),
     async (c) => {
-      const queue = await queueFor(c);
-      const unread = await unreadCount(db, c.get('principal').userId);
+      const [queue, unread] = await Promise.all([
+        queueFor(c),
+        unreadCount(db, c.get('principal').userId),
+      ]);
       // Hash the whole queue, not just the counts, so a swap of items at equal counts still
       // changes the tag. ponytail: an unread notification swapped for another within one poll
       // keeps the count and the tag; add the newest notification id if the Inbox needs that.

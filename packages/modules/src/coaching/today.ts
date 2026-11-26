@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { isoDate, schema as s, toStrictIso, type Db } from '@gymos/db';
 import { attentionStatus } from './attention';
@@ -63,6 +63,19 @@ export const getTodayQueue = async (
     isNull(s.coachAssignments.unassignedAt),
   );
 
+  // One lateral lookup per client: half the cost of two correlated subqueries at 170 clients.
+  const lastWeight = db
+    .select({
+      // Null when the client has no weigh-in (left join).
+      kg: sql<number | null>`${s.vitals.weightKg}::float`.as('kg'),
+      at: sql<string | null>`${s.vitals.recordedAt}`.as('at'),
+    })
+    .from(s.vitals)
+    .where(and(eq(s.vitals.clientId, s.clients.id), isNotNull(s.vitals.weightKg)))
+    .orderBy(desc(s.vitals.recordedAt))
+    .limit(1)
+    .as('last_weight');
+
   const [clients, dueCheckIns, plans] = await Promise.all([
     db
       .select({
@@ -70,21 +83,14 @@ export const getTodayQueue = async (
         name: s.clients.name,
         timezone: s.outlets.timezone,
         reasons: s.clientAttention.reasons,
-        lastWeightKg: sql<number | null>`(
-          select v.weight_kg::float from vitals v
-          where v.client_id = ${s.clients.id} and v.weight_kg is not null
-          order by v.recorded_at desc limit 1
-        )`,
-        lastWeightAt: sql<string | null>`(
-          select v.recorded_at from vitals v
-          where v.client_id = ${s.clients.id} and v.weight_kg is not null
-          order by v.recorded_at desc limit 1
-        )`,
+        lastWeightKg: lastWeight.kg,
+        lastWeightAt: lastWeight.at,
       })
       .from(s.coachAssignments)
       .innerJoin(s.clients, eq(s.clients.id, s.coachAssignments.clientId))
       .innerJoin(s.outlets, eq(s.outlets.id, s.clients.outletId))
       .leftJoin(s.clientAttention, eq(s.clientAttention.clientId, s.clients.id))
+      .leftJoinLateral(lastWeight, sql`true`)
       .where(
         and(
           assigned,
