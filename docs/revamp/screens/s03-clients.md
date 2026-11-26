@@ -58,3 +58,4 @@ Desktop table and phone list; populated (170 synthetic clients), no matches, emp
   - The same status shown on phone and desktop.
   - Quick actions route correctly.
 - The budget is measured with the Q0 harness at 170 and 500 clients and recorded in the PR.
+- React's hydration error 418 on `/clients`, which Q0 found, no longer appears on a cold load (rulings O32).
