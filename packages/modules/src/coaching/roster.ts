@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { err, ok, type Result } from '@gymos/core';
 import { can, type Actor } from '@gymos/core/rbac';
@@ -144,49 +144,90 @@ export const listRoster = async (
   if (query.cursor !== undefined && after === null) return err({ code: 'INVALID_CURSOR' });
 
   const { scope } = actor;
-  const lastCheckIn = db
-    .select({
-      scheduledFor: s.checkIns.scheduledFor,
-      adherenceRating: s.checkIns.adherenceRating,
-    })
-    .from(s.checkIns)
-    .where(and(eq(s.checkIns.clientId, s.clients.id), eq(s.checkIns.status, 'COMPLETED')))
-    .orderBy(desc(s.checkIns.scheduledFor), desc(s.checkIns.completedAt))
-    .limit(1)
-    .as('last_check_in');
-  const nextDue = db
-    .select({ scheduledFor: s.checkIns.scheduledFor })
-    .from(s.checkIns)
-    .where(and(eq(s.checkIns.clientId, s.clients.id), eq(s.checkIns.status, 'DUE')))
-    .orderBy(asc(s.checkIns.scheduledFor))
-    .limit(1)
-    .as('next_due');
-  const latestWeight = db
-    .select({ weightKg: s.vitals.weightKg })
-    .from(s.vitals)
-    .where(and(eq(s.vitals.clientId, s.clients.id), isNotNull(s.vitals.weightKg)))
-    .orderBy(desc(s.vitals.recordedAt))
-    .limit(1)
-    .as('latest_weight');
-  const latestPlan = db
-    .select({ status: s.mealPlans.status, version: s.mealPlans.version })
-    .from(s.mealPlans)
-    .where(
-      and(
-        eq(s.mealPlans.clientId, s.clients.id),
-        inArray(s.mealPlans.status, [...ROSTER_PLAN_STATUSES]),
+  // Set-based, one pass per table over the clients in scope: faster than a lateral per client.
+  const inScope = db.$with('in_scope').as(
+    db
+      .select({
+        id: s.clients.id,
+        name: s.clients.name,
+        outletId: s.clients.outletId,
+        userId: s.clients.userId,
+      })
+      .from(s.clients)
+      .innerJoin(s.outlets, eq(s.outlets.id, s.clients.outletId))
+      .where(
+        and(
+          eq(s.outlets.orgId, orgId),
+          eq(s.clients.status, 'active'),
+          isNull(s.clients.deletedAt),
+          // The scope set bounds the read; can() below applies each role's level.
+          scope.orgWide
+            ? undefined
+            : or(
+                inArray(s.clients.outletId, [...scope.outletIds]),
+                inArray(s.clients.id, [...scope.assignedClientIds]),
+                eq(s.clients.userId, scope.userId),
+              ),
+          query.q ? ilike(s.clients.name, `%${escapeLike(query.q)}%`) : undefined,
+        ),
       ),
-    )
-    .orderBy(desc(s.mealPlans.version))
-    .limit(1)
-    .as('latest_plan');
+  );
+  const scopedIds = db.select({ id: inScope.id }).from(inScope);
+  const lastCheckIn = db.$with('last_check_in').as(
+    db
+      .selectDistinctOn([s.checkIns.clientId], {
+        clientId: s.checkIns.clientId,
+        scheduledFor: s.checkIns.scheduledFor,
+        adherenceRating: s.checkIns.adherenceRating,
+      })
+      .from(s.checkIns)
+      .where(and(eq(s.checkIns.status, 'COMPLETED'), inArray(s.checkIns.clientId, scopedIds)))
+      .orderBy(s.checkIns.clientId, desc(s.checkIns.scheduledFor), desc(s.checkIns.completedAt)),
+  );
+  const nextDue = db.$with('next_due').as(
+    db
+      .selectDistinctOn([s.checkIns.clientId], {
+        clientId: s.checkIns.clientId,
+        scheduledFor: s.checkIns.scheduledFor,
+      })
+      .from(s.checkIns)
+      .where(and(eq(s.checkIns.status, 'DUE'), inArray(s.checkIns.clientId, scopedIds)))
+      .orderBy(s.checkIns.clientId, asc(s.checkIns.scheduledFor)),
+  );
+  const latestWeight = db.$with('latest_weight').as(
+    db
+      .selectDistinctOn([s.vitals.clientId], {
+        clientId: s.vitals.clientId,
+        weightKg: s.vitals.weightKg,
+      })
+      .from(s.vitals)
+      .where(and(isNotNull(s.vitals.weightKg), inArray(s.vitals.clientId, scopedIds)))
+      .orderBy(s.vitals.clientId, desc(s.vitals.recordedAt)),
+  );
+  const latestPlan = db.$with('latest_plan').as(
+    db
+      .selectDistinctOn([s.mealPlans.clientId], {
+        clientId: s.mealPlans.clientId,
+        status: s.mealPlans.status,
+        version: s.mealPlans.version,
+      })
+      .from(s.mealPlans)
+      .where(
+        and(
+          inArray(s.mealPlans.status, [...ROSTER_PLAN_STATUSES]),
+          inArray(s.mealPlans.clientId, scopedIds),
+        ),
+      )
+      .orderBy(s.mealPlans.clientId, desc(s.mealPlans.version)),
+  );
 
   const rows = await db
+    .with(inScope, lastCheckIn, nextDue, latestWeight, latestPlan)
     .select({
-      id: s.clients.id,
-      name: s.clients.name,
-      outletId: s.clients.outletId,
-      userId: s.clients.userId,
+      id: inScope.id,
+      name: inScope.name,
+      outletId: inScope.outletId,
+      userId: inScope.userId,
       goalPreset: s.clientGoals.preset,
       startWeightKg: s.clientGoals.startWeightKg,
       lastCheckInOn: lastCheckIn.scheduledFor,
@@ -196,32 +237,15 @@ export const listRoster = async (
       planStatus: latestPlan.status,
       planVersion: latestPlan.version,
     })
-    .from(s.clients)
-    .innerJoin(s.outlets, eq(s.outlets.id, s.clients.outletId))
+    .from(inScope)
     .leftJoin(
       s.clientGoals,
-      and(eq(s.clientGoals.clientId, s.clients.id), eq(s.clientGoals.status, 'ACTIVE')),
+      and(eq(s.clientGoals.clientId, inScope.id), eq(s.clientGoals.status, 'ACTIVE')),
     )
-    .leftJoinLateral(lastCheckIn, sql`true`)
-    .leftJoinLateral(nextDue, sql`true`)
-    .leftJoinLateral(latestWeight, sql`true`)
-    .leftJoinLateral(latestPlan, sql`true`)
-    .where(
-      and(
-        eq(s.outlets.orgId, orgId),
-        eq(s.clients.status, 'active'),
-        isNull(s.clients.deletedAt),
-        // The scope set bounds the read; can() below applies each role's level.
-        scope.orgWide
-          ? undefined
-          : or(
-              inArray(s.clients.outletId, [...scope.outletIds]),
-              inArray(s.clients.id, [...scope.assignedClientIds]),
-              eq(s.clients.userId, scope.userId),
-            ),
-        query.q ? ilike(s.clients.name, `%${escapeLike(query.q)}%`) : undefined,
-      ),
-    );
+    .leftJoin(lastCheckIn, eq(lastCheckIn.clientId, inScope.id))
+    .leftJoin(nextDue, eq(nextDue.clientId, inScope.id))
+    .leftJoin(latestWeight, eq(latestWeight.clientId, inScope.id))
+    .leftJoin(latestPlan, eq(latestPlan.clientId, inScope.id));
 
   const keyOf = (row: RosterRow): SortKey => ({ value: sortValue[query.sort](row), id: row.id });
   const compare = compareKeys(query.sort, query.dir);
