@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
+import { type Action } from '@gymos/core/rbac';
 import { isoDate, schema as s, toStrictIso, type Db } from '@gymos/db';
 import { attentionStatus } from './attention';
 import { type ClientScope } from './client-scope';
@@ -15,7 +16,7 @@ export type TodayReason =
 export type TodayItem = {
   clientId: string;
   clientName: string;
-  /** Latest weigh-in; `at` is ISO 8601 with an offset. */
+  /** Latest weigh-in; `at` is ISO 8601 with an offset. Null when none or no vitals.read. */
   lastWeight: { kg: number; at: string } | null;
   reason: TodayReason;
 };
@@ -52,6 +53,19 @@ const refOf = (i: TodayItem): string => {
     case 'PLAN_NEEDS_REVIEW':
     case 'DRAFT_AWAITING_PUBLISH':
       return i.reason.planId;
+  }
+};
+
+/** The grant a reason's data needs, on top of `client.list` (packages/core/src/rbac/matrix.ts). */
+const grantFor = (kind: TodayReason['kind']): Action => {
+  switch (kind) {
+    case 'RED_FLAG':
+    case 'CHECKIN_OVERDUE':
+    case 'CHECKIN_DUE':
+      return 'checkin.read';
+    case 'PLAN_NEEDS_REVIEW':
+    case 'DRAFT_AWAITING_PUBLISH':
+      return 'plan.read';
   }
 };
 
@@ -156,15 +170,19 @@ export const getTodayQueue = async (
 
   // Only active clients that pass the scope's per-row rule reach the queue.
   const byId = new Map(clients.filter(scope.includes).map((c) => [c.id, c]));
+  // Each item needs its reason's grant, and the weight needs vitals.read; what a role may not read
+  // is left out, so the counts (group lengths) match what it sees.
   const item = (clientId: string, reason: TodayReason): TodayItem[] => {
     const client = byId.get(clientId);
-    if (client === undefined) return [];
+    if (client === undefined || !scope.allows(grantFor(reason.kind), client)) return [];
     return [
       {
         clientId,
         clientName: client.name,
         lastWeight:
-          client.lastWeightKg === null || client.lastWeightAt === null
+          client.lastWeightKg === null ||
+          client.lastWeightAt === null ||
+          !scope.allows('vitals.read', client)
             ? null
             : { kg: client.lastWeightKg, at: toStrictIso(client.lastWeightAt) },
         reason,
@@ -189,7 +207,8 @@ export const getTodayQueue = async (
   let nextDueOn: string | null = null;
   for (const due of dueCheckIns) {
     const client = byId.get(due.clientId);
-    if (client === undefined) continue;
+    // nextDueOn comes from check-ins too, so it needs the same grant as their items.
+    if (client === undefined || !scope.allows('checkin.read', client)) continue;
     const days = daysBetween(due.scheduledFor, todayIn(client.timezone));
     if (days > 0) {
       overdue.push(

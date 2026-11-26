@@ -72,7 +72,19 @@ describe('resolveClientScope', () => {
     expect(visible(coach, 'all')).toEqual({ choice: 'all', ids: ['mine'] });
   });
 
-  it('a role without client.list sees nothing', () => {
+  it('a role without client.list sees nothing, even with a coach profile and assignments', () => {
     expect(visible(principal(['INSTRUCTOR']))).toEqual({ choice: 'all', ids: [] });
+    const instructorCoach = principal(['INSTRUCTOR'], { coachId: 'coach-1', assigned: ['mine'] });
+    expect(visible(instructorCoach)).toEqual({ choice: 'mine', ids: [] });
+    expect(visible(instructorCoach, 'all')).toEqual({ choice: 'all', ids: [] });
+  });
+
+  it('allows() answers per grant: front desk may read check-ins but not vitals or plans', () => {
+    const scope = resolveClientScope(principal(['FRONT_DESK']));
+    if (!scope.ok) throw new Error(scope.error.code);
+    expect(scope.value.allows('checkin.read', mine)).toBe(true);
+    expect(scope.value.allows('vitals.read', mine)).toBe(false);
+    expect(scope.value.allows('plan.read', mine)).toBe(false);
+    expect(scope.value.allows('checkin.read', elsewhere)).toBe(false);
   });
 });

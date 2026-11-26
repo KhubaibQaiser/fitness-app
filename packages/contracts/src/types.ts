@@ -310,7 +310,7 @@ export type TodayReason =
 export type TodayItem = {
   clientId: string;
   clientName: string;
-  /** Latest weigh-in; `at` is ISO 8601 with an offset. */
+  /** Latest weigh-in (`at` is ISO 8601 with an offset); null when none or no vitals.read. */
   lastWeight: { kg: number; at: string } | null;
   reason: TodayReason;
 };
