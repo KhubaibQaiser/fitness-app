@@ -128,10 +128,6 @@ const escapeLike = (text: string): string => text.replace(/[\\%_]/g, '\\$&');
  * One page of the coach's roster. One query reads every client in the actor's scope set that
  * matches the search; `can()` then keeps the clients the actor's roles may list, and the page is
  * cut after the cursor's key in the sort's total order, so pages never repeat or skip a row.
- *
- * ponytail: sorting and cutting in memory reads the whole caseload on every page, so the status
- * rule shared with F7.1 can sort and filter in TypeScript. Fine for caseloads in the hundreds or
- * low thousands; move the sort and cut into SQL if that rule gains a SQL form or caseloads grow.
  */
 export const listRoster = async (
   db: Db,
@@ -249,6 +245,8 @@ export const listRoster = async (
 
   const keyOf = (row: RosterRow): SortKey => ({ value: sortValue[query.sort](row), id: row.id });
   const compare = compareKeys(query.sort, query.dir);
+  // ponytail: sorts and cuts in memory, so every page reads the whole caseload (lets F7.1's status
+  // rule sort and filter). Fine for hundreds of clients; thousands need SQL ordering and LIMIT.
   const listed = rows
     .filter((row) =>
       can(actor, 'client.list', {
