@@ -1,26 +1,12 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useSyncExternalStore } from 'react';
-import { AppState } from 'react-native';
+import { useEffect } from 'react';
 import { api } from '@gymos/contracts';
 import { applyPulse, nextPulseDelay, type PulseSnapshot } from './pulse';
 import { qk } from './query-keys';
-
-const subscribeAppState = (onChange: () => void) => {
-  const subscription = AppState.addEventListener('change', onChange);
-  return () => {
-    subscription.remove();
-  };
-};
-
-/** In the foreground on native; a visible tab on web (react-native-web maps AppState to visibility). */
-const useForeground = () =>
-  useSyncExternalStore(
-    subscribeAppState,
-    () => AppState.currentState !== 'background',
-    () => true,
-  );
+// Resolves to use-foreground.native.ts (AppState) on native, page visibility on web.
+import { useForeground } from './use-foreground';
 
 /** What the pulse summarises: refetched when its ETag moves. */
 const PULSE_INVALIDATES = [qk.today, qk.notifications, qk.dueCheckIns, ['clients']]; // every roster search
