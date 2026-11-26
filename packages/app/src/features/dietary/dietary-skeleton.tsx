@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'solito/navigation';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import {
   Card,
@@ -15,6 +14,7 @@ import {
   Text,
   XStack,
 } from '@gymos/ui';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { AppScreen } from '../shell/app-screen';
 import { DIETARY_ALLERGENS, DIETARY_RELIGIOUS } from './dietary-catalog';
 
@@ -32,14 +32,14 @@ const ChipBone = ({ code }: { code: string }) => (
 );
 
 /** Twin of DietaryScreen — real labels, catalog-sized chips, sticky footer. */
-export const DietarySkeleton = () => {
-  const router = useRouter();
+export const DietarySkeleton = ({ clientId }: { clientId: string }) => {
+  const goBack = useBackOr(`/clients/${clientId}`);
 
   return (
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton flex={1} disabled>

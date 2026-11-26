@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'solito/navigation';
 import {
   Body,
   Card,
@@ -17,6 +16,7 @@ import {
   XStack,
 } from '@gymos/ui';
 import { useMealInstructions, useSaveMealInstructions } from '../../../api';
+import { useBackOr } from '../../../lib/use-back-navigation';
 import { AppScreen } from '../../shell/app-screen';
 import { MarkdownSubsetPreview } from './markdown-preview';
 
@@ -33,7 +33,7 @@ const TOOLBAR: { label: string; snippet: (draft: string) => string }[] = [
  * this coach's own text — never the global prompt or tenant pack.
  */
 export const MealInstructionsScreen = () => {
-  const router = useRouter();
+  const goBack = useBackOr('/settings');
   const query = useMealInstructions();
   const save = useSaveMealInstructions();
   const [draft, setDraft] = useState('');
@@ -64,7 +64,7 @@ export const MealInstructionsScreen = () => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton flex={1} disabled={save.isPending} onPress={() => save.mutate(draft)}>

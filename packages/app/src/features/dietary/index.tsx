@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'solito/navigation';
 import { type Food, type Restriction } from '@gymos/contracts';
 import { formatRestrictionLabel } from '@gymos/core/nutrition';
 import {
@@ -23,6 +22,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useClientDetail, usePutDietary } from '../../api';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { PlanFoodPicker } from '../plan/plan-food-picker';
 import { AppScreen } from '../shell/app-screen';
 import { DietaryChips } from './dietary-chips';
@@ -32,7 +32,7 @@ type Selection = Map<string, Restriction>;
 
 /** Dietary profile editor — every save immediately re-validates the live plan. */
 export const DietaryScreen = ({ clientId }: { clientId: string }) => {
-  const router = useRouter();
+  const goBack = useBackOr(`/clients/${clientId}`);
   const detail = useClientDetail(clientId);
   const put = usePutDietary(clientId);
   const [selection, setSelection] = useState<Selection>(new Map());
@@ -54,7 +54,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
   }, [detail.data, loadedVersion]);
 
   if (detail.isPending) {
-    return <DietarySkeleton />;
+    return <DietarySkeleton clientId={clientId} />;
   }
   if (detail.isError) {
     return (
@@ -104,7 +104,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     if (put.isPending) return;
     put.mutate([...selection.values()], {
       onSuccess: (result) => {
-        if (!result.planFlagged) router.back();
+        if (!result.planFlagged) goBack();
       },
     });
   };
@@ -113,7 +113,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton flex={1} disabled={put.isPending} onPress={save}>
