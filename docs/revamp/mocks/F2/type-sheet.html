@@ -9,10 +9,11 @@
       External requests: only the Google Fonts CSS API link below (Archivo, Noto Nastaliq Urdu, Noto Naskh
       Arabic) and the font files it points to on fonts.gstatic.com. The app will bundle these faces instead.
       Inter is embedded below as base64 woff2 (Fontsource @fontsource/inter 5.3.0, latin subset, 400/500/600).
-      Colours, font stacks and the role scale are read at runtime from the JSON block with id "tokens", a
-      verbatim copy of primitive.fontFamily, semantic and typography from
-      docs/revamp/reference/tokens.floodlight.json. No colour or size in this file is typed by hand, except
-      Apple's Dynamic Type sizes for the label-fit frames (marked where they are defined).
+      Colours, font stacks and the type specimens are read at runtime from the JSON block with id "tokens",
+      a verbatim copy of primitive.fontFamily, semantic and typography from
+      docs/revamp/reference/tokens.floodlight.json. Typed by hand: the Sunflower brand block (ADR-0019
+      decision 3), Apple's Dynamic Type sizes for the label-fit frames, and the page chrome around the
+      specimens (.eyebrow, .metric, .annot, .theme-switch, the frames), which is sized by hand.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1086,10 +1087,15 @@
           return [Number(m[1]), Number(m[2])];
         };
         const vars = (role, fs, lh) => `--${role}-fs:${fs}px;--${role}-lh:${lh}px`;
+        // React Native's maxFontSizeMultiplier caps text on Android as well as iOS, so the JSON's cap
+        // (listed under ios) limits every scaled platform.
+        const capOf = (r) =>
+          Number(/maxFontSizeMultiplier ([\d.]+)/.exec(TYPE[r].ios)?.[1] ?? Infinity);
         const scaleVars = (platform, scale = 1) =>
           ROLES.map((r) => {
             const [fs, lh] = pair(r, platform);
-            return vars(r, fs * scale, lh * scale);
+            const k = Math.min(scale, capOf(r));
+            return vars(r, fs * k, lh * k);
           }).join(';');
         // Default-size font size per role, unitless, so a larger text size can scale the Urdu delta too.
         const baseVars = (platform) =>
@@ -1171,6 +1177,29 @@
       :root[data-theme='dark'] {
         color-scheme: dark;
       }
+      /* Sunflower brand, from ADR-0019 decision 3 (rulings R3). F1's token sheet derives these at runtime
+         from the tenant hex. The JSON's action.* keys still hold ultramarine, so this sheet doesn't use them. */
+      :root {
+        --brand-fill: #facc15;
+        --brand-on-fill: #171b28;
+        --brand-text: #886d00;
+        --brand-wash: #f7eed5;
+        /* Filled actions on light surfaces carry a 1px text-safe border. */
+        --brand-fill-border: #886d00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --brand-text: #facc15;
+          /* ADR-0019 gives no dark wash, so dark selection keeps the plain surface. */
+          --brand-wash: var(--color-bg-surface);
+          --brand-fill-border: #facc15;
+        }
+      }
+      :root[data-theme='dark'] {
+        --brand-text: #facc15;
+        --brand-wash: var(--color-bg-surface);
+        --brand-fill-border: #facc15;
+      }
       html {
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
@@ -1209,10 +1238,10 @@
         list-style: none;
       }
       a {
-        color: var(--color-action-text);
+        color: var(--brand-text);
       }
       :focus-visible {
-        outline: 2px solid var(--color-focus-ring);
+        outline: 2px solid var(--brand-text);
         outline-offset: 2px;
       }
       .vh {
@@ -1294,13 +1323,14 @@
         cursor: pointer;
       }
       .theme-switch label:has(input:checked) {
-        background: var(--color-action-wash);
-        color: var(--color-action-washText);
-        border-color: var(--color-action-text);
+        background: var(--brand-wash);
+        color: var(--color-fg-primary);
+        border-color: var(--brand-text);
+        font-weight: 600;
       }
       .theme-switch input {
         margin: 0;
-        accent-color: var(--color-action-bg);
+        accent-color: var(--brand-text);
       }
       .font-status {
         font: 500 13px/16px var(--fam-ui);
@@ -1345,7 +1375,7 @@
         font-family: var(--fam-display);
         font-stretch: 125%;
         font-weight: 700;
-        color: var(--color-action-text);
+        color: var(--brand-text);
       }
       .intro {
         margin-block-start: 8px;
@@ -1366,7 +1396,7 @@
       .lines {
         background-image: repeating-linear-gradient(
           to bottom,
-          var(--color-action-wash) 0 var(--lb),
+          var(--color-accent-aqua-wash) 0 var(--lb),
           transparent var(--lb) calc(var(--lb) * 2)
         );
       }
@@ -1750,10 +1780,10 @@
         width: 100%;
         min-height: 44px;
         padding: 8px 20px;
-        border: 1px solid var(--color-action-text);
+        border: 1px solid var(--brand-text);
         border-radius: 12px;
         background: var(--color-bg-surface);
-        color: var(--color-action-text);
+        color: var(--brand-text);
         text-align: center;
         cursor: pointer;
       }
@@ -1761,10 +1791,13 @@
         /* (default label size + Urdu delta), scaled by the same factor as the label at this text size */
         --fs: calc(var(--label-fs) * (var(--label-base) + var(--ur-delta-n)) / var(--label-base));
         font-family: var(--fam-urduUi);
-        font-weight: 600;
+        font-weight: 400;
         font-size: var(--fs);
         line-height: calc(var(--fs) * var(--ur-naskhUi));
         letter-spacing: 0;
+      }
+      .btn-alt.ur-label {
+        font-weight: 600;
       }
 
       /* Tablet frames */
@@ -1796,10 +1829,10 @@
         width: 100%;
         min-height: 44px;
         padding: 10px 20px;
-        border: 0;
+        border: 1px solid var(--brand-fill-border);
         border-radius: 12px;
-        background: var(--color-action-bg);
-        color: var(--color-action-fg);
+        background: var(--brand-fill);
+        color: var(--brand-on-fill);
         text-align: center;
         cursor: pointer;
       }
@@ -1845,7 +1878,7 @@
         box-shadow: 0 0 0 1px var(--color-border-subtle);
       }
       .seg label:has(input:focus-visible) {
-        outline: 2px solid var(--color-focus-ring);
+        outline: 2px solid var(--brand-text);
         outline-offset: 2px;
       }
       .seg .check {
@@ -1853,7 +1886,7 @@
         flex: none;
         width: 20px;
         height: 20px;
-        color: var(--color-action-text);
+        color: var(--brand-text);
       }
       .seg.is-list {
         display: flex;
@@ -1889,6 +1922,10 @@
         gap: 8px;
       }
       .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3em;
         max-width: 100%;
         min-height: 44px;
         padding: 6px 14px;
@@ -1896,13 +1933,38 @@
         border-radius: 22px;
         background: var(--color-bg-surface);
         color: var(--color-fg-primary);
+        font-weight: 500;
         text-align: center;
         cursor: pointer;
       }
+      .chip-check {
+        display: none;
+        flex: none;
+        width: 1em;
+        height: 1em;
+      }
+      /* Pressed: fill, check icon and a heavier label, so colour is never the only signal. */
       .chip[aria-pressed='true'] {
-        border-color: var(--color-action-text);
-        background: var(--color-action-wash);
-        color: var(--color-action-washText);
+        border-color: var(--brand-fill-border);
+        background: var(--brand-fill);
+        color: var(--brand-on-fill);
+        font-weight: 600;
+      }
+      .chip[aria-pressed='true'] .chip-check {
+        display: block;
+      }
+      .ur-chipfit {
+        --fs: calc(var(--chip-fs) * (var(--chip-base) + var(--ur-delta-n)) / var(--chip-base));
+        font-family: var(--fam-urduUi);
+        font-size: var(--fs);
+        line-height: calc(var(--fs) * var(--ur-naskhChip));
+        letter-spacing: 0;
+      }
+      .chip.ur-chipfit {
+        font-weight: 400;
+      }
+      .chip.ur-chipfit[aria-pressed='true'] {
+        font-weight: 600;
       }
       .row {
         display: flex;
@@ -1955,8 +2017,8 @@
         <h1 class="r-displayTitle">Type sheet</h1>
         <p class="lede">
           Faces, the role scale on each platform, Urdu line heights, tabular numbers and label fit
-          at large text sizes. Every colour and size comes from the Floodlight tokens. All data is
-          made up.
+          at large text sizes. Specimen colours and sizes come from the Floodlight tokens, and the
+          brand colour is Sunflower (ADR-0019). All data is made up.
         </p>
         <p class="sample-tag">All Urdu on this page is sample text, not product copy.</p>
         <div class="controls">
@@ -2417,11 +2479,11 @@
             <span class="sec-num">5</span> Label fit at large text sizes
           </h2>
           <p class="intro">
-            A button in English and in Urdu, a four-option segmented control, filter chips and a
-            list row, in an iPhone frame (390 pt wide) and an Android frame (412 dp, the Pixel 6).
-            Labels wrap only between words, never inside one. When a segment label can’t fit on one
-            line, the control becomes a list picker. Each frame measures its own labels after the
-            fonts load.
+            A button, a four-option segmented control and filter chips, each in English and in Urdu,
+            and a list row, in an iPhone frame (390 pt wide) and an Android frame (412 dp, the Pixel
+            6). Labels wrap only between words, never inside one. When a segment label can’t fit on
+            one line, the control becomes a list picker. Each frame measures its own labels after
+            the fonts load.
           </p>
           <div class="frames" id="fit-frames">
             <figure class="frame-fig">
@@ -2457,8 +2519,9 @@
           </div>
           <p class="intro">
             iOS sizes follow Apple’s Dynamic Type table per text style. Chips stop growing at 1.6×
-            (the JSON’s maxFontSizeMultiplier). Android 14 and later scale large text by less than
-            the font scale, so a straight 2× is the hardest case.
+            on iOS and Android (the JSON’s maxFontSizeMultiplier, which React Native applies on
+            both). Android 14 and later scale large text by less than the font scale, so a straight
+            2× is the hardest case.
           </p>
         </div>
       </section>
@@ -2474,7 +2537,7 @@
           کلائنٹ کو چیک اِن کی یاد دہانی بھیجیں
         </button>
         <fieldset class="seg">
-          <legend class="vh">Client hub section</legend>
+          <legend class="vh" data-name="Client hub section">Client hub section</legend>
           <label
             ><input type="radio" value="overview" checked /><span class="seg-label r-label"
               >Overview</span
@@ -2498,11 +2561,74 @@
           ></label>
         </fieldset>
         <p class="annot seg-note"></p>
-        <div class="chips" role="group" aria-label="Filter clients">
-          <button type="button" class="chip r-chip" aria-pressed="true">Overdue 12</button>
-          <button type="button" class="chip r-chip" aria-pressed="false">Due soon 4</button>
-          <button type="button" class="chip r-chip" aria-pressed="false">On track 31</button>
-          <button type="button" class="chip r-chip" aria-pressed="false">No weigh-ins 2</button>
+        <fieldset class="seg" lang="ur" dir="rtl">
+          <legend class="vh" data-name="Client hub section, Urdu">Client hub section, Urdu</legend>
+          <label
+            ><input type="radio" value="overview" checked /><span class="seg-label ur-label"
+              >خلاصہ</span
+            ><svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" /></svg
+          ></label>
+          <label
+            ><input type="radio" value="plan" /><span class="seg-label ur-label">پلان</span
+            ><svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" /></svg
+          ></label>
+          <label
+            ><input type="radio" value="check-ins" /><span class="seg-label ur-label">چیک اِن</span
+            ><svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" /></svg
+          ></label>
+          <label
+            ><input type="radio" value="progress" /><span class="seg-label ur-label">پیش رفت</span
+            ><svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" /></svg
+          ></label>
+        </fieldset>
+        <p class="annot seg-note"></p>
+        <div class="chips" role="group" data-name="Filter clients">
+          <button type="button" class="chip r-chip" aria-pressed="true">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>Overdue 12</span>
+          </button>
+          <button type="button" class="chip r-chip" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>Due soon 4</span>
+          </button>
+          <button type="button" class="chip r-chip" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>On track 31</span>
+          </button>
+          <button type="button" class="chip r-chip" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>No weigh-ins 2</span>
+          </button>
+        </div>
+        <div class="chips" role="group" data-name="Filter clients, Urdu" lang="ur" dir="rtl">
+          <button type="button" class="chip ur-chipfit" aria-pressed="true">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>تاخیر <span class="num" dir="ltr">12</span></span>
+          </button>
+          <button type="button" class="chip ur-chipfit" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>جائزہ درکار <span class="num" dir="ltr">4</span></span>
+          </button>
+          <button type="button" class="chip ur-chipfit" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>ہدف کے مطابق <span class="num" dir="ltr">31</span></span>
+          </button>
+          <button type="button" class="chip ur-chipfit" aria-pressed="false">
+            <svg class="chip-check" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" /></svg
+            ><span>وزن درج نہیں <span class="num" dir="ltr">2</span></span>
+          </button>
         </div>
         <div class="row">
           <span class="avatar" aria-hidden="true">DC</span>
@@ -2693,9 +2819,16 @@
             .closest('figure')
             .querySelector('figcaption')
             .firstChild.textContent.trim();
-          slot.querySelector('legend').textContent = `Client hub section, ${caption}`;
-          slot.querySelectorAll('.seg input').forEach((input) => (input.name = `seg-${i}`));
-          slot.querySelector('.chips').setAttribute('aria-label', `Filter clients, ${caption}`);
+          for (const node of slot.querySelectorAll('[data-name]')) {
+            const label = `${node.dataset.name}, ${caption}`;
+            if (node.tagName === 'LEGEND') node.textContent = label;
+            else node.setAttribute('aria-label', label);
+          }
+          slot
+            .querySelectorAll('.seg')
+            .forEach((seg, j) =>
+              seg.querySelectorAll('input').forEach((input) => (input.name = `seg-${i}-${j}`)),
+            );
         });
         document
           .querySelectorAll('.chip')
@@ -2765,23 +2898,29 @@
       }
 
       function fitSegments() {
-        for (const fit of document.querySelectorAll('.fit')) {
-          const seg = fit.querySelector('.seg');
+        for (const seg of document.querySelectorAll('.seg')) {
+          const note = seg.nextElementSibling;
+          if (!note?.classList.contains('seg-note'))
+            throw new Error('Each segmented control needs a .seg-note after it');
           seg.classList.remove('is-list');
           const overflow = [...seg.querySelectorAll('.seg-label')].some(
-            (s) => s.scrollWidth > s.clientWidth + 1,
+            (l) => l.scrollWidth > l.clientWidth + 1,
           );
           seg.classList.toggle('is-list', overflow);
-          fit.querySelector('.seg-note').textContent = overflow
-            ? 'A segment label did not fit on one line, so the control became a list picker.'
-            : 'All four segment labels fit on one line.';
+          const who = seg.lang === 'ur' ? 'Urdu segments' : 'English segments';
+          note.textContent = overflow
+            ? `${who}: a label did not fit on one line, so the control became a list picker.`
+            : `${who}: all four labels fit on one line.`;
+        }
+        for (const fit of document.querySelectorAll('.fit')) {
           const size = (sel) => fmt(parseFloat(getComputedStyle(fit.querySelector(sel)).fontSize));
           const unit = fit.closest('.android') ? 'sp' : 'pt';
+          const delta = fmt(parseFloat(getComputedStyle(fit).getPropertyValue('--ur-delta')));
           fit.querySelector('.fit-sizes').textContent =
-            `Sizes in ${unit}: button and segments (label) ${size('.btn')}, Urdu button (Naskh, label + ` +
-            `${fmt(parseFloat(getComputedStyle(fit).getPropertyValue('--ur-delta')))} before scaling) ${size('.btn-alt')}, chips ${size('.chip')}, ` +
+            `Sizes in ${unit}. English: button and segments (label) ${size('.btn')}, chips ${size('.r-chip')}, ` +
             `row name (body) ${size('.row-text .r-body')}, row detail (caption) ${size('.row-text .r-caption')}, ` +
-            `value (data) ${size('.row-end .r-data')}.`;
+            `value (data) ${size('.row-end .r-data')}. Urdu in Naskh, the English size + ${delta} before ` +
+            `scaling: button and segments ${size('.btn-alt')}, chips ${size('.ur-chipfit')}.`;
         }
       }
 
