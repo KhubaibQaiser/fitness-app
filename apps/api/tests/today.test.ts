@@ -32,6 +32,9 @@ let seeded: SeedResult;
 let tokenA = '';
 let tokenB = '';
 let tokenDesk = '';
+let tokenAdmin = '';
+let tokenManager = '';
+let tokenInstructor = '';
 let tokenOther = '';
 
 /** The seeded outlet's calendar day (YYYY-MM-DD), offset by `days`. Karachi has no DST. */
@@ -65,9 +68,10 @@ const addDueCheckIn = async (
     .values({ clientId, outletId, goalId: goal.id, scheduledFor: dueOn, status: 'DUE' });
 };
 
+/** A client with a DUE check-in, assigned to `coachId` (none when null). */
 const addDueClient = async (
   name: string,
-  coachId: string,
+  coachId: string | null,
   dueOn: string,
   outletId = seeded.outletId,
 ) => {
@@ -76,7 +80,9 @@ const addDueClient = async (
     .values({ outletId, name, sex: 'M', status: 'active' })
     .returning();
   if (!client) throw new Error('client insert failed');
-  await db.insert(schema.coachAssignments).values({ coachId, clientId: client.id, outletId });
+  if (coachId !== null) {
+    await db.insert(schema.coachAssignments).values({ coachId, clientId: client.id, outletId });
+  }
   await addDueCheckIn(client.id, outletId, dueOn);
   return client.id;
 };
@@ -90,13 +96,22 @@ const newUser = async (email: string) => {
   return user;
 };
 
-/** A second user in the pilot org who joined with the join code: COACH, or FRONT_DESK without a coach row. */
-const addMember = async (email: string, role: 'COACH' | 'FRONT_DESK') => {
+/**
+ * Another user in the pilot org. COACH joined with the join code and has a coach row; the other
+ * roles have none. ORG_ADMIN is org-wide (no outlet); the rest belong to the main outlet.
+ */
+const addMember = async (
+  email: string,
+  role: 'COACH' | 'FRONT_DESK' | 'INSTRUCTOR' | 'OUTLET_ADMIN' | 'ORG_ADMIN',
+) => {
   const user = await newUser(email);
-  await db
-    .insert(schema.memberships)
-    .values({ userId: user.id, role, orgId: seeded.orgId, outletId: seeded.outletId });
-  if (role === 'FRONT_DESK') return null;
+  await db.insert(schema.memberships).values({
+    userId: user.id,
+    role,
+    orgId: seeded.orgId,
+    outletId: role === 'ORG_ADMIN' ? null : seeded.outletId,
+  });
+  if (role !== 'COACH') return null;
   const [coach] = await db.insert(schema.coaches).values({ userId: user.id }).returning();
   if (!coach) throw new Error('coach insert failed');
   return coach.id;
@@ -164,6 +179,16 @@ beforeAll(async () => {
   if (coachB === null) throw new Error('coach B missing');
   await addDueClient('Coach B Client', coachB, outletDay(-30));
   await addMember('desk@pilot.local', 'FRONT_DESK');
+  await addMember('admin@pilot.local', 'ORG_ADMIN');
+  await addMember('manager@pilot.local', 'OUTLET_ADMIN');
+  await addMember('instructor@pilot.local', 'INSTRUCTOR');
+  // A second branch of the pilot org, with a client no coach has yet.
+  const [branch] = await db
+    .insert(schema.outlets)
+    .values({ orgId: seeded.orgId, name: 'Second Branch', timezone: 'Asia/Karachi' })
+    .returning();
+  if (!branch) throw new Error('outlet insert failed');
+  await addDueClient('Branch Two Bina', null, outletDay(-6), branch.id);
   const other = await addOtherOrgCoach('coach@other.local');
   await addDueClient('Other Org Client', other.coachId, outletDay(-5), other.outletId);
 
@@ -171,6 +196,9 @@ beforeAll(async () => {
   tokenA = await login('coach@pilot.local');
   tokenB = await login('coach-b@pilot.local');
   tokenDesk = await login('desk@pilot.local');
+  tokenAdmin = await login('admin@pilot.local');
+  tokenManager = await login('manager@pilot.local');
+  tokenInstructor = await login('instructor@pilot.local');
   tokenOther = await login('coach@other.local');
 });
 
@@ -235,11 +263,88 @@ describe('GET /v1/today', () => {
     expect(pulse.unreadCount).toBe(0);
   });
 
-  it('refuses a member without a coach profile and an anonymous caller', async () => {
-    expect((await get('/v1/today', tokenDesk)).status).toBe(403);
-    expect((await get('/v1/pulse', tokenDesk)).status).toBe(403);
+  it('refuses an anonymous caller, and shows nothing to a role that may not list clients', async () => {
     expect((await app.request('/v1/today')).status).toBe(401);
     expect((await app.request('/v1/pulse')).status).toBe(401);
+    const instructor = todayResponse.parse(await (await get('/v1/today', tokenInstructor)).json());
+    expect(instructor.scope).toBe('all');
+    expect(names(instructor)).toEqual([]);
+    expect(Object.values(instructor.counts).every((n) => n === 0)).toBe(true);
+  });
+});
+
+describe('scope: my clients or all', () => {
+  const today = async (token: string, scope?: string) => {
+    const res = await get(`/v1/today${scope === undefined ? '' : `?scope=${scope}`}`, token);
+    expect(res.status).toBe(200);
+    return todayResponse.parse(await res.json());
+  };
+  const pulse = async (token: string, scope: string) =>
+    pulseResponse.parse(await (await get(`/v1/pulse?scope=${scope}`, token)).json());
+
+  it('an admin who coaches: mine by default, all adds the rest of the org and only it', async () => {
+    const mine = await today(tokenA);
+    const all = await today(tokenA, 'all');
+    expect(mine.scope).toBe('mine');
+    expect(all.scope).toBe('all');
+    for (const name of ['Coach B Client', 'Branch Two Bina']) {
+      expect(names(mine)).not.toContain(name);
+      expect(names(all)).toContain(name);
+    }
+    expect(names(all)).toContain('Overdue Omar');
+    expect(names(all)).not.toContain('Other Org Client');
+    expect(all.counts.overdue).toBe(mine.counts.overdue + 2);
+
+    // The pulse counts and ETag follow the scope.
+    const pulseMine = await pulse(tokenA, 'mine');
+    const pulseAll = await pulse(tokenA, 'all');
+    expect(pulseMine).toMatchObject({ scope: 'mine', counts: mine.counts });
+    expect(pulseAll).toMatchObject({ scope: 'all', counts: all.counts });
+    expect(pulseAll.etag).not.toBe(pulseMine.etag);
+    const stale = await get('/v1/pulse?scope=all', tokenA, { 'if-none-match': pulseMine.etag });
+    expect(stale.status).toBe(200);
+  });
+
+  it('an admin with no coach profile: all by default instead of a 403, and mine refused', async () => {
+    const admin = await today(tokenAdmin);
+    expect(admin.scope).toBe('all');
+    for (const name of ['Overdue Omar', 'Coach B Client', 'Branch Two Bina']) {
+      expect(names(admin)).toContain(name);
+    }
+    expect(names(admin)).not.toContain('Other Org Client');
+    expect(await pulse(tokenAdmin, 'all')).toMatchObject({ scope: 'all', counts: admin.counts });
+
+    const refused = await get('/v1/today?scope=mine', tokenAdmin);
+    expect(refused.status).toBe(403);
+    expect(((await refused.json()) as { code: string }).code).toBe('COACH_REQUIRED');
+  });
+
+  it('an outlet manager: their outlet, not the other branch or org', async () => {
+    const manager = await today(tokenManager);
+    expect(manager.scope).toBe('all');
+    for (const name of ['Adnan (Demo)', 'Overdue Omar', 'Coach B Client']) {
+      expect(names(manager)).toContain(name);
+    }
+    expect(names(manager)).not.toContain('Branch Two Bina');
+    expect(names(manager)).not.toContain('Other Org Client');
+    // Front desk lists clients at outlet level too, so its all is the same outlet.
+    expect(names(await today(tokenDesk)).sort()).toEqual(names(manager).sort());
+  });
+
+  it('a COACH-only coach: all never widens past their own clients', async () => {
+    const all = await today(tokenB, 'all');
+    expect(all.scope).toBe('all');
+    expect(names(all)).toEqual(['Coach B Client']);
+    expect(all.counts).toEqual((await today(tokenB, 'mine')).counts);
+  });
+
+  it('a coach in another org: all is their own org only', async () => {
+    expect(names(await today(tokenOther, 'all'))).toEqual(['Other Org Client']);
+  });
+
+  it('rejects an unknown scope with 422', async () => {
+    expect((await get('/v1/today?scope=everyone', tokenA)).status).toBe(422);
+    expect((await get('/v1/pulse?scope=team', tokenA)).status).toBe(422);
   });
 });
 

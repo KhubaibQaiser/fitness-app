@@ -73,6 +73,9 @@
       "Today": {
         "type": "object",
         "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/ClientScope"
+          },
           "groups": {
             "type": "object",
             "properties": {
@@ -119,7 +122,12 @@
             "description": "The soonest check-in due after today in its outlet's calendar, for the all-clear state; null when none is scheduled."
           }
         },
-        "required": ["groups", "counts", "nextDueOn"]
+        "required": ["scope", "groups", "counts", "nextDueOn"]
+      },
+      "ClientScope": {
+        "type": "string",
+        "enum": ["mine", "all"],
+        "description": "mine: the signed-in coach's assigned clients. all: every client the principal's roles may list (a COACH-only principal still gets only their own)."
       },
       "TodayItem": {
         "type": "object",
@@ -266,6 +274,9 @@
       "Pulse": {
         "type": "object",
         "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/ClientScope"
+          },
           "unreadCount": {
             "type": "integer"
           },
@@ -277,7 +288,7 @@
             "description": "Same value as the ETag header; send it back as If-None-Match."
           }
         },
-        "required": ["unreadCount", "counts", "etag"]
+        "required": ["scope", "unreadCount", "counts", "etag"]
       }
     },
     "parameters": {}
@@ -2946,9 +2957,27 @@
     "/v1/today": {
       "get": {
         "operationId": "getToday",
+        "parameters": [
+          {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ClientScope"
+                },
+                {
+                  "description": "Defaults to mine with a coach profile and all without one."
+                }
+              ]
+            },
+            "required": false,
+            "description": "Defaults to mine with a coach profile and all without one.",
+            "name": "scope",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "The coach's grouped work queue",
+            "description": "The grouped work queue for the scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -2966,6 +2995,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         }
       }
@@ -2974,6 +3013,22 @@
       "get": {
         "operationId": "getPulse",
         "parameters": [
+          {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ClientScope"
+                },
+                {
+                  "description": "Defaults to mine with a coach profile and all without one."
+                }
+              ]
+            },
+            "required": false,
+            "description": "Defaults to mine with a coach profile and all without one.",
+            "name": "scope",
+            "in": "query"
+          },
           {
             "schema": {
               "type": "string"
@@ -3018,6 +3073,16 @@
             }
           },
           "403": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Problem details",
             "content": {
               "application/json": {

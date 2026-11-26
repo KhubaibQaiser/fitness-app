@@ -317,6 +317,17 @@ export const okResponse = z.object({ ok: z.boolean() });
 
 const isoInstant = z.iso.datetime({ offset: true });
 
+const clientScopeChoice = z.enum(['mine', 'all']).openapi('ClientScope', {
+  description:
+    "mine: the signed-in coach's assigned clients. all: every client the principal's roles may list (a COACH-only principal still gets only their own).",
+});
+
+export const clientScopeQuery = z.object({
+  scope: clientScopeChoice.optional().openapi({
+    description: 'Defaults to mine with a coach profile and all without one.',
+  }),
+});
+
 export const todayReasonSchema = z
   .discriminatedUnion('kind', [
     z.object({ kind: z.literal('RED_FLAG'), since: isoInstant }),
@@ -361,6 +372,7 @@ export const todayCountsSchema = z
 
 export const todayResponse = z
   .object({
+    scope: clientScopeChoice,
     groups: z
       .object({
         redFlags: z.array(todayItemSchema),
@@ -383,6 +395,7 @@ export const todayResponse = z
 
 export const pulseResponse = z
   .object({
+    scope: clientScopeChoice,
     unreadCount: z.number().int(),
     counts: todayCountsSchema,
     etag: z.string().openapi({
