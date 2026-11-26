@@ -2,7 +2,7 @@
 
 Only the Phase 2 coordinator edits this file (rulings O27, [`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-26, after rulings O30–O34. Every Phase 1 task except U3 and U4 has merged. The Phase 1 coordinator resumed U3 and runs U4, F7.1 and F7.2; the Phase 2 coordinator started the first mocks (O27).
+Last updated: 2026-11-26, after rulings O30–O34. Every Phase 1 task has merged except U3, U4, the back-navigation fallback and the Q0 follow-ups. The Phase 1 coordinator resumed U3 and runs U4, F7.1 and F7.2; the Phase 2 coordinator started the first mocks (O27).
 
 ## Phase 1
 
@@ -24,7 +24,7 @@ Last updated: 2026-11-26, after rulings O30–O34. Every Phase 1 task except U3 
 | —   | Lint fix after #112 and #114   | U2         | merged      | #118                                          | #112's test stub clashed with U2's typescript-eslint 8.74                                                                                                                                                                                             |
 | —   | One press owner per control    | docs       | merged      | #122                                          | The iOS tap bug, also present on SDK 57: roster rows didn't open the client. U3 blocker                                                                                                                                                               |
 | O22 | Check-in verdict validation    | docs       | merged      | #123                                          | The seed stores engine verdicts; the detail screen validates and shows Retry                                                                                                                                                                          |
-| —   | Back-navigation fallback       | docs       | building    | `fix/back-navigation-fallback`                | O30: before U3, built on `solito/navigation`                                                                                                                                                                                                          |
+| —   | Back-navigation fallback       | docs       | building    | draft #129                                    | O30: before U3, built on `solito/navigation`                                                                                                                                                                                                          |
 | —   | Q0 follow-ups                  | Q0         | not started |                                               | O32: env-gated source-maps line and `test:perf` in CI                                                                                                                                                                                                 |
 
 ## Phase 2
@@ -88,7 +88,7 @@ Last updated: 2026-11-26, after rulings O30–O34. Every Phase 1 task except U3 
 
 - **D1** (volt only for chart marks) stands unless the owner overrules it, per [`rulings.md`](rulings.md).
 - **Today's ORG_ADMIN scope** (F7.1): the owner asked for examples first; #125 waits on it.
-- **Parked findings under O34:** the parent's list of findings already parked in the docs is with the owner, to be filed as issues on his yes.
+- **Parked findings under O34:** the parent sent the owner its list of findings already parked in the docs (2026-11-26). Each becomes an issue only on his yes.
 
 ## Pending after Phase 1
 
