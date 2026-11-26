@@ -7,7 +7,7 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 import { DateTime } from 'luxon';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { schema as s, seed, type Db, type SeedResult } from '@gymos/db';
-import { getTodayQueue, type TodayQueue } from './today';
+import { getTodayQueue, orderTodayGroups, type TodayItem, type TodayQueue } from './today';
 
 const migrationsFolder = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -295,5 +295,46 @@ describe('getTodayQueue', () => {
       now: NOW,
     });
     expect(Object.values(crossTenant.groups).flat()).toEqual([]);
+  });
+});
+
+describe('orderTodayGroups', () => {
+  // Rows that tie on everything a coach sees: one client with two DUE check-ins (one per goal)
+  // and two blocked plans. Only the ids order them, so the pulse ETag can't flap with row order.
+  const item = (reason: TodayItem['reason']): TodayItem => ({
+    clientId: 'client-1',
+    clientName: 'Twin Tariq',
+    lastWeight: null,
+    reason,
+  });
+  const due = (checkInId: string) =>
+    item({ kind: 'CHECKIN_OVERDUE', checkInId, scheduledFor: '2026-11-22', daysOverdue: 4 });
+  const today = (checkInId: string) =>
+    item({ kind: 'CHECKIN_DUE', checkInId, scheduledFor: '2026-11-26' });
+  const blocked = (planId: string) => item({ kind: 'PLAN_NEEDS_REVIEW', planId, planVersion: 1 });
+  const draft = (planId: string) =>
+    item({ kind: 'DRAFT_AWAITING_PUBLISH', planId, planVersion: 2 });
+  const groups = (flip: boolean) => {
+    const pair = <T>(a: T, b: T) => (flip ? [b, a] : [a, b]);
+    return {
+      redFlags: [],
+      plansBlocked: pair(blocked('plan-a'), blocked('plan-b')),
+      overdue: pair(due('check-a'), due('check-b')),
+      dueToday: pair(today('check-c'), today('check-d')),
+      drafts: pair(draft('plan-c'), draft('plan-d')),
+    };
+  };
+
+  it('gives one order for tied rows, whichever order the database returned them in', () => {
+    const ordered = orderTodayGroups(groups(false));
+    expect(orderTodayGroups(groups(true))).toEqual(ordered);
+    expect(ordered.overdue.map((i) => i.reason)).toMatchObject([
+      { checkInId: 'check-a' },
+      { checkInId: 'check-b' },
+    ]);
+    expect(ordered.plansBlocked.map((i) => i.reason)).toMatchObject([
+      { planId: 'plan-a' },
+      { planId: 'plan-b' },
+    ]);
   });
 });

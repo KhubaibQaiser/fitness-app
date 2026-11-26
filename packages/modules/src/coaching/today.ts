@@ -40,8 +40,38 @@ export type TodayQueue = {
   nextDueOn: string | null;
 };
 
+/** The row behind the reason: a client can have several DUE check-ins (one per goal) or plans. */
+const refOf = (i: TodayItem): string => {
+  switch (i.reason.kind) {
+    case 'RED_FLAG':
+      return '';
+    case 'CHECKIN_OVERDUE':
+    case 'CHECKIN_DUE':
+      return i.reason.checkInId;
+    case 'PLAN_NEEDS_REVIEW':
+    case 'DRAFT_AWAITING_PUBLISH':
+      return i.reason.planId;
+  }
+};
+
 const byName = (a: TodayItem, b: TodayItem) =>
-  a.clientName.localeCompare(b.clientName) || a.clientId.localeCompare(b.clientId);
+  a.clientName.localeCompare(b.clientName) ||
+  a.clientId.localeCompare(b.clientId) ||
+  refOf(a).localeCompare(refOf(b));
+
+const sinceOf = (i: TodayItem) => (i.reason.kind === 'RED_FLAG' ? i.reason.since : '');
+const daysOf = (i: TodayItem) => (i.reason.kind === 'CHECKIN_OVERDUE' ? i.reason.daysOverdue : 0);
+
+/** Each group in display order, whatever order the rows came in (the pulse ETag hashes it). */
+export const orderTodayGroups = (groups: TodayGroups): TodayGroups => ({
+  redFlags: [...groups.redFlags].sort(
+    (a, b) => sinceOf(a).localeCompare(sinceOf(b)) || byName(a, b),
+  ),
+  plansBlocked: [...groups.plansBlocked].sort(byName),
+  overdue: [...groups.overdue].sort((a, b) => daysOf(b) - daysOf(a) || byName(a, b)),
+  dueToday: [...groups.dueToday].sort(byName),
+  drafts: [...groups.drafts].sort(byName),
+});
 
 /** Whole days from `from` to `to`, both YYYY-MM-DD. */
 const daysBetween = (from: string, to: string): number => {
@@ -205,16 +235,7 @@ export const getTodayQueue = async (
       : [],
   );
 
-  const sinceOf = (i: TodayItem) => (i.reason.kind === 'RED_FLAG' ? i.reason.since : '');
-  const daysOf = (i: TodayItem) => (i.reason.kind === 'CHECKIN_OVERDUE' ? i.reason.daysOverdue : 0);
-
-  const groups: TodayGroups = {
-    redFlags: redFlags.sort((a, b) => sinceOf(a).localeCompare(sinceOf(b)) || byName(a, b)),
-    plansBlocked: plansBlocked.sort(byName),
-    overdue: overdue.sort((a, b) => daysOf(b) - daysOf(a) || byName(a, b)),
-    dueToday: dueToday.sort(byName),
-    drafts: drafts.sort(byName),
-  };
+  const groups = orderTodayGroups({ redFlags, plansBlocked, overdue, dueToday, drafts });
   return {
     groups,
     counts: {
