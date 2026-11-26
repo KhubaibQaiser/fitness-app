@@ -868,7 +868,7 @@
     </main>
     <!--
       Token data: a verbatim copy of docs/revamp/reference/tokens.floodlight.json, taken from
-      origin/main at 953642c. Prettier may re-indent it; compare with JSON.parse and a deep-equal.
+      origin/main at 953642c. Prettier may re-indent it. Compare with JSON.parse and a deep-equal.
       Nothing below types a colour from the token set by hand.
     -->
     <script type="application/json" id="tokens">
@@ -3605,7 +3605,7 @@
         darkText: '#FACC15',
         borderOnLight: true,
       };
-      // Width edges: today's `md` from packages/ui/src/breakpoints.ts; the proposal from F1 requirement 10.
+      // Width edges: today's `md` from packages/ui/src/breakpoints.ts, the proposal from F1 requirement 10.
       const TODAY_DESKTOP = 768;
       const TABLET_MIN = 744;
       const DESKTOP_MIN = 1200;
@@ -3764,7 +3764,7 @@
         return m ? { family: m[1], step: Number(m[2]) } : null;
       };
 
-      // ---------- tenant brand, tokens.md §2.4 steps 1–8
+      // ---------- tenant brand, tokens.md §2.4 steps 1 to 8
       function deriveBrandTheme(hex) {
         parseHex(hex); // step 1: throws at the manifest boundary
         const brand = hex.toUpperCase();
@@ -3837,7 +3837,7 @@
         const policy = dangerDE < 15 ? 'inverse-actions' : 'brand-actions';
         if (policy !== 'brand-actions')
           throw new Error(
-            'Red-brand policy (T5) applies to this brand; this mock only renders brand actions.',
+            'Red-brand policy (T5) applies to this brand. This mock only renders brand actions.',
           );
         return {
           brand,
@@ -4088,7 +4088,7 @@
           const g = p.split('.')[0];
           if (g !== group) {
             group = g;
-            html += `<p class="group-h">${g}${g === 'action' || g === 'focus' ? ` <span class="tag">${icon('info')}JSON default is ultramarine; Sunflower replaces it at runtime (section 3)</span>` : ''}</p>`;
+            html += `<p class="group-h">${g}${g === 'action' || g === 'focus' ? ` <span class="tag">${icon('info')}JSON default is ultramarine. Sunflower replaces it at runtime (section 3)</span>` : ''}</p>`;
           }
           const cells = MODES.map((mode) => {
             const tok = sem(mode, p);
@@ -4115,7 +4115,7 @@
           <table style="margin-top:12px"><thead><tr><th scope="col">Layer</th><th scope="col">Primitive</th><th scope="col">OKLCH L</th><th scope="col">Step from layer below</th></tr></thead><tbody>${steps
             .map(
               (s, i) =>
-                `<tr><td><code>${s.k}</code></td><td><code>${aliasLabel(sem('dark', s.k))}</code> <span class="mono">${s.hex}</span></td><td>${s.L.toFixed(3)}</td><td>${i ? `ΔL ${(s.L - steps[i - 1].L).toFixed(3)} · ${fmt(contrast(s.hex, steps[i - 1].hex))}` : '—'}</td></tr>`,
+                `<tr><td><code>${s.k}</code></td><td><code>${aliasLabel(sem('dark', s.k))}</code> <span class="mono">${s.hex}</span></td><td>${s.L.toFixed(3)}</td><td>${i ? `ΔL ${(s.L - steps[i - 1].L).toFixed(3)} · ${fmt(contrast(s.hex, steps[i - 1].hex))}` : 'base layer'}</td></tr>`,
             )
             .join(
               '',
@@ -4138,7 +4138,7 @@
           rows += `<div class="gt-row"><span class="k"><code>${fgK}</code> on <code>${bgK}</code> <span class="small muted">· ${need === null ? 'exempt, disabled text' : 'needs ' + needLabel(need, fgK)}</span></span>${cells.join('')}</div>`;
         }
         html += `</div><div id="s2-contrast"><h3>Contrast, every pair in tokens.md §6.3 and §6.4</h3>
-          <p class="muted small">WCAG 2.2 relative luminance. Ratios are truncated to two decimals; pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine; Sunflower's ratios are in section 3.</p>
+          <p class="muted small">WCAG 2.2 relative luminance. Ratios are truncated to two decimals. Pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine. Sunflower's ratios are in section 3.</p>
           <p id="pair-summary"></p>
           <div class="gt-row head"><span class="k">Pair</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>${rows}</div>`;
         $('#semantic').innerHTML = html;
@@ -4283,7 +4283,7 @@
           )
           .join('')}</tbody></table></div>${
           B.adrDiffs.length
-            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. The page shows the computed value; the owner picks which one F1 ships.</p>`
+            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. The page shows the computed value. The owner picks which one F1 ships.</p>`
             : ''
         }`;
         $('#sunflower').innerHTML = html;
@@ -4341,7 +4341,7 @@
           }
           const solid = semHex(mode, 'status.danger.solid');
           const onSolid = semHex(mode, 'status.danger.onSolid');
-          html += `<div class="chip-row"><div><span class="chip" style="background:${solid};color:${onSolid}">${icon('octagon')}Severe allergy · Peanut</span></div><div class="small"><strong>severe allergy</strong> · the only solid red chip; <code>status.danger.solid</code>, octagon icon and words; never brand-tinted, never glass<br>Words ${ratioLine(onSolid, solid, 4.5)}</div></div></div>`;
+          html += `<div class="chip-row"><div><span class="chip" style="background:${solid};color:${onSolid}">${icon('octagon')}Severe allergy · Peanut</span></div><div class="small"><strong>severe allergy</strong> · the only solid red chip. <code>status.danger.solid</code>, octagon icon and words, never brand-tinted, never glass<br>Words ${ratioLine(onSolid, solid, 4.5)}</div></div></div>`;
         }
         html += `</div>`;
         // D1 warning fills
@@ -4357,7 +4357,7 @@
             if (!ok) B.d1Warning.push(`${mode} ${k} = ${aliasLabel(tok)}`);
           }
         }
-        html += `<h3>D1 check: warning fills use amber step 500 or darker</h3><p class="muted small">Read from the token data. D1 does not say whether a pale wash counts as a fill; the solid fails either way.</p><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Mode and token</th><th scope="col">Primitive</th><th scope="col">D1</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+        html += `<h3>D1 check: warning fills use amber step 500 or darker</h3><p class="muted small">Read from the token data. D1 does not say whether a pale wash counts as a fill. The solid fails either way.</p><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Mode and token</th><th scope="col">Primitive</th><th scope="col">D1</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
         $('#status').innerHTML = html;
       }
 
@@ -4419,14 +4419,14 @@
             `<div class="panel t-${mode}">${modeTitle(mode)}${['sequential', 'diverging']
               .map((kind) => {
                 const steps = leaves(T.semantic[mode].color.viz[kind]);
-                return `<p class="small" style="margin:8px 0 4px"><code>viz.${kind}.1–7</code> ${kind === 'sequential' ? 'low → high' : 'under ← target → over'}</p><div class="ramp">${steps.map(([k, t]) => `<span style="background:${t.$value};color:${textOn(t.$value)}">${k}</span>`).join('')}</div><p class="mono muted small" style="margin-top:2px">${steps.map(([, t]) => t.$value).join(' ')}</p>`;
+                return `<p class="small" style="margin:8px 0 4px"><code>viz.${kind}.1 to 7</code> ${kind === 'sequential' ? 'low → high' : 'under ← target → over'}</p><div class="ramp">${steps.map(([k, t]) => `<span style="background:${t.$value};color:${textOn(t.$value)}">${k}</span>`).join('')}</div><p class="mono muted small" style="margin-top:2px">${steps.map(([, t]) => t.$value).join(' ')}</p>`;
               })
               .join('')}</div>`,
         ).join('')}</div>`;
         html += `<h3>Sample weight chart</h3><div class="two">${MODES.map((mode) => {
           const c = (k) => semHex(mode, `viz.${k}`);
           return `<div class="panel t-${mode} chart">${modeTitle(mode)}<p class="small muted" style="margin:0">Body weight, kg · synthetic client</p>
-            <div class="legend"><span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="${c('categorical.1')}" fill-opacity="0.45"/></svg>Weigh-ins</span><span><svg width="18" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c('categorical.1')}" stroke-width="2"/></svg>Trend</span><span><svg width="18" height="12" aria-hidden="true"><rect width="18" height="12" fill="${c('goalBand')}"/><line x1="0" x2="18" y1="2" y2="2" stroke="${c('goalLine')}" stroke-width="1.5" stroke-dasharray="4 4"/></svg>Goal ${GOAL[0]}–${GOAL[1]} kg</span></div>
+            <div class="legend"><span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="${c('categorical.1')}" fill-opacity="0.45"/></svg>Weigh-ins</span><span><svg width="18" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c('categorical.1')}" stroke-width="2"/></svg>Trend</span><span><svg width="18" height="12" aria-hidden="true"><rect width="18" height="12" fill="${c('goalBand')}"/><line x1="0" x2="18" y1="2" y2="2" stroke="${c('goalLine')}" stroke-width="1.5" stroke-dasharray="4 4"/></svg>Goal ${GOAL[0]} to ${GOAL[1]} kg</span></div>
             ${weightChart(mode)}
             <p class="small" style="margin-top:12px">Macros today, g</p>${[
               ['protein', 140],
@@ -4458,8 +4458,8 @@
         B.d1Volt = outside.length;
         html += `<h3>D1 check: volt appears only under viz.*</h3><p class="muted small">Scans every semantic token in both modes for a volt alias or a hex equal to a volt step.</p>
           <p>${badge(outside.length ? { cls: 'fail', icon: 'fail' } : { cls: 'pass', icon: 'pass' }, outside.length ? `Fail: ${outside.length} tokens outside viz.* resolve to volt` : 'Pass: volt appears only under viz.*')}</p>
-          ${outside.length ? `<p class="small">Outside viz.*: ${outside.join('; ')}.</p><p class="small muted">These are the <code>accent.volt.*</code> keys tokens.md §5.2 defines. F1 requirement 7 says no semantic UI token may resolve to volt, so F1 must drop or remap them. The owner decides which.</p>` : ''}
-          <p class="small muted">Under viz.* (allowed): ${inViz.join('; ') || 'none'}. <code>viz.categorical.2</code> (carbs) is also a volt tone (tokens.md §7.2) but not an exact step, so the hex scan does not list it; it sits under viz.* either way.</p>`;
+          ${outside.length ? `<p class="small">Outside viz.*: ${outside.join(', ')}.</p><p class="small muted">These are the <code>accent.volt.*</code> keys tokens.md §5.2 defines. F1 requirement 7 says no semantic UI token may resolve to volt, so F1 must drop or remap them. The owner decides which.</p>` : ''}
+          <p class="small muted">Under viz.* (allowed): ${inViz.join(', ') || 'none'}. <code>viz.categorical.2</code> (carbs) is also a volt tone (tokens.md §7.2) but not an exact step, so the hex scan does not list it. It sits under viz.* either way.</p>`;
         $('#viz').innerHTML = html;
       }
 
@@ -4510,13 +4510,13 @@
           };
           const w = worstChrome(mode);
           html += `<div class="panel t-${mode}">${modeTitle(mode)}<div class="two" style="gap:12px"><div>${frame('glass')}</div><div>${frame('solid')}</div></div>
-            <p class="small" style="margin-top:8px"><code>fg.primary</code> on the glass tint, worst of ${w.n} solid backdrops (black, white, steps 300–900 of each family): ${fmt(w.r)} over ${w.name} · ${badge(verdict(w.r, 7), w.r >= 7 ? 'Pass, at least 7:1' : 'Fail, under 7:1')}</p></div>`;
+            <p class="small" style="margin-top:8px"><code>fg.primary</code> on the glass tint, worst of ${w.n} solid backdrops (black, white, steps 300 to 900 of each family): ${fmt(w.r)} over ${w.name} · ${badge(verdict(w.r, 7), w.r >= 7 ? 'Pass, at least 7:1' : 'Fail, under 7:1')}</p></div>`;
         }
         $('#glass').innerHTML = html + `</div>`;
       }
 
       // ---------- 7. widths
-      // Widths in iOS points or Android dp; a full-screen web view reports the same number in CSS px.
+      // Widths in iOS points or Android dp. A full-screen web view reports the same number in CSS px.
       const DEVICES = [
         ['iPhone SE (3rd gen)', 'portrait', 375, 'pt'],
         ['iPhone 16', 'portrait', 393, 'pt'],
@@ -4528,8 +4528,8 @@
         ['iPad mini (6th gen, A17 Pro)', 'landscape', 1133, 'pt'],
         ['iPad Air 11-inch (M2), iPad (10th gen)', 'portrait', 820, 'pt'],
         ['iPad Air 11-inch (M2), iPad (10th gen)', 'landscape', 1180, 'pt'],
-        ['iPad Pro 11-inch (1st–4th gen)', 'portrait', 834, 'pt'],
-        ['iPad Pro 11-inch (1st–4th gen)', 'landscape', 1194, 'pt'],
+        ['iPad Pro 11-inch (1st to 4th gen)', 'portrait', 834, 'pt'],
+        ['iPad Pro 11-inch (1st to 4th gen)', 'landscape', 1194, 'pt'],
         ['iPad Pro 11-inch (M4)', 'portrait', 834, 'pt'],
         ['iPad Pro 11-inch (M4)', 'landscape', 1210, 'pt'],
         ['iPad Pro 12.9-inch, iPad Air 13-inch', 'portrait', 1024, 'pt'],
@@ -4548,10 +4548,10 @@
           1280,
           'dp',
         ],
-        ['Web browser window', '—', 768, 'px'],
-        ['Web browser window', '—', 1199, 'px'],
-        ['Web laptop', '—', 1280, 'px'],
-        ['Web desktop', '—', 1440, 'px'],
+        ['Web browser window', '', 768, 'px'],
+        ['Web browser window', '', 1199, 'px'],
+        ['Web laptop', '', 1280, 'px'],
+        ['Web desktop', '', 1440, 'px'],
       ];
       const today = (w) => (w >= TODAY_DESKTOP ? 'desktop' : 'phone');
       const proposed = (w) => (w >= DESKTOP_MIN ? 'desktop' : w >= TABLET_MIN ? 'tablet' : 'phone');
@@ -4561,12 +4561,12 @@
         const pct = (a, b) => ((b - a) / (hi - lo)) * 100;
         let html = `<p class="muted">The layout is picked by window width (O8), so iPad split screen and narrow browser windows follow the same ranges. Phones stay portrait.</p>
           <p class="small" style="margin:12px 0 0"><strong>Proposed</strong></p><div class="rangebar" role="img" aria-label="Proposed: phone below ${TABLET_MIN} px, tablet ${TABLET_MIN} to ${DESKTOP_MIN - 1} px, desktop ${DESKTOP_MIN} px and up">
-            <span class="rb-phone" style="width:${pct(lo, TABLET_MIN)}%">Phone<span class="num">&lt; ${TABLET_MIN}</span></span><span class="rb-tablet" style="width:${pct(TABLET_MIN, DESKTOP_MIN)}%">Tablet<span class="num">${TABLET_MIN}–${DESKTOP_MIN - 1}</span></span><span class="rb-desktop" style="width:${pct(DESKTOP_MIN, hi)}%">Desktop<span class="num">${DESKTOP_MIN}+</span></span></div>
+            <span class="rb-phone" style="width:${pct(lo, TABLET_MIN)}%">Phone<span class="num">&lt; ${TABLET_MIN}</span></span><span class="rb-tablet" style="width:${pct(TABLET_MIN, DESKTOP_MIN)}%">Tablet<span class="num">${TABLET_MIN} to ${DESKTOP_MIN - 1}</span></span><span class="rb-desktop" style="width:${pct(DESKTOP_MIN, hi)}%">Desktop<span class="num">${DESKTOP_MIN}+</span></span></div>
           <p class="small" style="margin:0"><strong>Today</strong> (<code>md</code> = ${TODAY_DESKTOP} px)</p><div class="rangebar" role="img" aria-label="Today: phone below ${TODAY_DESKTOP} px, desktop ${TODAY_DESKTOP} px and up">
             <span class="rb-phone" style="width:${pct(lo, TODAY_DESKTOP)}%">Phone<span class="num">&lt; ${TODAY_DESKTOP}</span></span><span class="rb-desktop" style="width:${pct(TODAY_DESKTOP, hi)}%">Desktop<span class="num">${TODAY_DESKTOP}+</span></span></div>
           <p class="small">This window is <strong id="live-w" class="num"></strong> wide: <strong id="live-r"></strong>.</p>
           <div class="callout"><strong>For approval: the two effects F1 names</strong><ul>
-            <li>Web at ${TODAY_DESKTOP}–${DESKTOP_MIN - 1} px moves from today's desktop layout to the tablet one.</li>
+            <li>Web at ${TODAY_DESKTOP} to ${DESKTOP_MIN - 1} px moves from today's desktop layout to the tablet one.</li>
             <li>12.9- and 13-inch iPads in landscape (1366 and 1376 pt) get the desktop layout.</li></ul>
             <strong>Found while mapping devices</strong><ul>
             <li>iPad Pro 11-inch (M4) in landscape is 1210 pt, so it gets desktop. Only older 11-inch Pros (1194 pt) and the 11-inch Air (1180 pt) land in tablet.</li>
@@ -4576,7 +4576,7 @@
             ([name, o, w, unit]) => {
               const t = today(w);
               const p = proposed(w);
-              return `<tr><td>${name}<br><span class="small muted num">${o === '—' ? '' : o + ' · '}${w} ${unit}</span></td><td>${t}</td><td>${t !== p ? `<span class="moves">${p}</span> (moves)` : p}</td></tr>`;
+              return `<tr><td>${name}<br><span class="small muted num">${o ? o + ' · ' : ''}${w} ${unit}</span></td><td>${t}</td><td>${t !== p ? `<span class="moves">${p}</span> (moves)` : p}</td></tr>`;
             },
           ).join('')}</tbody></table></div>
           <p class="small muted">Android widths are computed from pixels and density, not measured on a device.</p>`;
@@ -4598,11 +4598,11 @@
           );
         if (B.d1Warning.length)
           items.push(
-            `D1: warning fills lighter than amber.500: ${B.d1Warning.join('; ')}. Section 4.`,
+            `D1: warning fills lighter than amber.500: ${B.d1Warning.join(', ')}. Section 4.`,
           );
         for (const [what, a, c] of B.adrDiffs)
           items.push(
-            `ADR-0019 ${what.toLowerCase()} is <span class="mono">${a}</span>; the §2.4 recipe gives <span class="mono">${c}</span>. Section 3.`,
+            `ADR-0019 ${what.toLowerCase()} is <span class="mono">${a}</span>, the §2.4 recipe gives <span class="mono">${c}</span>. Section 3.`,
           );
         items.push(
           `Width edges ${TABLET_MIN} and ${DESKTOP_MIN} px, with their effects. Section 7.`,
