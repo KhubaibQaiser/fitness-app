@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { ROSTER_PAGE_SIZE, ROSTER_PLAN_STATUSES, ROSTER_SORTS } from '@gymos/modules/coaching';
 
 /** Request/response DTOs — the OpenAPI contract source. */
 
@@ -295,6 +296,50 @@ export const updateMeBody = z
       body.defaultCountry !== undefined,
     { error: 'Provide at least one preference to update' },
   );
+
+export const rosterQuery = z.object({
+  q: z.string().trim().max(120).optional(),
+  sort: z.enum(ROSTER_SORTS).default('name'),
+  dir: z.enum(['asc', 'desc']).default('asc'),
+  cursor: z.string().max(1024).optional().openapi({
+    description: "The previous page's nextCursor, issued for the same sort and dir.",
+  }),
+});
+
+export const rosterRow = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    goalPreset: z.enum(['LOSE', 'GAIN', 'MAINTAIN', 'RECOMP']).nullable(),
+    lastCheckInOn: z.iso.date().nullable().openapi({
+      description: 'Scheduled date (YYYY-MM-DD) of the latest completed check-in.',
+    }),
+    lastAdherence: z.number().int().min(1).max(5).nullable().openapi({
+      description: "That check-in's adherence rating, 1–5.",
+    }),
+    nextDueOn: z.iso.date().nullable().openapi({
+      description: 'Scheduled date (YYYY-MM-DD) of the earliest due check-in.',
+    }),
+    weightKg: z.number().nullable().openapi({ description: 'Latest recorded weight, in kg.' }),
+    weightChangeKg: z.number().nullable().openapi({
+      description: "Latest weight minus the active goal's start weight, in kg.",
+    }),
+    plan: z
+      .object({
+        status: z.enum(ROSTER_PLAN_STATUSES),
+        version: z.number().int(),
+      })
+      .nullable()
+      .openapi({ description: 'Latest plan version that is not superseded or archived.' }),
+  })
+  .openapi('RosterRow');
+
+export const rosterPage = z
+  .object({
+    items: z.array(rosterRow).max(ROSTER_PAGE_SIZE),
+    nextCursor: z.string().nullable().openapi({ description: 'Null on the last page.' }),
+  })
+  .openapi('RosterPage');
 
 /** Loose-but-typed response envelopes (tightened in the contracts milestone). */
 export const anyObject = z.record(z.string(), z.unknown());

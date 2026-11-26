@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { MATRIX } from '@gymos/core/rbac';
 import {
   createClient,
   createNote,
@@ -10,6 +11,7 @@ import {
   listCheckIns,
   listClients,
   listNotes,
+  listRoster,
   onboardClient,
   updateClient,
 } from '@gymos/modules/coaching';
@@ -46,6 +48,41 @@ export const registerClientRoutes = (app: GymosApp, bind: RouteBind): void => {
         orgId: principal.orgId,
       });
       return c.json({ items });
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/v1/roster',
+      operationId: 'listRoster',
+      request: { query: dto.rosterQuery },
+      responses: {
+        200: { description: 'Active clients, 50 per page (keyset)', ...json(dto.rosterPage) },
+        ...problemDocs(404, 422),
+      },
+    }),
+    async (c) => {
+      const principal = c.get('principal');
+      // authorize() needs a client id for COACH's 'assigned' grant; listRoster checks each row with can().
+      if (!principal.actor.roles.some((role) => MATRIX[role]['client.list'] !== undefined)) {
+        throw new ProblemError(404, 'NOT_FOUND', 'Resource not found');
+      }
+      const { q, sort, dir, cursor } = c.req.valid('query');
+      const page = await listRoster(db, principal.actor, principal.orgId, {
+        sort,
+        dir,
+        ...(q !== undefined ? { q } : {}),
+        ...(cursor !== undefined ? { cursor } : {}),
+      });
+      if (!page.ok) {
+        throw new ProblemError(
+          422,
+          'INVALID_CURSOR',
+          'This page link has expired. Reload the list.',
+        );
+      }
+      return c.json(page.value, 200);
     },
   );
 
