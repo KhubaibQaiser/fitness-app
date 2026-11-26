@@ -15,7 +15,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    - its blocking rulings are answered;
    - for visual code, its mock is approved.
 
-   At most four builders run at once, each with its reviewer (rulings O10). After the first wave of screens merges, report usage and rebase churn to the owner, who decides whether to raise it.
+   At most five builders run at once across both coordinators, each with its reviewer (rulings O28). Until U4 merges, Phase 1's coordinator runs U3, U4, F7.1 and F7.2 with at most three, and Phase 2's coordinator runs the mocks with at most two and owns `status.md` and `rulings.md` (O27). After the first wave of screens merges, report usage and rebase churn to the owner, who decides whether to raise it.
 
 2. **Create one worktree and branch per task,** off the latest `main`. Worktrees sit outside the main checkout and outside `/tmp` (macOS clears `/private/tmp`), for example `<workspace>/fitness-app-wt/<task-id>`.
 
@@ -33,7 +33,9 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
 
 3. **Brief the builder** with the template below. Fill in exact paths and merged SHAs; never "see above".
 4. **Route mocks to the owner:**
+   - Each mock is self-contained HTML in a docs PR, with a PNG of each state and theme embedded in the PR body (rulings O29). A fresh reviewer checks it against its spec first.
    - One message per batch, with links.
+   - A mock PR merges only on the owner's explicit approval.
    - Record approval or change requests in `status.md`, with the date.
    - A mock change that alters a spec also updates the spec, in a docs PR, the same day.
 5. **When a builder reports "PR ready",** brief a fresh reviewer with the template below. The reviewer gets the diff and the spec, never the builder's reasoning.
@@ -48,7 +50,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    Use a merge commit. Then rebase every waiting branch that the merge affects and have its builder re-run verification. After a U task merges, close the Dependabot PRs it supersedes, with a comment naming it (rulings O3).
 
 8. **Installs and questions.** A builder runs only the installs its task's "Install" line names. Under rulings O5 each one asks the owner to confirm and waits until they do, so batch installs and run them while the owner is at the app. Batch rulings questions for the owner. Never work around the agent guard.
-9. **Update `status.md`** in a small `docs/revamp-status-<date>` PR, at most once a day. Only the parent edits it, so it never conflicts.
+9. **Update `status.md`** in a small `docs/revamp-status-<date>` PR, at most once a day. Only the Phase 2 coordinator edits it (rulings O27), so it never conflicts.
 
 **Stop a builder when it:**
 
