@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -32,6 +32,7 @@ let seeded: SeedResult;
 let tokenA = '';
 let tokenB = '';
 let tokenDesk = '';
+let tokenOther = '';
 
 /** The seeded outlet's calendar day (YYYY-MM-DD), offset by `days`. Karachi has no DST. */
 const outletDay = (days: number) =>
@@ -39,50 +40,59 @@ const outletDay = (days: number) =>
     Date.now() + days * 86_400_000,
   );
 
-const addDueClient = async (name: string, coachId: string, dueOn: string) => {
-  const [client] = await db
-    .insert(schema.clients)
-    .values({ outletId: seeded.outletId, name, sex: 'M', status: 'active' })
-    .returning();
-  if (!client) throw new Error('client insert failed');
-  await db
-    .insert(schema.coachAssignments)
-    .values({ coachId, clientId: client.id, outletId: seeded.outletId });
+const addDueCheckIn = async (
+  clientId: string,
+  outletId: string,
+  dueOn: string,
+  goalStatus: 'ACTIVE' | 'ACHIEVED' = 'ACTIVE',
+) => {
   const [goal] = await db
     .insert(schema.clientGoals)
     .values({
-      clientId: client.id,
-      outletId: seeded.outletId,
+      clientId,
+      outletId,
       preset: 'LOSE',
       rate: 'STANDARD',
       startDate: '2026-09-01',
       startWeightKg: 90,
       expectedWeeklyDeltaKg: -0.5,
+      status: goalStatus,
     })
     .returning();
   if (!goal) throw new Error('goal insert failed');
-  await db.insert(schema.checkIns).values({
-    clientId: client.id,
-    outletId: seeded.outletId,
-    goalId: goal.id,
-    scheduledFor: dueOn,
-    status: 'DUE',
-  });
+  await db
+    .insert(schema.checkIns)
+    .values({ clientId, outletId, goalId: goal.id, scheduledFor: dueOn, status: 'DUE' });
+};
+
+const addDueClient = async (
+  name: string,
+  coachId: string,
+  dueOn: string,
+  outletId = seeded.outletId,
+) => {
+  const [client] = await db
+    .insert(schema.clients)
+    .values({ outletId, name, sex: 'M', status: 'active' })
+    .returning();
+  if (!client) throw new Error('client insert failed');
+  await db.insert(schema.coachAssignments).values({ coachId, clientId: client.id, outletId });
+  await addDueCheckIn(client.id, outletId, dueOn);
   return client.id;
+};
+
+const newUser = async (email: string) => {
+  const [user] = await db
+    .insert(schema.users)
+    .values({ email, name: email, locale: 'en', passwordHash: await hashPassword(COACH_PASSWORD) })
+    .returning();
+  if (!user) throw new Error('user insert failed');
+  return user;
 };
 
 /** A second user in the pilot org who joined with the join code: COACH, or FRONT_DESK without a coach row. */
 const addMember = async (email: string, role: 'COACH' | 'FRONT_DESK') => {
-  const [user] = await db
-    .insert(schema.users)
-    .values({
-      email,
-      name: email,
-      locale: 'en',
-      passwordHash: await hashPassword(COACH_PASSWORD),
-    })
-    .returning();
-  if (!user) throw new Error('user insert failed');
+  const user = await newUser(email);
   await db
     .insert(schema.memberships)
     .values({ userId: user.id, role, orgId: seeded.orgId, outletId: seeded.outletId });
@@ -90,6 +100,25 @@ const addMember = async (email: string, role: 'COACH' | 'FRONT_DESK') => {
   const [coach] = await db.insert(schema.coaches).values({ userId: user.id }).returning();
   if (!coach) throw new Error('coach insert failed');
   return coach.id;
+};
+
+/** A coach who signed up alone: their own org, outlet, and COACH + ORG_ADMIN, as signup-coach does. */
+const addOtherOrgCoach = async (email: string) => {
+  const [org] = await db.insert(schema.organizations).values({ name: 'Other Gym' }).returning();
+  if (!org) throw new Error('org insert failed');
+  const [outlet] = await db
+    .insert(schema.outlets)
+    .values({ orgId: org.id, name: 'Other Branch', timezone: 'Asia/Karachi' })
+    .returning();
+  if (!outlet) throw new Error('outlet insert failed');
+  const user = await newUser(email);
+  await db.insert(schema.memberships).values([
+    { userId: user.id, role: 'COACH', orgId: org.id, outletId: outlet.id },
+    { userId: user.id, role: 'ORG_ADMIN', orgId: org.id },
+  ]);
+  const [coach] = await db.insert(schema.coaches).values({ userId: user.id }).returning();
+  if (!coach) throw new Error('coach insert failed');
+  return { coachId: coach.id, outletId: outlet.id };
 };
 
 const login = async (email: string) => {
@@ -135,11 +164,14 @@ beforeAll(async () => {
   if (coachB === null) throw new Error('coach B missing');
   await addDueClient('Coach B Client', coachB, outletDay(-30));
   await addMember('desk@pilot.local', 'FRONT_DESK');
+  const other = await addOtherOrgCoach('coach@other.local');
+  await addDueClient('Other Org Client', other.coachId, outletDay(-5), other.outletId);
 
   app = buildApp({ db, manifest, env: { JWT_ACCESS_SECRET: JWT_SECRET, AI_MODE: 'fallback' } });
   tokenA = await login('coach@pilot.local');
   tokenB = await login('coach-b@pilot.local');
   tokenDesk = await login('desk@pilot.local');
+  tokenOther = await login('coach@other.local');
 });
 
 describe('GET /v1/today', () => {
@@ -178,6 +210,29 @@ describe('GET /v1/today', () => {
 
     const pulseB = pulseResponse.parse(await (await get('/v1/pulse', tokenB)).json());
     expect(pulseB.counts).toEqual(b.counts);
+  });
+
+  it('never crosses orgs: a coach in another org sees only their own clients and counts', async () => {
+    const a = todayResponse.parse(await (await get('/v1/today', tokenA)).json());
+    expect(names(a)).not.toContain('Other Org Client');
+
+    const other = todayResponse.parse(await (await get('/v1/today', tokenOther)).json());
+    expect(names(other)).toEqual(['Other Org Client']);
+    for (const pilotClient of ['Adnan (Demo)', 'Overdue Omar', 'Coach B Client']) {
+      expect(names(other)).not.toContain(pilotClient);
+    }
+    expect(other.counts).toEqual({
+      redFlags: 0,
+      plansBlocked: 0,
+      overdue: 1,
+      dueToday: 0,
+      drafts: 0,
+    });
+    expect(other.nextDueOn).toBeNull();
+
+    const pulse = pulseResponse.parse(await (await get('/v1/pulse', tokenOther)).json());
+    expect(pulse.counts).toEqual(other.counts);
+    expect(pulse.unreadCount).toBe(0);
   });
 
   it('refuses a member without a coach profile and an anonymous caller', async () => {
@@ -232,6 +287,41 @@ describe('GET /v1/pulse', () => {
     const after = pulseResponse.parse(await res.json());
     expect(after.unreadCount).toBe(before.unreadCount + 1);
     expect(after.etag).not.toBe(before.etag);
+  });
+});
+
+describe('ETag stability', () => {
+  it('stays the same across repeated calls on unchanged data with tied rows', async () => {
+    // One client with two DUE check-ins (one per goal; only one goal can be ACTIVE) and two
+    // blocked plans: equal names and days, so only the ids order them. PGlite happens to return
+    // these rows in one order; orderTodayGroups' test in packages/modules proves the tie-break.
+    const clientId = await addDueClient('Twin Tariq', seeded.coachId, outletDay(-4));
+    await addDueCheckIn(clientId, seeded.outletId, outletDay(-4), 'ACHIEVED');
+    for (const version of [1, 2]) {
+      await db.insert(schema.mealPlans).values({
+        clientId,
+        coachId: seeded.coachId,
+        outletId: seeded.outletId,
+        version,
+        status: 'NEEDS_REVIEW',
+        targets: { kcal: 2000, proteinG: 150, fatG: 65, carbsG: 180, fiberG: 28 },
+      });
+    }
+    const today = todayResponse.parse(await (await get('/v1/today', tokenA)).json());
+    expect(today.groups.overdue.filter((i) => i.clientName === 'Twin Tariq')).toHaveLength(2);
+    expect(today.groups.plansBlocked.filter((i) => i.clientName === 'Twin Tariq')).toHaveLength(2);
+
+    const etagNow = async () =>
+      pulseResponse.parse(await (await get('/v1/pulse', tokenA)).json()).etag;
+    const first = await etagNow();
+    expect(await etagNow()).toBe(first);
+    // The queries have no ORDER BY; on Postgres another plan can return the rows in another order.
+    await db.execute(sql`set enable_hashjoin = off`);
+    try {
+      expect(await etagNow()).toBe(first);
+    } finally {
+      await db.execute(sql`reset enable_hashjoin`);
+    }
   });
 });
 
