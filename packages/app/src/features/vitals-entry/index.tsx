@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter } from 'solito/navigation';
 import {
   Body,
   Card,
@@ -18,6 +17,7 @@ import {
   YStack,
 } from '@gymos/ui';
 import { useRecordVitals, useVitals } from '../../api';
+import { useBackOr } from '../../lib/use-back-navigation';
 import { AppScreen } from '../shell/app-screen';
 import { VitalsEntrySkeleton } from './vitals-entry-skeleton';
 
@@ -74,7 +74,7 @@ const FIELD_ORDER: FieldKey[] = [
 
 /** Fast vitals capture — sectioned, prior values as hints, field-level errors. */
 export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
-  const router = useRouter();
+  const goBack = useBackOr(`/clients/${clientId}`);
   const vitals = useVitals(clientId);
   const record = useRecordVitals(clientId);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -99,7 +99,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   const chain = useFocusChain(FIELD_ORDER, { onSubmit: submit });
 
   if (vitals.isPending) {
-    return <VitalsEntrySkeleton />;
+    return <VitalsEntrySkeleton clientId={clientId} />;
   }
 
   if (saved) {
@@ -122,7 +122,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
           <Muted textAlign="center">
             History was appended. Prior readings were not overwritten.
           </Muted>
-          <PrimaryButton onPress={() => router.back()}>Back</PrimaryButton>
+          <PrimaryButton onPress={goBack}>Back</PrimaryButton>
         </YStack>
       </AppScreen>
     );
@@ -169,7 +169,7 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
     <AppScreen
       footer={
         <StickyFormFooter>
-          <OutlineButton flex={1} onPress={() => router.back()}>
+          <OutlineButton flex={1} onPress={goBack}>
             Cancel
           </OutlineButton>
           <PrimaryButton
