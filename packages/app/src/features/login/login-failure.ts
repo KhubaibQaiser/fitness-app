@@ -28,8 +28,10 @@ export const describeLoginFailure = (error: unknown): LoginFailure => {
     if (error.status === 401) {
       return failure('Email or password is incorrect.', { credentials: true });
     }
-    // The login route has no account lockout; this per-IP limit (10 a minute) is its only one.
-    if (error.status === 429) return failure('Too many attempts. Wait a minute and try again.');
+    // Per-IP limit or the per-account back-off, which can last up to 15 minutes.
+    if (error.status === 429) {
+      return failure('Too many sign-in attempts. Try again in a few minutes.');
+    }
     if (error.status >= 500) {
       const requestId = error.requestId?.trim();
       const reference = requestId ? ` Reference: ${requestId}` : '';
