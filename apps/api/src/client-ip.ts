@@ -40,3 +40,26 @@ export const createClientIpResolver = (platform: {
     return address !== null && isIP(address) !== 0 ? address : null;
   };
 };
+
+const hextets = (part: string): string[] =>
+  part === '' ? [] : part.split(':').flatMap((g) => (g.includes('.') ? ['0', '0'] : [g]));
+
+/**
+ * The per-IP limiter key: IPv4 per address; IPv6 grouped by /64, as is standard practice for rate
+ * limits, since one subscriber is usually given a whole /64. An IPv4-mapped IPv6 address counts as
+ * its IPv4 address.
+ */
+export const rateLimitKey = (ip: string): string => {
+  if (isIP(ip) !== 6) return ip;
+  const address = (ip.split('%')[0] ?? ip).toLowerCase();
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(address)?.[1];
+  if (mapped !== undefined) return mapped;
+  const [head = '', tail] = address.split('::');
+  const left = hextets(head);
+  const right = tail === undefined ? [] : hextets(tail);
+  const full = [...left, ...Array<string>(8 - left.length - right.length).fill('0'), ...right];
+  return `${full
+    .slice(0, 4)
+    .map((g) => Number.parseInt(g, 16).toString(16))
+    .join(':')}::/64`;
+};

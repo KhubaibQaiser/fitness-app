@@ -13,7 +13,7 @@ import {
   tenantManifestSchema,
 } from '@gymos/modules/tenancy';
 import { buildApp, type App } from '../src/app';
-import { createClientIpResolver } from '../src/client-ip';
+import { createClientIpResolver, rateLimitKey } from '../src/client-ip';
 import { type GymosVars } from '../src/http';
 
 const JWT_SECRET = 'a-test-jwt-access-secret-that-is-long-enough';
@@ -96,6 +96,23 @@ describe('login rate limiting', () => {
     }
     expect(statuses.slice(0, 10)).toEqual(Array.from({ length: 10 }, () => 401));
     expect(statuses[10]).toBe(429);
+  });
+
+  it('counts IPv6 addresses in one /64 as one caller, and another /64 separately', async () => {
+    const sameSubnet = ['2001:db8:1:2::a', '2001:DB8:1:2:ffff::b', '2001:db8:0001:0002:0:0:0:c'];
+    const statuses: number[] = [];
+    for (let k = 0; k < 11; k += 1) {
+      const res = await login(onVercel, `v6-${k}@example.com`, 'wrong-password-1', {
+        'x-real-ip': sameSubnet[k % sameSubnet.length] ?? '',
+      });
+      statuses.push(res.status);
+    }
+    expect(statuses.slice(0, 10)).toEqual(Array.from({ length: 10 }, () => 401));
+    expect(statuses[10]).toBe(429);
+    const otherSubnet = await login(onVercel, 'v6-other@example.com', 'wrong-password-1', {
+      'x-real-ip': '2001:db8:1:3::a',
+    });
+    expect(otherSubnet.status).toBe(401);
   });
 
   it('limits failures per account across client IPs, the same for unknown emails', async () => {
@@ -192,5 +209,18 @@ describe('createClientIpResolver', () => {
   it('uses the socket address elsewhere and ignores forwarding headers', async () => {
     expect(await resolve({}, forwardingHeaders, '192.0.2.10')).toBe('192.0.2.10');
     expect(await resolve({}, forwardingHeaders)).toBeNull();
+  });
+});
+
+describe('rateLimitKey', () => {
+  it.each([
+    ['IPv4 stays per address', '203.0.113.7', '203.0.113.7'],
+    ['IPv6 groups by /64', '2001:DB8:0:0:1::1', '2001:db8:0:0::/64'],
+    ['full IPv6 form', '2001:0db8:0001:0002:0003:0004:0005:0006', '2001:db8:1:2::/64'],
+    ['loopback', '::1', '0:0:0:0::/64'],
+    ['IPv4-mapped IPv6 counts as IPv4', '::ffff:192.0.2.1', '192.0.2.1'],
+    ['zone id is dropped', 'fe80::1%eth0', 'fe80:0:0:0::/64'],
+  ])('%s', (_label, ip, key) => {
+    expect(rateLimitKey(ip)).toBe(key);
   });
 });

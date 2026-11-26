@@ -9,6 +9,7 @@ import {
   startCoachSignup,
 } from '@gymos/modules/identity';
 import { clearAuthCookies, readRefreshToken } from '../auth-cookies';
+import { rateLimitKey } from '../client-ip';
 import { type AppContext, type GymosApp } from '../http';
 import { problemResponse } from '../problems';
 import { type RateLimiter, type RouteBind } from '../route-bind';
@@ -35,7 +36,9 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
   /** The per-IP limit, or the route's shared cap when the caller has no trusted IP. */
   const withinIpLimit = (c: AppContext, route: string, perIp: RateLimiter): Promise<boolean> => {
     const ip = clientIp(c);
-    return ip === null ? unattributedLimiter(`${route}:unattributed`) : perIp(`${route}:ip:${ip}`);
+    return ip === null
+      ? unattributedLimiter(`${route}:unattributed`)
+      : perIp(`${route}:ip:${rateLimitKey(ip)}`);
   };
 
   app.post('/v1/auth/login', async (c) => {
