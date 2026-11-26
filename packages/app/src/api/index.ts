@@ -1,12 +1,14 @@
 import {
+  infiniteQueryOptions,
   keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
   type UseMutationResult,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { api, type PlanOp, type Restriction } from '@gymos/contracts';
+import { api, type PlanOp, type Restriction, type RosterQuery } from '@gymos/contracts';
 
 /** Query-key factory — the single vocabulary for cache identity. */
 export const qk = {
@@ -14,6 +16,8 @@ export const qk = {
   mealInstructions: ['me', 'meal-instructions'] as const,
   config: ['config'] as const,
   clients: (q?: string) => ['clients', q ?? ''] as const,
+  rosterAll: ['roster'] as const,
+  roster: (query: Omit<RosterQuery, 'cursor'>) => ['roster', query] as const,
   clientDetail: (id: string) => ['clients', 'detail', id] as const,
   vitals: (clientId: string) => ['vitals', clientId] as const,
   dietary: (clientId: string) => ['dietary', clientId] as const,
@@ -71,6 +75,20 @@ export const useClients = (q?: string) =>
     placeholderData: keepPreviousData,
   });
 
+/** Roster v2 in keyset pages of 50; shared by the hook and server prefetch. */
+export const rosterQueryOptions = (query: Omit<RosterQuery, 'cursor'> = {}) =>
+  infiniteQueryOptions({
+    queryKey: qk.roster(query),
+    queryFn: ({ pageParam }) =>
+      api.clients.roster(pageParam === null ? query : { ...query, cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.nextCursor,
+    placeholderData: keepPreviousData,
+  });
+
+export const useRoster = (query: Omit<RosterQuery, 'cursor'> = {}) =>
+  useInfiniteQuery(rosterQueryOptions(query));
+
 export const useClientDetail = (clientId: string) =>
   useQuery({ queryKey: qk.clientDetail(clientId), queryFn: () => api.clients.detail(clientId) });
 
@@ -120,6 +138,7 @@ export const useUnreadCount = () =>
 const invalidateClient = (queryClient: ReturnType<typeof useQueryClient>, clientId: string) => {
   void queryClient.invalidateQueries({ queryKey: qk.clientDetail(clientId) });
   void queryClient.invalidateQueries({ queryKey: qk.clients() });
+  void queryClient.invalidateQueries({ queryKey: qk.rosterAll });
   void queryClient.invalidateQueries({ queryKey: qk.vitals(clientId) });
   void queryClient.invalidateQueries({ queryKey: qk.plans(clientId) });
   void queryClient.invalidateQueries({ queryKey: qk.clientCheckIns(clientId) });
@@ -131,7 +150,10 @@ export const useCreateClient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: api.clients.create,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: qk.clients() }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.clients() });
+      void queryClient.invalidateQueries({ queryKey: qk.rosterAll });
+    },
   });
 };
 

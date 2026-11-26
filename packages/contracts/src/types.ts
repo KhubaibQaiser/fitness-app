@@ -105,6 +105,38 @@ export type ClientListItem = {
   goalPreset: string | null;
 };
 
+/** One row of `GET /v1/roster`. Dates are YYYY-MM-DD; weights are kg. */
+export type RosterRow = {
+  id: string;
+  name: string;
+  goalPreset: Goal['preset'] | null;
+  /** Scheduled date of the latest completed check-in. */
+  lastCheckInOn: string | null;
+  /** That check-in's adherence rating, 1–5. */
+  lastAdherence: number | null;
+  /** Scheduled date of the earliest due check-in. */
+  nextDueOn: string | null;
+  weightKg: number | null;
+  /** Latest weight minus the active goal's start weight. */
+  weightChangeKg: number | null;
+  /** Latest plan version that is not superseded or archived. */
+  plan: { status: 'DRAFT' | 'PUBLISHED' | 'NEEDS_REVIEW'; version: number } | null;
+};
+
+export type RosterSort =
+  'name' | 'lastCheckIn' | 'nextDue' | 'weight' | 'weightChange' | 'adherence';
+
+export type RosterQuery = {
+  q?: string;
+  sort?: RosterSort;
+  dir?: 'asc' | 'desc';
+  /** The previous page's `nextCursor`, for the same sort and dir. */
+  cursor?: string;
+};
+
+/** 50 rows per page; `nextCursor` is null on the last page. */
+export type RosterPage = { items: RosterRow[]; nextCursor: string | null };
+
 export type Client = {
   id: string;
   name: string;

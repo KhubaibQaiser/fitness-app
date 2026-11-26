@@ -288,6 +288,10 @@ export const api = {
         'GET',
         `/v1/clients${q ? `?q=${encodeURIComponent(q)}` : ''}`,
       ),
+    roster: (query: T.RosterQuery = {}) => {
+      const search = new URLSearchParams(query).toString();
+      return request<T.RosterPage>('GET', `/v1/roster${search ? `?${search}` : ''}`);
+    },
     create: (input: {
       name: string;
       sex: 'F' | 'M';
