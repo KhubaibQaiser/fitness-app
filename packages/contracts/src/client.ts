@@ -439,13 +439,15 @@ export const api = {
       requestBlob(`/v1/meal-plans/${planId}/diet-plan.pdf`),
   },
 
-  today: () => request<T.Today>('GET', '/v1/today'),
+  /** Without `scope` the server picks its default (see `ClientScope`). */
+  today: (scope?: T.ClientScope) =>
+    request<T.Today>('GET', `/v1/today${scope === undefined ? '' : `?scope=${scope}`}`),
 
   /** The pulse, or `null` when the server answers 304 to `etag` (nothing changed). */
-  pulse: async (etag?: string): Promise<T.Pulse | null> => {
+  pulse: async (etag?: string, scope?: T.ClientScope): Promise<T.Pulse | null> => {
     const response = await send(
       'GET',
-      '/v1/pulse',
+      `/v1/pulse${scope === undefined ? '' : `?scope=${scope}`}`,
       undefined,
       etag === undefined ? {} : { headers: { 'if-none-match': etag } },
     );

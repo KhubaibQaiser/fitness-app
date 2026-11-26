@@ -1,5 +1,5 @@
 import { dehydrate, QueryClient, type DehydratedState } from '@tanstack/react-query';
-import { qk } from '@gymos/app/api';
+import { qk, type ClientScope } from '@gymos/app/api';
 import { defaultOrigin, serverApiGet, type FetchLike } from './prefetch-coach';
 
 /**
@@ -8,16 +8,20 @@ import { defaultOrigin, serverApiGet, type FetchLike } from './prefetch-coach';
  */
 export const dehydrateToday = async ({
   cookieHeader,
+  scope,
   fetchImpl = fetch,
   apiOrigin = defaultOrigin(),
 }: {
   cookieHeader: string;
+  /** The same scope the screen passes to `useToday`; absent means the server's default. */
+  scope?: ClientScope;
   fetchImpl?: FetchLike;
   apiOrigin?: string;
 }): Promise<DehydratedState> => {
   const queryClient = new QueryClient();
   if (cookieHeader.trim() === '') return dehydrate(queryClient);
-  const result = await serverApiGet('/v1/today', cookieHeader, fetchImpl, apiOrigin);
-  if (result.ok) queryClient.setQueryData(qk.today, result.data);
+  const path = `/v1/today${scope === undefined ? '' : `?scope=${scope}`}`;
+  const result = await serverApiGet(path, cookieHeader, fetchImpl, apiOrigin);
+  if (result.ok) queryClient.setQueryData(qk.today(scope), result.data);
   return dehydrate(queryClient);
 };

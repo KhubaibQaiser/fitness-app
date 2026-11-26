@@ -2,29 +2,31 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { api } from '@gymos/contracts';
+import { api, type ClientScope } from '@gymos/contracts';
 import { applyPulse, nextPulseDelay, type PulseSnapshot } from './pulse';
 import { qk } from './query-keys';
 // Resolves to use-foreground.native.ts (AppState) on native, page visibility on web.
 import { useForeground } from './use-foreground';
 
 /** What the pulse summarises: refetched when its ETag moves. */
-const PULSE_INVALIDATES = [qk.today, qk.notifications, qk.dueCheckIns, ['clients']]; // every roster search
+// qk.today() and ['clients'] are prefixes: every scope and every roster search.
+const PULSE_INVALIDATES = [qk.today(), qk.notifications, qk.dueCheckIns, ['clients']];
 
 /**
  * Polls GET /v1/pulse with If-None-Match: every 30 s while it moves, every 2 min once idle,
  * paused in the background (`pulse.ts`). When the ETag moves it invalidates Today, notifications,
- * due check-ins and the roster. Mount it once in the shell; another mount shares the query and
- * its schedule rather than doubling the polls.
+ * due check-ins and the roster (every scope). Without `scope` the server picks its default. Mount
+ * it once per scope in the shell; another mount shares the query and its schedule rather than
+ * doubling the polls.
  */
-export const usePulse = () => {
+export const usePulse = (scope?: ClientScope) => {
   const queryClient = useQueryClient();
   const foreground = useForeground();
   const query = useQuery({
-    queryKey: qk.pulse,
+    queryKey: qk.pulse(scope),
     queryFn: async () => {
-      const prev = queryClient.getQueryData<PulseSnapshot>(qk.pulse);
-      const next = await api.pulse(prev?.pulse.etag);
+      const prev = queryClient.getQueryData<PulseSnapshot>(qk.pulse(scope));
+      const next = await api.pulse(prev?.pulse.etag, scope);
       const { snapshot, invalidate } = applyPulse(prev, next, Date.now());
       if (invalidate) {
         for (const queryKey of PULSE_INVALIDATES) void queryClient.invalidateQueries({ queryKey });

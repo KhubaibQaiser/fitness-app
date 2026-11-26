@@ -9,6 +9,7 @@ import {
 } from './pulse';
 
 const pulse = (etag: string, overdue = 1): Pulse => ({
+  scope: 'mine',
   unreadCount: 0,
   counts: { redFlags: 0, plansBlocked: 0, overdue, dueToday: 0, drafts: 0 },
   etag,

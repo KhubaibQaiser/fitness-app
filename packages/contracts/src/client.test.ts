@@ -330,6 +330,7 @@ describe('contracts client — problem request reference', () => {
 
 describe('contracts client — pulse', () => {
   const pulse = {
+    scope: 'mine',
     unreadCount: 2,
     counts: { redFlags: 0, plansBlocked: 0, overdue: 3, dueToday: 1, drafts: 0 },
     etag: '"abc"',
@@ -365,6 +366,19 @@ describe('contracts client — pulse', () => {
     await expect(api.pulse('"abc"')).resolves.toBeNull();
     expect(sentHeaders[0]?.['if-none-match']).toBe('"abc"');
     expect(sentHeaders[0]?.authorization).toBe('Bearer token');
+  });
+
+  it('asks for a scope only when given one', async () => {
+    const urls: string[] = [];
+    global.fetch = vi.fn((url: string | URL) => {
+      urls.push(String(url));
+      return Promise.resolve(jsonResponse(pulse, 200));
+    }) as unknown as typeof fetch;
+    await api.pulse('"abc"', 'all');
+    await api.pulse();
+    await api.today('mine');
+    await api.today();
+    expect(urls).toEqual(['/v1/pulse?scope=all', '/v1/pulse', '/v1/today?scope=mine', '/v1/today']);
   });
 
   it('throws an ApiError on a failure instead of reporting "not modified"', async () => {

@@ -9,6 +9,7 @@ const jsonResponse = (status: number, body: unknown): Response =>
   });
 
 const today = {
+  scope: 'mine',
   groups: { redFlags: [], plansBlocked: [], overdue: [], dueToday: [], drafts: [] },
   counts: { redFlags: 0, plansBlocked: 0, overdue: 0, dueToday: 0, drafts: 0 },
   nextDueOn: '2026-11-30',
@@ -40,6 +41,21 @@ describe('dehydrateToday', () => {
     expect(state.queries).toHaveLength(1);
     expect(state.queries[0]?.queryKey).toEqual(['today']);
     expect(state.queries[0]?.state.data).toEqual(today);
+  });
+
+  it('asks for the given scope and caches it under that scope', async () => {
+    const urls: string[] = [];
+    const state = await dehydrateToday({
+      cookieHeader: 'gymos_access=ok',
+      scope: 'all',
+      fetchImpl: (input) => {
+        urls.push(input);
+        return Promise.resolve(jsonResponse(200, { ...today, scope: 'all' }));
+      },
+      apiOrigin: 'http://api.test',
+    });
+    expect(urls).toEqual(['http://api.test/v1/today?scope=all']);
+    expect(state.queries[0]?.queryKey).toEqual(['today', 'all']);
   });
 
   it.each([401, 403, 500])(

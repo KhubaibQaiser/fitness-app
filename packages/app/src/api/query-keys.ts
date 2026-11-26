@@ -1,3 +1,5 @@
+import { type ClientScope } from '@gymos/contracts';
+
 /** Query-key factory — the single vocabulary for cache identity. */
 export const qk = {
   me: ['me'] as const,
@@ -16,6 +18,7 @@ export const qk = {
   foods: (q?: string) => ['foods', q ?? ''] as const,
   notifications: ['notifications'] as const,
   unread: ['notifications', 'unread'] as const,
-  today: ['today'] as const,
-  pulse: ['pulse'] as const,
+  /** Per scope; with no scope (the server's default) the key is also the prefix for every scope. */
+  today: (scope?: ClientScope) => (scope === undefined ? ['today'] : ['today', scope]),
+  pulse: (scope?: ClientScope) => (scope === undefined ? ['pulse'] : ['pulse', scope]),
 };

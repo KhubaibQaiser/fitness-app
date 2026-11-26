@@ -12,6 +12,7 @@ import { api, type Pulse } from '@gymos/contracts';
  */
 
 const pulse = (etag: string): Pulse => ({
+  scope: 'mine',
   unreadCount: 0,
   counts: { redFlags: 0, plansBlocked: 0, overdue: 1, dueToday: 0, drafts: 0 },
   etag,
@@ -62,7 +63,7 @@ describe('usePulse', () => {
     const { result, unmount } = mount();
     await advance(0);
     expect(poll).toHaveBeenCalledTimes(1);
-    expect(poll).toHaveBeenLastCalledWith(undefined);
+    expect(poll).toHaveBeenLastCalledWith(undefined, undefined);
     await waitFor(() => expect(result.current.data?.pulse.etag).toBe('"a"'));
     const firstAt = result.current.dataUpdatedAt;
 
@@ -70,7 +71,7 @@ describe('usePulse', () => {
     expect(poll).toHaveBeenCalledTimes(1);
     await advance(1_000);
     expect(poll).toHaveBeenCalledTimes(2);
-    expect(poll).toHaveBeenLastCalledWith('"a"');
+    expect(poll).toHaveBeenLastCalledWith('"a"', undefined);
     // Once the second poll has rendered, the third is scheduled; unmounting must clear it.
     await waitFor(() => expect(result.current.dataUpdatedAt).toBeGreaterThan(firstAt));
 

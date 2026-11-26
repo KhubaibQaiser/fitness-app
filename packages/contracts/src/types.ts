@@ -315,8 +315,16 @@ export type TodayItem = {
   reason: TodayReason;
 };
 
+/**
+ * Whose clients: `mine` (assigned to the signed-in coach) or `all` (every client the principal's
+ * roles may list). The server defaults to `mine` with a coach profile and `all` without one.
+ */
+export type ClientScope = 'mine' | 'all';
+
 /** GET /v1/today. Groups come in urgency order; overdue is sorted by days, most first. */
 export type Today = {
+  /** The scope the server applied. */
+  scope: ClientScope;
   groups: {
     redFlags: TodayItem[];
     plansBlocked: TodayItem[];
@@ -332,7 +340,12 @@ export type Today = {
 export type TodayCounts = Record<keyof Today['groups'], number>;
 
 /** GET /v1/pulse. `etag` equals the ETag header; send it back as If-None-Match. */
-export type Pulse = { unreadCount: number; counts: TodayCounts; etag: string };
+export type Pulse = {
+  scope: ClientScope;
+  unreadCount: number;
+  counts: TodayCounts;
+  etag: string;
+};
 
 export type Verdict = {
   type:
