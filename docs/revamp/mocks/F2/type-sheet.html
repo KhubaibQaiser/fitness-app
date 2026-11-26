@@ -1836,9 +1836,9 @@
         text-align: center;
         cursor: pointer;
       }
+      /* Segments size to their labels (like iOS apportionsSegmentWidthsByContent), so the selected check fits. */
       .seg {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        display: flex;
         min-width: 0;
         margin: 0;
         padding: 2px;
@@ -1848,10 +1848,11 @@
       }
       .seg label {
         position: relative;
+        flex: 1 1 auto;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 0.25em;
         min-width: 0;
         min-height: 44px;
         padding-inline: 6px;
@@ -1884,8 +1885,8 @@
       .seg .check {
         display: none;
         flex: none;
-        width: 20px;
-        height: 20px;
+        width: 1em;
+        height: 1em;
         color: var(--brand-text);
       }
       .seg.is-list {
@@ -1913,8 +1914,12 @@
         overflow: visible;
         white-space: normal;
       }
-      .seg.is-list label:has(input:checked) .check {
+      /* The selected segment carries a check and a heavier label in both layouts, never fill alone. */
+      .seg label:has(input:checked) .check {
         display: block;
+      }
+      .seg label:has(input:checked) .seg-label {
+        font-weight: 600;
       }
       .chips {
         display: flex;
