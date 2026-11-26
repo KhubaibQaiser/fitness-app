@@ -50,7 +50,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    Use a merge commit. Then rebase every waiting branch that the merge affects and have its builder re-run verification. After a U task merges, close the Dependabot PRs it supersedes, with a comment naming it (rulings O3).
 
 8. **Installs and questions.** A builder runs only the installs its task's "Install" line names. Under rulings O5 each one asks the owner to confirm and waits until they do, so batch installs and run them while the owner is at the app. Batch rulings questions for the owner. Never work around the agent guard.
-9. **Update `status.md`** in a small `docs/revamp-status-<date>` PR, at most once a day. Only the parent edits it, so it never conflicts.
+9. **Update `status.md`** in a small `docs/revamp-status-<date>` PR, at most once a day. Only the Phase 2 coordinator edits it (rulings O27), so it never conflicts.
 
 **Stop a builder when it:**
 
