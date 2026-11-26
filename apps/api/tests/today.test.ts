@@ -6,7 +6,8 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { schema, seed, type Db, type SeedResult } from '@gymos/db';
-import { hashPassword, resetPrincipalCache } from '@gymos/modules/identity';
+import { resolveClientScope } from '@gymos/modules/coaching';
+import { hashPassword, resetPrincipalCache, resolvePrincipal } from '@gymos/modules/identity';
 import { notify } from '@gymos/modules/notifications';
 import {
   resetManifestCache,
@@ -35,6 +36,8 @@ let tokenDesk = '';
 let tokenAdmin = '';
 let tokenManager = '';
 let tokenInstructor = '';
+let tokenInstructorCoach = '';
+let coachBClientId = '';
 let tokenOther = '';
 
 /** The seeded outlet's calendar day (YYYY-MM-DD), offset by `days`. Karachi has no DST. */
@@ -98,11 +101,13 @@ const newUser = async (email: string) => {
 
 /**
  * Another user in the pilot org. COACH joined with the join code and has a coach row; the other
- * roles have none. ORG_ADMIN is org-wide (no outlet); the rest belong to the main outlet.
+ * roles have none unless `coachRow`. ORG_ADMIN is org-wide (no outlet); the rest belong to the
+ * main outlet.
  */
 const addMember = async (
   email: string,
   role: 'COACH' | 'FRONT_DESK' | 'INSTRUCTOR' | 'OUTLET_ADMIN' | 'ORG_ADMIN',
+  coachRow = role === 'COACH',
 ) => {
   const user = await newUser(email);
   await db.insert(schema.memberships).values({
@@ -111,7 +116,7 @@ const addMember = async (
     orgId: seeded.orgId,
     outletId: role === 'ORG_ADMIN' ? null : seeded.outletId,
   });
-  if (role !== 'COACH') return null;
+  if (!coachRow) return null;
   const [coach] = await db.insert(schema.coaches).values({ userId: user.id }).returning();
   if (!coach) throw new Error('coach insert failed');
   return coach.id;
@@ -171,17 +176,30 @@ beforeAll(async () => {
     .update(schema.checkIns)
     .set({ scheduledFor: outletDay(0) })
     .where(eq(schema.checkIns.clientId, seeded.demoClientId));
-  await addDueClient('Overdue Omar', seeded.coachId, outletDay(-9));
+  const omar = await addDueClient('Overdue Omar', seeded.coachId, outletDay(-9));
+  // A draft plan: the outlet manager may read it (plan.read), front desk may not.
+  await db.insert(schema.mealPlans).values({
+    clientId: omar,
+    coachId: seeded.coachId,
+    outletId: seeded.outletId,
+    version: 1,
+    status: 'DRAFT',
+    targets: { kcal: 2000, proteinG: 150, fatG: 65, carbsG: 180, fiberG: 28 },
+  });
   await addDueClient('Later Lina', seeded.coachId, outletDay(4));
   await addDueClient('Later Leila', seeded.coachId, outletDay(11));
 
   const coachB = await addMember('coach-b@pilot.local', 'COACH');
   if (coachB === null) throw new Error('coach B missing');
-  await addDueClient('Coach B Client', coachB, outletDay(-30));
+  coachBClientId = await addDueClient('Coach B Client', coachB, outletDay(-30));
   await addMember('desk@pilot.local', 'FRONT_DESK');
   await addMember('admin@pilot.local', 'ORG_ADMIN');
   await addMember('manager@pilot.local', 'OUTLET_ADMIN');
   await addMember('instructor@pilot.local', 'INSTRUCTOR');
+  // An instructor with a coach row and an assigned client: still no client.list grant.
+  const instructorCoach = await addMember('instructor-coach@pilot.local', 'INSTRUCTOR', true);
+  if (instructorCoach === null) throw new Error('instructor coach missing');
+  await addDueClient('Instructor Ida', instructorCoach, outletDay(-3));
   // A second branch of the pilot org, with a client no coach has yet.
   const [branch] = await db
     .insert(schema.outlets)
@@ -199,6 +217,7 @@ beforeAll(async () => {
   tokenAdmin = await login('admin@pilot.local');
   tokenManager = await login('manager@pilot.local');
   tokenInstructor = await login('instructor@pilot.local');
+  tokenInstructorCoach = await login('instructor-coach@pilot.local');
   tokenOther = await login('coach@other.local');
 });
 
@@ -287,13 +306,13 @@ describe('scope: my clients or all', () => {
     const all = await today(tokenA, 'all');
     expect(mine.scope).toBe('mine');
     expect(all.scope).toBe('all');
-    for (const name of ['Coach B Client', 'Branch Two Bina']) {
+    for (const name of ['Coach B Client', 'Branch Two Bina', 'Instructor Ida']) {
       expect(names(mine)).not.toContain(name);
       expect(names(all)).toContain(name);
     }
     expect(names(all)).toContain('Overdue Omar');
     expect(names(all)).not.toContain('Other Org Client');
-    expect(all.counts.overdue).toBe(mine.counts.overdue + 2);
+    expect(all.counts.overdue).toBe(mine.counts.overdue + 3);
 
     // The pulse counts and ETag follow the scope.
     const pulseMine = await pulse(tokenA, 'mine');
@@ -303,6 +322,9 @@ describe('scope: my clients or all', () => {
     expect(pulseAll.etag).not.toBe(pulseMine.etag);
     const stale = await get('/v1/pulse?scope=all', tokenA, { 'if-none-match': pulseMine.etag });
     expect(stale.status).toBe(200);
+    const fresh = await get('/v1/pulse?scope=all', tokenA, { 'if-none-match': pulseAll.etag });
+    expect(fresh.status).toBe(304);
+    expect(fresh.headers.get('etag')).toBe(pulseAll.etag);
   });
 
   it('an admin with no coach profile: all by default instead of a 403, and mine refused', async () => {
@@ -327,8 +349,44 @@ describe('scope: my clients or all', () => {
     }
     expect(names(manager)).not.toContain('Branch Two Bina');
     expect(names(manager)).not.toContain('Other Org Client');
-    // Front desk lists clients at outlet level too, so its all is the same outlet.
-    expect(names(await today(tokenDesk)).sort()).toEqual(names(manager).sort());
+  });
+
+  it("front desk: its outlet's check-ins, but no weights or plans, and counts match", async () => {
+    const desk = await today(tokenDesk);
+    const manager = await today(tokenManager);
+    expect(desk.scope).toBe('all');
+    // Front desk may read check-ins at outlet level, as the manager does.
+    expect(desk.groups.overdue).toEqual(
+      manager.groups.overdue.map((i) => ({ ...i, lastWeight: null })),
+    );
+    expect(names({ ...desk, groups: { ...desk.groups, overdue: [] } })).toEqual(
+      manager.groups.dueToday.map((i) => i.clientName),
+    );
+    // The manager may read vitals and plans; front desk may not, so they are left out.
+    expect(manager.groups.dueToday[0]?.lastWeight).not.toBeNull();
+    expect(manager.groups.drafts.map((i) => i.clientName)).toContain('Overdue Omar');
+    expect(
+      Object.values(desk.groups)
+        .flat()
+        .every((i) => i.lastWeight === null),
+    ).toBe(true);
+    expect(desk.groups.plansBlocked).toEqual([]);
+    expect(desk.groups.drafts).toEqual([]);
+    const raw = await (await get('/v1/today', tokenDesk)).text();
+    expect(raw).not.toContain('"kg"');
+    expect(raw).not.toContain('planId');
+    for (const [group, items] of Object.entries(desk.groups)) {
+      expect(desk.counts[group as keyof typeof desk.counts]).toBe(items.length);
+    }
+    expect((await pulse(tokenDesk, 'all')).counts).toEqual(desk.counts);
+  });
+
+  it('an instructor with a coach row and an assigned client still sees nothing', async () => {
+    const instructor = await today(tokenInstructorCoach);
+    expect(instructor.scope).toBe('mine');
+    expect(names(instructor)).toEqual([]);
+    expect(instructor.nextDueOn).toBeNull();
+    expect(names(await today(tokenInstructorCoach, 'all'))).toEqual([]);
   });
 
   it('a COACH-only coach: all never widens past their own clients', async () => {
@@ -336,6 +394,21 @@ describe('scope: my clients or all', () => {
     expect(all.scope).toBe('all');
     expect(names(all)).toEqual(['Coach B Client']);
     expect(all.counts).toEqual((await today(tokenB, 'mine')).counts);
+  });
+
+  it("keeps a COACH-only coach's all narrow in the SQL bound itself, not only per row", async () => {
+    const [user] = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, 'coach-b@pilot.local'));
+    const scope = resolveClientScope(await resolvePrincipal(db, user?.id ?? ''), 'all');
+    if (!scope.ok) throw new Error(scope.error.code);
+    const bounded = await db
+      .select({ id: schema.clients.id })
+      .from(schema.clients)
+      .where(scope.value.where);
+    // Coach B's outlet holds many clients; the bound alone must already return only theirs.
+    expect(bounded.map((r) => r.id)).toEqual([coachBClientId]);
   });
 
   it('a coach in another org: all is their own org only', async () => {

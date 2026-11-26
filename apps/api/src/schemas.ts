@@ -355,7 +355,9 @@ export const todayItemSchema = z
   .object({
     clientId: z.uuid(),
     clientName: z.string(),
-    lastWeight: z.object({ kg: z.number(), at: isoInstant }).nullable(),
+    lastWeight: z.object({ kg: z.number(), at: isoInstant }).nullable().openapi({
+      description: 'The latest weigh-in; null when there is none or the role may not read vitals.',
+    }),
     reason: todayReasonSchema,
   })
   .openapi('TodayItem');
@@ -383,7 +385,7 @@ export const todayResponse = z
       })
       .openapi({
         description:
-          'In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag.',
+          'In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag. Items the role may not read (check-ins without checkin.read, plans without plan.read) are left out, and the counts follow.',
       }),
     counts: todayCountsSchema,
     nextDueOn: z.iso.date().nullable().openapi({
