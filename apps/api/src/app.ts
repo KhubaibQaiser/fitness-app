@@ -16,10 +16,11 @@ import { type AppDeps } from './app-deps';
 import { clearAuthCookies, setAccessCookie, setRefreshCookie } from './auth-cookies';
 import { ACCESS_COOKIE_NAME } from './auth/constants';
 import { issueAccessToken, verifyAccessToken } from './auth/jwt';
+import { createClientIpResolver } from './client-ip';
 import { resolveEmailFrom, resolveOtpPepper } from './env';
 import { type AppContext, type GymosVars } from './http';
 import { ProblemError, problemResponse } from './problems';
-import { createDbRateLimiter } from './rate-limit';
+import { createAccountLimiter, createDbRateLimiter } from './rate-limit';
 import { asCoach, authorize, requireCoachId } from './rbac-http';
 import { resolveRequestId } from './request-id';
 import { type RouteBind } from './route-bind';
@@ -67,6 +68,9 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   };
 
   const loginLimiter = createDbRateLimiter(db, 10, 60_000);
+  const loginAccountLimiter = createAccountLimiter(db);
+  // Callers with no trusted IP share this cap per route instead of a per-IP bucket.
+  const unattributedLimiter = createDbRateLimiter(db, 60, 60_000);
   const signupIpLimiter = createDbRateLimiter(db, 5, 15 * 60_000);
   const signupEmailLimiter = createDbRateLimiter(db, 3, 15 * 60_000);
   const forgotIpLimiter = createDbRateLimiter(db, 5, 15 * 60_000);
@@ -92,11 +96,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   const signupDeps = { ...otpDeps, mail };
   const resetDeps = { ...otpDeps, mail };
 
-  const clientIp = (c: AppContext): string => {
-    const raw = c.req.header('x-forwarded-for');
-    if (raw === undefined) return 'local';
-    return raw.split(',')[0]?.trim() ?? 'local';
-  };
+  const clientIp = createClientIpResolver(process.env);
 
   const app = new OpenAPIHono<{ Variables: GymosVars }>({
     defaultHook: (result, c) => {
@@ -210,6 +210,8 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
     respondWithTokens,
     clientIp,
     loginLimiter,
+    loginAccountLimiter,
+    unattributedLimiter,
     signupIpLimiter,
     signupEmailLimiter,
     forgotIpLimiter,
