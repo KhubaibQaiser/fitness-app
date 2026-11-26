@@ -7,6 +7,8 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 import { DateTime } from 'luxon';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { schema as s, seed, type Db, type SeedResult } from '@gymos/db';
+import { resolvePrincipal } from '../identity';
+import { resolveClientScope, type ClientScopeChoice } from './client-scope';
 import { getTodayQueue, orderTodayGroups, type TodayItem, type TodayQueue } from './today';
 
 const migrationsFolder = path.resolve(
@@ -104,6 +106,14 @@ const addClient = async (f: Fixture): Promise<string> => {
 
 const names = (items: { clientName: string }[]) => items.map((i) => i.clientName);
 
+/** The queue as the API builds it: the user's principal, its resolved scope, a fixed clock. */
+const queueFor = async (userId: string, choice?: ClientScopeChoice, orgId?: string) => {
+  const principal = await resolvePrincipal(db, userId);
+  const scope = resolveClientScope({ ...principal, ...(orgId ? { orgId } : {}) }, choice);
+  if (!scope.ok) throw new Error(scope.error.code);
+  return getTodayQueue(db, { scope: scope.value, now: NOW });
+};
+
 beforeAll(async () => {
   const pglite = drizzle(new PGlite(), { schema: s });
   await migrate(pglite, { migrationsFolder });
@@ -153,6 +163,7 @@ beforeAll(async () => {
 
   // Another coach in the same org, and a coach in another org, each with an overdue client.
   const coachB = await addCoach(seeded.orgId);
+  coachBUserId = coachB.userId;
   await addClient({ name: 'Coach B client', coachId: coachB.coachId, dueOn: '2026-11-10' });
   const [otherOrg] = await db.insert(s.organizations).values({ name: 'Other Gym' }).returning();
   if (!otherOrg) throw new Error('org insert failed');
@@ -165,8 +176,10 @@ beforeAll(async () => {
     reasons: [{ code: 'RED_FLAG', weight: 100, since: '2026-11-20T09:00:00Z' }],
   });
 
-  queue = await getTodayQueue(db, { coachId: seeded.coachId, orgId: seeded.orgId, now: NOW });
+  queue = await queueFor(seeded.coachUserId);
 }, 60_000);
+
+let coachBUserId = '';
 
 let coachSeq = 0;
 const addCoach = async (orgId: string) => {
@@ -180,9 +193,12 @@ const addCoach = async (orgId: string) => {
     .values({ email: `coach${coachSeq}@other.local`, name: `Coach ${coachSeq}`, locale: 'en' })
     .returning();
   if (!outlet || !user) throw new Error('coach insert failed');
+  await db
+    .insert(s.memberships)
+    .values({ userId: user.id, role: 'COACH', orgId, outletId: outlet.id });
   const [coach] = await db.insert(s.coaches).values({ userId: user.id }).returning();
   if (!coach) throw new Error('coach insert failed');
-  return { coachId: coach.id, outletId: outlet.id };
+  return { coachId: coach.id, outletId: outlet.id, userId: user.id };
 };
 
 describe('getTodayQueue', () => {
@@ -264,15 +280,7 @@ describe('getTodayQueue', () => {
     expect(everyone).not.toContain('Coach B client');
     expect(everyone).not.toContain('Other org client');
 
-    const [assignment] = await db
-      .select({ coachId: s.coachAssignments.coachId })
-      .from(s.coachAssignments)
-      .where(eq(s.coachAssignments.clientId, ids['Coach B client'] ?? ''));
-    const coachB = await getTodayQueue(db, {
-      coachId: assignment?.coachId ?? '',
-      orgId: seeded.orgId,
-      now: NOW,
-    });
+    const coachB = await queueFor(coachBUserId);
     expect(names(coachB.groups.overdue)).toEqual(['Coach B client']);
     expect(coachB.nextDueOn).toBeNull();
     expect(coachB.counts).toEqual({
@@ -289,12 +297,16 @@ describe('getTodayQueue', () => {
       .select({ id: s.organizations.id })
       .from(s.organizations)
       .where(eq(s.organizations.name, 'Other Gym'));
-    const crossTenant = await getTodayQueue(db, {
-      coachId: seeded.coachId,
-      orgId: otherOrg?.id ?? '',
-      now: NOW,
-    });
+    const crossTenant = await queueFor(seeded.coachUserId, 'mine', otherOrg?.id ?? '');
     expect(Object.values(crossTenant.groups).flat()).toEqual([]);
+  });
+
+  it('with all, the admin who coaches sees the whole org, and only that org', async () => {
+    const all = Object.values((await queueFor(seeded.coachUserId, 'all')).groups).flatMap(names);
+    expect(all).toContain('Coach B client');
+    expect(all).toContain('Zara');
+    expect(all).not.toContain('Other org client');
+    expect(all).not.toContain('Archived');
   });
 });
 

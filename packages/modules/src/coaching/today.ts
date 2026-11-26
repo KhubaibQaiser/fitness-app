@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { isoDate, schema as s, toStrictIso, type Db } from '@gymos/db';
 import { attentionStatus } from './attention';
+import { type ClientScope } from './client-scope';
 
 /** Why a client is in the queue, as data: the UI phrases it ("Check-in 10 days overdue"). */
 export type TodayReason =
@@ -84,19 +85,17 @@ const daysBetween = (from: string, to: string): number => {
 };
 
 /**
- * The coach's work queue: red flags, plans blocked for review, overdue check-ins (most days
- * first), check-ins due today, and drafts awaiting publish. Scoped to the coach's current
- * assignments inside the principal's organization. "Today" is each client's outlet calendar day.
+ * The work queue: red flags, plans blocked for review, overdue check-ins (most days first),
+ * check-ins due today, and drafts awaiting publish, for the active clients in `scope`
+ * (`resolveClientScope`). "Today" is each client's outlet calendar day.
  */
 export const getTodayQueue = async (
   db: Db,
-  opts: { coachId: string; orgId: string; now?: DateTime },
+  opts: { scope: ClientScope; now?: DateTime },
 ): Promise<TodayQueue> => {
   const now = opts.now ?? DateTime.utc();
-  const assigned = and(
-    eq(s.coachAssignments.coachId, opts.coachId),
-    isNull(s.coachAssignments.unassignedAt),
-  );
+  const { scope } = opts;
+  const scopedIds = db.select({ id: s.clients.id }).from(s.clients).where(scope.where);
 
   // One lateral lookup per client: half the cost of two correlated subqueries at 170 clients.
   const lastWeight = db
@@ -116,24 +115,18 @@ export const getTodayQueue = async (
       .select({
         id: s.clients.id,
         name: s.clients.name,
+        outletId: s.clients.outletId,
+        userId: s.clients.userId,
         timezone: s.outlets.timezone,
         reasons: s.clientAttention.reasons,
         lastWeightKg: lastWeight.kg,
         lastWeightAt: lastWeight.at,
       })
-      .from(s.coachAssignments)
-      .innerJoin(s.clients, eq(s.clients.id, s.coachAssignments.clientId))
+      .from(s.clients)
       .innerJoin(s.outlets, eq(s.outlets.id, s.clients.outletId))
       .leftJoin(s.clientAttention, eq(s.clientAttention.clientId, s.clients.id))
       .leftJoinLateral(lastWeight, sql`true`)
-      .where(
-        and(
-          assigned,
-          eq(s.outlets.orgId, opts.orgId),
-          eq(s.clients.status, 'active'),
-          isNull(s.clients.deletedAt),
-        ),
-      ),
+      .where(and(scope.where, eq(s.clients.status, 'active'), isNull(s.clients.deletedAt))),
     db
       .select({
         id: s.checkIns.id,
@@ -141,8 +134,7 @@ export const getTodayQueue = async (
         scheduledFor: s.checkIns.scheduledFor,
       })
       .from(s.checkIns)
-      .innerJoin(s.coachAssignments, eq(s.coachAssignments.clientId, s.checkIns.clientId))
-      .where(and(assigned, eq(s.checkIns.status, 'DUE'))),
+      .where(and(inArray(s.checkIns.clientId, scopedIds), eq(s.checkIns.status, 'DUE'))),
     db
       .select({
         id: s.mealPlans.id,
@@ -154,12 +146,16 @@ export const getTodayQueue = async (
         )`,
       })
       .from(s.mealPlans)
-      .innerJoin(s.coachAssignments, eq(s.coachAssignments.clientId, s.mealPlans.clientId))
-      .where(and(assigned, inArray(s.mealPlans.status, ['DRAFT', 'NEEDS_REVIEW']))),
+      .where(
+        and(
+          inArray(s.mealPlans.clientId, scopedIds),
+          inArray(s.mealPlans.status, ['DRAFT', 'NEEDS_REVIEW']),
+        ),
+      ),
   ]);
 
-  // Only clients that pass the org, status and assignment checks reach the queue.
-  const byId = new Map(clients.map((c) => [c.id, c]));
+  // Only active clients that pass the scope's per-row rule reach the queue.
+  const byId = new Map(clients.filter(scope.includes).map((c) => [c.id, c]));
   const item = (clientId: string, reason: TodayReason): TodayItem[] => {
     const client = byId.get(clientId);
     if (client === undefined) return [];

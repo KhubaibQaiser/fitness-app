@@ -1,5 +1,6 @@
 export * from './attention';
 export * from './checkins';
+export * from './client-scope';
 export * from './clients';
 export * from './credentials';
 export * from './goals';
