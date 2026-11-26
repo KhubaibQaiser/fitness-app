@@ -1,3 +1,4 @@
+export * from './attention';
 export * from './checkins';
 export * from './clients';
 export * from './credentials';
