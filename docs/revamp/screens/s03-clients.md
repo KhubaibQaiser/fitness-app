@@ -31,7 +31,7 @@ Find a client and scan caseload health with the loop's columns, at any roster si
 3. **Phone web:** 72 px rows (avatar, name, a status line in words, chevron), with search pinned. "New client" is a header button.
 4. **Native:** large title "Clients" with a search bar. "New client" is the trailing nav-bar button on iOS and a FAB on Android. Recycled list; rounded search and filter controls (N13).
 5. **Same data on every breakpoint.** The desktop shows CHECKIN_OVERDUE as the phone does (bug 12).
-6. **Scope switch** (rulings O35): admins and outlet managers get a "Mine / All coaches" switch; coaches see none. It defaults to Mine, or to All coaches for an admin with no coach profile. It's the same control and the same stored choice as on Today, so the counts on both always match.
+6. **Scope switch** (rulings O35): admins and outlet managers get a "Mine / All coaches" switch; coaches see none. It defaults to Mine, or to All coaches for an admin or outlet manager with no coach profile. It's the same control and the same stored choice as on Today, so the counts on both always match.
 
 ## States
 

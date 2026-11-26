@@ -33,7 +33,7 @@ Answer "who needs me today, and what do I do first?" Today is a work queue, not 
    - The queue fills the screen.
    - Pull to refresh, with no haptic.
 8. **Batch.** "Start check-in" passes the remaining overdue and due ids (screens README, hand-offs).
-9. **Scope switch** (rulings O35): the top line, the chip counts and the queue default to the coach's own clients. Admins and outlet managers get a "Mine / All coaches" switch; coaches see none. It defaults to Mine, or to All coaches for an admin with no coach profile. It's the same control and the same stored choice as on Clients, so the counts on both always match.
+9. **Scope switch** (rulings O35): the top line, the chip counts and the queue default to the coach's own clients. Admins and outlet managers get a "Mine / All coaches" switch; coaches see none. It defaults to Mine, or to All coaches for an admin or outlet manager with no coach profile. It's the same control and the same stored choice as on Clients, so the counts on both always match.
 
 ## States
 

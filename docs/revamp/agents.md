@@ -90,6 +90,7 @@ Report back: PR number, what changed, the evidence for each done condition, anyt
   - the screenshots, linked by `raw.githubusercontent.com` URLs from the `screenshots` branch under `revamp/<task-id>/`.
 - **Never** push to `main`, force-push, read `.env`, or run paid services (model API calls, cloud builds) without the owner's OK. CI is free here.
 - **Out-of-scope findings** (rulings O34): a bug, issue, performance or tech-debt finding outside the task is never fixed or filed by the builder. List it in the report (what, where, evidence, impact, suggested fix); the parent takes it to the owner, and an issue is filed only on his yes. Mark a security hole "security", keep its detail out of every public text (PR body, commit, issue), and report it to the parent only.
+- **Browsers** (rulings O38): prefer the in-app browser. The owner's Chrome is allowed only for test sign-ins on localhost, never for real sites or accounts.
 - **Native evidence:**
   - iOS from the simulator on this machine.
   - Android from the owner's other MacBook with the kit. When Android evidence is pending, say so in the PR and in the report; never claim it.
