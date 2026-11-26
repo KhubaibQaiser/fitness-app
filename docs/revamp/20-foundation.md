@@ -128,7 +128,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   - A legibility test computes worst-case contrast at the token alphas over the `tokens.md` §9.3 backdrops: chrome `fg.primary` at least 7:1, sheet text at least 4.5:1.
   - Playwright screenshots exist with `backdrop-filter` disabled and with reduced transparency emulated.
   - iOS screenshots exist with Reduce Transparency on and off.
-  - Android API 31+ and below-31 screenshots are added when the owner runs the kit (status board).
+  - Android API 31+ and below-31 screenshots are added when the owner runs the kit (the Android checklist, #139).
   - The Android baseline-device (Pixel 6, rulings O11) pass is a release gate in Q4, not a merge gate.
 - **Reviewer focus:** glass on content surfaces, secondary text on chrome glass, a missing fallback path.
 

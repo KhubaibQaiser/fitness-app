@@ -80,7 +80,7 @@ Ruling A14: fix now, in small PRs, before mocks. These bugs hide information or 
   - iOS simulator screenshots of every coach route under `apps/mobile/app/(coach)/` (19 route files today; first viewport) show nothing under the system UI.
   - The correct tab is active on each primary route.
   - There is no tab bar on intake, vitals, goal, check-in, check-in detail, dietary or the plan editor.
-  - Android screenshots are added when the owner runs the kit; they don't block the merge (tracked in `status.md`).
+  - Android screenshots are added when the owner runs the kit; they don't block the merge (tracked in #139).
 - **Note:** F6 later replaces this shell with native tabs and stacks. Keep the fix small; the pathname façade may be reused there.
 
 ## B5: Native hub header stays in the layout
