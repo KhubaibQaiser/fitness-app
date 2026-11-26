@@ -128,6 +128,8 @@ beforeAll(async () => {
     .set({ scheduledFor: outletDay(0) })
     .where(eq(schema.checkIns.clientId, seeded.demoClientId));
   await addDueClient('Overdue Omar', seeded.coachId, outletDay(-9));
+  await addDueClient('Later Lina', seeded.coachId, outletDay(4));
+  await addDueClient('Later Leila', seeded.coachId, outletDay(11));
 
   const coachB = await addMember('coach-b@pilot.local', 'COACH');
   if (coachB === null) throw new Error('coach B missing');
@@ -157,6 +159,9 @@ describe('GET /v1/today', () => {
     });
     // The demo client's weigh-ins cross as ISO 8601 with T and an offset (B6).
     expect(body.groups.dueToday[0]?.lastWeight?.at).toMatch(/T.*(Z|[+-]\d{2}:\d{2})$/);
+    // The soonest upcoming check-in, date-only, for S02's all-clear line.
+    expect(body.nextDueOn).toBe(outletDay(4));
+    expect(names(body)).not.toContain('Later Lina');
     for (const [group, items] of Object.entries(body.groups)) {
       expect(body.counts[group as keyof typeof body.counts]).toBe(items.length);
     }
@@ -169,6 +174,7 @@ describe('GET /v1/today', () => {
     const b = todayResponse.parse(await (await get('/v1/today', tokenB)).json());
     expect(names(b)).toEqual(['Coach B Client']);
     expect(b.counts).toEqual({ redFlags: 0, plansBlocked: 0, overdue: 1, dueToday: 0, drafts: 0 });
+    expect(b.nextDueOn).toBeNull();
 
     const pulseB = pulseResponse.parse(await (await get('/v1/pulse', tokenB)).json());
     expect(pulseB.counts).toEqual(b.counts);

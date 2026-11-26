@@ -374,6 +374,10 @@ export const todayResponse = z
           'In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag.',
       }),
     counts: todayCountsSchema,
+    nextDueOn: z.iso.date().nullable().openapi({
+      description:
+        "The soonest check-in due after today in its outlet's calendar, for the all-clear state; null when none is scheduled.",
+    }),
   })
   .openapi('Today');
 

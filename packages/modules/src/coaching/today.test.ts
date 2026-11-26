@@ -247,6 +247,11 @@ describe('getTodayQueue', () => {
     });
   });
 
+  it('gives the soonest upcoming check-in for the all-clear state, or null when none', () => {
+    // 'Later' is due on the 30th; archived and unassigned clients' check-ins don't count.
+    expect(queue.nextDueOn).toBe('2026-11-30');
+  });
+
   it('leaves out future, archived and unassigned check-ins, stale drafts and off-track clients', () => {
     const everyone = Object.values(queue.groups).flatMap(names);
     for (const name of ['Later', 'Archived', 'Unassigned', 'Stale Draft', 'Off Track']) {
@@ -269,6 +274,7 @@ describe('getTodayQueue', () => {
       now: NOW,
     });
     expect(names(coachB.groups.overdue)).toEqual(['Coach B client']);
+    expect(coachB.nextDueOn).toBeNull();
     expect(coachB.counts).toEqual({
       redFlags: 0,
       plansBlocked: 0,

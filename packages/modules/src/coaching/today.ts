@@ -33,7 +33,12 @@ export type TodayGroups = {
 
 export type TodayCounts = Record<keyof TodayGroups, number>;
 
-export type TodayQueue = { groups: TodayGroups; counts: TodayCounts };
+export type TodayQueue = {
+  groups: TodayGroups;
+  counts: TodayCounts;
+  /** The soonest check-in due after today (YYYY-MM-DD), for the all-clear state; null when none. */
+  nextDueOn: string | null;
+};
 
 const byName = (a: TodayItem, b: TodayItem) =>
   a.clientName.localeCompare(b.clientName) || a.clientId.localeCompare(b.clientId);
@@ -155,6 +160,7 @@ export const getTodayQueue = async (
 
   const overdue: TodayItem[] = [];
   const dueToday: TodayItem[] = [];
+  let nextDueOn: string | null = null;
   for (const due of dueCheckIns) {
     const client = byId.get(due.clientId);
     if (client === undefined) continue;
@@ -176,6 +182,8 @@ export const getTodayQueue = async (
           scheduledFor: due.scheduledFor,
         }),
       );
+    } else if (nextDueOn === null || due.scheduledFor < nextDueOn) {
+      nextDueOn = due.scheduledFor;
     }
   }
 
@@ -216,5 +224,6 @@ export const getTodayQueue = async (
       dueToday: groups.dueToday.length,
       drafts: groups.drafts.length,
     },
+    nextDueOn,
   };
 };

@@ -112,9 +112,14 @@
           },
           "counts": {
             "$ref": "#/components/schemas/TodayCounts"
+          },
+          "nextDueOn": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The soonest check-in due after today in its outlet's calendar, for the all-clear state; null when none is scheduled."
           }
         },
-        "required": ["groups", "counts"]
+        "required": ["groups", "counts", "nextDueOn"]
       },
       "TodayItem": {
         "type": "object",

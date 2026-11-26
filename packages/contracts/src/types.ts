@@ -325,6 +325,8 @@ export type Today = {
     drafts: TodayItem[];
   };
   counts: TodayCounts;
+  /** The soonest check-in due after today (YYYY-MM-DD), for the all-clear state; null when none. */
+  nextDueOn: string | null;
 };
 
 export type TodayCounts = Record<keyof Today['groups'], number>;
