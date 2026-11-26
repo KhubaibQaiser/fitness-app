@@ -1,0 +1,4642 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>F1 token sheet</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bgCanvas);
+        color: var(--fgPrimary);
+        font:
+          15px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        overflow-wrap: anywhere;
+      }
+      code,
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+      }
+      .num,
+      td,
+      .ratio {
+        font-variant-numeric: tabular-nums;
+      }
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      @media (min-width: 744px) {
+        .wrap {
+          padding: 0 32px;
+        }
+      }
+      h1 {
+        font-size: 28px;
+        line-height: 1.2;
+        margin: 4px 0 8px;
+      }
+      h2 {
+        font-size: 22px;
+        line-height: 1.25;
+        margin: 0 0 4px;
+      }
+      h3 {
+        font-size: 17px;
+        line-height: 1.3;
+        margin: 28px 0 8px;
+      }
+      h4 {
+        font-size: 15px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 8px;
+        max-width: 72ch;
+      }
+      .muted {
+        color: var(--fgSecondary);
+      }
+      .small {
+        font-size: 13px;
+      }
+      :focus-visible {
+        outline: 2px solid var(--brandText);
+        outline-offset: 2px;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 16px;
+        top: 8px;
+        background: var(--bgSurface);
+        padding: 8px 12px;
+        z-index: 10;
+      }
+      .ic {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .page-head {
+        padding: 24px 0 16px;
+        background: var(--bgSurface);
+        border-bottom: 1px solid var(--borderSubtle);
+      }
+      .eyebrow {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fgSecondary);
+        margin: 0;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        align-items: flex-end;
+        margin-top: 16px;
+      }
+      fieldset.seg {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      fieldset.seg legend {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 0;
+        margin-bottom: 4px;
+      }
+      .seg-row {
+        display: inline-flex;
+        border: 1px solid var(--borderControl);
+        border-radius: 10px;
+        padding: 2px;
+        gap: 2px;
+      }
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .seg label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .seg label .ic {
+        visibility: hidden;
+      }
+      .seg input:checked + label {
+        background: var(--brandWash);
+        color: var(--brandWashText);
+        font-weight: 700;
+      }
+      .seg input:checked + label .ic {
+        visibility: visible;
+      }
+      .seg input:focus-visible + label {
+        outline: 2px solid var(--brandText);
+        outline-offset: 2px;
+      }
+      nav.toc ol {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 10px;
+        color: var(--fgPrimary);
+        border-radius: 8px;
+        text-underline-offset: 3px;
+      }
+      .callout {
+        border: 1px solid var(--borderControl);
+        border-radius: 14px;
+        padding: 12px 16px;
+        margin: 16px 0 0;
+        background: var(--bgSurface);
+      }
+      .callout ul {
+        margin: 4px 0 0;
+        padding-left: 20px;
+      }
+      .callout li {
+        margin: 4px 0;
+      }
+      #error {
+        margin: 16px;
+        padding: 12px 16px;
+        border: 2px solid var(--statusDangerBorder);
+        background: var(--statusDangerWash);
+        color: var(--statusDangerWashText);
+        border-radius: 10px;
+        font-weight: 600;
+      }
+      section {
+        padding: 32px 0 40px;
+        border-bottom: 1px solid var(--borderSubtle);
+        background: var(--bgCanvas);
+      }
+      .two {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      @media (min-width: 900px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+      }
+      .three {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      @media (min-width: 900px) {
+        .three {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      .panel {
+        background: var(--bgSurface);
+        color: var(--fgPrimary);
+        border: 1px solid var(--borderSubtle);
+        border-radius: 14px;
+        padding: 16px;
+        min-width: 0;
+      }
+      .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
+      .res {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+      }
+      .res.pass {
+        color: var(--statusSuccessText);
+      }
+      .res.fail {
+        color: var(--statusDangerText);
+      }
+      .res.exempt,
+      .res.info {
+        color: var(--fgSecondary);
+      }
+      .sw {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--borderSubtle);
+        flex: none;
+        vertical-align: middle;
+      }
+      .cell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+      }
+      .cell > span:last-child {
+        min-width: 0;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--borderControl);
+        border-radius: 6px;
+        padding: 0 6px;
+        margin-top: 2px;
+      }
+      /* grid tables that reflow on phones */
+      .gt-row {
+        display: grid;
+        gap: 6px 16px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--borderSubtle);
+        align-items: center;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+      }
+      .gt-row.head {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--fgSecondary);
+        border-bottom-color: var(--borderControl);
+      }
+      @media (max-width: 743px) {
+        .gt-row {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 2px 12px;
+          padding: 6px 0;
+        }
+        .gt-row > .k {
+          grid-column: 1 / -1;
+        }
+        .gt-row.head > .k {
+          display: none;
+        }
+      }
+      .group-h {
+        margin: 20px 0 0;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--fgSecondary);
+      }
+      .sample {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 28px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 14px;
+        flex: none;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        text-align: start;
+        padding: 8px 8px 8px 0;
+        border-bottom: 1px solid var(--borderSubtle);
+        vertical-align: top;
+        font-size: 14px;
+      }
+      th {
+        font-size: 13px;
+        color: var(--fgSecondary);
+        border-bottom-color: var(--borderControl);
+      }
+      .scroll-x {
+        overflow-x: auto;
+      }
+      .ratio,
+      .nowrap {
+        white-space: nowrap;
+      }
+      .group-h .tag {
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      #s2-contrast {
+        padding-top: 1px;
+      }
+      /* tables that turn into stacked rows on phones */
+      @media (max-width: 743px) {
+        table.stack > thead {
+          display: none;
+        }
+        table.stack,
+        table.stack > tbody,
+        table.stack > tbody > tr,
+        table.stack > tbody > tr > td {
+          display: block;
+          width: 100%;
+        }
+        table.stack > tbody > tr {
+          border-bottom: 1px solid var(--borderControl);
+          padding: 8px 0;
+        }
+        table.stack > tbody > tr > td {
+          border: 0;
+          padding: 2px 0;
+        }
+        table.stack > tbody > tr > td:first-child {
+          font-weight: 700;
+        }
+        table.stack > tbody > tr > td[data-label]::before {
+          content: attr(data-label) ': ';
+          font-family: system-ui, sans-serif;
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--fgSecondary);
+        }
+      }
+      /* 1. scales */
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+      }
+      .tile .blk {
+        height: 52px;
+        border-radius: 8px;
+        border: 1px solid var(--borderSubtle);
+        display: flex;
+        align-items: flex-end;
+        padding: 4px 6px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .tile .hex {
+        display: block;
+        margin-top: 2px;
+      }
+      .bars .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 28px;
+      }
+      .bars .lbl {
+        width: 180px;
+        flex: none;
+      }
+      .bars .bar {
+        height: 12px;
+        background: var(--fgSecondary);
+        border-radius: 2px;
+      }
+      .radii {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .radii .r {
+        width: 72px;
+        height: 72px;
+        border: 2px solid var(--fgSecondary);
+        background: var(--bgSurface);
+      }
+      .elev {
+        padding: 20px;
+        border-radius: 14px;
+        background: var(--bgCanvas);
+        border: 1px solid var(--borderSubtle);
+      }
+      .elev .card {
+        background: var(--bgSurface);
+        border: 1px solid var(--borderSubtle);
+        border-radius: var(--radiusLg);
+        padding: 16px;
+      }
+      .t-dark .elev .card,
+      .t-dark .elev .card .card {
+        box-shadow: none;
+      }
+      .t-dark .elev .card .card {
+        background: var(--bgRaised);
+        margin-top: 12px;
+      }
+      .ios-group {
+        background: var(--bgSurface);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .ios-group div {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--borderSubtle);
+        min-height: 44px;
+      }
+      .ios-group div:last-child {
+        border-bottom: 0;
+      }
+      /* 3. sunflower */
+      .btn {
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: var(--radiusMd);
+        font: inherit;
+        font-weight: 650;
+        background: var(--brandFill);
+        color: var(--brandOn);
+        border: 1px solid var(--brandBorder);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .btn:hover,
+      .btn.is-hover {
+        background: var(--brandHover);
+      }
+      .btn:active,
+      .btn.is-pressed {
+        background: var(--brandPressed);
+      }
+      .btn.is-focus {
+        outline: 2px solid var(--brandText);
+        outline-offset: 2px;
+      }
+      .spin {
+        width: 16px;
+        height: 16px;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spin {
+          animation: none;
+        }
+      }
+      .states {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+        gap: 14px 10px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      .states figure {
+        margin: 0;
+      }
+      .states figcaption {
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .on-canvas {
+        background: var(--bgCanvas);
+      }
+      .link {
+        color: var(--brandText);
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .tabs {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--borderSubtle);
+        border-radius: 12px;
+      }
+      .tabs span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 36px;
+        padding: 0 12px;
+        border-radius: 8px;
+      }
+      .tabs .sel {
+        background: var(--brandWash);
+        color: var(--brandWashText);
+        font-weight: 700;
+      }
+      /* 4. chips */
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: var(--radiusSm);
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chip .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .chip.calm {
+        padding: 0;
+      }
+      .chip-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--borderSubtle);
+      }
+      @media (min-width: 744px) {
+        .chip-row {
+          grid-template-columns: 200px minmax(0, 1fr);
+          align-items: center;
+        }
+      }
+      /* 5. viz */
+      .ramp {
+        display: flex;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--borderSubtle);
+      }
+      .ramp span {
+        flex: 1;
+        height: 36px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        padding-bottom: 2px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        font-size: 13px;
+        margin: 8px 0;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .chart > svg {
+        width: 100%;
+        max-width: 520px;
+        height: auto;
+        display: block;
+      }
+      details summary {
+        cursor: pointer;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+      }
+      /* 6. glass */
+      .frame {
+        position: relative;
+        height: 240px;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--borderSubtle);
+        background: var(--bgCanvas);
+      }
+      .frame .content {
+        padding: 8px 12px 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .frame .ccard {
+        background: var(--bgSurface);
+        border: 1px solid var(--borderSubtle);
+        border-radius: 12px;
+        padding: 10px;
+      }
+      .frame .stripe {
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+        height: 56px;
+      }
+      .frame .stripe i {
+        flex: 1;
+        border-radius: 3px 3px 0 0;
+      }
+      .frame .people {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .frame .people i {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        flex: none;
+      }
+      .frame .line {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--fgFaint);
+        opacity: 0.5;
+        flex: 1;
+      }
+      .topbar {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 14px;
+        color: var(--fgPrimary);
+        font-weight: 700;
+        font-size: 17px;
+      }
+      .topbar .ic {
+        width: 22px;
+        height: 22px;
+      }
+      .topbar .title {
+        flex: 1;
+      }
+      .topbar.glass {
+        background: var(--glassColorChrome);
+        -webkit-backdrop-filter: blur(var(--glassBlurChrome)) saturate(var(--glassSaturate));
+        backdrop-filter: blur(var(--glassBlurChrome)) saturate(var(--glassSaturate));
+        border-bottom: 1px solid var(--glassColorEdge);
+        box-shadow:
+          inset 0 -1px 0 var(--glassColorBorder),
+          var(--glassHighlight),
+          var(--glassShadow);
+      }
+      .topbar.glass::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: var(--glassNoiseOpacity);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .topbar.glass {
+          background: var(--glassColorFallback);
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .topbar.glass {
+          background: var(--glassColorFallback);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+      }
+      .topbar.solid {
+        background: var(--glassColorFallback);
+        border-bottom: 1px solid var(--borderSubtle);
+      }
+      /* 7. widths */
+      .rangebar {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--borderControl);
+        margin: 4px 0 12px;
+      }
+      .rangebar > span {
+        min-height: 44px;
+        padding: 4px 8px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-inline-end: 1px solid var(--borderControl);
+      }
+      .rangebar > span:last-child {
+        border-inline-end: 0;
+      }
+      .rb-phone {
+        background: var(--bgSunken);
+      }
+      .rb-tablet {
+        background: var(--brandWash);
+        color: var(--brandWashText);
+      }
+      .rb-desktop {
+        background: var(--bgInverse);
+        color: var(--fgInverse);
+      }
+      .moves {
+        font-weight: 700;
+      }
+    </style>
+    <style id="theme-vars"></style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <noscript
+      ><p class="wrap">
+        This sheet computes every value with JavaScript. Turn it on to see the tokens.
+      </p></noscript
+    >
+    <header class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">GymOS UI revamp · task F1 · mock for owner approval</p>
+        <h1>Floodlight token sheet</h1>
+        <p class="muted">
+          Every colour and ratio here is computed in the browser from
+          <code>docs/revamp/reference/tokens.floodlight.json</code>, embedded below as a verbatim
+          copy. The one other input is the tenant brand, Sunflower, from rulings R3. Demo data is
+          synthetic.
+        </p>
+        <p class="small muted" id="selfcheck"></p>
+        <div class="controls">
+          <fieldset class="seg" id="theme-control">
+            <legend>Theme</legend>
+            <div class="seg-row" id="theme-options"></div>
+          </fieldset>
+          <nav class="toc" aria-label="Sections">
+            <ol>
+              <li><a href="#s1">1 Scales</a></li>
+              <li><a href="#s2">2 Semantic</a></li>
+              <li><a href="#s3">3 Sunflower</a></li>
+              <li><a href="#s4">4 Status</a></li>
+              <li><a href="#s5">5 Viz</a></li>
+              <li><a href="#s6">6 Glass</a></li>
+              <li><a href="#s7">7 Widths</a></li>
+            </ol>
+          </nav>
+        </div>
+        <div class="callout" id="open-points"></div>
+      </div>
+    </header>
+    <div id="error" role="alert" hidden></div>
+    <main id="main">
+      <section id="s1" aria-labelledby="h-s1">
+        <div class="wrap">
+          <h2 id="h-s1">1. Scales</h2>
+          <p class="muted">
+            Primitive layer: raw values with no meaning. Components never read these directly.
+          </p>
+          <div id="scales"></div>
+        </div>
+      </section>
+      <section id="s2" aria-labelledby="h-s2">
+        <div class="wrap">
+          <h2 id="h-s2">2. Semantic tokens and contrast</h2>
+          <p class="muted">
+            Every semantic key from tokens.md §2.3, light and dark, with the primitive it points to.
+            Then every text and background pair from tokens.md §6.3 and §6.4 with its WCAG 2.2
+            ratio.
+          </p>
+          <div id="semantic"></div>
+        </div>
+      </section>
+      <section id="s3" aria-labelledby="h-s3">
+        <div class="wrap">
+          <h2 id="h-s3">3. Sunflower action states</h2>
+          <div id="sunflower"></div>
+        </div>
+      </section>
+      <section id="s4" aria-labelledby="h-s4">
+        <div class="wrap">
+          <h2 id="h-s4">4. Status chips</h2>
+          <div id="status"></div>
+        </div>
+      </section>
+      <section id="s5" aria-labelledby="h-s5">
+        <div class="wrap">
+          <h2 id="h-s5">5. Viz palette</h2>
+          <div id="viz"></div>
+        </div>
+      </section>
+      <section id="s6" aria-labelledby="h-s6">
+        <div class="wrap">
+          <h2 id="h-s6">6. Glass top bar</h2>
+          <div id="glass"></div>
+        </div>
+      </section>
+      <section id="s7" aria-labelledby="h-s7">
+        <div class="wrap">
+          <h2 id="h-s7">7. Width ranges</h2>
+          <div id="widths"></div>
+        </div>
+      </section>
+    </main>
+    <!--
+      Token data: a verbatim copy of docs/revamp/reference/tokens.floodlight.json, taken from
+      origin/main at 953642c. Prettier may re-indent it; compare with JSON.parse and a deep-equal.
+      Nothing below types a colour from the token set by hand.
+    -->
+    <script type="application/json" id="tokens">
+      {
+        "$description": "GymOS design tokens, option \"Floodlight\" (recommended, status: proposed). Generated by scripts/tokens-build.mjs on 2026-11-23. Aliases use DTCG {path} syntax; $extensions.resolved carries the hex.",
+        "primitive": {
+          "color": {
+            "neutral": {
+              "0": {
+                "$value": "#FCFDFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.995 0.003 264.5)"
+                }
+              },
+              "50": {
+                "$value": "#F3F6FA",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.972 0.006 255.5)"
+                }
+              },
+              "100": {
+                "$value": "#EAEEF3",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.008 253.9)"
+                }
+              },
+              "200": {
+                "$value": "#DBE0E7",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.011 256.7)"
+                }
+              },
+              "300": {
+                "$value": "#C7CDD5",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.013 255.5)"
+                }
+              },
+              "400": {
+                "$value": "#A8AEB8",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.75 0.016 260.7)"
+                }
+              },
+              "500": {
+                "$value": "#868D96",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.64 0.016 254.7)"
+                }
+              },
+              "600": {
+                "$value": "#656B74",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.525 0.016 258.4)"
+                }
+              },
+              "700": {
+                "$value": "#505660",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.018 260.7)"
+                }
+              },
+              "800": {
+                "$value": "#333844",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.34 0.022 267.4)"
+                }
+              },
+              "850": {
+                "$value": "#242935",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.28 0.023 267.2)"
+                }
+              },
+              "900": {
+                "$value": "#171B28",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.225 0.026 271)"
+                }
+              },
+              "950": {
+                "$value": "#0C0F19",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.17 0.022 271.1)"
+                }
+              }
+            },
+            "ultra": {
+              "50": {
+                "$value": "#F2F7FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.012 259.8)"
+                }
+              },
+              "100": {
+                "$value": "#E5EEFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.025 263.3)"
+                }
+              },
+              "200": {
+                "$value": "#D0E0FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.046 263.7)"
+                }
+              },
+              "300": {
+                "$value": "#B4CCFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.076 265.1)"
+                }
+              },
+              "400": {
+                "$value": "#91B2FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.117 266)"
+                }
+              },
+              "500": {
+                "$value": "#6E95FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.162 266.9)"
+                }
+              },
+              "600": {
+                "$value": "#4A70FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.216 267.9)"
+                }
+              },
+              "700": {
+                "$value": "#3953F2",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.237 269)"
+                }
+              },
+              "800": {
+                "$value": "#2F3FC4",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.205 270.1)"
+                }
+              },
+              "900": {
+                "$value": "#242F95",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.165 270.8)"
+                }
+              },
+              "950": {
+                "$value": "#181E66",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.124 271.9)"
+                }
+              }
+            },
+            "volt": {
+              "50": {
+                "$value": "#F5F9E7",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.024 117)"
+                }
+              },
+              "100": {
+                "$value": "#E9F3CC",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.052 119.1)"
+                }
+              },
+              "200": {
+                "$value": "#D7EAA2",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.095 120.3)"
+                }
+              },
+              "300": {
+                "$value": "#BEDB66",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.147 121.2)"
+                }
+              },
+              "400": {
+                "$value": "#A1C500",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.186 121.9)"
+                }
+              },
+              "500": {
+                "$value": "#88AB00",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.169 123.1)"
+                }
+              },
+              "600": {
+                "$value": "#6E8E00",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.149 124)"
+                }
+              },
+              "700": {
+                "$value": "#5A7800",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.133 125.1)"
+                }
+              },
+              "800": {
+                "$value": "#456000",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.115 126.3)"
+                }
+              },
+              "900": {
+                "$value": "#324800",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.095 126.9)"
+                }
+              },
+              "950": {
+                "$value": "#1F3000",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.074 127.8)"
+                }
+              }
+            },
+            "aqua": {
+              "50": {
+                "$value": "#EBFBFA",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.017 192.4)"
+                }
+              },
+              "100": {
+                "$value": "#D4F6F4",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.035 192.2)"
+                }
+              },
+              "200": {
+                "$value": "#AFEEEB",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.063 192.4)"
+                }
+              },
+              "300": {
+                "$value": "#77E0DF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.098 194.6)"
+                }
+              },
+              "400": {
+                "$value": "#24CDCD",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.126 194.9)"
+                }
+              },
+              "500": {
+                "$value": "#00B1B3",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.117 196.2)"
+                }
+              },
+              "600": {
+                "$value": "#009395",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.102 196.5)"
+                }
+              },
+              "700": {
+                "$value": "#007B7E",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.09 197.8)"
+                }
+              },
+              "800": {
+                "$value": "#006265",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.077 198.5)"
+                }
+              },
+              "900": {
+                "$value": "#004A4C",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.063 197.9)"
+                }
+              },
+              "950": {
+                "$value": "#003134",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.048 201.3)"
+                }
+              }
+            },
+            "emerald": {
+              "50": {
+                "$value": "#EDFBF2",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.019 157.9)"
+                }
+              },
+              "100": {
+                "$value": "#D8F7E4",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.041 158.6)"
+                }
+              },
+              "200": {
+                "$value": "#B7EFCE",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.073 158.7)"
+                }
+              },
+              "300": {
+                "$value": "#88E3B2",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.112 159.2)"
+                }
+              },
+              "400": {
+                "$value": "#4FD093",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.145 159.4)"
+                }
+              },
+              "500": {
+                "$value": "#00B879",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.156 160)"
+                }
+              },
+              "600": {
+                "$value": "#009864",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.135 160.3)"
+                }
+              },
+              "700": {
+                "$value": "#008054",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.119 160.6)"
+                }
+              },
+              "800": {
+                "$value": "#006643",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.1 161.2)"
+                }
+              },
+              "900": {
+                "$value": "#004D32",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.082 161.6)"
+                }
+              },
+              "950": {
+                "$value": "#003320",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.062 161.9)"
+                }
+              }
+            },
+            "amber": {
+              "50": {
+                "$value": "#FFF5E8",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.02 74.7)"
+                }
+              },
+              "100": {
+                "$value": "#FFEBCF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.043 76.4)"
+                }
+              },
+              "200": {
+                "$value": "#FFD9A7",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.077 74.2)"
+                }
+              },
+              "300": {
+                "$value": "#FCBF71",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.118 71.8)"
+                }
+              },
+              "400": {
+                "$value": "#F1A12E",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.153 70.4)"
+                }
+              },
+              "500": {
+                "$value": "#D78600",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.151 68)"
+                }
+              },
+              "600": {
+                "$value": "#B56D00",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.134 65.9)"
+                }
+              },
+              "700": {
+                "$value": "#9B5A00",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.12 63.8)"
+                }
+              },
+              "800": {
+                "$value": "#7D4600",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.103 62.4)"
+                }
+              },
+              "900": {
+                "$value": "#603200",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.087 59.5)"
+                }
+              },
+              "950": {
+                "$value": "#422000",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.068 58.6)"
+                }
+              }
+            },
+            "red": {
+              "50": {
+                "$value": "#FFF4F2",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.012 29.9)"
+                }
+              },
+              "100": {
+                "$value": "#FFE8E5",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.026 26.5)"
+                }
+              },
+              "200": {
+                "$value": "#FFD4CF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.049 25.9)"
+                }
+              },
+              "300": {
+                "$value": "#FFB7B1",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.085 24.4)"
+                }
+              },
+              "400": {
+                "$value": "#FF9089",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.135 24.5)"
+                }
+              },
+              "500": {
+                "$value": "#FF5B5B",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.2 24)"
+                }
+              },
+              "600": {
+                "$value": "#E2333E",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.21 23.4)"
+                }
+              },
+              "700": {
+                "$value": "#C51C2E",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.2 23.3)"
+                }
+              },
+              "800": {
+                "$value": "#9F1123",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.172 22.9)"
+                }
+              },
+              "900": {
+                "$value": "#780D1A",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.138 22.4)"
+                }
+              },
+              "950": {
+                "$value": "#520810",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.104 22.2)"
+                }
+              }
+            },
+            "sky": {
+              "50": {
+                "$value": "#EEF8FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.014 238)"
+                }
+              },
+              "100": {
+                "$value": "#DDF1FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.028 238.2)"
+                }
+              },
+              "200": {
+                "$value": "#C0E6FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.053 237)"
+                }
+              },
+              "300": {
+                "$value": "#96D5FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.087 238.3)"
+                }
+              },
+              "400": {
+                "$value": "#67BEF7",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.117 239.5)"
+                }
+              },
+              "500": {
+                "$value": "#40A5E3",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.13 239.7)"
+                }
+              },
+              "600": {
+                "$value": "#1D88C6",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.131 241)"
+                }
+              },
+              "700": {
+                "$value": "#0572AC",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.124 241.9)"
+                }
+              },
+              "800": {
+                "$value": "#025A8B",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.107 242.8)"
+                }
+              },
+              "900": {
+                "$value": "#064469",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.085 242.6)"
+                }
+              },
+              "950": {
+                "$value": "#052D48",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.065 243.9)"
+                }
+              }
+            },
+            "orchid": {
+              "50": {
+                "$value": "#FDF3FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.019 320.6)"
+                }
+              },
+              "100": {
+                "$value": "#FCE5FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.042 322.3)"
+                }
+              },
+              "200": {
+                "$value": "#FACFFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.079 322.8)"
+                }
+              },
+              "300": {
+                "$value": "#F7ADFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.136 323.3)"
+                }
+              },
+              "400": {
+                "$value": "#EA88F5",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.181 323.4)"
+                }
+              },
+              "500": {
+                "$value": "#D568E0",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.2 323.9)"
+                }
+              },
+              "600": {
+                "$value": "#B84AC1",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.201 324.6)"
+                }
+              },
+              "700": {
+                "$value": "#9F38A7",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.19 324.8)"
+                }
+              },
+              "800": {
+                "$value": "#802986",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.165 325.1)"
+                }
+              },
+              "900": {
+                "$value": "#611E64",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.132 326.1)"
+                }
+              },
+              "950": {
+                "$value": "#421344",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.1 326.1)"
+                }
+              }
+            },
+            "iris": {
+              "50": {
+                "$value": "#F7F5FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.013 295.3)"
+                }
+              },
+              "100": {
+                "$value": "#EFEAFF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.029 296.8)"
+                }
+              },
+              "200": {
+                "$value": "#E3D9FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.052 297.4)"
+                }
+              },
+              "300": {
+                "$value": "#D2C1FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.087 297.1)"
+                }
+              },
+              "400": {
+                "$value": "#BEA1FF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.134 297.4)"
+                }
+              },
+              "500": {
+                "$value": "#AA7EFB",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.18 297.7)"
+                }
+              },
+              "600": {
+                "$value": "#9061DB",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.18 298.6)"
+                }
+              },
+              "700": {
+                "$value": "#7B4EBF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.171 298.8)"
+                }
+              },
+              "800": {
+                "$value": "#623C9A",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.148 299)"
+                }
+              },
+              "900": {
+                "$value": "#4A2C74",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.119 299.8)"
+                }
+              },
+              "950": {
+                "$value": "#321C4F",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.091 300.7)"
+                }
+              }
+            },
+            "apricot": {
+              "50": {
+                "$value": "#FFF4EE",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.975 0.014 50.8)"
+                }
+              },
+              "100": {
+                "$value": "#FFE9DC",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.948 0.03 52.7)"
+                }
+              },
+              "200": {
+                "$value": "#FFD6BF",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.905 0.056 51)"
+                }
+              },
+              "300": {
+                "$value": "#FFBA94",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.845 0.095 49.9)"
+                }
+              },
+              "400": {
+                "$value": "#F99962",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.77 0.135 49.6)"
+                }
+              },
+              "500": {
+                "$value": "#E47B3C",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.69 0.151 49)"
+                }
+              },
+              "600": {
+                "$value": "#C55F1C",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.6 0.15 48.5)"
+                }
+              },
+              "700": {
+                "$value": "#AB4C05",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.53 0.142 48)"
+                }
+              },
+              "800": {
+                "$value": "#8A3A02",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.45 0.124 46.9)"
+                }
+              },
+              "900": {
+                "$value": "#682B04",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.37 0.099 46.8)"
+                }
+              },
+              "950": {
+                "$value": "#471B03",
+                "$type": "color",
+                "$extensions": {
+                  "oklch": "oklch(0.285 0.076 45.8)"
+                }
+              }
+            },
+            "white": {
+              "$value": "#FFFFFF",
+              "$type": "color"
+            }
+          },
+          "space": {
+            "0": {
+              "$value": "0px",
+              "$type": "dimension"
+            },
+            "1": {
+              "$value": "4px",
+              "$type": "dimension"
+            },
+            "2": {
+              "$value": "8px",
+              "$type": "dimension"
+            },
+            "3": {
+              "$value": "12px",
+              "$type": "dimension"
+            },
+            "4": {
+              "$value": "16px",
+              "$type": "dimension"
+            },
+            "5": {
+              "$value": "20px",
+              "$type": "dimension"
+            },
+            "6": {
+              "$value": "24px",
+              "$type": "dimension"
+            },
+            "8": {
+              "$value": "32px",
+              "$type": "dimension"
+            },
+            "10": {
+              "$value": "40px",
+              "$type": "dimension"
+            },
+            "12": {
+              "$value": "48px",
+              "$type": "dimension"
+            },
+            "16": {
+              "$value": "64px",
+              "$type": "dimension"
+            },
+            "0.5": {
+              "$value": "2px",
+              "$type": "dimension"
+            },
+            "1.5": {
+              "$value": "6px",
+              "$type": "dimension"
+            }
+          },
+          "radius": {
+            "xs": {
+              "$value": "4px",
+              "$type": "dimension"
+            },
+            "sm": {
+              "$value": "6px",
+              "$type": "dimension",
+              "$description": "chips, tags"
+            },
+            "md": {
+              "$value": "10px",
+              "$type": "dimension",
+              "$description": "buttons, inputs, segmented controls"
+            },
+            "lg": {
+              "$value": "14px",
+              "$type": "dimension",
+              "$description": "cards, tiles"
+            },
+            "xl": {
+              "$value": "20px",
+              "$type": "dimension",
+              "$description": "sheet top corners, dialogs"
+            },
+            "full": {
+              "$value": "999px",
+              "$type": "dimension",
+              "$description": "avatars, pills"
+            }
+          },
+          "borderWidth": {
+            "hairline": {
+              "$value": "1px",
+              "$type": "dimension",
+              "$description": "web 1px; native StyleSheet.hairlineWidth for separators only"
+            },
+            "control": {
+              "$value": "1px",
+              "$type": "dimension"
+            },
+            "focus": {
+              "$value": "2px",
+              "$type": "dimension",
+              "$description": "focus ring, drawn with a 2px offset"
+            },
+            "selected": {
+              "$value": "2px",
+              "$type": "dimension"
+            }
+          },
+          "elevation": {
+            "card": {
+              "$value": "0 1px 2px rgba(22,26,32,0.06), 0 0 0 1px rgba(22,26,32,0.02)",
+              "$type": "shadow",
+              "$description": "light only; dark uses surface steps + border; iOS uses hairline separators, no card shadow"
+            },
+            "overlay": {
+              "$value": "0 12px 32px -8px rgba(22,26,32,0.22)",
+              "$type": "shadow",
+              "$description": "popover, menu, side sheet (dark: rgba(0,0,0,0.65))"
+            },
+            "sheet": {
+              "$value": "0 -8px 32px -8px rgba(22,26,32,0.18)",
+              "$type": "shadow"
+            }
+          },
+          "duration": {
+            "instant": {
+              "$value": "80ms",
+              "$type": "duration",
+              "$description": "press, toggle, reduced-motion fade"
+            },
+            "fast": {
+              "$value": "140ms",
+              "$type": "duration",
+              "$description": "hover, chip, menu"
+            },
+            "base": {
+              "$value": "220ms",
+              "$type": "duration",
+              "$description": "panel, side sheet, route fade"
+            },
+            "slow": {
+              "$value": "320ms",
+              "$type": "duration",
+              "$description": "sheet, shared element"
+            }
+          },
+          "easing": {
+            "standard": {
+              "$value": [0.2, 0, 0, 1],
+              "$type": "cubicBezier"
+            },
+            "decelerate": {
+              "$value": [0.05, 0.7, 0.1, 1],
+              "$type": "cubicBezier",
+              "$description": "entering"
+            },
+            "accelerate": {
+              "$value": [0.3, 0, 1, 1],
+              "$type": "cubicBezier",
+              "$description": "leaving"
+            },
+            "springSheet": {
+              "$value": {
+                "damping": 28,
+                "stiffness": 300,
+                "mass": 1
+              },
+              "$type": "spring"
+            },
+            "springPress": {
+              "$value": {
+                "damping": 22,
+                "stiffness": 420,
+                "mass": 1
+              },
+              "$type": "spring"
+            }
+          },
+          "fontFamily": {
+            "ui": {
+              "$value": [
+                "Inter",
+                "ui-sans-serif",
+                "system-ui",
+                "-apple-system",
+                "Segoe UI",
+                "Roboto",
+                "sans-serif"
+              ],
+              "$type": "fontFamily",
+              "$description": "Google Fonts, OFL. Axes opsz 14-32, wght 100-900. Features in the Google build: tnum, pnum, frac, calt (no cv/ss sets)."
+            },
+            "display": {
+              "$value": ["Archivo", "Inter", "ui-sans-serif", "sans-serif"],
+              "$type": "fontFamily",
+              "$description": "Google Fonts, OFL, Omnibus-Type. Axes wdth 62-125, wght 100-900. Has tnum. Native: bundle static instances (wdth 112 and 125 at wght 700) fetched from the Google Fonts API."
+            },
+            "urduReading": {
+              "$value": ["Noto Nastaliq Urdu", "Noto Naskh Arabic", "serif"],
+              "$type": "fontFamily",
+              "$description": "Google Fonts, OFL. wght 400-700. hhea ascent+descent = 2.50 em."
+            },
+            "urduUi": {
+              "$value": ["Noto Naskh Arabic", "Noto Nastaliq Urdu", "serif"],
+              "$type": "fontFamily",
+              "$description": "Google Fonts, OFL. wght 400-700. hhea ascent+descent = 1.70 em."
+            }
+          },
+          "fontWeight": {
+            "regular": {
+              "$value": 400,
+              "$type": "fontWeight"
+            },
+            "medium": {
+              "$value": 500,
+              "$type": "fontWeight"
+            },
+            "semibold": {
+              "$value": 600,
+              "$type": "fontWeight"
+            },
+            "bold": {
+              "$value": 700,
+              "$type": "fontWeight"
+            }
+          }
+        },
+        "semantic": {
+          "light": {
+            "color": {
+              "bg": {
+                "canvas": {
+                  "$value": "{primitive.color.neutral.50}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#F3F6FA"
+                  }
+                },
+                "surface": {
+                  "$value": "{primitive.color.neutral.0}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#FCFDFF"
+                  }
+                },
+                "raised": {
+                  "$value": "{primitive.color.neutral.0}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#FCFDFF"
+                  }
+                },
+                "sunken": {
+                  "$value": "{primitive.color.neutral.100}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#EAEEF3"
+                  }
+                },
+                "hover": {
+                  "$value": "{primitive.color.neutral.100}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#EAEEF3"
+                  }
+                },
+                "field": {
+                  "$value": "{primitive.color.neutral.0}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#FCFDFF"
+                  }
+                },
+                "inverse": {
+                  "$value": "{primitive.color.neutral.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#171B28"
+                  }
+                }
+              },
+              "fg": {
+                "primary": {
+                  "$value": "{primitive.color.neutral.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#171B28"
+                  }
+                },
+                "secondary": {
+                  "$value": "{primitive.color.neutral.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#505660"
+                  }
+                },
+                "faint": {
+                  "$value": "{primitive.color.neutral.600}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#656B74"
+                  }
+                },
+                "disabled": {
+                  "$value": "{primitive.color.neutral.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#A8AEB8"
+                  }
+                },
+                "inverse": {
+                  "$value": "{primitive.color.neutral.50}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#F3F6FA"
+                  }
+                }
+              },
+              "border": {
+                "subtle": {
+                  "$value": "{primitive.color.neutral.200}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#DBE0E7"
+                  }
+                },
+                "control": {
+                  "$value": "{primitive.color.neutral.500}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#868D96"
+                  }
+                }
+              },
+              "action": {
+                "bg": {
+                  "$value": "{primitive.color.ultra.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#3953F2"
+                  }
+                },
+                "bgHover": {
+                  "$value": "{primitive.color.ultra.800}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#2F3FC4"
+                  }
+                },
+                "bgPressed": {
+                  "$value": "{primitive.color.ultra.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#242F95"
+                  }
+                },
+                "fg": {
+                  "$value": "{primitive.color.white}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#FFFFFF"
+                  }
+                },
+                "text": {
+                  "$value": "{primitive.color.ultra.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#3953F2"
+                  }
+                },
+                "wash": {
+                  "$value": "{primitive.color.ultra.100}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#E5EEFF"
+                  }
+                },
+                "washText": {
+                  "$value": "{primitive.color.ultra.800}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#2F3FC4"
+                  }
+                }
+              },
+              "focus": {
+                "ring": {
+                  "$value": "{primitive.color.ultra.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#3953F2"
+                  }
+                }
+              },
+              "scrim": {
+                "$value": "rgba(23,27,40,0.4)",
+                "$type": "color",
+                "$extensions": {
+                  "base": "{primitive.color.neutral.900}",
+                  "alpha": 0.4
+                }
+              },
+              "status": {
+                "success": {
+                  "solid": {
+                    "$value": "{primitive.color.emerald.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#008054"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.emerald.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#008054"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.emerald.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#D8F7E4"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.emerald.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#006643"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.emerald.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#009864"
+                    }
+                  }
+                },
+                "warning": {
+                  "solid": {
+                    "$value": "{primitive.color.amber.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#F1A12E"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.amber.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#9B5A00"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.amber.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFEBCF"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.amber.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#7D4600"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.amber.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#B56D00"
+                    }
+                  }
+                },
+                "danger": {
+                  "solid": {
+                    "$value": "{primitive.color.red.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#C51C2E"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.red.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#C51C2E"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.red.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFE8E5"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.red.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#9F1123"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.red.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#E2333E"
+                    }
+                  }
+                },
+                "info": {
+                  "solid": {
+                    "$value": "{primitive.color.sky.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#0572AC"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.sky.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#0572AC"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.sky.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#DDF1FF"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.sky.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#025A8B"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.sky.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#1D88C6"
+                    }
+                  }
+                }
+              },
+              "accent": {
+                "volt": {
+                  "fill": {
+                    "$value": "{primitive.color.volt.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#A1C500"
+                    }
+                  },
+                  "onFill": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "strong": {
+                    "$value": "{primitive.color.volt.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#6E8E00"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.volt.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#5A7800"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.volt.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#456000"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.volt.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#E9F3CC"
+                    }
+                  }
+                },
+                "aqua": {
+                  "fill": {
+                    "$value": "{primitive.color.aqua.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#24CDCD"
+                    }
+                  },
+                  "onFill": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "strong": {
+                    "$value": "{primitive.color.aqua.600}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#009395"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.aqua.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#007B7E"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.aqua.800}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#006265"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.aqua.100}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#D4F6F4"
+                    }
+                  }
+                }
+              },
+              "viz": {
+                "grid": {
+                  "$value": "{primitive.color.neutral.200}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#DBE0E7"
+                  }
+                },
+                "axis": {
+                  "$value": "{primitive.color.neutral.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#A8AEB8"
+                  }
+                },
+                "axisLabel": {
+                  "$value": "{primitive.color.neutral.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#505660"
+                  }
+                },
+                "trendLine": {
+                  "$value": "{primitive.color.neutral.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#171B28"
+                  }
+                },
+                "goalBand": {
+                  "$value": "{primitive.color.aqua.100}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#D4F6F4"
+                  }
+                },
+                "goalLine": {
+                  "$value": "{primitive.color.aqua.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#007B7E"
+                  }
+                },
+                "categorical": {
+                  "1": {
+                    "$value": "#3858FF",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#7B9A00",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#881090",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#00A0A2",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#6631A9",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#B45000",
+                    "$type": "color"
+                  }
+                },
+                "macro": {
+                  "protein": {
+                    "$value": "{semantic.light.color.viz.categorical.1}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#3858FF"
+                    }
+                  },
+                  "carbs": {
+                    "$value": "{semantic.light.color.viz.categorical.2}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#7B9A00"
+                    }
+                  },
+                  "fat": {
+                    "$value": "{semantic.light.color.viz.categorical.3}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#881090"
+                    }
+                  },
+                  "fiber": {
+                    "$value": "{semantic.light.color.viz.categorical.4}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#00A0A2"
+                    }
+                  }
+                },
+                "sequential": {
+                  "1": {
+                    "$value": "#E5EEFF",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#D0E0FF",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#B4CCFF",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#91B2FF",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#6E95FF",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#4A70FF",
+                    "$type": "color"
+                  },
+                  "7": {
+                    "$value": "#3953F2",
+                    "$type": "color"
+                  }
+                },
+                "diverging": {
+                  "1": {
+                    "$value": "#3953F2",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#6E95FF",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#B4CCFF",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#DBE0E7",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#BEDB66",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#88AB00",
+                    "$type": "color"
+                  },
+                  "7": {
+                    "$value": "#5A7800",
+                    "$type": "color"
+                  }
+                }
+              }
+            }
+          },
+          "dark": {
+            "color": {
+              "bg": {
+                "canvas": {
+                  "$value": "{primitive.color.neutral.950}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#0C0F19"
+                  }
+                },
+                "surface": {
+                  "$value": "{primitive.color.neutral.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#171B28"
+                  }
+                },
+                "raised": {
+                  "$value": "{primitive.color.neutral.850}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#242935"
+                  }
+                },
+                "sunken": {
+                  "$value": "{primitive.color.neutral.950}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#0C0F19"
+                  }
+                },
+                "hover": {
+                  "$value": "{primitive.color.neutral.850}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#242935"
+                  }
+                },
+                "field": {
+                  "$value": "{primitive.color.neutral.950}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#0C0F19"
+                  }
+                },
+                "inverse": {
+                  "$value": "{primitive.color.neutral.50}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#F3F6FA"
+                  }
+                }
+              },
+              "fg": {
+                "primary": {
+                  "$value": "{primitive.color.neutral.50}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#F3F6FA"
+                  }
+                },
+                "secondary": {
+                  "$value": "{primitive.color.neutral.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#A8AEB8"
+                  }
+                },
+                "faint": {
+                  "$value": "{primitive.color.neutral.500}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#868D96"
+                  }
+                },
+                "disabled": {
+                  "$value": "{primitive.color.neutral.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#505660"
+                  }
+                },
+                "inverse": {
+                  "$value": "{primitive.color.neutral.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#171B28"
+                  }
+                }
+              },
+              "border": {
+                "subtle": {
+                  "$value": "{primitive.color.neutral.800}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#333844"
+                  }
+                },
+                "control": {
+                  "$value": "{primitive.color.neutral.600}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#656B74"
+                  }
+                }
+              },
+              "action": {
+                "bg": {
+                  "$value": "{primitive.color.ultra.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#3953F2"
+                  }
+                },
+                "bgHover": {
+                  "$value": "{primitive.color.ultra.800}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#2F3FC4"
+                  }
+                },
+                "bgPressed": {
+                  "$value": "{primitive.color.ultra.900}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#242F95"
+                  }
+                },
+                "fg": {
+                  "$value": "{primitive.color.white}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#FFFFFF"
+                  }
+                },
+                "text": {
+                  "$value": "{primitive.color.ultra.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#91B2FF"
+                  }
+                },
+                "wash": {
+                  "$value": "{primitive.color.ultra.950}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#181E66"
+                  }
+                },
+                "washText": {
+                  "$value": "{primitive.color.ultra.300}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#B4CCFF"
+                  }
+                }
+              },
+              "focus": {
+                "ring": {
+                  "$value": "{primitive.color.ultra.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#91B2FF"
+                  }
+                }
+              },
+              "scrim": {
+                "$value": "rgba(12,15,25,0.6)",
+                "$type": "color",
+                "$extensions": {
+                  "base": "{primitive.color.neutral.950}",
+                  "alpha": 0.6
+                }
+              },
+              "status": {
+                "success": {
+                  "solid": {
+                    "$value": "{primitive.color.emerald.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#008054"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.emerald.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#4FD093"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.emerald.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#003320"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.emerald.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#88E3B2"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.emerald.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#00B879"
+                    }
+                  }
+                },
+                "warning": {
+                  "solid": {
+                    "$value": "{primitive.color.amber.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#F1A12E"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.amber.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#F1A12E"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.amber.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#422000"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.amber.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FCBF71"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.amber.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#D78600"
+                    }
+                  }
+                },
+                "danger": {
+                  "solid": {
+                    "$value": "{primitive.color.red.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#C51C2E"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.red.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FF9089"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.red.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#520810"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.red.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFB7B1"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.red.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FF5B5B"
+                    }
+                  }
+                },
+                "info": {
+                  "solid": {
+                    "$value": "{primitive.color.sky.700}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#0572AC"
+                    }
+                  },
+                  "onSolid": {
+                    "$value": "{primitive.color.white}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#FFFFFF"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.sky.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#67BEF7"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.sky.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#052D48"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.sky.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#96D5FF"
+                    }
+                  },
+                  "border": {
+                    "$value": "{primitive.color.sky.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#40A5E3"
+                    }
+                  }
+                }
+              },
+              "accent": {
+                "volt": {
+                  "fill": {
+                    "$value": "{primitive.color.volt.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#A1C500"
+                    }
+                  },
+                  "onFill": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "strong": {
+                    "$value": "{primitive.color.volt.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#88AB00"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.volt.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#BEDB66"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.volt.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#BEDB66"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.volt.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#1F3000"
+                    }
+                  }
+                },
+                "aqua": {
+                  "fill": {
+                    "$value": "{primitive.color.aqua.400}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#24CDCD"
+                    }
+                  },
+                  "onFill": {
+                    "$value": "{primitive.color.neutral.900}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#171B28"
+                    }
+                  },
+                  "strong": {
+                    "$value": "{primitive.color.aqua.500}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#00B1B3"
+                    }
+                  },
+                  "text": {
+                    "$value": "{primitive.color.aqua.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#77E0DF"
+                    }
+                  },
+                  "washText": {
+                    "$value": "{primitive.color.aqua.300}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#77E0DF"
+                    }
+                  },
+                  "wash": {
+                    "$value": "{primitive.color.aqua.950}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#003134"
+                    }
+                  }
+                }
+              },
+              "viz": {
+                "grid": {
+                  "$value": "{primitive.color.neutral.800}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#333844"
+                  }
+                },
+                "axis": {
+                  "$value": "{primitive.color.neutral.700}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#505660"
+                  }
+                },
+                "axisLabel": {
+                  "$value": "{primitive.color.neutral.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#A8AEB8"
+                  }
+                },
+                "trendLine": {
+                  "$value": "{primitive.color.neutral.50}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#F3F6FA"
+                  }
+                },
+                "goalBand": {
+                  "$value": "{primitive.color.aqua.950}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#003134"
+                  }
+                },
+                "goalLine": {
+                  "$value": "{primitive.color.aqua.400}",
+                  "$type": "color",
+                  "$extensions": {
+                    "resolved": "#24CDCD"
+                  }
+                },
+                "categorical": {
+                  "1": {
+                    "$value": "#4870FF",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#83A200",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#B74BC2",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#00A9AA",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#8F61DB",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#C55F1B",
+                    "$type": "color"
+                  }
+                },
+                "macro": {
+                  "protein": {
+                    "$value": "{semantic.dark.color.viz.categorical.1}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#4870FF"
+                    }
+                  },
+                  "carbs": {
+                    "$value": "{semantic.dark.color.viz.categorical.2}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#83A200"
+                    }
+                  },
+                  "fat": {
+                    "$value": "{semantic.dark.color.viz.categorical.3}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#B74BC2"
+                    }
+                  },
+                  "fiber": {
+                    "$value": "{semantic.dark.color.viz.categorical.4}",
+                    "$type": "color",
+                    "$extensions": {
+                      "resolved": "#00A9AA"
+                    }
+                  }
+                },
+                "sequential": {
+                  "1": {
+                    "$value": "#242F95",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#2F3FC4",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#3953F2",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#4A70FF",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#6E95FF",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#91B2FF",
+                    "$type": "color"
+                  },
+                  "7": {
+                    "$value": "#B4CCFF",
+                    "$type": "color"
+                  }
+                },
+                "diverging": {
+                  "1": {
+                    "$value": "#B4CCFF",
+                    "$type": "color"
+                  },
+                  "2": {
+                    "$value": "#6E95FF",
+                    "$type": "color"
+                  },
+                  "3": {
+                    "$value": "#3953F2",
+                    "$type": "color"
+                  },
+                  "4": {
+                    "$value": "#333844",
+                    "$type": "color"
+                  },
+                  "5": {
+                    "$value": "#5A7800",
+                    "$type": "color"
+                  },
+                  "6": {
+                    "$value": "#88AB00",
+                    "$type": "color"
+                  },
+                  "7": {
+                    "$value": "#BEDB66",
+                    "$type": "color"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "glass": {
+          "light": {
+            "color": {
+              "chrome": {
+                "$value": "rgba(252,253,255,0.66)",
+                "$type": "color",
+                "$description": "Nav bar, tab bar, client header. Carries fg.primary text and icons only."
+              },
+              "sheet": {
+                "$value": "rgba(252,253,255,0.91)",
+                "$type": "color",
+                "$description": "Sheets and overlays that carry secondary text, links or inputs."
+              },
+              "border": {
+                "$value": "rgba(255,255,255,0.55)",
+                "$type": "color"
+              },
+              "edge": {
+                "$value": "rgba(22,26,32,0.10)",
+                "$type": "color"
+              },
+              "fallback": {
+                "$value": "{semantic.light.color.bg.surface}",
+                "$type": "color",
+                "$description": "Solid fill when Reduce Transparency, high contrast, no backdrop-filter, or Android below API 31."
+              }
+            },
+            "blur": {
+              "chrome": {
+                "$value": "20px",
+                "$type": "dimension"
+              },
+              "sheet": {
+                "$value": "32px",
+                "$type": "dimension"
+              }
+            },
+            "saturate": {
+              "$value": 1.6,
+              "$type": "number"
+            },
+            "highlight": {
+              "$value": "inset 0 1px 0 rgba(255,255,255,0.70)",
+              "$type": "shadow"
+            },
+            "shadow": {
+              "$value": "0 8px 32px -12px rgba(22,26,32,0.28)",
+              "$type": "shadow"
+            },
+            "noiseOpacity": {
+              "$value": 0.035,
+              "$type": "number"
+            },
+            "measured": {
+              "chromeWorstCase": {
+                "fg.primary": 7.12,
+                "fg.secondary": 3.07,
+                "action.text": 2.36
+              },
+              "sheetWorstCase": {
+                "fg.primary": 13.74,
+                "fg.secondary": 5.92,
+                "action.text": 4.55
+              }
+            }
+          },
+          "dark": {
+            "color": {
+              "chrome": {
+                "$value": "rgba(23,27,40,0.76)",
+                "$type": "color",
+                "$description": "Nav bar, tab bar, client header. Carries fg.primary text and icons only."
+              },
+              "sheet": {
+                "$value": "rgba(23,27,40,0.83)",
+                "$type": "color",
+                "$description": "Sheets and overlays that carry secondary text, links or inputs."
+              },
+              "border": {
+                "$value": "rgba(255,255,255,0.10)",
+                "$type": "color"
+              },
+              "edge": {
+                "$value": "rgba(0,0,0,0.45)",
+                "$type": "color"
+              },
+              "fallback": {
+                "$value": "{semantic.dark.color.bg.raised}",
+                "$type": "color",
+                "$description": "Solid fill when Reduce Transparency, high contrast, no backdrop-filter, or Android below API 31."
+              }
+            },
+            "blur": {
+              "chrome": {
+                "$value": "20px",
+                "$type": "dimension"
+              },
+              "sheet": {
+                "$value": "32px",
+                "$type": "dimension"
+              }
+            },
+            "saturate": {
+              "$value": 1.3,
+              "$type": "number"
+            },
+            "highlight": {
+              "$value": "inset 0 1px 0 rgba(255,255,255,0.08)",
+              "$type": "shadow"
+            },
+            "shadow": {
+              "$value": "0 8px 32px -8px rgba(0,0,0,0.60)",
+              "$type": "shadow"
+            },
+            "noiseOpacity": {
+              "$value": 0.05,
+              "$type": "number"
+            },
+            "measured": {
+              "chromeWorstCase": {
+                "fg.primary": 7.19,
+                "fg.secondary": 3.49,
+                "action.text": 3.72
+              },
+              "sheetWorstCase": {
+                "fg.primary": 9.26,
+                "fg.secondary": 4.5,
+                "action.text": 4.79
+              }
+            }
+          }
+        },
+        "component": {
+          "$description": "Component references like {action.bg} are relative to semantic.<mode>.color, so one component definition serves light, dark and glass. {primitive.*} paths are absolute.",
+          "button": {
+            "primary": {
+              "bg": "{action.bg}",
+              "fg": "{action.fg}",
+              "bgHover": "{action.bgHover}",
+              "bgPressed": "{action.bgPressed}",
+              "radius": "{primitive.radius.md}",
+              "height": "40px desktop, 44px touch",
+              "font": "label"
+            },
+            "secondary": {
+              "bg": "{bg.surface}",
+              "fg": "{fg.primary}",
+              "border": "{border.control}",
+              "bgHover": "{bg.hover}"
+            },
+            "ghost": {
+              "bg": "transparent",
+              "fg": "{action.text}",
+              "bgHover": "{action.wash}"
+            },
+            "destructive": {
+              "bg": "{status.danger.solid}",
+              "fg": "{status.danger.onSolid}"
+            },
+            "disabled": {
+              "bg": "{bg.sunken}",
+              "fg": "{fg.disabled}",
+              "note": "Never pre-disable a submit; validate on press instead."
+            }
+          },
+          "chip": {
+            "status": {
+              "bg": "{status.<name>.wash}",
+              "fg": "{status.<name>.washText}",
+              "icon": "{status.<name>.text}",
+              "radius": "{primitive.radius.sm}",
+              "height": "24px",
+              "font": "chip",
+              "rule": "always icon + word"
+            },
+            "draft": {
+              "bg": "transparent",
+              "fg": "{fg.secondary}",
+              "border": "1px dashed {border.control}",
+              "icon": "pencil"
+            },
+            "severeAllergy": {
+              "bg": "{status.danger.solid}",
+              "fg": "{status.danger.onSolid}",
+              "icon": "octagon-alert",
+              "radius": "{primitive.radius.sm}",
+              "rule": "The only solid red chip in the system. Never tenant-coloured, never glass, always visible on task screens where food is edited."
+            }
+          },
+          "input": {
+            "bg": "{bg.field}",
+            "fg": "{fg.primary}",
+            "placeholder": "{fg.faint}",
+            "border": "{border.control}",
+            "borderFocus": "{focus.ring}",
+            "borderError": "{status.danger.border}",
+            "radius": "{primitive.radius.md}",
+            "height": "44px"
+          },
+          "card": {
+            "bg": "{bg.surface}",
+            "border": "{border.subtle}",
+            "radius": "{primitive.radius.lg}",
+            "shadow": "{primitive.elevation.card}",
+            "padding": "{primitive.space.4}"
+          },
+          "tabBar": {
+            "bg": "{glass.chrome} or {bg.surface}",
+            "item": "{fg.primary}",
+            "itemSelected": "{action.text}",
+            "indicator": "{action.wash}",
+            "rule": "unselected labels use fg.primary at weight 500, never fg.secondary, so they stay legible on glass"
+          },
+          "sheet": {
+            "bg": "{glass.sheet} or {bg.raised}",
+            "radius": "{primitive.radius.xl}",
+            "scrim": "{scrim}"
+          },
+          "chart": {
+            "grid": "{viz.grid}",
+            "axis": "{viz.axis}",
+            "axisLabel": "{viz.axisLabel}",
+            "series1": "{viz.categorical.1}",
+            "rawDotOpacity": 0.45,
+            "trendStroke": "2px",
+            "goalBand": "{viz.goalBand}",
+            "goalLine": "{viz.goalLine} 1.5px dashed 4 4"
+          }
+        },
+        "typography": {
+          "$description": "Roles, not sizes. Each role lists web desktop, web phone (<768px), iOS text style (Dynamic Type) and Android type role (sp). Numbers always tabular (font-variant-numeric: tabular-nums / fontVariant ['tabular-nums']).",
+          "displayHero": {
+            "family": "{primitive.fontFamily.display}",
+            "weight": 700,
+            "width": 125,
+            "desktop": "40/44",
+            "phone": "34/38",
+            "ios": "largeTitle-relative custom (34/41)",
+            "android": "displaySmall 36/44",
+            "numeric": "tabular",
+            "tracking": "-0.01em"
+          },
+          "displayTitle": {
+            "family": "{primitive.fontFamily.display}",
+            "weight": 700,
+            "width": 112,
+            "desktop": "28/32",
+            "phone": "24/28",
+            "ios": "title1 28/34 (in-content only; native nav bars keep the system font)",
+            "android": "headlineSmall 24/32",
+            "tracking": "-0.005em"
+          },
+          "title": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 600,
+            "desktop": "20/26",
+            "phone": "18/24",
+            "ios": "title3 20/25",
+            "android": "titleLarge 22/28"
+          },
+          "headline": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 600,
+            "desktop": "16/22",
+            "phone": "16/22",
+            "ios": "headline 17/22",
+            "android": "titleMedium 16/24"
+          },
+          "body": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 400,
+            "desktop": "14/20",
+            "phone": "15/22",
+            "ios": "body 17/22",
+            "android": "bodyLarge 16/24 (reading), bodyMedium 14/20 (lists)"
+          },
+          "bodyStrong": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 500,
+            "desktop": "14/20",
+            "phone": "15/22",
+            "ios": "body 17/22 medium",
+            "android": "bodyMedium 14/20 medium"
+          },
+          "label": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 500,
+            "desktop": "13/16",
+            "phone": "14/18",
+            "ios": "subheadline 15/20",
+            "android": "labelLarge 14/20"
+          },
+          "chip": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 600,
+            "desktop": "12/16",
+            "phone": "12/16",
+            "ios": "caption1 12/16 semibold, maxFontSizeMultiplier 1.6",
+            "android": "labelMedium 12/16"
+          },
+          "caption": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 400,
+            "desktop": "12/16",
+            "phone": "12/16",
+            "ios": "footnote 13/18",
+            "android": "bodySmall 12/16"
+          },
+          "input": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 400,
+            "desktop": "14/20",
+            "phone": "16/24 (iOS Safari zooms below 16px)",
+            "ios": "body 17/22",
+            "android": "bodyLarge 16/24"
+          },
+          "statLarge": {
+            "family": "{primitive.fontFamily.display}",
+            "weight": 700,
+            "width": 112,
+            "desktop": "32/36",
+            "phone": "28/32",
+            "ios": "title1 28/34 tabular",
+            "android": "headlineMedium 28/36",
+            "numeric": "tabular"
+          },
+          "statMedium": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 600,
+            "desktop": "20/24",
+            "phone": "20/24",
+            "ios": "title3 20/25 tabular",
+            "android": "titleLarge 22/28",
+            "numeric": "tabular"
+          },
+          "data": {
+            "family": "{primitive.fontFamily.ui}",
+            "weight": 400,
+            "desktop": "14/20",
+            "phone": "14/20",
+            "ios": "subheadline 15/20 tabular",
+            "android": "bodyMedium 14/20",
+            "numeric": "tabular"
+          },
+          "locale": {
+            "en": {
+              "lineHeightScale": 1
+            },
+            "ur": {
+              "readingFamily": "{primitive.fontFamily.urduReading}",
+              "uiFamily": "{primitive.fontFamily.urduUi}",
+              "sizeDelta": "+1px desktop, +2px phone (Arabic-script x-height reads smaller at the same em)",
+              "lineHeight": {
+                "nastaliqReading": 2,
+                "nastaliqHeading": 1.8,
+                "naskhUi": 1.6,
+                "naskhChip": 1.5
+              },
+              "digits": "Western (0-9) by default; decision pending",
+              "note": "Start values. Verify with real strings on Android, where Nastaliq first-line clipping is a reported problem."
+            }
+          }
+        },
+        "tenant": {
+          "$description": "Per-tenant input and what the app derives from it at runtime.",
+          "input": {
+            "brand.primary": "hex, required, validated at the manifest boundary (throws on invalid)",
+            "radius": "crisp | soft | round (soft = radius tokens above)"
+          },
+          "derived": [
+            "action.bg (exact brand when its label reaches 4.5:1, else darkened in OKLCH at the same hue)",
+            "action.fg (white or ink, whichever contrasts more)",
+            "action.bgHover / bgPressed (L -0.04 / -0.08)",
+            "action.text per mode (>= 4.5:1 on surface and canvas)",
+            "action.wash + action.washText per mode (>= 4.5:1)",
+            "focus.ring = action.text"
+          ],
+          "neverOverridable": [
+            "bg.*",
+            "fg.*",
+            "border.*",
+            "status.*",
+            "accent.*",
+            "viz.*",
+            "glass.*",
+            "scrim"
+          ],
+          "collisionPolicy": "If the brand's Oklab Delta E to status.danger.solid is under 15 (normal vision), filled actions switch to the inverse neutral (bg.inverse fill, fg.inverse label), links and focus use fg.primary, selection washes use bg.hover, and the brand stays on the logo and app icon. Warning/success closeness and CVD closeness are reported to the tenant admin as advisory."
+        }
+      }
+    </script>
+    <script>
+      'use strict';
+
+      // Tenant input: the GymOS default and pilot brand (rulings R3). It is not in tokens.floodlight.json.
+      const BRAND = '#FACC15';
+      // ADR-0019 decision 3, typed here only to compare with the computed values. Nothing renders from it.
+      const ADR = {
+        fill: '#FACC15',
+        label: '#171B28',
+        labelRatio: 11.2,
+        lightText: '#886D00',
+        lightTextRatio: 4.87,
+        lightWash: '#F7EED5',
+        darkText: '#FACC15',
+        borderOnLight: true,
+      };
+      // Width edges: today's `md` from packages/ui/src/breakpoints.ts; the proposal from F1 requirement 10.
+      const TODAY_DESKTOP = 768;
+      const TABLET_MIN = 744;
+      const DESKTOP_MIN = 1200;
+
+      const T = JSON.parse(document.getElementById('tokens').textContent);
+      const MODES = ['light', 'dark'];
+      const $ = (sel) => document.querySelector(sel);
+
+      // ---------- colour math (WCAG 2.2 luminance, Oklab by Ottosson, CVD by Machado 2009 at severity 1.0)
+      function parseHex(hex) {
+        if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex))
+          throw new Error(`Invalid hex colour: ${JSON.stringify(hex)}`);
+        return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+      }
+      const toLin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      const toGam = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+      const hexOf = (rgb) =>
+        '#' +
+        rgb
+          .map((c) =>
+            Math.round(Math.min(1, Math.max(0, c)) * 255)
+              .toString(16)
+              .padStart(2, '0'),
+          )
+          .join('')
+          .toUpperCase();
+      function linToOklab([r, g, b]) {
+        const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+        const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+        const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+        return [
+          0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+          1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+          0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+        ];
+      }
+      function oklabToLin([L, a, b]) {
+        const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+        const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+        const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+        return [
+          4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+          -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+        ];
+      }
+      function hexToOklch(hex) {
+        const [L, a, b] = linToOklab(parseHex(hex).map(toLin));
+        let H = (Math.atan2(b, a) * 180) / Math.PI;
+        if (H < 0) H += 360;
+        return { L, C: Math.hypot(a, b), H };
+      }
+      const oklchLin = (L, C, H) =>
+        oklabToLin([L, C * Math.cos((H * Math.PI) / 180), C * Math.sin((H * Math.PI) / 180)]);
+      const inGamut = (lin) => lin.every((c) => c >= -1e-6 && c <= 1 + 1e-6);
+      // Out-of-gamut colours keep L and H and lose chroma until they fit sRGB (tokens.md §4.1).
+      function oklchToHex(L, C, H) {
+        if (!(L >= 0 && L <= 1)) throw new Error(`OKLCH lightness out of range: ${L}`);
+        let lin = oklchLin(L, C, H);
+        if (!inGamut(lin)) {
+          let lo = 0;
+          let hi = C;
+          for (let i = 0; i < 40; i++) {
+            const mid = (lo + hi) / 2;
+            if (inGamut(oklchLin(L, mid, H))) lo = mid;
+            else hi = mid;
+          }
+          lin = oklchLin(L, lo, H);
+        }
+        return hexOf(lin.map(toGam));
+      }
+      function luminance(hex) {
+        const [r, g, b] = parseHex(hex).map(toLin);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+      function contrast(a, b) {
+        const la = luminance(a);
+        const lb = luminance(b);
+        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+      }
+      // Truncate, never round up: 4.497 shows as 4.49, not 4.50.
+      const fmt = (r) => `<span class="ratio">${(Math.floor(r * 100) / 100).toFixed(2)}:1</span>`;
+      const CVD = {
+        protan: [
+          [0.152286, 1.052583, -0.204868],
+          [0.114503, 0.786281, 0.099216],
+          [-0.003882, -0.048116, 1.051998],
+        ],
+        deutan: [
+          [0.367322, 0.860646, -0.227968],
+          [0.280085, 0.672501, 0.047413],
+          [-0.01182, 0.04294, 0.968881],
+        ],
+      };
+      function labOf(hex, sim) {
+        let lin = parseHex(hex).map(toLin);
+        if (sim)
+          lin = CVD[sim].map((row) =>
+            Math.min(1, Math.max(0, row[0] * lin[0] + row[1] * lin[1] + row[2] * lin[2])),
+          );
+        return linToOklab(lin);
+      }
+      function deltaE(a, b, sim) {
+        const p = labOf(a, sim);
+        const q = labOf(b, sim);
+        return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) * 100;
+      }
+
+      // ---------- token access
+      function node(path) {
+        return path.split('.').reduce((o, k) => {
+          if (o == null || !(k in o)) throw new Error(`Token path not found: ${path}`);
+          return o[k];
+        }, T);
+      }
+      function resolve(v) {
+        const m = typeof v === 'string' && v.match(/^\{(.+)\}$/);
+        return m ? resolve(node(m[1]).$value) : v;
+      }
+      const sem = (mode, key) => node(`semantic.${mode}.color.${key}`);
+      const semHex = (mode, key) => resolve(sem(mode, key).$value);
+      function aliasLabel(tok) {
+        const v = tok.$value;
+        let m = typeof v === 'string' && v.match(/^\{primitive\.color\.(.+)\}$/);
+        if (m) return m[1];
+        m = typeof v === 'string' && v.match(/^\{semantic\.\w+\.color\.(.+)\}$/);
+        if (m) return m[1];
+        if (tok.$extensions && tok.$extensions.base)
+          return `${tok.$extensions.base.replace(/^\{primitive\.color\.|\}$/g, '')} at ${tok.$extensions.alpha * 100}%`;
+        return 'raw value';
+      }
+      function leaves(obj, prefix = '') {
+        const out = [];
+        for (const [k, v] of Object.entries(obj)) {
+          if (k.startsWith('$')) continue;
+          const p = prefix ? `${prefix}.${k}` : k;
+          if (v && typeof v === 'object' && '$value' in v) out.push([p, v]);
+          else if (v && typeof v === 'object') out.push(...leaves(v, p));
+        }
+        return out;
+      }
+      const camel = (p) =>
+        p
+          .split('.')
+          .map((s, i) => (i ? s[0].toUpperCase() + s.slice(1) : s))
+          .join('');
+      const WHITE = resolve(T.primitive.color.white.$value);
+      const textOn = (hex) =>
+        contrast(WHITE, hex) >= contrast(semHex('light', 'fg.primary'), hex)
+          ? WHITE
+          : semHex('light', 'fg.primary');
+      const primStep = (tok) => {
+        const m =
+          typeof tok.$value === 'string' &&
+          tok.$value.match(/^\{primitive\.color\.(\w+)\.(\d+)\}$/);
+        return m ? { family: m[1], step: Number(m[2]) } : null;
+      };
+
+      // ---------- tenant brand, tokens.md §2.4 steps 1–8
+      function deriveBrandTheme(hex) {
+        parseHex(hex); // step 1: throws at the manifest boundary
+        const brand = hex.toUpperCase();
+        const b = hexToOklch(brand);
+        const ink = semHex('light', 'fg.primary');
+        const log = [];
+        // step 2
+        let fill = brand;
+        if (Math.max(contrast(WHITE, brand), contrast(ink, brand)) < 4.5) {
+          let i = 0;
+          do {
+            i++;
+            fill = oklchToHex(b.L - 0.005 * i, b.C, b.H);
+          } while (contrast(WHITE, fill) < 4.5);
+          log.push(`Fill darkened by L ${(0.005 * i).toFixed(3)} to ${fill}.`);
+        }
+        // step 3
+        const on = contrast(WHITE, fill) >= contrast(ink, fill) ? WHITE : ink;
+        // step 4
+        const f = hexToOklch(fill);
+        const hover = oklchToHex(f.L - 0.04, f.C, f.H);
+        const pressed = oklchToHex(f.L - 0.08, f.C, f.H);
+        const stepUntil = (dir, ok) => {
+          for (let i = 0; i <= 200; i++) {
+            const L = b.L + dir * 0.005 * i;
+            if (L < 0 || L > 1) break;
+            const h = i ? oklchToHex(L, b.C, b.H) : brand;
+            if (ok(h)) return { hex: h, steps: i };
+          }
+          throw new Error(`No tone of ${brand} reaches 4.5:1`);
+        };
+        const modes = {};
+        for (const mode of MODES) {
+          const surface = semHex(mode, 'bg.surface');
+          const canvas = semHex(mode, 'bg.canvas');
+          const dir = mode === 'light' ? -1 : 1;
+          // step 5
+          const text = stepUntil(
+            dir,
+            (h) => contrast(h, surface) >= 4.5 && contrast(h, canvas) >= 4.5,
+          );
+          // step 6
+          const wash = oklchToHex(mode === 'light' ? 0.95 : 0.29, b.C / 3, b.H);
+          const washText = stepUntil(dir, (h) => contrast(h, wash) >= 4.5);
+          // step 7
+          const border = contrast(fill, surface) < 3;
+          modes[mode] = {
+            surface,
+            canvas,
+            text: text.hex,
+            textSteps: text.steps,
+            wash,
+            washText: washText.hex,
+            washTextSteps: washText.steps,
+            border,
+          };
+        }
+        // step 8
+        const collisions = ['success', 'warning', 'danger', 'info'].map((key) => {
+          const c = semHex('light', `status.${key}.solid`);
+          return {
+            key,
+            hex: c,
+            normal: deltaE(brand, c),
+            protan: deltaE(brand, c, 'protan'),
+            deutan: deltaE(brand, c, 'deutan'),
+          };
+        });
+        const dangerDE = collisions.find((c) => c.key === 'danger').normal;
+        const policy = dangerDE < 15 ? 'inverse-actions' : 'brand-actions';
+        if (policy !== 'brand-actions')
+          throw new Error(
+            'Red-brand policy (T5) applies to this brand; this mock only renders brand actions.',
+          );
+        return {
+          brand,
+          oklch: b,
+          fill,
+          on,
+          hover,
+          pressed,
+          modes,
+          collisions,
+          dangerDE,
+          policy,
+          log,
+        };
+      }
+
+      // ---------- self-checks: each throws, so a failure shows the error banner and a console error
+      function selfChecks() {
+        let n = 0;
+        for (const fam of Object.keys(T.primitive.color)) {
+          for (const [p, tok] of leaves(T.primitive.color[fam])) {
+            const o = hexToOklch(tok.$value);
+            if (oklchToHex(o.L, o.C, o.H) !== tok.$value.toUpperCase())
+              throw new Error(`OKLCH round trip changed ${fam}.${p}`);
+            n++;
+          }
+        }
+        for (const root of [T.semantic.light, T.semantic.dark, T.glass.light, T.glass.dark]) {
+          for (const [p, tok] of leaves(root)) {
+            const want = tok.$extensions && tok.$extensions.resolved;
+            if (want && resolve(tok.$value) !== want)
+              throw new Error(`${p} resolves to ${resolve(tok.$value)}, JSON says ${want}`);
+            n++;
+          }
+        }
+        if (Math.abs(contrast('#FFFFFF', '#000000') - 21) > 1e-9)
+          throw new Error('Contrast of white on black is not 21:1');
+        for (const bad of ['#FACC1', 'FACC15', '#FACC1G', '']) {
+          let threw = false;
+          try {
+            deriveBrandTheme(bad);
+          } catch {
+            threw = true; // expected: an invalid hex must throw
+          }
+          if (!threw) throw new Error(`deriveBrandTheme accepted ${JSON.stringify(bad)}`);
+        }
+        return n + 5;
+      }
+
+      // ---------- shared bits
+      const ICONS = {
+        check: '<path d="M20 6 9 17l-5-5"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+        eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+        octagon:
+          '<path stroke-linejoin="miter" d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9Z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+        pass: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+        fail: '<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
+        exempt: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+        info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+        back: '<path d="m15 18-6-6 6-6"/>',
+        search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+        moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/>',
+        monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+      };
+      const icon = (name, cls = 'ic') =>
+        `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+      function verdict(ratio, need) {
+        if (need === null) return { cls: 'exempt', word: 'Exempt', icon: 'exempt' };
+        return ratio >= need
+          ? { cls: 'pass', word: 'Pass', icon: 'pass' }
+          : { cls: 'fail', word: 'Fail', icon: 'fail' };
+      }
+      const badge = (v, word) =>
+        `<span class="res ${v.cls}">${icon(v.icon)}${word || v.word}</span>`;
+      const ratioLine = (fg, bg, need) =>
+        `${fmt(contrast(fg, bg))} ${badge(verdict(contrast(fg, bg), need))}`;
+      const swatch = (hex) => `<span class="sw" style="background:${hex}"></span>`;
+      const modeTitle = (mode) =>
+        `<p class="panel-title">${icon(mode === 'light' ? 'sun' : 'moon')}${mode === 'light' ? 'Light' : 'Dark'}</p>`;
+      const needLabel = (need, fgKey) =>
+        need === null
+          ? 'Exempt (disabled)'
+          : need === 4.5
+            ? fgKey === 'fg.faint'
+              ? '4.5:1 placeholder'
+              : '4.5:1 text'
+            : '3:1 graphic';
+      const counts = { pass: 0, fail: 0, exempt: 0 };
+      const tally = (v) => (counts[v.cls] += 1);
+
+      // ---------- theme variables, generated from the token data
+      let B;
+      function brandVars(mode) {
+        const m = B.modes[mode];
+        return {
+          brandFill: B.fill,
+          brandOn: B.on,
+          brandHover: B.hover,
+          brandPressed: B.pressed,
+          brandText: m.text,
+          brandWash: m.wash,
+          brandWashText: m.washText,
+          brandBorder: m.border ? m.text : 'transparent',
+        };
+      }
+      function varsFor(mode) {
+        const v = {};
+        for (const [p, tok] of leaves(T.semantic[mode].color)) v[camel(p)] = resolve(tok.$value);
+        for (const [p, tok] of leaves(T.glass[mode]))
+          v['glass' + camel(p).replace(/^./, (c) => c.toUpperCase())] = String(resolve(tok.$value));
+        Object.assign(v, brandVars(mode));
+        return Object.entries(v)
+          .map(([k, x]) => `--${k}:${x};`)
+          .join('');
+      }
+      function writeThemeCss() {
+        const shared = Object.entries(T.primitive.radius)
+          .filter(([k]) => !k.startsWith('$'))
+          .map(([k, t]) => `--radius${k[0].toUpperCase() + k.slice(1)}:${t.$value};`)
+          .join('');
+        const L = varsFor('light');
+        const D = varsFor('dark');
+        $('#theme-vars').textContent =
+          `:root{${shared}}` +
+          `:root,.t-light{${L}color-scheme:light}` +
+          `@media (prefers-color-scheme: dark){:root:not([data-theme=light]){${D}color-scheme:dark}}` +
+          `:root[data-theme=dark]{${D}color-scheme:dark}` +
+          `.t-light{${L}color-scheme:light}.t-dark{${D}color-scheme:dark}`;
+      }
+      function renderThemeControl() {
+        const opts = [
+          ['system', 'System', 'monitor'],
+          ['light', 'Light', 'sun'],
+          ['dark', 'Dark', 'moon'],
+        ];
+        $('#theme-options').innerHTML = opts
+          .map(
+            ([v, label]) =>
+              `<input type="radio" name="theme" id="theme-${v}" value="${v}"${v === 'system' ? ' checked' : ''}><label for="theme-${v}">${icon('check')}${label}</label>`,
+          )
+          .join('');
+        $('#theme-options').addEventListener('change', (e) => {
+          document.documentElement.dataset.theme = e.target.value;
+        });
+      }
+
+      // ---------- 1. scales
+      const FAMILY_ROLE = {
+        neutral: 'ground, text, borders',
+        ultra: 'primary (replaced by the tenant brand at runtime)',
+        volt: 'accent, chart marks only (D1)',
+        aqua: 'accent',
+        emerald: 'success',
+        amber: 'warning',
+        red: 'danger',
+        sky: 'info',
+        orchid: 'viz',
+        iris: 'viz',
+        apricot: 'viz',
+        white: 'pure white, labels on dark fills',
+      };
+      function renderScales() {
+        let html = `<h3>Colour</h3>`;
+        for (const [fam, steps] of Object.entries(T.primitive.color)) {
+          const items = '$value' in steps ? [['white', steps]] : leaves(steps);
+          html += `<h4 style="margin-top:20px">${fam} <span class="muted small" style="font-weight:400">· ${FAMILY_ROLE[fam] || ''}</span></h4><div class="tiles">`;
+          for (const [step, tok] of items) {
+            html += `<div class="tile"><div class="blk" style="background:${tok.$value};color:${textOn(tok.$value)}">${step}</div><span class="hex mono">${tok.$value}</span></div>`;
+          }
+          html += `</div>`;
+        }
+        const space = Object.entries(T.primitive.space)
+          .filter(([k]) => !k.startsWith('$'))
+          .sort((a, b) => parseFloat(a[1].$value) - parseFloat(b[1].$value));
+        html += `<h3>Space (4 px base)</h3><div class="bars">${space.map(([k, t]) => `<div class="row"><span class="lbl"><code>space.${k}</code> <span class="num">${t.$value}</span></span><span class="bar" style="width:${t.$value}"></span></div>`).join('')}</div>`;
+        const radius = Object.entries(T.primitive.radius).filter(([k]) => !k.startsWith('$'));
+        html += `<h3>Radius</h3><div class="radii">${radius.map(([k, t]) => `<div><div class="r" style="border-radius:${t.$value}"></div><div class="small"><code>radius.${k}</code> ${t.$value}</div><div class="small muted">${t.$description || ''}</div></div>`).join('')}</div>`;
+        const bw = Object.entries(T.primitive.borderWidth).filter(([k]) => !k.startsWith('$'));
+        html += `<h3>Border width</h3><div class="bars">${bw.map(([k, t]) => `<div class="row"><span class="lbl"><code>borderWidth.${k}</code> ${t.$value}</span><span style="flex:1;max-width:200px;border-top:${t.$value} solid var(--fgPrimary)"></span><span class="small muted">${t.$description || ''}</span></div>`).join('')}</div>`;
+        const e = T.primitive.elevation;
+        const surfL = (k) => hexToOklch(semHex('dark', k)).L.toFixed(3);
+        html += `<h3>Elevation</h3><p class="muted small">Card shadow: ${e.card.$description}.</p><div class="three">
+          <div class="panel t-light">${modeTitle('light')}<div class="elev"><div class="card" style="box-shadow:${e.card.$value}"><strong>Card</strong><div class="small muted">bg.surface, 1px border.subtle, elevation.card shadow</div></div><div class="card" style="margin-top:12px;box-shadow:${e.overlay.$value}"><strong>Menu</strong><div class="small muted">elevation.overlay shadow</div></div></div></div>
+          <div class="panel t-dark">${modeTitle('dark')}<div class="elev"><div class="small muted">canvas · ${aliasLabel(sem('dark', 'bg.canvas'))} · L ${surfL('bg.canvas')}</div><div class="card" style="margin-top:8px"><strong>Card</strong><div class="small muted">surface · ${aliasLabel(sem('dark', 'bg.surface'))} · L ${surfL('bg.surface')} · no shadow</div><div class="card"><strong>Raised</strong><div class="small muted">raised · ${aliasLabel(sem('dark', 'bg.raised'))} · L ${surfL('bg.raised')} · no shadow</div></div></div></div></div>
+          <div class="panel">${`<p class="panel-title">iOS grouped list (page theme)</p>`}<div class="elev"><div class="ios-group"><div>Hairline separators</div><div>Grouped background</div><div>No card shadow</div></div></div></div>
+        </div>`;
+        $('#scales').innerHTML = html;
+      }
+
+      // ---------- 2. semantic + contrast
+      const PAIRS = [
+        ['fg.primary', 'bg.canvas', 4.5],
+        ['fg.primary', 'bg.surface', 4.5],
+        ['fg.primary', 'bg.raised', 4.5],
+        ['fg.primary', 'bg.sunken', 4.5],
+        ['fg.secondary', 'bg.canvas', 4.5],
+        ['fg.secondary', 'bg.surface', 4.5],
+        ['fg.secondary', 'bg.sunken', 4.5],
+        ['fg.faint', 'bg.canvas', 4.5],
+        ['fg.faint', 'bg.surface', 4.5],
+        ['fg.faint', 'bg.sunken', 4.5],
+        ['fg.faint', 'bg.field', 4.5],
+        ['fg.primary', 'bg.field', 4.5],
+        ['fg.inverse', 'bg.inverse', 4.5],
+        ['border.control', 'bg.surface', 3],
+        ['border.control', 'bg.field', 3],
+        ['border.control', 'bg.canvas', 3],
+        ['action.fg', 'action.bg', 4.5],
+        ['action.fg', 'action.bgHover', 4.5],
+        ['action.fg', 'action.bgPressed', 4.5],
+        ['action.bg', 'bg.surface', 3],
+        ['action.bg', 'bg.canvas', 3],
+        ['action.text', 'bg.surface', 4.5],
+        ['action.text', 'bg.canvas', 4.5],
+        ['action.washText', 'action.wash', 4.5],
+        ['focus.ring', 'bg.surface', 3],
+        ['focus.ring', 'bg.canvas', 3],
+        ...['success', 'warning', 'danger', 'info'].flatMap((s) => [
+          [`status.${s}.text`, 'bg.surface', 4.5],
+          [`status.${s}.text`, 'bg.canvas', 4.5],
+          [`status.${s}.washText`, `status.${s}.wash`, 4.5],
+          [`status.${s}.onSolid`, `status.${s}.solid`, 4.5],
+          [`status.${s}.border`, 'bg.surface', 3],
+        ]),
+        ...['volt', 'aqua'].flatMap((a) => [
+          [`accent.${a}.onFill`, `accent.${a}.fill`, 4.5],
+          [`accent.${a}.text`, 'bg.surface', 4.5],
+          [`accent.${a}.washText`, `accent.${a}.wash`, 4.5],
+          [`accent.${a}.strong`, 'bg.surface', 3],
+        ]),
+        ['viz.axisLabel', 'bg.surface', 4.5],
+        ['viz.goalLine', 'bg.surface', 3],
+        ['viz.goalLine', 'viz.goalBand', 3],
+        ['fg.disabled', 'bg.surface', null],
+      ];
+      function isVoltOutsideViz(path, tok) {
+        const s = primStep(tok);
+        return !path.startsWith('viz.') && s && s.family === 'volt';
+      }
+      function renderSemantic() {
+        const keys = leaves(T.semantic.light.color).filter(([p]) => !p.startsWith('viz.'));
+        let html = `<div id="s2-swatches"><div class="gt-row head"><span class="k">Token</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>`;
+        let group = '';
+        for (const [p] of keys) {
+          const g = p.split('.')[0];
+          if (g !== group) {
+            group = g;
+            html += `<p class="group-h">${g}${g === 'action' || g === 'focus' ? ` <span class="tag">${icon('info')}JSON default is ultramarine; Sunflower replaces it at runtime (section 3)</span>` : ''}</p>`;
+          }
+          const cells = MODES.map((mode) => {
+            const tok = sem(mode, p);
+            const val = resolve(tok.$value);
+            const bg = val.startsWith('rgba')
+              ? `linear-gradient(${val},${val}),repeating-linear-gradient(45deg,${semHex(mode, 'fg.primary')} 0 4px,${semHex(mode, 'bg.surface')} 4px 8px)`
+              : val;
+            const d1 = isVoltOutsideViz(p, tok)
+              ? ` <span class="tag">${icon('fail')}D1: volt</span>`
+              : '';
+            return `<span class="cell"><span class="sw" style="background:${bg}"></span><span><code>${aliasLabel(tok)}</code> <span class="mono muted">${val}</span>${d1}</span></span>`;
+          });
+          html += `<div class="gt-row"><span class="k"><code>${p}</code></span>${cells.join('')}</div>`;
+        }
+        // dark surface steps
+        const steps = ['bg.canvas', 'bg.surface', 'bg.raised'].map((k) => ({
+          k,
+          hex: semHex('dark', k),
+          L: hexToOklch(semHex('dark', k)).L,
+        }));
+        const ordered = steps[0].L < steps[1].L && steps[1].L < steps[2].L;
+        html += `<h3>Dark cards against the canvas</h3><p class="muted small">Dark mode separates layers by surface step, not shadow. Each step is one neutral primitive lighter.</p>
+          <div class="panel t-dark"><div class="elev" style="padding:12px"><span class="small">canvas</span><div class="card" style="padding:12px;margin-top:6px"><span class="small">surface (card)</span><div class="card" style="padding:12px;margin-top:6px"><span class="small">raised</span></div></div></div>
+          <table style="margin-top:12px"><thead><tr><th scope="col">Layer</th><th scope="col">Primitive</th><th scope="col">OKLCH L</th><th scope="col">Step from layer below</th></tr></thead><tbody>${steps
+            .map(
+              (s, i) =>
+                `<tr><td><code>${s.k}</code></td><td><code>${aliasLabel(sem('dark', s.k))}</code> <span class="mono">${s.hex}</span></td><td>${s.L.toFixed(3)}</td><td>${i ? `ΔL ${(s.L - steps[i - 1].L).toFixed(3)} · ${fmt(contrast(s.hex, steps[i - 1].hex))}` : '—'}</td></tr>`,
+            )
+            .join(
+              '',
+            )}</tbody></table><p style="margin-top:8px">${badge(ordered ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, ordered ? 'Pass: each layer is a distinct, lighter surface step' : 'Fail: surfaces do not step up')}</p></div>`;
+        // contrast pairs
+        let rows = '';
+        for (const [fgK, bgK, need] of PAIRS) {
+          const cells = MODES.map((mode) => {
+            const fg = semHex(mode, fgK);
+            const bg = semHex(mode, bgK);
+            const r = contrast(fg, bg);
+            const v = verdict(r, need);
+            tally(v);
+            const sample =
+              need === 3
+                ? `<span class="sample" style="background:${bg};box-shadow:inset 0 0 0 3px ${fg}"></span>`
+                : `<span class="sample" style="background:${bg};color:${fg}">Aa</span>`;
+            return `<span class="cell" title="${fg} on ${bg}">${sample}<span>${fmt(r)} ${badge(v)}</span></span>`;
+          });
+          rows += `<div class="gt-row"><span class="k"><code>${fgK}</code> on <code>${bgK}</code> <span class="small muted">· ${need === null ? 'exempt, disabled text' : 'needs ' + needLabel(need, fgK)}</span></span>${cells.join('')}</div>`;
+        }
+        html += `</div><div id="s2-contrast"><h3>Contrast, every pair in tokens.md §6.3 and §6.4</h3>
+          <p class="muted small">WCAG 2.2 relative luminance. Ratios are truncated to two decimals; pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine; Sunflower's ratios are in section 3.</p>
+          <p id="pair-summary"></p>
+          <div class="gt-row head"><span class="k">Pair</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>${rows}</div>`;
+        $('#semantic').innerHTML = html;
+        $('#pair-summary').innerHTML =
+          `${PAIRS.length} pairs × 2 modes: <strong>${counts.pass} pass</strong>, <strong>${counts.fail} fail</strong>, ${counts.exempt} exempt (disabled text).`;
+      }
+
+      // ---------- 3. sunflower
+      function renderSunflower() {
+        const b = B;
+        const inkName = 'fg.primary (light)';
+        let html = `<p class="muted">The JSON's <code>action.*</code> keys still hold ultramarine. Rulings R3 make Sunflower <code>${b.brand}</code> the brand, so this section derives every action tone from that one hex, in OKLCH, by tokens.md §2.4 steps 1 to 8, with the Floodlight neutrals.</p>`;
+        // states
+        html += `<h3>Primary button states</h3><div class="two">${MODES.map((mode) => {
+          const m = b.modes[mode];
+          const states = [
+            ['Default', '', b.fill],
+            ['Hover', 'is-hover', b.hover],
+            ['Pressed', 'is-pressed', b.pressed],
+            ['Focus', 'is-focus', b.fill],
+          ];
+          return `<div class="panel t-${mode}">${modeTitle(mode)}${['surface', 'canvas']
+            .map(
+              (where) =>
+                `<p class="small muted" style="margin:${where === 'canvas' ? '12px' : '0'} 0 4px">On <code>bg.${where}</code> <span class="mono">${m[where]}</span></p><div class="states ${where === 'canvas' ? 'on-canvas' : ''}">${states
+                  .map(
+                    ([name, cls, bg]) =>
+                      `<figure><button type="button" class="btn ${cls}">Publish plan</button><figcaption><strong>${name}</strong> <span class="mono">${bg}</span><br>Label ${ratioLine(b.on, bg, 4.5)}</figcaption></figure>`,
+                  )
+                  .join(
+                    '',
+                  )}<figure><button type="button" class="btn" aria-busy="true"><svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"/></svg>Publishing</button><figcaption><strong>Loading</strong> <span class="mono">${b.fill}</span><br>Label ${ratioLine(b.on, b.fill, 4.5)}</figcaption></figure></div>`,
+            )
+            .join(
+              '',
+            )}<p class="small muted" style="margin-top:8px">${m.border ? `1px border in the text-safe tone <span class="mono">${m.text}</span>, because the fill is under 3:1 on the surface.` : 'No border: the fill already reaches 3:1 on the surface.'} No disabled state is shown: F5 keeps buttons enabled and explains instead.</p></div>`;
+        }).join('')}</div>`;
+        // link + wash
+        html += `<h3>Link text and selected wash</h3><div class="two">${MODES.map((mode) => {
+          const m = b.modes[mode];
+          return `<div class="panel t-${mode}">${modeTitle(mode)}<p><a class="link" href="#s3">View check-in history</a> <span class="small">· ${ratioLine(m.text, m.surface, 4.5)} on surface</span></p>
+            <p class="small muted" style="margin-top:12px">Selected tab pill: wash plus bold label plus a check mark, so selection is not colour alone.</p>
+            <div class="tabs" role="presentation"><span>Day</span><span class="sel">${icon('check')}Week</span><span>Month</span></div>
+            <p class="small" style="margin-top:8px">Wash <span class="mono">${m.wash}</span> · wash text <span class="mono">${m.washText}</span> · ${ratioLine(m.washText, m.wash, 4.5)}</p></div>`;
+        }).join('')}</div>`;
+        // ratios
+        const rowsFor = (mode) => {
+          const m = b.modes[mode];
+          const boundary = Math.max(
+            contrast(b.fill, m.surface),
+            m.border ? contrast(m.text, m.surface) : 0,
+          );
+          const boundaryC = Math.max(
+            contrast(b.fill, m.canvas),
+            m.border ? contrast(m.text, m.canvas) : 0,
+          );
+          return [
+            ['Label on default fill', b.on, b.fill, 4.5],
+            ['Label on hover', b.on, b.hover, 4.5],
+            ['Label on pressed', b.on, b.pressed, 4.5],
+            ['Fill against surface (information)', b.fill, m.surface, 'info'],
+            ...(m.border ? [['Border against surface', m.text, m.surface, 3]] : []),
+            ...(m.border ? [['Border against canvas', m.text, m.canvas, 3]] : []),
+            ['Button boundary on surface (fill or border)', null, null, 3, boundary],
+            ['Button boundary on canvas (fill or border)', null, null, 3, boundaryC],
+            ['Link text on surface', m.text, m.surface, 4.5],
+            ['Link text on canvas', m.text, m.canvas, 4.5],
+            ['Wash text on wash', m.washText, m.wash, 4.5],
+            ['Focus ring on surface', m.text, m.surface, 3],
+            ['Focus ring on canvas', m.text, m.canvas, 3],
+          ]
+            .map(([what, fg, bg, need, pre]) => {
+              const r = pre !== undefined ? pre : contrast(fg, bg);
+              const res =
+                need === 'info'
+                  ? `<span class="res info">${icon('info')}${m.border ? 'Border added' : 'No border needed'}</span>`
+                  : badge(verdict(r, need));
+              return `<tr><td>${what}${fg ? `<br><span class="mono muted">${fg} / ${bg}</span>` : ''}</td><td class="nowrap">${fmt(r)}${need === 'info' ? '' : `<br><span class="small muted">needs ${need}:1</span>`}</td><td>${res}</td></tr>`;
+            })
+            .join('');
+        };
+        html += `<h3>Every label and border ratio</h3><div class="two">${MODES.map((mode) => `<div class="panel t-${mode}">${modeTitle(mode)}<div class="scroll-x"><table><thead><tr><th scope="col">Check and colours</th><th scope="col">Ratio</th><th scope="col">Result</th></tr></thead><tbody>${rowsFor(mode)}</tbody></table></div></div>`).join('')}</div>`;
+        // derivation steps
+        const L = b.modes.light;
+        const D = b.modes.dark;
+        const cell = (hex, note = '') =>
+          `<span class="cell">${swatch(hex)}<span><span class="mono">${hex}</span>${note ? `<br><span class="small muted">${note}</span>` : ''}</span></span>`;
+        html += `<h3>Derivation, step by step</h3><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Step (tokens.md §2.4)</th><th scope="col">Light</th><th scope="col">Dark</th></tr></thead><tbody>
+          <tr><td>1. Validate the hex</td><td colspan="2"><span class="mono">${b.brand}</span> is valid. Invalid input throws: checked on load with <code>#FACC1</code>, <code>FACC15</code>, <code>#FACC1G</code> and an empty string. OKLCH L ${b.oklch.L.toFixed(3)}, C ${b.oklch.C.toFixed(3)}, H ${b.oklch.H.toFixed(1)}.</td></tr>
+          <tr><td>2. Action fill</td><td colspan="2">${cell(b.fill, b.log.length ? b.log.join(' ') : `Brand used unchanged: its best label reaches ${fmt(Math.max(contrast(WHITE, b.brand), contrast(b.on, b.brand)))}.`)}</td></tr>
+          <tr><td>3. On-colour</td><td colspan="2">${cell(b.on, `${b.on === WHITE ? 'white' : inkName}: ${fmt(contrast(b.on, b.fill))}, against ${fmt(contrast(b.on === WHITE ? semHex('light', 'fg.primary') : WHITE, b.fill))} for ${b.on === WHITE ? 'ink' : 'white'}`)}</td></tr>
+          <tr><td>4. Hover and pressed (L −0.04, −0.08)</td><td colspan="2"><span class="cell">${cell(b.hover, 'hover')} ${cell(b.pressed, 'pressed')}</span></td></tr>
+          <tr><td>5. Text-safe tone (links, selected labels, focus ring)</td><td data-label="Light">${cell(L.text, `${L.textSteps} steps of L −0.005 · ${fmt(contrast(L.text, L.surface))} surface, ${fmt(contrast(L.text, L.canvas))} canvas`)}</td><td data-label="Dark">${cell(D.text, `${D.textSteps ? D.textSteps + ' steps of L +0.005' : 'brand unchanged'} · ${fmt(contrast(D.text, D.surface))} surface, ${fmt(contrast(D.text, D.canvas))} canvas`)}</td></tr>
+          <tr><td>6. Wash (L 0.95 light, 0.29 dark, a third of the chroma) and wash text</td><td data-label="Light">${cell(L.wash, 'wash')} ${cell(L.washText, `wash text, ${L.washTextSteps} steps · ${fmt(contrast(L.washText, L.wash))}`)}</td><td data-label="Dark">${cell(D.wash, 'wash')} ${cell(D.washText, `wash text, ${D.washTextSteps ? D.washTextSteps + ' steps' : 'brand unchanged'} · ${fmt(contrast(D.washText, D.wash))}`)}</td></tr>
+          <tr><td>7. Boundary: 1px border when the fill is under 3:1 on the surface</td><td data-label="Light">${L.border ? 'Yes' : 'No'}: fill ${fmt(contrast(b.fill, L.surface))} on surface</td><td data-label="Dark">${D.border ? 'Yes' : 'No'}: fill ${fmt(contrast(b.fill, D.surface))} on surface</td></tr>
+          <tr><td>8. Collision check against status solids (Oklab ΔE ×100)</td><td colspan="2"><table><thead><tr><th scope="col">Status solid</th><th scope="col">Normal</th><th scope="col">Protan</th><th scope="col">Deutan</th></tr></thead><tbody>${b.collisions
+            .map(
+              (c) =>
+                `<tr><td><span class="cell">${swatch(c.hex)}<code>status.${c.key}.solid</code></span></td><td>${c.normal.toFixed(1)}</td><td>${c.protan.toFixed(1)}</td><td>${c.deutan.toFixed(1)}</td></tr>`,
+            )
+            .join(
+              '',
+            )}</tbody></table><p class="small" style="margin-top:6px">Red-brand policy (T5) needs ΔE under 15 to danger: here ${b.dangerDE.toFixed(1)}, so the policy is <strong>${b.policy}</strong>. Closest status colour: ${(() => {
+            const c = [...b.collisions].sort(
+              (x, y) =>
+                Math.min(x.normal, x.protan, x.deutan) - Math.min(y.normal, y.protan, y.deutan),
+            )[0];
+            return `${c.key} (lowest ΔE ${Math.min(c.normal, c.protan, c.deutan).toFixed(1)}), which is why warning always carries an icon and a word.`;
+          })()}</p><p class="small muted">For ADR-0019 decision 5: ΔE to ${['volt.300', 'volt.400', 'amber.300'].map((k) => `<code>${k}</code> ${deltaE(b.brand, node('primitive.color.' + k).$value).toFixed(1)}`).join(', ')}.</p></td></tr>
+          </tbody></table></div>`;
+        // ADR compare
+        const cmp = [
+          ['Action fill', ADR.fill, b.fill, ADR.fill === b.fill],
+          ['Label colour', ADR.label, b.on, ADR.label === b.on],
+          [
+            'Label ratio',
+            ADR.labelRatio + ':1',
+            contrast(b.on, b.fill).toFixed(1) + ':1',
+            ADR.labelRatio.toFixed(1) === contrast(b.on, b.fill).toFixed(1),
+          ],
+          ['Light text-safe', ADR.lightText, L.text, ADR.lightText === L.text],
+          [
+            'Light text-safe ratio (on surface)',
+            ADR.lightTextRatio + ':1',
+            contrast(L.text, L.surface).toFixed(2) + ':1',
+            ADR.lightTextRatio.toFixed(2) === contrast(L.text, L.surface).toFixed(2),
+          ],
+          ['Light wash', ADR.lightWash, L.wash, ADR.lightWash === L.wash],
+          ['Dark text', ADR.darkText, D.text, ADR.darkText === D.text],
+          [
+            '1px border on light',
+            ADR.borderOnLight ? 'yes' : 'no',
+            L.border ? 'yes' : 'no',
+            ADR.borderOnLight === L.border,
+          ],
+        ];
+        B.adrDiffs = cmp.filter((r) => !r[3]);
+        html += `<h3>Against ADR-0019 decision 3</h3><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Value</th><th scope="col">ADR-0019</th><th scope="col">Computed here</th><th scope="col">Result</th></tr></thead><tbody>${cmp
+          .map(
+            ([what, a, c, same]) =>
+              `<tr><td>${what}</td><td class="mono" data-label="ADR-0019">${a}</td><td class="mono" data-label="Computed">${c}</td><td data-label="Result">${same ? badge({ cls: 'pass', icon: 'pass' }, 'Same') : badge({ cls: 'fail', icon: 'fail' }, 'Differs')}</td></tr>`,
+          )
+          .join('')}</tbody></table></div>${
+          B.adrDiffs.length
+            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. The page shows the computed value; the owner picks which one F1 ships.</p>`
+            : ''
+        }`;
+        $('#sunflower').innerHTML = html;
+      }
+
+      // ---------- 4. status chips
+      const CHIPS = [
+        {
+          s: 'success',
+          kind: 'calm',
+          icon: 'check',
+          word: 'On track',
+          why: 'Calm state: icon plus word, no fill (T6)',
+        },
+        {
+          s: 'warning',
+          kind: 'fill',
+          icon: 'clock',
+          word: '3 d overdue',
+          why: 'Needs action: filled wash chip',
+        },
+        {
+          s: 'danger',
+          kind: 'fill',
+          icon: 'flag',
+          word: 'Red flag',
+          why: 'Needs action: filled wash chip',
+        },
+        {
+          s: 'info',
+          kind: 'fill',
+          icon: 'eye',
+          word: 'Needs review',
+          why: 'Needs action: filled wash chip',
+        },
+      ];
+      function renderStatus() {
+        let html = `<p class="muted">Every chip has an icon and a word, so the state survives greyscale and colour blindness. Fill volume follows urgency (T6).</p><div class="two">`;
+        for (const mode of MODES) {
+          const surface = semHex(mode, 'bg.surface');
+          html += `<div class="panel t-${mode}">${modeTitle(mode)}`;
+          for (const c of CHIPS) {
+            const text = semHex(mode, `status.${c.s}.text`);
+            const wash = semHex(mode, `status.${c.s}.wash`);
+            const washText = semHex(mode, `status.${c.s}.washText`);
+            const chip =
+              c.kind === 'calm'
+                ? `<span class="chip calm" style="color:${text}">${icon(c.icon)}${c.word}</span>`
+                : `<span class="chip" style="background:${wash};color:${washText}"><span style="color:${text};display:inline-flex">${icon(c.icon)}</span>${c.word}</span>`;
+            const ratios =
+              c.kind === 'calm'
+                ? `Text on surface ${ratioLine(text, surface, 4.5)}`
+                : `Word ${ratioLine(washText, wash, 4.5)} · icon ${ratioLine(text, wash, 3)}<br><span class="muted">fill <code>${aliasLabel(sem(mode, `status.${c.s}.wash`))}</code></span>`;
+            html += `<div class="chip-row"><div>${chip}</div><div class="small"><strong>${c.s}</strong> · ${c.why}<br>${ratios}</div></div>`;
+          }
+          const solid = semHex(mode, 'status.danger.solid');
+          const onSolid = semHex(mode, 'status.danger.onSolid');
+          html += `<div class="chip-row"><div><span class="chip" style="background:${solid};color:${onSolid}">${icon('octagon')}Severe allergy · Peanut</span></div><div class="small"><strong>severe allergy</strong> · the only solid red chip; <code>status.danger.solid</code>, octagon icon and words; never brand-tinted, never glass<br>Words ${ratioLine(onSolid, solid, 4.5)}</div></div></div>`;
+        }
+        html += `</div>`;
+        // D1 warning fills
+        const rows = [];
+        for (const mode of MODES) {
+          for (const k of ['status.warning.wash', 'status.warning.solid']) {
+            const tok = sem(mode, k);
+            const s = primStep(tok);
+            const ok = s && s.family === 'amber' && s.step >= 500;
+            rows.push(
+              `<tr><td>${mode} <code>${k}</code></td><td data-label="Primitive"><span class="cell">${swatch(resolve(tok.$value))}<code>${aliasLabel(tok)}</code></span></td><td data-label="D1">${badge(ok ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, ok ? 'Step 500 or darker' : 'Lighter than amber.500')}</td></tr>`,
+            );
+            if (!ok) B.d1Warning.push(`${mode} ${k} = ${aliasLabel(tok)}`);
+          }
+        }
+        html += `<h3>D1 check: warning fills use amber step 500 or darker</h3><p class="muted small">Read from the token data. D1 does not say whether a pale wash counts as a fill; the solid fails either way.</p><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Mode and token</th><th scope="col">Primitive</th><th scope="col">D1</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+        $('#status').innerHTML = html;
+      }
+
+      // ---------- 5. viz
+      const WEIGH_INS = [
+        86.4, 86.1, 85.9, 86.2, 85.6, 85.3, 85.5, 84.9, 84.6, 84.8, 84.2, 83.9, 84.1, 83.5, 83.2,
+        83.4, 82.8, 82.6, 82.9, 82.2, 81.9, 82.1, 81.6, 81.3,
+      ];
+      const GOAL = [78, 80];
+      function weightChart(mode) {
+        const c = (k) => semHex(mode, `viz.${k}`);
+        const W = 400;
+        const H = 200;
+        const pad = { l: 40, r: 12, t: 12, b: 28 };
+        const y0 = 76;
+        const y1 = 88;
+        const x = (i) => pad.l + (i * (W - pad.l - pad.r)) / (WEIGH_INS.length - 1);
+        const y = (v) => pad.t + ((y1 - v) * (H - pad.t - pad.b)) / (y1 - y0);
+        const trend = [];
+        WEIGH_INS.reduce((acc, v, i) => {
+          const t = i ? acc + 0.3 * (v - acc) : v;
+          trend.push([x(i), y(t)]);
+          return t;
+        }, 0);
+        let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sample weight chart, ${mode} mode: weigh-ins fall from ${WEIGH_INS[0]} to ${WEIGH_INS[WEIGH_INS.length - 1]} kg over 12 weeks, toward a goal band of ${GOAL[0]} to ${GOAL[1]} kg.">`;
+        s += `<rect x="${pad.l}" y="${y(GOAL[1])}" width="${W - pad.l - pad.r}" height="${y(GOAL[0]) - y(GOAL[1])}" fill="${c('goalBand')}"/>`;
+        for (let v = y0; v <= y1; v += 2)
+          s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="${c('grid')}" stroke-width="1"/><text x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="${c('axisLabel')}" style="font-variant-numeric:tabular-nums">${v}</text>`;
+        s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(GOAL[1])}" y2="${y(GOAL[1])}" stroke="${c('goalLine')}" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+        s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${H - pad.b}" y2="${H - pad.b}" stroke="${c('axis')}" stroke-width="1"/>`;
+        for (let wk = 1; wk <= 12; wk += 1)
+          if (wk % 2 === 1)
+            s += `<text x="${x((wk - 1) * 2 + 1)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="${c('axisLabel')}">W${wk}</text>`;
+        s += WEIGH_INS.map(
+          (v, i) =>
+            `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${c('categorical.1')}" fill-opacity="0.45"/>`,
+        ).join('');
+        s += `<polyline fill="none" stroke="${c('categorical.1')}" stroke-width="2" points="${trend.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')}"/>`;
+        return s + `</svg>`;
+      }
+      function renderViz() {
+        const keys = leaves(T.semantic.light.color.viz);
+        let html = `<p class="muted">Chart colours are fixed GymOS primitives. A tenant can never set them. Categorical order is fixed and never cycled.</p>`;
+        html += `<div class="gt-row head"><span class="k">Token</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>`;
+        for (const [p] of keys) {
+          if (p.startsWith('sequential') || p.startsWith('diverging')) continue;
+          const cells = MODES.map((mode) => {
+            const tok = sem(mode, `viz.${p}`);
+            const val = resolve(tok.$value);
+            const extra = p.startsWith('categorical')
+              ? `<br><span class="small">on surface ${ratioLine(val, semHex(mode, 'bg.surface'), 3)}</span>`
+              : '';
+            return `<span class="cell">${swatch(val)}<span><code>${aliasLabel(tok)}</code><br><span class="mono muted">${val}</span>${extra}</span></span>`;
+          });
+          html += `<div class="gt-row"><span class="k"><code>viz.${p}</code></span>${cells.join('')}</div>`;
+        }
+        html += `<h3>Sequential and diverging</h3><div class="two">${MODES.map(
+          (mode) =>
+            `<div class="panel t-${mode}">${modeTitle(mode)}${['sequential', 'diverging']
+              .map((kind) => {
+                const steps = leaves(T.semantic[mode].color.viz[kind]);
+                return `<p class="small" style="margin:8px 0 4px"><code>viz.${kind}.1–7</code> ${kind === 'sequential' ? 'low → high' : 'under ← target → over'}</p><div class="ramp">${steps.map(([k, t]) => `<span style="background:${t.$value};color:${textOn(t.$value)}">${k}</span>`).join('')}</div><p class="mono muted small" style="margin-top:2px">${steps.map(([, t]) => t.$value).join(' ')}</p>`;
+              })
+              .join('')}</div>`,
+        ).join('')}</div>`;
+        html += `<h3>Sample weight chart</h3><div class="two">${MODES.map((mode) => {
+          const c = (k) => semHex(mode, `viz.${k}`);
+          return `<div class="panel t-${mode} chart">${modeTitle(mode)}<p class="small muted" style="margin:0">Body weight, kg · synthetic client</p>
+            <div class="legend"><span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="${c('categorical.1')}" fill-opacity="0.45"/></svg>Weigh-ins</span><span><svg width="18" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c('categorical.1')}" stroke-width="2"/></svg>Trend</span><span><svg width="18" height="12" aria-hidden="true"><rect width="18" height="12" fill="${c('goalBand')}"/><line x1="0" x2="18" y1="2" y2="2" stroke="${c('goalLine')}" stroke-width="1.5" stroke-dasharray="4 4"/></svg>Goal ${GOAL[0]}–${GOAL[1]} kg</span></div>
+            ${weightChart(mode)}
+            <p class="small" style="margin-top:12px">Macros today, g</p>${[
+              ['protein', 140],
+              ['carbs', 210],
+              ['fat', 62],
+              ['fiber', 28],
+            ]
+              .map(
+                ([k, g]) =>
+                  `<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span class="small" style="width:56px">${k}</span><span style="height:12px;border-radius:2px;width:${(g / 210) * 60}%;background:${c('macro.' + k)}"></span><span class="small num">${g}</span></div>`,
+              )
+              .join('')}
+            <details><summary>Weigh-ins as a table</summary><table><thead><tr><th scope="col">Reading</th><th scope="col">kg</th></tr></thead><tbody>${WEIGH_INS.map((v, i) => `<tr><td>${i + 1}</td><td>${v.toFixed(1)}</td></tr>`).join('')}</tbody></table></details></div>`;
+        }).join('')}</div>`;
+        // D1 volt scan
+        const voltHex = new Set(leaves(T.primitive.color.volt).map(([, t]) => t.$value));
+        const inViz = [];
+        const outside = [];
+        for (const mode of MODES) {
+          for (const [p, tok] of leaves(T.semantic[mode].color)) {
+            const val = resolve(tok.$value);
+            const s = primStep(tok);
+            const isVolt = (s && s.family === 'volt') || voltHex.has(val);
+            if (!isVolt) continue;
+            const label = `${mode} <code>${p}</code> = ${s ? `<code>${s.family}.${s.step}</code>` : `<span class="mono">${val}</span> (same hex as a volt step)`}`;
+            (p.startsWith('viz.') ? inViz : outside).push(label);
+          }
+        }
+        B.d1Volt = outside.length;
+        html += `<h3>D1 check: volt appears only under viz.*</h3><p class="muted small">Scans every semantic token in both modes for a volt alias or a hex equal to a volt step.</p>
+          <p>${badge(outside.length ? { cls: 'fail', icon: 'fail' } : { cls: 'pass', icon: 'pass' }, outside.length ? `Fail: ${outside.length} tokens outside viz.* resolve to volt` : 'Pass: volt appears only under viz.*')}</p>
+          ${outside.length ? `<p class="small">Outside viz.*: ${outside.join('; ')}.</p><p class="small muted">These are the <code>accent.volt.*</code> keys tokens.md §5.2 defines. F1 requirement 7 says no semantic UI token may resolve to volt, so F1 must drop or remap them. The owner decides which.</p>` : ''}
+          <p class="small muted">Under viz.* (allowed): ${inViz.join('; ') || 'none'}. <code>viz.categorical.2</code> (carbs) is also a volt tone (tokens.md §7.2) but not an exact step, so the hex scan does not list it; it sits under viz.* either way.</p>`;
+        $('#viz').innerHTML = html;
+      }
+
+      // ---------- 6. glass
+      function worstChrome(mode) {
+        const tintTok = T.glass[mode].color.chrome.$value;
+        const m = tintTok.match(/^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/);
+        if (!m) throw new Error(`Unexpected glass chrome value: ${tintTok}`);
+        const tint = [m[1], m[2], m[3]].map((n) => Number(n) / 255);
+        const a = Number(m[4]);
+        const backdrops = [
+          ['white', WHITE],
+          ['black', '#000000'],
+        ];
+        for (const fam of Object.keys(T.primitive.color)) {
+          if (fam === 'white') continue;
+          for (const st of ['300', '500', '700', '900'])
+            backdrops.push([`${fam}.${st}`, T.primitive.color[fam][st].$value]);
+        }
+        const fg = semHex(mode, 'fg.primary');
+        let worst = null;
+        for (const [name, hex] of backdrops) {
+          const mixed = hexOf(parseHex(hex).map((c, i) => a * tint[i] + (1 - a) * c));
+          const r = contrast(fg, mixed);
+          if (!worst || r < worst.r) worst = { r, name, n: backdrops.length };
+        }
+        return worst;
+      }
+      function renderGlass() {
+        let html = `<p class="muted">Glass is for chrome that content scrolls under (R2). The bar carries only <code>fg.primary</code> text and icons. Chips, lists and forms stay solid.</p><div class="two">`;
+        for (const mode of MODES) {
+          const g = T.glass[mode];
+          const frame = (kind) => {
+            const v = (k) => semHex(mode, k);
+            const bars = [1, 2, 3, 4, 5, 6]
+              .map(
+                (i, j) =>
+                  `<i style="background:${v('viz.categorical.' + i)};height:${[90, 60, 75, 45, 100, 70][j]}%"></i>`,
+              )
+              .join('');
+            return `<div class="frame"><div class="content" aria-hidden="true">
+              <div class="ccard"><div class="stripe">${bars}${bars}</div></div>
+              <div class="ccard people"><i style="background:${v('accent.aqua.fill')}"></i><i style="background:${v('status.danger.solid')}"></i><i style="background:${v('accent.volt.fill')}"></i><span class="line"></span></div>
+              <div class="ccard people"><i style="background:${v('viz.categorical.3')}"></i><span class="line"></span><span class="line" style="flex:.5"></span></div>
+              <div class="ccard"><div class="stripe">${bars}</div></div>
+            </div><div class="topbar ${kind}">${icon('back')}<span class="title">Clients</span>${icon('search')}</div></div>
+            <p class="small" style="margin-top:6px"><strong>${kind === 'glass' ? 'Glass' : 'Solid fallback'}</strong> · ${kind === 'glass' ? `tint <span class="mono">${g.color.chrome.$value}</span>, blur ${g.blur.chrome.$value}, saturate ${g.saturate.$value}, noise ${g.noiseOpacity.$value}` : `<code>glass.fallback</code> = <code>${aliasLabel(g.color.fallback)}</code> <span class="mono">${resolve(g.color.fallback.$value)}</span>. Used for Reduce Transparency, high contrast, no backdrop-filter, Android below API 31.`}</p>`;
+          };
+          const w = worstChrome(mode);
+          html += `<div class="panel t-${mode}">${modeTitle(mode)}<div class="two" style="gap:12px"><div>${frame('glass')}</div><div>${frame('solid')}</div></div>
+            <p class="small" style="margin-top:8px"><code>fg.primary</code> on the glass tint, worst of ${w.n} solid backdrops (black, white, steps 300–900 of each family): ${fmt(w.r)} over ${w.name} · ${badge(verdict(w.r, 7), w.r >= 7 ? 'Pass, at least 7:1' : 'Fail, under 7:1')}</p></div>`;
+        }
+        $('#glass').innerHTML = html + `</div>`;
+      }
+
+      // ---------- 7. widths
+      // Widths in iOS points or Android dp; a full-screen web view reports the same number in CSS px.
+      const DEVICES = [
+        ['iPhone SE (3rd gen)', 'portrait', 375, 'pt'],
+        ['iPhone 16', 'portrait', 393, 'pt'],
+        ['iPhone 16 Pro', 'portrait', 402, 'pt'],
+        ['iPhone 16 Pro Max', 'portrait', 440, 'pt'],
+        ['Android phone, narrow common width', 'portrait', 360, 'dp'],
+        ['Google Pixel 6 (O11 baseline), 1080 px ÷ 2.625', 'portrait', 412, 'dp'],
+        ['iPad mini (6th gen, A17 Pro)', 'portrait', 744, 'pt'],
+        ['iPad mini (6th gen, A17 Pro)', 'landscape', 1133, 'pt'],
+        ['iPad Air 11-inch (M2), iPad (10th gen)', 'portrait', 820, 'pt'],
+        ['iPad Air 11-inch (M2), iPad (10th gen)', 'landscape', 1180, 'pt'],
+        ['iPad Pro 11-inch (1st–4th gen)', 'portrait', 834, 'pt'],
+        ['iPad Pro 11-inch (1st–4th gen)', 'landscape', 1194, 'pt'],
+        ['iPad Pro 11-inch (M4)', 'portrait', 834, 'pt'],
+        ['iPad Pro 11-inch (M4)', 'landscape', 1210, 'pt'],
+        ['iPad Pro 12.9-inch, iPad Air 13-inch', 'portrait', 1024, 'pt'],
+        ['iPad Pro 12.9-inch, iPad Air 13-inch', 'landscape', 1366, 'pt'],
+        ['iPad Pro 13-inch (M4)', 'portrait', 1032, 'pt'],
+        ['iPad Pro 13-inch (M4)', 'landscape', 1376, 'pt'],
+        [
+          'Android 11-inch tablet, 2560 × 1600 px at density 2.0 (Pixel Tablet)',
+          'portrait',
+          800,
+          'dp',
+        ],
+        [
+          'Android 11-inch tablet, 2560 × 1600 px at density 2.0 (Pixel Tablet)',
+          'landscape',
+          1280,
+          'dp',
+        ],
+        ['Web browser window', '—', 768, 'px'],
+        ['Web browser window', '—', 1199, 'px'],
+        ['Web laptop', '—', 1280, 'px'],
+        ['Web desktop', '—', 1440, 'px'],
+      ];
+      const today = (w) => (w >= TODAY_DESKTOP ? 'desktop' : 'phone');
+      const proposed = (w) => (w >= DESKTOP_MIN ? 'desktop' : w >= TABLET_MIN ? 'tablet' : 'phone');
+      function renderWidths() {
+        const lo = 320;
+        const hi = 1600;
+        const pct = (a, b) => ((b - a) / (hi - lo)) * 100;
+        let html = `<p class="muted">The layout is picked by window width (O8), so iPad split screen and narrow browser windows follow the same ranges. Phones stay portrait.</p>
+          <p class="small" style="margin:12px 0 0"><strong>Proposed</strong></p><div class="rangebar" role="img" aria-label="Proposed: phone below ${TABLET_MIN} px, tablet ${TABLET_MIN} to ${DESKTOP_MIN - 1} px, desktop ${DESKTOP_MIN} px and up">
+            <span class="rb-phone" style="width:${pct(lo, TABLET_MIN)}%">Phone<span class="num">&lt; ${TABLET_MIN}</span></span><span class="rb-tablet" style="width:${pct(TABLET_MIN, DESKTOP_MIN)}%">Tablet<span class="num">${TABLET_MIN}–${DESKTOP_MIN - 1}</span></span><span class="rb-desktop" style="width:${pct(DESKTOP_MIN, hi)}%">Desktop<span class="num">${DESKTOP_MIN}+</span></span></div>
+          <p class="small" style="margin:0"><strong>Today</strong> (<code>md</code> = ${TODAY_DESKTOP} px)</p><div class="rangebar" role="img" aria-label="Today: phone below ${TODAY_DESKTOP} px, desktop ${TODAY_DESKTOP} px and up">
+            <span class="rb-phone" style="width:${pct(lo, TODAY_DESKTOP)}%">Phone<span class="num">&lt; ${TODAY_DESKTOP}</span></span><span class="rb-desktop" style="width:${pct(TODAY_DESKTOP, hi)}%">Desktop<span class="num">${TODAY_DESKTOP}+</span></span></div>
+          <p class="small">This window is <strong id="live-w" class="num"></strong> wide: <strong id="live-r"></strong>.</p>
+          <div class="callout"><strong>For approval: the two effects F1 names</strong><ul>
+            <li>Web at ${TODAY_DESKTOP}–${DESKTOP_MIN - 1} px moves from today's desktop layout to the tablet one.</li>
+            <li>12.9- and 13-inch iPads in landscape (1366 and 1376 pt) get the desktop layout.</li></ul>
+            <strong>Found while mapping devices</strong><ul>
+            <li>iPad Pro 11-inch (M4) in landscape is 1210 pt, so it gets desktop. Only older 11-inch Pros (1194 pt) and the 11-inch Air (1180 pt) land in tablet.</li>
+            <li>A 2560 × 1600 Android tablet at density 2.0 is 1280 dp in landscape, so it gets desktop too.</li>
+            <li>iPad mini in portrait (744 pt) gets the phone layout today, because 744 is under 768. It moves to tablet.</li></ul></div>
+          <h3>Devices</h3><div class="scroll-x"><table><thead><tr><th scope="col">Device, orientation, width</th><th scope="col">Today</th><th scope="col">Proposed</th></tr></thead><tbody>${DEVICES.map(
+            ([name, o, w, unit]) => {
+              const t = today(w);
+              const p = proposed(w);
+              return `<tr><td>${name}<br><span class="small muted num">${o === '—' ? '' : o + ' · '}${w} ${unit}</span></td><td>${t}</td><td>${t !== p ? `<span class="moves">${p}</span> (moves)` : p}</td></tr>`;
+            },
+          ).join('')}</tbody></table></div>
+          <p class="small muted">Android widths are computed from pixels and density, not measured on a device.</p>`;
+        $('#widths').innerHTML = html;
+        const live = () => {
+          $('#live-w').textContent = `${window.innerWidth} px`;
+          $('#live-r').textContent =
+            `${proposed(window.innerWidth)} (today: ${today(window.innerWidth)})`;
+        };
+        live();
+        window.addEventListener('resize', live);
+      }
+
+      function renderOpenPoints() {
+        const items = [];
+        if (B.d1Volt)
+          items.push(
+            `D1: ${B.d1Volt} semantic tokens outside viz.* resolve to volt (the <code>accent.volt.*</code> keys). Section 5.`,
+          );
+        if (B.d1Warning.length)
+          items.push(
+            `D1: warning fills lighter than amber.500: ${B.d1Warning.join('; ')}. Section 4.`,
+          );
+        for (const [what, a, c] of B.adrDiffs)
+          items.push(
+            `ADR-0019 ${what.toLowerCase()} is <span class="mono">${a}</span>; the §2.4 recipe gives <span class="mono">${c}</span>. Section 3.`,
+          );
+        items.push(
+          `Width edges ${TABLET_MIN} and ${DESKTOP_MIN} px, with their effects. Section 7.`,
+        );
+        $('#open-points').innerHTML =
+          `<strong>Open points for the owner</strong><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
+      }
+
+      function main() {
+        B = deriveBrandTheme(BRAND);
+        B.d1Warning = [];
+        writeThemeCss();
+        const n = selfChecks();
+        $('#selfcheck').innerHTML =
+          `${badge({ cls: 'pass', icon: 'pass' }, 'Self-checks passed')} ${n} checks on load: every primitive round-trips through OKLCH, every alias matches the JSON's resolved hex, white on black is 21:1, and an invalid brand hex throws.`;
+        renderThemeControl();
+        renderScales();
+        renderSemantic();
+        renderSunflower();
+        renderStatus();
+        renderViz();
+        renderGlass();
+        renderWidths();
+        renderOpenPoints();
+      }
+
+      try {
+        main();
+      } catch (err) {
+        const el = $('#error');
+        el.hidden = false;
+        el.textContent = `This sheet failed to render: ${err.message}`;
+        throw err;
+      }
+    </script>
+  </body>
+</html>
