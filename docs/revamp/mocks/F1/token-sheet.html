@@ -647,7 +647,7 @@
         background: var(--bgCanvas);
       }
       .frame .content {
-        padding: 8px 12px 12px;
+        padding: 0 12px 12px;
         display: grid;
         gap: 10px;
       }
@@ -662,6 +662,14 @@
         gap: 4px;
         align-items: flex-end;
         height: 56px;
+      }
+      .frame .ccard.hero {
+        border-top: 0;
+        border-radius: 0 0 12px 12px;
+        padding-top: 0;
+      }
+      .frame .ccard.hero .stripe {
+        height: 92px;
       }
       .frame .stripe i {
         flex: 1;
@@ -3687,7 +3695,6 @@
         const lb = luminance(b);
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
       }
-      // Truncate, never round up: 4.497 shows as 4.49, not 4.50.
       // Shown rounded to two decimals, as tokens.md does. Pass or fail always uses the unrounded value.
       const fmt = (r) => `<span class="ratio">${r.toFixed(2)}:1</span>`;
       const CVD = {
@@ -3854,7 +3861,7 @@
         }
         // step 8
         const collisions = ['success', 'warning', 'danger', 'info'].map((key) => {
-          const c = semHex('light', `status.${key}.solid`);
+          const c = pTok('light', `status.${key}.solid`).hex; // the F1 proposal, so warning is amber.500
           return {
             key,
             hex: c,
@@ -3923,6 +3930,8 @@
         clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
         flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
         eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+        alert:
+          '<path stroke-linejoin="miter" d="M12 3 2 21h20Z"/><path d="M12 10v4"/><path d="M12 17h.01"/>',
         octagon:
           '<path stroke-linejoin="miter" d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9Z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
         pass: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
@@ -4325,10 +4334,20 @@
           )
           .join('')}</tbody></table></div>${
           B.adrDiffs.length
-            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. F1 proposes <span class="mono">${L.wash}</span>. F1 requirement 6 then has F1's code PR update ADR-0019.</p>`
+            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. F1 proposes <span class="mono">${L.wash}</span>. F1 requirement 6 then has F1's code PR update ADR-0019.</p>${washClash()}`
             : ''
         }`;
         $('#sunflower').innerHTML = html;
+      }
+
+      // light brand wash against the light warning wash: a selected pill and a warning chip side by side
+      function washClash() {
+        const ww = semHex('light', 'status.warning.wash');
+        const de = deltaE(B.modes.light.wash, ww);
+        const deAdr = deltaE(ADR.lightWash, ww);
+        B.washClash = { de, deAdr };
+        return `<div class="panel t-light" style="margin-top:12px"><p class="small" style="margin:0 0 8px">Light brand wash <span class="mono">${B.modes.light.wash}</span> and light warning wash <span class="mono">${ww}</span> are ΔE ${de.toFixed(1)} apart (ADR-0019's wash would be ${deAdr.toFixed(1)}). Selection relies on the bold label and the check, warnings on the icon and word.</p>
+          <span class="tabs" role="presentation"><span class="sel">${icon('check')}Week</span></span> <span class="chip" style="background:${ww};color:${semHex('light', 'status.warning.washText')}"><span style="color:${semHex('light', 'status.warning.text')};display:inline-flex">${icon('clock')}</span>3 d overdue</span></div>`;
       }
 
       // ---------- 4. status chips
@@ -4381,6 +4400,19 @@
                 : `Word ${ratioLine(washText, wash, 4.5)} · icon ${ratioLine(text, wash, 3)}<br><span class="muted">fill <code>${aliasLabel(sem(mode, `status.${c.s}.wash`))}</code></span>`;
             html += `<div class="chip-row"><div>${chip}</div><div class="small"><strong>${c.s}</strong> · ${c.why}<br>${ratios}</div></div>`;
           }
+          // proposed warning solid (D1): amber.500 or darker, with a 1px status.warning.border where the fill is under 3:1 on the surface or canvas
+          const wSolid = pTok(mode, 'status.warning.solid').hex;
+          const wOn = semHex(mode, 'status.warning.onSolid');
+          const wBorder = semHex(mode, 'status.warning.border');
+          const canvas = semHex(mode, 'bg.canvas');
+          const needsBorder = contrast(wSolid, surface) < 3 || contrast(wSolid, canvas) < 3;
+          B.warnBorder = B.warnBorder || {};
+          B.warnBorder[mode] = needsBorder;
+          const fillLine = `fill on surface ${fmt(contrast(wSolid, surface))}, on canvas ${fmt(contrast(wSolid, canvas))}`;
+          const boundary = needsBorder
+            ? `${fillLine}, under 3:1, so it carries a 1px <code>status.warning.border</code> <span class="mono">${wBorder}</span>: on surface ${ratioLine(wBorder, surface, 3)}, on canvas ${ratioLine(wBorder, canvas, 3)}`
+            : `boundary ${fmt(Math.min(contrast(wSolid, surface), contrast(wSolid, canvas)))} ${badge(verdict(Math.min(contrast(wSolid, surface), contrast(wSolid, canvas)), 3))}, no border needed`;
+          html += `<div class="chip-row"><div><span class="chip" style="background:${wSolid};color:${wOn};border:1px solid ${needsBorder ? wBorder : 'transparent'}">${icon('alert')}Plan blocked</span></div><div class="small"><strong>warning, solid</strong> · F1 proposal: <code>${pTok(mode, 'status.warning.solid').alias}</code> with the ink label (D1)<br>Words ${ratioLine(wOn, wSolid, 4.5)}<br>${boundary}</div></div>`;
           const solid = semHex(mode, 'status.danger.solid');
           const onSolid = semHex(mode, 'status.danger.onSolid');
           html += `<div class="chip-row"><div><span class="chip" style="background:${solid};color:${onSolid}">${icon('octagon')}Severe allergy · Peanut</span></div><div class="small"><strong>severe allergy</strong> · the only solid red chip. <code>status.danger.solid</code>, octagon icon and words, never brand-tinted, never glass<br>Words ${ratioLine(onSolid, solid, 4.5)}</div></div></div>`;
@@ -4407,7 +4439,7 @@
             } else if (amberOk(t.alias)) {
               propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code> kept<br>${badge({ cls: 'pass', icon: 'pass' }, '500 or darker')}</span></span>`;
             } else {
-              propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code> kept: a pale wash under the word and icon, not a solid fill<br><span class="small">ΔE to Sunflower ${washDE.sun.toFixed(1)}, to amber.300 ${washDE.a300.toFixed(1)}</span></span></span>`;
+              propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code> kept: a pale wash under the word and icon, not a solid fill<br><span class="small">amber.100 is ΔE ${washDE.sun.toFixed(1)} from Sunflower and ${washDE.a300.toFixed(1)} from amber.300 (the step D1 names). It is ΔE ${B.washClash.de.toFixed(1)} from the light brand wash (section 3).</span></span></span>`;
             }
             rows.push(
               `<tr><td>${mode} <code>${k}</code></td><td data-label="Reference (before)">${refCell}</td><td data-label="F1 proposal">${propCell}</td></tr>`,
@@ -4575,14 +4607,17 @@
           const g = T.glass[mode];
           const frame = (kind) => {
             const v = (k) => semHex(mode, k);
-            const bars = [1, 2, 3, 4, 5, 6]
-              .map(
-                (i, j) =>
-                  `<i style="background:${v('viz.categorical.' + i)};height:${[90, 60, 75, 45, 100, 70][j]}%"></i>`,
-              )
-              .join('');
+            const barsOf = (hs) =>
+              [1, 2, 3, 4, 5, 6]
+                .map(
+                  (i, j) =>
+                    `<i style="background:${v('viz.categorical.' + i)};height:${hs[j]}%"></i>`,
+                )
+                .join('');
+            const bars = barsOf([90, 60, 75, 45, 100, 70]);
+            const tall = barsOf([100, 82, 94, 76, 100, 88]);
             return `<div class="frame"><div class="content" aria-hidden="true">
-              <div class="ccard"><div class="stripe">${bars}${bars}</div></div>
+              <div class="ccard hero"><div class="stripe">${tall}${tall}</div></div>
               <div class="ccard people"><i style="background:${v('accent.aqua.fill')}"></i><i style="background:${v('status.danger.solid')}"></i><i style="background:${v('viz.categorical.2')}"></i><span class="line"></span></div>
               <div class="ccard people"><i style="background:${v('viz.categorical.3')}"></i><span class="line"></span><span class="line" style="flex:.5"></span></div>
               <div class="ccard"><div class="stripe">${bars}</div></div>
@@ -4605,8 +4640,8 @@
         ['iPhone 16 Pro Max', 'portrait', 440, 'pt'],
         ['Android phone, narrow common width', 'portrait', 360, 'dp'],
         ['Google Pixel 6 (O11 baseline), 1080 px ÷ 2.625', 'portrait', 412, 'dp'],
-        ['iPad mini (6th gen, A17 Pro)', 'portrait', 744, 'pt'],
-        ['iPad mini (6th gen, A17 Pro)', 'landscape', 1133, 'pt'],
+        ['iPad mini (7th gen, A17 Pro)', 'portrait', 744, 'pt'],
+        ['iPad mini (7th gen, A17 Pro)', 'landscape', 1133, 'pt'],
         ['iPad Air 11-inch (M2), iPad (10th gen)', 'portrait', 820, 'pt'],
         ['iPad Air 11-inch (M2), iPad (10th gen)', 'landscape', 1180, 'pt'],
         ['iPad Pro 11-inch (1st to 4th gen)', 'portrait', 834, 'pt'],
@@ -4650,7 +4685,7 @@
             <li>Web at ${TODAY_DESKTOP} to ${DESKTOP_MIN - 1} px moves from today's desktop layout to the tablet one.</li>
             <li>12.9- and 13-inch iPads in landscape (1366 and 1376 pt) get the desktop layout.</li></ul>
             <strong>Found while mapping devices</strong><ul>
-            <li>iPad Pro 11-inch (M4) in landscape is 1210 pt, so it gets desktop. Only older 11-inch Pros (1194 pt) and the 11-inch Air (1180 pt) land in tablet.</li>
+            <li>iPad Pro 11-inch (M4) in landscape is 1210 pt, so it gets desktop. The other iPads up to 11 inches stay in tablet in landscape: iPad mini 1133 pt, iPad Air 11-inch and iPad (10th gen) 1180 pt, older 11-inch Pros 1194 pt.</li>
             <li>A 2560 × 1600 Android tablet at density 2.0 is 1280 dp in landscape, so it gets desktop too.</li>
             <li>iPad mini in portrait (744 pt) gets the phone layout today, because 744 is under 768. It moves to tablet.</li>
             <li>F1 keeps ${DESKTOP_MIN}. Raising the desktop edge past 1280 to cover both would put common 1280 px laptop windows on the tablet layout.</li></ul></div>
@@ -4679,8 +4714,9 @@
         ).join(', ');
         const items = [
           `Drop the ${B.d1Volt.ref} <code>accent.volt.*</code> tokens from the semantic UI set, so volt stays under viz.* (D1 scan: proposal ${B.d1Volt.prop ? 'fails' : 'passes'}, reference fails). The milestone highlight uses <code>accent.aqua.*</code>. Section 5.`,
-          `<code>status.warning.solid</code> moves from amber.400 to ${ws}. Section 4.`,
-          `Keep the light <code>status.warning.wash</code> at amber.100: ΔE ${B.washDE.sun.toFixed(1)} to Sunflower and ${B.washDE.a300.toFixed(1)} to amber.300. Section 4.`,
+          `<code>status.warning.solid</code> moves from amber.400 to ${ws}. ${B.warnBorder.light ? 'In light the solid chip carries a 1px <code>status.warning.border</code>, because the fill is under 3:1 on the surface. ' : ''}Section 4.`,
+          `Keep the light <code>status.warning.wash</code> at amber.100. amber.100 is ΔE ${B.washDE.sun.toFixed(1)} from Sunflower and ${B.washDE.a300.toFixed(1)} from amber.300 (the step D1 names). Section 4.`,
+          `Light brand wash and warning wash are ΔE ${B.washClash.de.toFixed(1)} apart (ADR's value ${B.washClash.deAdr.toFixed(1)}). Selection relies on the check, warnings on icon plus word. Section 3.`,
           ...B.adrDiffs.map(
             ([what, a, c]) =>
               `${what} <span class="mono">${c}</span> (the §2.4 recipe). F1's code PR then updates ADR-0019 from <span class="mono">${a}</span>. Section 3.`,
