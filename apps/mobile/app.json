@@ -21,7 +21,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#0E4C90"
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
