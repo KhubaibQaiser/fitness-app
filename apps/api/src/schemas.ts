@@ -315,4 +315,76 @@ export const problem = z
 export const objectList = z.object({ items: z.array(anyObject) });
 export const okResponse = z.object({ ok: z.boolean() });
 
+const isoInstant = z.iso.datetime({ offset: true });
+
+export const todayReasonSchema = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('RED_FLAG'), since: isoInstant }),
+    z.object({
+      kind: z.literal('PLAN_NEEDS_REVIEW'),
+      planId: z.uuid(),
+      planVersion: z.number().int(),
+    }),
+    z.object({
+      kind: z.literal('CHECKIN_OVERDUE'),
+      checkInId: z.uuid(),
+      scheduledFor: z.iso.date(),
+      daysOverdue: z.number().int().min(1),
+    }),
+    z.object({ kind: z.literal('CHECKIN_DUE'), checkInId: z.uuid(), scheduledFor: z.iso.date() }),
+    z.object({
+      kind: z.literal('DRAFT_AWAITING_PUBLISH'),
+      planId: z.uuid(),
+      planVersion: z.number().int(),
+    }),
+  ])
+  .openapi('TodayReason');
+
+export const todayItemSchema = z
+  .object({
+    clientId: z.uuid(),
+    clientName: z.string(),
+    lastWeight: z.object({ kg: z.number(), at: isoInstant }).nullable(),
+    reason: todayReasonSchema,
+  })
+  .openapi('TodayItem');
+
+export const todayCountsSchema = z
+  .object({
+    redFlags: z.number().int(),
+    plansBlocked: z.number().int(),
+    overdue: z.number().int(),
+    dueToday: z.number().int(),
+    drafts: z.number().int(),
+  })
+  .openapi('TodayCounts');
+
+export const todayResponse = z
+  .object({
+    groups: z
+      .object({
+        redFlags: z.array(todayItemSchema),
+        plansBlocked: z.array(todayItemSchema),
+        overdue: z.array(todayItemSchema),
+        dueToday: z.array(todayItemSchema),
+        drafts: z.array(todayItemSchema),
+      })
+      .openapi({
+        description:
+          'In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag.',
+      }),
+    counts: todayCountsSchema,
+  })
+  .openapi('Today');
+
+export const pulseResponse = z
+  .object({
+    unreadCount: z.number().int(),
+    counts: todayCountsSchema,
+    etag: z.string().openapi({
+      description: 'Same value as the ETag header; send it back as If-None-Match.',
+    }),
+  })
+  .openapi('Pulse');
+
 export type MacroTargets = z.infer<typeof macroTargetsSchema>;

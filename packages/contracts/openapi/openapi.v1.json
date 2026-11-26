@@ -69,6 +69,210 @@
           }
         },
         "required": ["signaturePngBase64", "signedAt"]
+      },
+      "Today": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "object",
+            "properties": {
+              "redFlags": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodayItem"
+                }
+              },
+              "plansBlocked": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodayItem"
+                }
+              },
+              "overdue": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodayItem"
+                }
+              },
+              "dueToday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodayItem"
+                }
+              },
+              "drafts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodayItem"
+                }
+              }
+            },
+            "required": ["redFlags", "plansBlocked", "overdue", "dueToday", "drafts"],
+            "description": "In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/TodayCounts"
+          }
+        },
+        "required": ["groups", "counts"]
+      },
+      "TodayItem": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "lastWeight": {
+            "type": ["object", "null"],
+            "properties": {
+              "kg": {
+                "type": "number"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["kg", "at"]
+          },
+          "reason": {
+            "$ref": "#/components/schemas/TodayReason"
+          }
+        },
+        "required": ["clientId", "clientName", "lastWeight", "reason"]
+      },
+      "TodayReason": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["RED_FLAG"]
+              },
+              "since": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["kind", "since"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["PLAN_NEEDS_REVIEW"]
+              },
+              "planId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "planVersion": {
+                "type": "integer"
+              }
+            },
+            "required": ["kind", "planId", "planVersion"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["CHECKIN_OVERDUE"]
+              },
+              "checkInId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "scheduledFor": {
+                "type": "string",
+                "format": "date"
+              },
+              "daysOverdue": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["kind", "checkInId", "scheduledFor", "daysOverdue"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["CHECKIN_DUE"]
+              },
+              "checkInId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "scheduledFor": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": ["kind", "checkInId", "scheduledFor"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["DRAFT_AWAITING_PUBLISH"]
+              },
+              "planId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "planVersion": {
+                "type": "integer"
+              }
+            },
+            "required": ["kind", "planId", "planVersion"]
+          }
+        ]
+      },
+      "TodayCounts": {
+        "type": "object",
+        "properties": {
+          "redFlags": {
+            "type": "integer"
+          },
+          "plansBlocked": {
+            "type": "integer"
+          },
+          "overdue": {
+            "type": "integer"
+          },
+          "dueToday": {
+            "type": "integer"
+          },
+          "drafts": {
+            "type": "integer"
+          }
+        },
+        "required": ["redFlags", "plansBlocked", "overdue", "dueToday", "drafts"]
+      },
+      "Pulse": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "integer"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/TodayCounts"
+          },
+          "etag": {
+            "type": "string",
+            "description": "Same value as the ETag header; send it back as If-None-Match."
+          }
+        },
+        "required": ["unreadCount", "counts", "etag"]
       }
     },
     "parameters": {}
@@ -2727,6 +2931,93 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/today": {
+      "get": {
+        "operationId": "getToday",
+        "responses": {
+          "200": {
+            "description": "The coach's grouped work queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Today"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/pulse": {
+      "get": {
+        "operationId": "getPulse",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "if-none-match",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unread count and Today counts",
+            "headers": {
+              "etag": {
+                "schema": {
+                  "type": "string",
+                  "description": "Strong ETag of the pulse"
+                },
+                "required": true,
+                "description": "Strong ETag of the pulse"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pulse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nothing changed since If-None-Match",
+            "headers": {
+              "etag": {
+                "schema": {
+                  "type": "string",
+                  "description": "Strong ETag of the pulse"
+                },
+                "required": true,
+                "description": "Strong ETag of the pulse"
+              }
+            }
+          },
+          "403": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
