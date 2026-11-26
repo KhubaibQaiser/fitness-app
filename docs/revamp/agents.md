@@ -10,7 +10,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
 
 **Each cycle:**
 
-1. **Check usage, then pick ready tasks** (rulings O39). Before starting any builder or reviewer, read the plan limits; at 80% of any limit that could run out before its reset, ask the owner first. A task is ready when:
+1. **Check usage, then pick ready tasks** (rulings O39). Before starting any builder or reviewer, read the plan limits; at 80% of any limit that could run out before its reset, ask the owner first, and after a "keep going" ask again at 90%. To park on his word: bring branches to a stable point, write `.agent-notes/parked-phase2-<date>.md` (done, in flight, open decisions, first steps to resume), and stay idle until he says resume. A task is ready when:
    - its dependencies have merged;
    - its blocking rulings are answered;
    - for visual code, its mock is approved.
