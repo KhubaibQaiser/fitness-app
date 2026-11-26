@@ -491,6 +491,7 @@
         align-items: center;
         gap: 8px;
         cursor: pointer;
+        white-space: nowrap;
       }
       .btn:hover,
       .btn.is-hover {
@@ -521,7 +522,7 @@
       }
       .states {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 14px 10px;
         padding: 10px;
         border-radius: 10px;
@@ -3687,7 +3688,8 @@
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
       }
       // Truncate, never round up: 4.497 shows as 4.49, not 4.50.
-      const fmt = (r) => `<span class="ratio">${(Math.floor(r * 100) / 100).toFixed(2)}:1</span>`;
+      // Shown rounded to two decimals, as tokens.md does. Pass or fail always uses the unrounded value.
+      const fmt = (r) => `<span class="ratio">${r.toFixed(2)}:1</span>`;
       const CVD = {
         protan: [
           [0.152286, 1.052583, -0.204868],
@@ -3757,12 +3759,40 @@
         contrast(WHITE, hex) >= contrast(semHex('light', 'fg.primary'), hex)
           ? WHITE
           : semHex('light', 'fg.primary');
-      const primStep = (tok) => {
-        const m =
-          typeof tok.$value === 'string' &&
-          tok.$value.match(/^\{primitive\.color\.(\w+)\.(\d+)\}$/);
-        return m ? { family: m[1], step: Number(m[2]) } : null;
-      };
+
+      // ---------- F1 proposal for rulings D1 (F1 requirement 7). It sits on top of the reference JSON, which stays unedited.
+      const D1_DROP_PREFIX = 'accent.volt.';
+      const stepHex = (family, step) => T.primitive.color[family][String(step)].$value;
+      function buildProposal() {
+        const out = {};
+        for (const mode of MODES) {
+          const m = new Map();
+          for (const [p, tok] of leaves(T.semantic[mode].color))
+            m.set(p, { hex: resolve(tok.$value), alias: aliasLabel(tok), ref: null });
+          for (const [p, t] of m)
+            if (p.startsWith(D1_DROP_PREFIX)) m.set(p, { dropped: true, ref: t });
+          // amber.500, or the lightest darker step whose onSolid label still reaches 4.5:1
+          const on = m.get('status.warning.onSolid').hex;
+          const step = [500, 600, 700, 800, 900, 950].find(
+            (st) => contrast(on, stepHex('amber', st)) >= 4.5,
+          );
+          if (step === undefined)
+            throw new Error(`No amber step from 500 gives status.warning.onSolid 4.5:1 in ${mode}`);
+          m.set('status.warning.solid', {
+            hex: stepHex('amber', step),
+            alias: `amber.${step}`,
+            ref: m.get('status.warning.solid'),
+          });
+          out[mode] = m;
+        }
+        return out;
+      }
+      let P;
+      function pTok(mode, key) {
+        const t = P[mode].get(key);
+        if (!t) throw new Error(`Unknown semantic key: ${key}`);
+        return t;
+      }
 
       // ---------- tenant brand, tokens.md §2.4 steps 1 to 8
       function deriveBrandTheme(hex) {
@@ -3948,7 +3978,7 @@
       }
       function varsFor(mode) {
         const v = {};
-        for (const [p, tok] of leaves(T.semantic[mode].color)) v[camel(p)] = resolve(tok.$value);
+        for (const [p, t] of P[mode]) if (!t.dropped) v[camel(p)] = t.hex;
         for (const [p, tok] of leaves(T.glass[mode]))
           v['glass' + camel(p).replace(/^./, (c) => c.toUpperCase())] = String(resolve(tok.$value));
         Object.assign(v, brandVars(mode));
@@ -4076,10 +4106,6 @@
         ['viz.goalLine', 'viz.goalBand', 3],
         ['fg.disabled', 'bg.surface', null],
       ];
-      function isVoltOutsideViz(path, tok) {
-        const s = primStep(tok);
-        return !path.startsWith('viz.') && s && s.family === 'volt';
-      }
       function renderSemantic() {
         const keys = leaves(T.semantic.light.color).filter(([p]) => !p.startsWith('viz.'));
         let html = `<div id="s2-swatches"><div class="gt-row head"><span class="k">Token</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>`;
@@ -4091,15 +4117,18 @@
             html += `<p class="group-h">${g}${g === 'action' || g === 'focus' ? ` <span class="tag">${icon('info')}JSON default is ultramarine. Sunflower replaces it at runtime (section 3)</span>` : ''}</p>`;
           }
           const cells = MODES.map((mode) => {
-            const tok = sem(mode, p);
-            const val = resolve(tok.$value);
+            const t = pTok(mode, p);
+            const before = t.ref
+              ? `<br><span class="small muted">reference (before): <code>${t.ref.alias}</code> <span class="mono">${t.ref.hex}</span></span>`
+              : '';
+            if (t.dropped)
+              return `<span class="cell"><span class="sw" style="border-style:dashed;background:transparent"></span><span><span class="tag">${icon('info')}F1 proposal: dropped (D1)</span>${before}</span></span>`;
+            const val = t.hex;
             const bg = val.startsWith('rgba')
               ? `linear-gradient(${val},${val}),repeating-linear-gradient(45deg,${semHex(mode, 'fg.primary')} 0 4px,${semHex(mode, 'bg.surface')} 4px 8px)`
               : val;
-            const d1 = isVoltOutsideViz(p, tok)
-              ? ` <span class="tag">${icon('fail')}D1: volt</span>`
-              : '';
-            return `<span class="cell"><span class="sw" style="background:${bg}"></span><span><code>${aliasLabel(tok)}</code> <span class="mono muted">${val}</span>${d1}</span></span>`;
+            const tag = t.ref ? ` <span class="tag">${icon('info')}F1 proposal (D1)</span>` : '';
+            return `<span class="cell"><span class="sw" style="background:${bg}"></span><span><code>${t.alias}</code> <span class="mono muted">${val}</span>${tag}${before}</span></span>`;
           });
           html += `<div class="gt-row"><span class="k"><code>${p}</code></span>${cells.join('')}</div>`;
         }
@@ -4120,30 +4149,43 @@
             .join(
               '',
             )}</tbody></table><p style="margin-top:8px">${badge(ordered ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, ordered ? 'Pass: each layer is a distinct, lighter surface step' : 'Fail: surfaces do not step up')}</p></div>`;
-        // contrast pairs
+        // contrast pairs, on the F1 proposal, with the reference JSON's ratio where a token changed
+        const refCounts = { pass: 0, fail: 0, exempt: 0, dropped: 0 };
         let rows = '';
         for (const [fgK, bgK, need] of PAIRS) {
           const cells = MODES.map((mode) => {
-            const fg = semHex(mode, fgK);
-            const bg = semHex(mode, bgK);
+            const refR = contrast(semHex(mode, fgK), semHex(mode, bgK));
+            refCounts[verdict(refR, need).cls] += 1;
+            const fgT = pTok(mode, fgK);
+            const bgT = pTok(mode, bgK);
+            if (fgT.dropped || bgT.dropped) {
+              refCounts.dropped += 1;
+              return `<span class="cell"><span class="res info">${icon('info')}Dropped</span> <span class="small muted">reference ${fmt(refR)}</span></span>`;
+            }
+            const fg = fgT.hex;
+            const bg = bgT.hex;
             const r = contrast(fg, bg);
             const v = verdict(r, need);
             tally(v);
+            const before =
+              fgT.ref || bgT.ref
+                ? `<br><span class="small muted">reference ${fmt(refR)}</span>`
+                : '';
             const sample =
               need === 3
                 ? `<span class="sample" style="background:${bg};box-shadow:inset 0 0 0 3px ${fg}"></span>`
                 : `<span class="sample" style="background:${bg};color:${fg}">Aa</span>`;
-            return `<span class="cell" title="${fg} on ${bg}">${sample}<span>${fmt(r)} ${badge(v)}</span></span>`;
+            return `<span class="cell" title="${fg} on ${bg}">${sample}<span>${fmt(r)} ${badge(v)}${before}</span></span>`;
           });
           rows += `<div class="gt-row"><span class="k"><code>${fgK}</code> on <code>${bgK}</code> <span class="small muted">· ${need === null ? 'exempt, disabled text' : 'needs ' + needLabel(need, fgK)}</span></span>${cells.join('')}</div>`;
         }
         html += `</div><div id="s2-contrast"><h3>Contrast, every pair in tokens.md §6.3 and §6.4</h3>
-          <p class="muted small">WCAG 2.2 relative luminance. Ratios are truncated to two decimals. Pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine. Sunflower's ratios are in section 3.</p>
+          <p class="muted small">WCAG 2.2 relative luminance. Ratios are rounded to two decimals, as tokens.md does. Pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine. Sunflower's ratios are in section 3.</p>
           <p id="pair-summary"></p>
           <div class="gt-row head"><span class="k">Pair</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>${rows}</div>`;
         $('#semantic').innerHTML = html;
         $('#pair-summary').innerHTML =
-          `${PAIRS.length} pairs × 2 modes: <strong>${counts.pass} pass</strong>, <strong>${counts.fail} fail</strong>, ${counts.exempt} exempt (disabled text).`;
+          `${PAIRS.length} pairs × 2 modes. F1 proposal: <strong>${counts.pass} pass</strong>, <strong>${counts.fail} fail</strong>, ${counts.exempt} exempt (disabled text), ${refCounts.dropped / 2} pairs per mode dropped with <code>accent.volt.*</code>. Reference JSON: ${refCounts.pass} pass, ${refCounts.fail} fail, ${refCounts.exempt} exempt.`;
       }
 
       // ---------- 3. sunflower
@@ -4279,11 +4321,11 @@
         html += `<h3>Against ADR-0019 decision 3</h3><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Value</th><th scope="col">ADR-0019</th><th scope="col">Computed here</th><th scope="col">Result</th></tr></thead><tbody>${cmp
           .map(
             ([what, a, c, same]) =>
-              `<tr><td>${what}</td><td class="mono" data-label="ADR-0019">${a}</td><td class="mono" data-label="Computed">${c}</td><td data-label="Result">${same ? badge({ cls: 'pass', icon: 'pass' }, 'Same') : badge({ cls: 'fail', icon: 'fail' }, 'Differs')}</td></tr>`,
+              `<tr><td>${what}</td><td class="mono" data-label="ADR-0019">${a}</td><td class="mono" data-label="Computed">${c}</td><td data-label="Result">${same ? badge({ cls: 'pass', icon: 'pass' }, 'Same') : what === 'Light wash' ? badge({ cls: 'info', icon: 'info' }, 'F1 proposal') : badge({ cls: 'fail', icon: 'fail' }, 'Differs')}</td></tr>`,
           )
           .join('')}</tbody></table></div>${
           B.adrDiffs.length
-            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. The page shows the computed value. The owner picks which one F1 ships.</p>`
+            ? `<p class="small" style="margin-top:8px">Light wash: step 6 says "a third of the brand's chroma", which gives C ${(b.oklch.C / 3).toFixed(3)} and <span class="mono">${L.wash}</span>. ADR-0019's <span class="mono">${ADR.lightWash}</span> has C ${hexToOklch(ADR.lightWash).C.toFixed(3)}, about a fifth. F1 proposes <span class="mono">${L.wash}</span>. F1 requirement 6 then has F1's code PR update ADR-0019.</p>`
             : ''
         }`;
         $('#sunflower').innerHTML = html;
@@ -4344,20 +4386,35 @@
           html += `<div class="chip-row"><div><span class="chip" style="background:${solid};color:${onSolid}">${icon('octagon')}Severe allergy · Peanut</span></div><div class="small"><strong>severe allergy</strong> · the only solid red chip. <code>status.danger.solid</code>, octagon icon and words, never brand-tinted, never glass<br>Words ${ratioLine(onSolid, solid, 4.5)}</div></div></div>`;
         }
         html += `</div>`;
-        // D1 warning fills
+        // D1 warning fills: reference JSON against the F1 proposal
+        const amberOk = (alias) =>
+          /^amber\.(\d+)$/.test(alias) && Number(alias.split('.')[1]) >= 500;
+        const washDE = {
+          sun: deltaE(semHex('light', 'status.warning.wash'), BRAND),
+          a300: deltaE(semHex('light', 'status.warning.wash'), stepHex('amber', 300)),
+        };
+        B.washDE = washDE;
         const rows = [];
         for (const mode of MODES) {
-          for (const k of ['status.warning.wash', 'status.warning.solid']) {
-            const tok = sem(mode, k);
-            const s = primStep(tok);
-            const ok = s && s.family === 'amber' && s.step >= 500;
+          const on = semHex(mode, 'status.warning.onSolid');
+          for (const k of ['status.warning.solid', 'status.warning.wash']) {
+            const t = pTok(mode, k);
+            const ref = t.ref || t;
+            const refCell = `<span class="cell">${swatch(ref.hex)}<span><code>${ref.alias}</code>${k.endsWith('solid') ? `<br><span class="small">label ${fmt(contrast(on, ref.hex))}</span>` : ''}<br>${badge(amberOk(ref.alias) ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, amberOk(ref.alias) ? '500 or darker' : 'Lighter than 500')}</span></span>`;
+            let propCell;
+            if (k.endsWith('solid')) {
+              propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code><br><span class="small">label ${ratioLine(on, t.hex, 4.5)}</span><br>${badge(amberOk(t.alias) ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, amberOk(t.alias) ? '500 or darker' : 'Lighter than 500')}</span></span>`;
+            } else if (amberOk(t.alias)) {
+              propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code> kept<br>${badge({ cls: 'pass', icon: 'pass' }, '500 or darker')}</span></span>`;
+            } else {
+              propCell = `<span class="cell">${swatch(t.hex)}<span><code>${t.alias}</code> kept: a pale wash under the word and icon, not a solid fill<br><span class="small">ΔE to Sunflower ${washDE.sun.toFixed(1)}, to amber.300 ${washDE.a300.toFixed(1)}</span></span></span>`;
+            }
             rows.push(
-              `<tr><td>${mode} <code>${k}</code></td><td data-label="Primitive"><span class="cell">${swatch(resolve(tok.$value))}<code>${aliasLabel(tok)}</code></span></td><td data-label="D1">${badge(ok ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, ok ? 'Step 500 or darker' : 'Lighter than amber.500')}</td></tr>`,
+              `<tr><td>${mode} <code>${k}</code></td><td data-label="Reference (before)">${refCell}</td><td data-label="F1 proposal">${propCell}</td></tr>`,
             );
-            if (!ok) B.d1Warning.push(`${mode} ${k} = ${aliasLabel(tok)}`);
           }
         }
-        html += `<h3>D1 check: warning fills use amber step 500 or darker</h3><p class="muted small">Read from the token data. D1 does not say whether a pale wash counts as a fill. The solid fails either way.</p><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Mode and token</th><th scope="col">Primitive</th><th scope="col">D1</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+        html += `<h3>D1: warning fills use amber step 500 or darker</h3><p class="muted small">Rulings D1 and F1 requirement 7. The reference JSON is shown as before. ΔE is Oklab ×100, normal vision. D1's rationale cites ΔE 7.6 between Sunflower and amber.300.</p><div class="scroll-x"><table class="stack"><thead><tr><th scope="col">Mode and token</th><th scope="col">Reference (before)</th><th scope="col">F1 proposal</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
         $('#status').innerHTML = html;
       }
 
@@ -4443,23 +4500,47 @@
         }).join('')}</div>`;
         // D1 volt scan
         const voltHex = new Set(leaves(T.primitive.color.volt).map(([, t]) => t.$value));
-        const inViz = [];
-        const outside = [];
-        for (const mode of MODES) {
-          for (const [p, tok] of leaves(T.semantic[mode].color)) {
-            const val = resolve(tok.$value);
-            const s = primStep(tok);
-            const isVolt = (s && s.family === 'volt') || voltHex.has(val);
-            if (!isVolt) continue;
-            const label = `${mode} <code>${p}</code> = ${s ? `<code>${s.family}.${s.step}</code>` : `<span class="mono">${val}</span> (same hex as a volt step)`}`;
+        const scan = (entries) => {
+          const inViz = [];
+          const outside = [];
+          for (const { mode, p, hex, alias } of entries) {
+            if (!/^volt\.\d+$/.test(alias) && !voltHex.has(hex)) continue;
+            const label = `${mode} <code>${p}</code> = ${/^volt\.\d+$/.test(alias) ? `<code>${alias}</code>` : `<span class="mono">${hex}</span> (same hex as a volt step)`}`;
             (p.startsWith('viz.') ? inViz : outside).push(label);
           }
-        }
-        B.d1Volt = outside.length;
-        html += `<h3>D1 check: volt appears only under viz.*</h3><p class="muted small">Scans every semantic token in both modes for a volt alias or a hex equal to a volt step.</p>
-          <p>${badge(outside.length ? { cls: 'fail', icon: 'fail' } : { cls: 'pass', icon: 'pass' }, outside.length ? `Fail: ${outside.length} tokens outside viz.* resolve to volt` : 'Pass: volt appears only under viz.*')}</p>
-          ${outside.length ? `<p class="small">Outside viz.*: ${outside.join(', ')}.</p><p class="small muted">These are the <code>accent.volt.*</code> keys tokens.md §5.2 defines. F1 requirement 7 says no semantic UI token may resolve to volt, so F1 must drop or remap them. The owner decides which.</p>` : ''}
-          <p class="small muted">Under viz.* (allowed): ${inViz.join(', ') || 'none'}. <code>viz.categorical.2</code> (carbs) is also a volt tone (tokens.md §7.2) but not an exact step, so the hex scan does not list it. It sits under viz.* either way.</p>`;
+          return { inViz, outside };
+        };
+        const ref = scan(
+          MODES.flatMap((mode) =>
+            leaves(T.semantic[mode].color).map(([p, tok]) => ({
+              mode,
+              p,
+              hex: resolve(tok.$value),
+              alias: aliasLabel(tok),
+            })),
+          ),
+        );
+        const prop = scan(
+          MODES.flatMap((mode) =>
+            [...P[mode]]
+              .filter(([, t]) => !t.dropped)
+              .map(([p, t]) => ({ mode, p, hex: t.hex, alias: t.alias })),
+          ),
+        );
+        B.d1Volt = { ref: ref.outside.length, prop: prop.outside.length };
+        const res = (o) =>
+          badge(
+            o.outside.length ? { cls: 'fail', icon: 'fail' } : { cls: 'pass', icon: 'pass' },
+            o.outside.length
+              ? `Fail: ${o.outside.length} tokens outside viz.* resolve to volt`
+              : 'Pass: volt appears only under viz.*',
+          );
+        html += `<h3>D1: volt appears only under viz.*</h3><p class="muted small">Scans every semantic token in both modes for a volt alias or a hex equal to a volt step.</p>
+          <p><strong>F1 proposal</strong> (drop <code>accent.volt.*</code>): ${res(prop)}</p>
+          <p><strong>Reference JSON (before)</strong>: ${res(ref)}</p>
+          ${ref.outside.length ? `<p class="small muted">Reference outside viz.*: ${ref.outside.join(', ')}.</p>` : ''}
+          <p class="small muted">No component token reads <code>accent.volt.*</code>. tokens.md §2.2 maps the legacy <code>milestoneFill</code> to an Option 1 marigold accent that Floodlight lacks, and §4.3 calls volt a highlighter fill. F1 proposes <code>accent.aqua.*</code> for that highlight instead.</p>
+          <p class="small muted">Under viz.* (allowed): ${prop.inViz.join(', ') || 'none'}. <code>viz.categorical.2</code> (carbs) is also a volt tone (tokens.md §7.2) but not an exact step, so the hex scan does not list it. It sits under viz.* either way.</p>`;
         $('#viz').innerHTML = html;
       }
 
@@ -4502,7 +4583,7 @@
               .join('');
             return `<div class="frame"><div class="content" aria-hidden="true">
               <div class="ccard"><div class="stripe">${bars}${bars}</div></div>
-              <div class="ccard people"><i style="background:${v('accent.aqua.fill')}"></i><i style="background:${v('status.danger.solid')}"></i><i style="background:${v('accent.volt.fill')}"></i><span class="line"></span></div>
+              <div class="ccard people"><i style="background:${v('accent.aqua.fill')}"></i><i style="background:${v('status.danger.solid')}"></i><i style="background:${v('viz.categorical.2')}"></i><span class="line"></span></div>
               <div class="ccard people"><i style="background:${v('viz.categorical.3')}"></i><span class="line"></span><span class="line" style="flex:.5"></span></div>
               <div class="ccard"><div class="stripe">${bars}</div></div>
             </div><div class="topbar ${kind}">${icon('back')}<span class="title">Clients</span>${icon('search')}</div></div>
@@ -4571,7 +4652,8 @@
             <strong>Found while mapping devices</strong><ul>
             <li>iPad Pro 11-inch (M4) in landscape is 1210 pt, so it gets desktop. Only older 11-inch Pros (1194 pt) and the 11-inch Air (1180 pt) land in tablet.</li>
             <li>A 2560 × 1600 Android tablet at density 2.0 is 1280 dp in landscape, so it gets desktop too.</li>
-            <li>iPad mini in portrait (744 pt) gets the phone layout today, because 744 is under 768. It moves to tablet.</li></ul></div>
+            <li>iPad mini in portrait (744 pt) gets the phone layout today, because 744 is under 768. It moves to tablet.</li>
+            <li>F1 keeps ${DESKTOP_MIN}. Raising the desktop edge past 1280 to cover both would put common 1280 px laptop windows on the tablet layout.</li></ul></div>
           <h3>Devices</h3><div class="scroll-x"><table><thead><tr><th scope="col">Device, orientation, width</th><th scope="col">Today</th><th scope="col">Proposed</th></tr></thead><tbody>${DEVICES.map(
             ([name, o, w, unit]) => {
               const t = today(w);
@@ -4591,29 +4673,27 @@
       }
 
       function renderOpenPoints() {
-        const items = [];
-        if (B.d1Volt)
-          items.push(
-            `D1: ${B.d1Volt} semantic tokens outside viz.* resolve to volt (the <code>accent.volt.*</code> keys). Section 5.`,
-          );
-        if (B.d1Warning.length)
-          items.push(
-            `D1: warning fills lighter than amber.500: ${B.d1Warning.join(', ')}. Section 4.`,
-          );
-        for (const [what, a, c] of B.adrDiffs)
-          items.push(
-            `ADR-0019 ${what.toLowerCase()} is <span class="mono">${a}</span>, the §2.4 recipe gives <span class="mono">${c}</span>. Section 3.`,
-          );
-        items.push(
-          `Width edges ${TABLET_MIN} and ${DESKTOP_MIN} px, with their effects. Section 7.`,
-        );
+        const ws = MODES.map(
+          (mode) =>
+            `${mode} <code>${pTok(mode, 'status.warning.solid').alias}</code>, label ${fmt(contrast(semHex(mode, 'status.warning.onSolid'), pTok(mode, 'status.warning.solid').hex))}`,
+        ).join(', ');
+        const items = [
+          `Drop the ${B.d1Volt.ref} <code>accent.volt.*</code> tokens from the semantic UI set, so volt stays under viz.* (D1 scan: proposal ${B.d1Volt.prop ? 'fails' : 'passes'}, reference fails). The milestone highlight uses <code>accent.aqua.*</code>. Section 5.`,
+          `<code>status.warning.solid</code> moves from amber.400 to ${ws}. Section 4.`,
+          `Keep the light <code>status.warning.wash</code> at amber.100: ΔE ${B.washDE.sun.toFixed(1)} to Sunflower and ${B.washDE.a300.toFixed(1)} to amber.300. Section 4.`,
+          ...B.adrDiffs.map(
+            ([what, a, c]) =>
+              `${what} <span class="mono">${c}</span> (the §2.4 recipe). F1's code PR then updates ADR-0019 from <span class="mono">${a}</span>. Section 3.`,
+          ),
+          `Width edges ${TABLET_MIN} and ${DESKTOP_MIN} px. The iPad Pro 11-inch (M4) at 1210 pt and a 1280 dp Android tablet get desktop in landscape. Section 7.`,
+        ];
         $('#open-points').innerHTML =
-          `<strong>Open points for the owner</strong><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
+          `<strong>F1 proposals for the owner to approve</strong><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
       }
 
       function main() {
+        P = buildProposal();
         B = deriveBrandTheme(BRAND);
-        B.d1Warning = [];
         writeThemeCss();
         const n = selfChecks();
         $('#selfcheck').innerHTML =
