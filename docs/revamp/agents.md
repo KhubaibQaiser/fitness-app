@@ -10,7 +10,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
 
 **Each cycle:**
 
-1. **Pick ready tasks.** A task is ready when:
+1. **Check usage, then pick ready tasks** (rulings O39). Before starting any builder or reviewer, read the plan limits; at 80% of any limit that could run out before its reset, ask the owner first. A task is ready when:
    - its dependencies have merged;
    - its blocking rulings are answered;
    - for visual code, its mock is approved.
@@ -75,8 +75,8 @@ Done conditions: <copied from the spec, plus README §8>.
 Verification to run before reporting: <commands>, screenshots <list>, perf <harness command> if budgeted.
 Local environment: local Docker Postgres (override DATABASE_URL to the local URL; the default .env points
   at a remote database), seeded demo data, test credentials from the project seed. Never print credentials.
-Report back: PR number, what changed, the evidence for each done condition, anything you could not verify,
-  questions for the owner. Do not merge.
+Report back in .agent-notes/<task-id>-report-<n>.md (rulings O40), and reply with its path: PR number, what changed,
+  the evidence for each done condition, anything you could not verify, questions for the owner. Do not merge.
 ```
 
 **Builder rules:**
@@ -90,6 +90,7 @@ Report back: PR number, what changed, the evidence for each done condition, anyt
   - the screenshots, linked by `raw.githubusercontent.com` URLs from the `screenshots` branch under `revamp/<task-id>/`.
 - **Never** push to `main`, force-push, read `.env`, or run paid services (model API calls, cloud builds) without the owner's OK. CI is free here.
 - **Out-of-scope findings** (rulings O34): a bug, issue, performance or tech-debt finding outside the task is never fixed or filed by the builder. List it in the report (what, where, evidence, impact, suggested fix); the parent takes it to the owner, and an issue is filed only on his yes. Mark a security hole "security", keep its detail out of every public text (PR body, commit, issue), and report it to the parent only.
+- **Files, not memory** (rulings O40): the brief, the report and any findings live in files under `.agent-notes/` in the main checkout; a message carries the status and the file's path.
 - **Browsers** (rulings O38): prefer the in-app browser. The owner's Chrome is allowed only for test sign-ins on localhost, never for real sites or accounts.
 - **Native evidence:**
   - iOS from the simulator on this machine.
@@ -116,6 +117,7 @@ Report only:
   9. Findings outside this task, listed separately for the parent (rulings O34). Don't file them; keep a security hole's detail out of anything public.
 For each finding: severity (blocker or non-blocking), evidence, the fix you expect.
 End with: BLOCKERS: <n>, NON-BLOCKING: <n>.
+Write the report to .agent-notes/<task-id>-review-<n>.md (rulings O40) and reply with its path and the last line.
 ```
 
 This extends the repo's own `reviewer` agent (`.claude/agents/reviewer.md`) with the revamp checks.
