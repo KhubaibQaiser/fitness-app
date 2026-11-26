@@ -31,6 +31,88 @@
         },
         "required": ["type", "title", "status", "code"]
       },
+      "RosterPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RosterRow"
+            },
+            "maxItems": 50
+          },
+          "nextCursor": {
+            "type": ["string", "null"],
+            "description": "Null on the last page."
+          }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "RosterRow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "goalPreset": {
+            "type": ["string", "null"],
+            "enum": ["LOSE", "GAIN", "MAINTAIN", "RECOMP", null]
+          },
+          "lastCheckInOn": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Scheduled date (YYYY-MM-DD) of the latest completed check-in."
+          },
+          "lastAdherence": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "That check-in's adherence rating, 1–5."
+          },
+          "nextDueOn": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Scheduled date (YYYY-MM-DD) of the earliest due check-in."
+          },
+          "weightKg": {
+            "type": ["number", "null"],
+            "description": "Latest recorded weight, in kg."
+          },
+          "weightChangeKg": {
+            "type": ["number", "null"],
+            "description": "Latest weight minus the active goal's start weight, in kg."
+          },
+          "plan": {
+            "type": ["object", "null"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["DRAFT", "PUBLISHED", "NEEDS_REVIEW"]
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": ["status", "version"],
+            "description": "Latest plan version that is not superseded or archived."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "goalPreset",
+          "lastCheckInOn",
+          "lastAdherence",
+          "nextDueOn",
+          "weightKg",
+          "weightChangeKg",
+          "plan"
+        ]
+      },
       "ClientIntake": {
         "type": "object",
         "properties": {
@@ -406,6 +488,85 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/roster": {
+      "get": {
+        "operationId": "listRoster",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["name", "lastCheckIn", "nextDue", "weight", "weightChange", "adherence"],
+              "default": "name"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "dir",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1024,
+              "description": "The previous page's nextCursor, issued for the same sort and dir."
+            },
+            "required": false,
+            "description": "The previous page's nextCursor, issued for the same sort and dir.",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active clients, 50 per page (keyset)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterPage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
