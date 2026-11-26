@@ -2391,7 +2391,7 @@
             }
           },
           "422": {
-            "description": "Problem details",
+            "description": "Problem details. ALLERGEN_CONFLICT when an added, swapped or copied food carries one of the client allergens (the whole batch is rolled back); PLAN_NOT_EDITABLE, ITEM_NOT_FOUND, FOOD_NOT_FOUND or DAY_NOT_FOUND for other refused edits; or an invalid body.",
             "content": {
               "application/json": {
                 "schema": {

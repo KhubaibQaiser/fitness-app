@@ -1,7 +1,6 @@
 'use client';
 
 import { startTransition, useMemo, useState } from 'react';
-import { Link } from 'solito/link';
 import { useDebouncedValue } from '@gymos/platform';
 import {
   Card,
@@ -18,6 +17,7 @@ import {
 } from '@gymos/ui';
 import { useClients } from '../../api';
 import { needsAttention } from '../../lib/attention';
+import { Link } from '../../lib/link';
 import { AppScreen } from '../shell/app-screen';
 import { RosterRow } from './roster-row';
 import { RosterListSkeleton } from './roster-skeleton';

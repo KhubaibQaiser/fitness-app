@@ -1,6 +1,5 @@
 'use client';
 
-import { Link } from 'solito/link';
 import { formatWeight, type WeightUnit } from '@gymos/core/units';
 import {
   Activity,
@@ -17,6 +16,7 @@ import {
   type BadgeTone,
   type GymosIcon,
 } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { journeyVerdictPresentation, type JourneyNode } from './client-journey';
 import { JourneyAdherenceScore } from './journey-adherence-score';
 

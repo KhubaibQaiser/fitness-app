@@ -65,6 +65,7 @@ The product's signature, safety-critical workflow. The coach always knows which 
 1. **Summary:**
    - Days customised.
    - Days off target, with the acknowledgement checkbox only when needed.
+   - Days with no items, listed with the days off target and needing the same acknowledgement (rulings O17, F7.5).
    - The allergen check result.
    - The diff against the live version.
    - A PDF preview link.
@@ -77,7 +78,7 @@ The product's signature, safety-critical workflow. The coach always knows which 
 
 ## States
 
-Live only; live and draft; draft only; empty draft; generating; generation failed (solver infeasible: "Couldn't fit these targets with the allowed foods", with Try again and Adjust targets); needs review; published; loading; error.
+Live only; live and draft; draft only; empty draft (Generate replaces it, leaving no second empty draft: O17, F7.5); generating; generation failed (solver infeasible: "Couldn't fit these targets with the allowed foods", with Try again and Adjust targets); needs review; published; loading; error.
 
 ## Performance
 

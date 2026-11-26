@@ -2,23 +2,28 @@
 
 Only the parent edits this file ([`agents.md`](agents.md)). States: `not started` · `blocked (<reason>)` · `mock` · `mock approved` · `building` · `in review` · `merged`.
 
-Last updated: 2026-11-23, when the specs were written, the owner answered O1–O12, and #99–#101 merged. Nothing has started.
+Last updated: 2026-11-24, when the run was parked on the owner's word. Every Phase 1 task except U3 and U4 has merged. U3's branch waits on the resume step below.
 
 ## Phase 1
 
-| Id  | Task                           | Depends on | State       | Branch / PR | Notes                                                     |
-| --- | ------------------------------ | ---------- | ----------- | ----------- | --------------------------------------------------------- |
-| U1  | Next.js 16.4.6                 | docs       | not started |             | Supersedes #98 (O3)                                       |
-| U2  | Patch and minor bumps          | U1         | not started |             | Supersedes #78, #96, #97                                  |
-| U3  | Expo SDK 58                    | U2         | not started |             | Supersedes #79, #81; Android smoke on the owner's MacBook |
-| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started |             | Supersedes #80                                            |
-| B1  | Attention count                | docs       | not started |             |                                                           |
-| B2  | Empty draft                    | docs       | not started |             |                                                           |
-| B3  | Login errors                   | docs       | not started |             |                                                           |
-| B4  | Native top inset and tab route | docs       | not started |             | Android screenshots pending the kit                       |
-| B5  | Native hub header              | docs       | not started |             |                                                           |
-| B6  | Invalid Date                   | docs       | not started |             |                                                           |
-| Q0  | Measurement harness            | docs       | not started |             |                                                           |
+| Id  | Task                           | Depends on | State             | Branch / PR                                   | Notes                                                                                                                                                                                                                                        |
+| --- | ------------------------------ | ---------- | ----------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | Next.js 16.4.6                 | docs       | merged            | #106                                          | #98 closed (O3)                                                                                                                                                                                                                              |
+| U2  | Patch and minor bumps          | U1         | merged            | #114                                          | O19: newest versions kept; the owner approved the `packages/ai` line. #78, #96 and #97 closed (O3)                                                                                                                                           |
+| U3  | Expo SDK 58                    | U2         | building (parked) | `chore/u3-expo-sdk-58`                        | Smoke done on iOS. Blocker fixes merged first: #122 (one press owner) and #123 (check-in verdict). On resume: merge main, rebuild the lockfile, re-run the tap smoke, open the PR. Supersedes #79, #81; Android smoke on the owner's MacBook |
+| U4  | Tamagui 3.3 and icons          | U3, B1–B6  | not started       |                                               | Supersedes #80                                                                                                                                                                                                                               |
+| B1  | Attention count                | docs       | merged            | #107                                          | O13: phone rows keep the status badge only; S03 shows reasons in words                                                                                                                                                                       |
+| B2  | Empty draft                    | docs       | merged            | #113                                          | The server refuses an empty publish (`PLAN_EMPTY`). Follow-ups: O16 (merged) and O17 (F7.5, S06)                                                                                                                                             |
+| B3  | Login errors                   | docs       | merged            | #108, with contracts-lane #110 and #112 (O15) | The login route has no lockout, so 429 covers it. O14: platform timeouts                                                                                                                                                                     |
+| B4  | Native top inset and tab route | docs       | merged            | #111                                          | O18: the thin inset band stays until F6                                                                                                                                                                                                      |
+| B5  | Native hub header              | docs       | merged            | #119                                          | Also fixes the loading skeleton's sticky header (same N2 bug)                                                                                                                                                                                |
+| B6  | Invalid Date                   | docs       | merged            | #120                                          | The API sends ISO timestamps; times read "24 Nov, 1:14 am" on web and iOS                                                                                                                                                                    |
+| Q0  | Measurement harness            | docs       | merged            | #121                                          | O20: Lighthouse 12.8.2. Five-run medians recorded on a not fully quiet machine; a re-baseline on an idle machine would tighten them                                                                                                          |
+| O16 | Allergens on manual add, swap  | docs       | merged            | #116                                          | Also checks copy-day-to-week                                                                                                                                                                                                                 |
+| O21 | node-forge override            | U2         | merged            | #117                                          | Clears 4 node-forge findings                                                                                                                                                                                                                 |
+| —   | Lint fix after #112 and #114   | U2         | merged            | #118                                          | #112's test stub clashed with U2's typescript-eslint 8.74                                                                                                                                                                                    |
+| —   | One press owner per control    | docs       | merged            | #122                                          | The iOS tap bug, also present on SDK 57: roster rows didn't open the client. U3 blocker                                                                                                                                                      |
+| O22 | Check-in verdict validation    | docs       | merged            | #123                                          | The seed stores engine verdicts; the detail screen validates and shows Retry                                                                                                                                                                 |
 
 ## Phase 2
 
@@ -78,9 +83,14 @@ Last updated: 2026-11-23, when the specs were written, the owner answered O1–O
 
 ## Waiting on the owner
 
-From [`rulings.md`](rulings.md):
+- **D1** (volt only for chart marks) stands unless the owner overrules it, per [`rulings.md`](rulings.md).
+- **Q0 follow-ups:** an env-gated `productionBrowserSourceMaps` line in `apps/web/next.config.mjs` (so the harness runs from a clean checkout); adding `test:perf` to CI; the `/clients` hydration error #418 (proposed for S03).
+- **Parent's overnight calls to confirm:** U3 adds `@expo/dom-webview` ~58.0.2 directly (Expo's SDK 58 module list; its optional peer kept a stale 57.0.1); U3 edits `apps/mobile/app/_layout.tsx` once (`redirectTo="/login"`, forced by expo-router 58); the tap fix shipped as its own PR before U3 (#122).
 
-- **D1** (volt only for chart marks) stands unless the owner overrules it.
+## Pending after Phase 1
+
+- **O26:** a small data fix for old seeded check-in rows. First check what the deployed database holds, with the owner's OK.
+- **F7 candidates found in Phase 1:** other endpoints probably send Postgres-text timestamps, as notifications did before B6; the roster API caps at 200 clients (`listClients` limit), so Q0's "500 clients" scenario renders 200 rows (F7.2).
 
 Order (O4): done on 2026-11-23. On the owner's word the parent merged #99, #100 and #101 into `main`, then merged `main` into this specs PR with the O4 resolution.
 
@@ -88,4 +98,6 @@ Run start (O5): the install switch `AGENT_GUARD_ALLOW_INSTALL=1` is set in the m
 
 ## Android evidence pending
 
-None yet. Each task that defers Android screenshots to the owner's kit run is listed here.
+Each task that defers Android screenshots to the owner's kit run (the Pixel 6, O11):
+
+- B2 (#113), B3 (#108), B4 (#111), B5 (#119), B6 (#120), #122, #123; U3 when its PR opens (release build and launch).

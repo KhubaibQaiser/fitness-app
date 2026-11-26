@@ -50,9 +50,6 @@ export const ClientHubHeaderSkeleton = ({
   onTabChange: (id: string) => void;
 }) => (
   <YStack
-    position="sticky"
-    top={0}
-    zIndex={20}
     backgroundColor="$cardBg"
     borderBottomWidth={1}
     borderBottomColor="$borderColor"
@@ -272,18 +269,9 @@ export const ClientHubHistorySkeleton = () => (
   </YStack>
 );
 
-/** Flush hub chrome + tab body while client detail is pending. */
-export const ClientHubSkeleton = ({
-  clientId,
-  tab,
-  onTabChange,
-}: {
-  clientId: string;
-  tab: string;
-  onTabChange: (id: string) => void;
-}) => (
+/** Tab body while client detail is pending. The screen places `ClientHubHeaderSkeleton` above it. */
+export const ClientHubSkeleton = ({ tab }: { tab: string }) => (
   <SkeletonRegion label="Loading client">
-    <ClientHubHeaderSkeleton clientId={clientId} tab={tab} onTabChange={onTabChange} />
     <ScreenBody gap="$4">
       {tab === 'plan' ? (
         <ClientHubPlanSkeleton />

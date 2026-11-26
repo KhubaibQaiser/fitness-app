@@ -1,7 +1,7 @@
 'use client';
 
-import { Link } from 'solito/link';
 import { Avatar, IconButton, MessageCircle, Muted, Tabs, Text, XStack, YStack } from '@gymos/ui';
+import { Link } from '../../lib/link';
 import { formatInternational, whatsappDigits } from '../../lib/phone';
 import { ClientHubMoreMenu } from './client-hub-more-menu';
 import { CLIENT_HUB_TABS } from './client-hub-tabs';
@@ -21,7 +21,7 @@ type Props = {
   onDownloadPdf: () => void;
 };
 
-/** Compact client hub identity strip + section tabs. */
+/** Compact client hub identity strip + section tabs. The screen places it with `StickyHeader`. */
 export const ClientHubHeader = ({
   clientId,
   name,
@@ -39,9 +39,6 @@ export const ClientHubHeader = ({
 
   return (
     <YStack
-      position="sticky"
-      top={0}
-      zIndex={20}
       backgroundColor="$cardBg"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"

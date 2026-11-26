@@ -167,7 +167,12 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
       request: { params: dto.idParam, body: json(dto.patchPlanBody) },
       responses: {
         200: { description: 'Updated plan with items', ...json(dto.anyObject) },
-        ...problemDocs(404, 422),
+        ...problemDocs(404),
+        422: {
+          description:
+            'Problem details. ALLERGEN_CONFLICT when an added, swapped or copied food carries one of the client allergens (the whole batch is rolled back); PLAN_NOT_EDITABLE, ITEM_NOT_FOUND, FOOD_NOT_FOUND or DAY_NOT_FOUND for other refused edits; or an invalid body.',
+          ...json(dto.problem),
+        },
       },
     }),
     async (c) => {
@@ -184,6 +189,14 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
         if (result.error.code === 'PLAN_NOT_FOUND') {
           throw new ProblemError(404, 'NOT_FOUND', 'Plan not found');
         }
+        if (result.error.code === 'ALLERGEN_CONFLICT') {
+          throw new ProblemError(
+            422,
+            'ALLERGEN_CONFLICT',
+            'This food contains an allergen the client must avoid',
+            `allergen=${result.error.allergen}`,
+          );
+        }
         throw new ProblemError(
           422,
           result.error.code,
@@ -191,7 +204,8 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
           JSON.stringify(result.error),
         );
       }
-      return c.json(result.value);
+      // Explicit status: 422 now has its own typed entry, and errors are thrown as ProblemError.
+      return c.json(result.value, 200);
     },
   );
 
@@ -279,6 +293,13 @@ export const registerPlanRoutes = (app: GymosApp, bind: RouteBind): void => {
             'DRIFT_ACK_REQUIRED',
             'Day totals are outside tolerance. Acknowledge drift to publish',
             `days=${result.error.days.join(',')}`,
+          );
+        }
+        if (result.error.code === 'PLAN_EMPTY') {
+          throw new ProblemError(
+            422,
+            'PLAN_EMPTY',
+            'Plan has no meals. Add food before publishing',
           );
         }
         if (result.error.code === 'REVIEW_REQUIRED') {
