@@ -1040,8 +1040,9 @@
       const TOKENS = JSON.parse(document.getElementById('tokens').textContent);
       const TYPE = TOKENS.typography;
       const ROLES = Object.keys(TYPE).filter((k) => !k.startsWith('$') && k !== 'locale');
-      // Apple HIG, iOS Dynamic Type sizes in pt (size, leading), typed by hand for the styles the label-fit
-      // frames use. The Large column is checked against the JSON below, and a mismatch throws.
+      // iOS Dynamic Type sizes in pt (size, leading) for the styles the label-fit frames use, from Apple's HIG
+      // Typography page, Specifications, "iOS, iPadOS Dynamic Type sizes" (checked 2026-11-26). The Large
+      // column is also checked against the JSON below, and a mismatch throws.
       const DYNAMIC_TYPE = {
         body: { large: [17, 22], xxxLarge: [23, 29], ax3: [40, 48] },
         subheadline: { large: [15, 20], xxxLarge: [21, 28], ax3: [36, 43] },
@@ -1090,6 +1091,9 @@
             const [fs, lh] = pair(r, platform);
             return vars(r, fs * scale, lh * scale);
           }).join(';');
+        // Default-size font size per role, unitless, so a larger text size can scale the Urdu delta too.
+        const baseVars = (platform) =>
+          ROLES.map((r) => `--${r}-base:${pair(r, platform)[0]}`).join(';');
         const iosStyle = (r) => TYPE[r].ios.split(' ')[0];
         const dynamicTypeVars = (size) =>
           ROLES.filter((r) => DYNAMIC_TYPE[iosStyle(r)])
@@ -1143,7 +1147,9 @@
           `:root[data-theme="dark"]{${dark}}` +
           `:root{${desktop}}@media (max-width: 743.98px){:root{${phone}}}` +
           `.ctx-desktop{${desktop}}.ctx-phone{${phone}}` +
-          `.ios{${scaleVars('ios')}}.android{${scaleVars('android')}}` +
+          `.ctx-tablet{${desktop};${vars('input', ...pair('input', 'phone'))}}` +
+          `.ios,.android{--ur-delta:${delta[2]}px;--ur-delta-n:${delta[2]}}` +
+          `.ios{${scaleVars('ios')};${baseVars('ios')}}.android{${scaleVars('android')};${baseVars('android')}}` +
           `.ios.dt-xxxlarge{${dynamicTypeVars('xxxLarge')}}.ios.dt-ax3{${dynamicTypeVars('ax3')}}` +
           `.android.fs-2{${scaleVars('android', 2)}}` +
           roleRules;
@@ -1740,6 +1746,46 @@
       }
 
       /* 5. Label fit */
+      .btn-alt {
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 20px;
+        border: 1px solid var(--color-action-text);
+        border-radius: 12px;
+        background: var(--color-bg-surface);
+        color: var(--color-action-text);
+        text-align: center;
+        cursor: pointer;
+      }
+      .ur-label {
+        /* (default label size + Urdu delta), scaled by the same factor as the label at this text size */
+        --fs: calc(var(--label-fs) * (var(--label-base) + var(--ur-delta-n)) / var(--label-base));
+        font-family: var(--fam-urduUi);
+        font-weight: 600;
+        font-size: var(--fs);
+        line-height: calc(var(--fs) * var(--ur-naskhUi));
+        letter-spacing: 0;
+      }
+
+      /* Tablet frames */
+      .device.ipad {
+        --dw: 834px;
+        border-radius: 36px;
+      }
+      .device.ipad.landscape {
+        --dw: 1194px;
+      }
+      .ipad .screen {
+        border-radius: 26px;
+      }
+      .frames.tablets {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .tablet-roles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        column-gap: 32px;
+      }
       .fit {
         display: flex;
         flex-direction: column;
@@ -1912,6 +1958,7 @@
           at large text sizes. Every colour and size comes from the Floodlight tokens. All data is
           made up.
         </p>
+        <p class="sample-tag">All Urdu on this page is sample text, not product copy.</p>
         <div class="controls">
           <fieldset class="theme-switch">
             <legend>Theme</legend>
@@ -2034,23 +2081,6 @@
           </div>
           <div id="scale-web"></div>
 
-          <aside class="card note question" aria-labelledby="tablet-h">
-            <h3 id="tablet-h">Tablet: which scale? (question for the owner)</h3>
-            <p>
-              <strong>iPad</strong> uses the iOS column. iOS text styles are the same size on iPad
-              and iPhone at the default text size, and Dynamic Type scales them the same way.
-            </p>
-            <p>
-              <strong>Web at 744 to 1199 px</strong> (the tablet range F1 proposes under rulings O8)
-              is not settled in the docs. The typography note in the JSON still puts the phone scale
-              below 768 px, so 744 to 767 px would get phone sizes and 768 to 1199 px desktop sizes.
-            </p>
-            <p>
-              <strong>Recommendation:</strong> desktop sizes from 744 px up, and 16 px inputs on
-              touch screens at every width, so Safari on iPad does not zoom into a field either.
-            </p>
-          </aside>
-
           <h3 class="sub r-headline">iOS and Android</h3>
           <div class="frames">
             <figure class="frame-fig">
@@ -2084,6 +2114,61 @@
               </figcaption>
             </figure>
           </div>
+
+          <h3 class="sub r-headline">Tablet (recommended, for the owner to approve)</h3>
+          <aside class="card note question" aria-labelledby="tablet-h">
+            <h3 id="tablet-h">Which scale on tablets? (question for the owner)</h3>
+            <p>
+              <strong>iPad</strong> uses the iOS column. iOS text styles are the same size on iPad
+              and iPhone at the default text size, and Dynamic Type scales them the same way.
+            </p>
+            <p>
+              <strong>Web at 744 to 1199 px</strong> (the tablet range F1 proposes under rulings O8)
+              is not settled in the docs. The typography note in the JSON still puts the phone scale
+              below 768 px, so 744 to 767 px would get phone sizes and 768 to 1199 px desktop sizes.
+            </p>
+            <p>
+              <strong>Recommendation:</strong> desktop sizes from 744 px up, and 16 px inputs on
+              touch screens at every width, so Safari on iPad does not zoom into a field either.
+            </p>
+          </aside>
+          <p class="intro">
+            The frames below show the recommendation: web in the tablet range at desktop sizes, with
+            inputs at the phone size of 16 px for touch. The native app on iPad uses the iOS column
+            above.
+          </p>
+          <div class="frames tablets">
+            <figure class="frame-fig">
+              <div class="device ipad portrait ctx-tablet fixed">
+                <div class="screen">
+                  <div class="statusbar" aria-hidden="true">
+                    <span>9:41</span><span class="bars"></span>
+                  </div>
+                  <ul class="frame-roles tablet-roles" data-tablet-roles></ul>
+                </div>
+              </div>
+              <figcaption>
+                iPad portrait, 834 pt wide: web at the recommended tablet scale<span
+                  class="annot zoom-note"
+                ></span>
+              </figcaption>
+            </figure>
+            <figure class="frame-fig">
+              <div class="device ipad landscape ctx-tablet fixed">
+                <div class="screen">
+                  <div class="statusbar" aria-hidden="true">
+                    <span>9:41</span><span class="bars"></span>
+                  </div>
+                  <ul class="frame-roles tablet-roles" data-tablet-roles></ul>
+                </div>
+              </div>
+              <figcaption>
+                iPad landscape, 1194 pt wide: web at the recommended tablet scale<span
+                  class="annot zoom-note"
+                ></span>
+              </figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 
@@ -2099,7 +2184,10 @@
           <p class="sample-tag">Urdu is sample text, not product copy. Owner: please read it.</p>
           <div class="pairs">
             <div class="card pair">
-              <h3>Heading<br /><span class="metric">Nastaliq, 1.8×</span></h3>
+              <div>
+                <h3>Heading</h3>
+                <p class="metric">Nastaliq, 1.8×</p>
+              </div>
               <div class="side">
                 <p class="plat">English · title · <span data-metric-of="la-head"></span></p>
                 <p class="r-title lines sample" id="la-head">Weekly check-in</p>
@@ -2114,7 +2202,10 @@
               </div>
             </div>
             <div class="card pair">
-              <h3>Reading text<br /><span class="metric">Nastaliq, 2.0×</span></h3>
+              <div>
+                <h3>Reading text</h3>
+                <p class="metric">Nastaliq, 2.0×</p>
+              </div>
               <div class="side">
                 <p class="plat">English · body · <span data-metric-of="la-read"></span></p>
                 <p class="r-body lines reading" id="la-read">
@@ -2131,14 +2222,17 @@
                   ہفتے بھی پانی اور نیند کا خیال رکھیں۔
                 </p>
                 <p class="metric">
-                  Tall letters such as <span lang="ur" class="ur-glyph">ک</span> rise above their
-                  line box. Android is reported to clip the first line of Nastaliq unless the text
-                  gets top room, so F2 checks this on a device.
+                  Tall letters such as <span lang="ur" dir="rtl" class="ur-glyph">ک</span> rise
+                  above their line box. Android is reported to clip the first line of Nastaliq
+                  unless the text gets top room, so F2 checks this on a device.
                 </p>
               </div>
             </div>
             <div class="card pair">
-              <h3>Dense UI rows<br /><span class="metric">Naskh, 1.6×</span></h3>
+              <div>
+                <h3>Dense UI rows</h3>
+                <p class="metric">Naskh, 1.6×</p>
+              </div>
               <div class="side">
                 <p class="plat">English · body · <span data-metric-of="la-ui"></span></p>
                 <div class="kv-wrap">
@@ -2163,7 +2257,10 @@
               </div>
             </div>
             <div class="card pair">
-              <h3>Chips<br /><span class="metric">Naskh, 1.5×</span></h3>
+              <div>
+                <h3>Chips</h3>
+                <p class="metric">Naskh, 1.5×</p>
+              </div>
               <div class="side">
                 <p class="plat">English · chip · <span data-metric-of="la-chip"></span></p>
                 <div class="pill-row">
@@ -2320,10 +2417,11 @@
             <span class="sec-num">5</span> Label fit at large text sizes
           </h2>
           <p class="intro">
-            A button, a four-option segmented control, filter chips and a list row, in an iPhone
-            frame (390 pt wide) and an Android frame (412 dp, the Pixel 6). Labels wrap only between
-            words, never inside one. When a segment label can’t fit on one line, the control becomes
-            a list picker. Each frame measures its own labels after the fonts load.
+            A button in English and in Urdu, a four-option segmented control, filter chips and a
+            list row, in an iPhone frame (390 pt wide) and an Android frame (412 dp, the Pixel 6).
+            Labels wrap only between words, never inside one. When a segment label can’t fit on one
+            line, the control becomes a list picker. Each frame measures its own labels after the
+            fonts load.
           </p>
           <div class="frames" id="fit-frames">
             <figure class="frame-fig">
@@ -2372,6 +2470,9 @@
       </div>
       <div class="fit">
         <button type="button" class="btn r-label">Remind client to check in</button>
+        <button type="button" class="btn-alt ur-label" lang="ur" dir="rtl">
+          کلائنٹ کو چیک اِن کی یاد دہانی بھیجیں
+        </button>
         <fieldset class="seg">
           <legend class="vh">Client hub section</legend>
           <label
@@ -2566,6 +2667,24 @@
         }
       }
 
+      function buildTabletFrames() {
+        for (const list of document.querySelectorAll('[data-tablet-roles]')) {
+          const where = list.closest('.landscape') ? 'iPad landscape' : 'iPad portrait';
+          for (const r of ROLES) {
+            const source = r === 'input' ? TYPE.input.phone : TYPE[r].desktop;
+            const scale = r === 'input' ? 'phone input size' : 'desktop size';
+            list.append(
+              el(
+                'li',
+                {},
+                sample(r, where),
+                el('p', { class: 'metric' }, `${r} · ${scale} · ${withUnit(source, 'px')}`),
+              ),
+            );
+          }
+        }
+      }
+
       function buildFitFrames() {
         const tpl = document.getElementById('fit-demo');
         document.querySelectorAll('.fit-slot').forEach((slot, i) => {
@@ -2659,7 +2778,8 @@
           const size = (sel) => fmt(parseFloat(getComputedStyle(fit.querySelector(sel)).fontSize));
           const unit = fit.closest('.android') ? 'sp' : 'pt';
           fit.querySelector('.fit-sizes').textContent =
-            `Sizes in ${unit}: button and segments (label) ${size('.btn')}, chips ${size('.chip')}, ` +
+            `Sizes in ${unit}: button and segments (label) ${size('.btn')}, Urdu button (Naskh, label + ` +
+            `${fmt(parseFloat(getComputedStyle(fit).getPropertyValue('--ur-delta')))} before scaling) ${size('.btn-alt')}, chips ${size('.chip')}, ` +
             `row name (body) ${size('.row-text .r-body')}, row detail (caption) ${size('.row-text .r-caption')}, ` +
             `value (data) ${size('.row-end .r-data')}.`;
         }
@@ -2719,6 +2839,7 @@
       }
 
       buildScale();
+      buildTabletFrames();
       buildFitFrames();
       window.addEventListener('resize', fitFrames);
       window.addEventListener('load', () => {
