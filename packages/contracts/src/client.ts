@@ -62,7 +62,12 @@ export const configureApiClient = (next: Partial<ClientConfig>): void => {
 
 export const getApiClientConfig = (): Readonly<ClientConfig> => config;
 
-type RequestOptions = { idempotent?: boolean; skipAuth?: boolean; _retried?: boolean };
+type RequestOptions = {
+  idempotent?: boolean;
+  skipAuth?: boolean;
+  _retried?: boolean;
+  headers?: Record<string, string>;
+};
 
 const parseProblem = async (response: Response): Promise<T.Problem | null> =>
   (await response.json().catch(() => null)) as T.Problem | null;
@@ -138,13 +143,15 @@ const refreshAccessToken = (): Promise<boolean> => {
   return inFlightRefresh;
 };
 
-const request = async <TResponse>(
+/** One authenticated call, refreshing once on a 401. The caller reads the status. */
+const send = async (
   method: 'GET' | 'POST' | 'PUT' | 'PATCH',
   path: string,
   body?: unknown,
   options: RequestOptions = {},
-): Promise<TResponse> => {
+): Promise<Response> => {
   const headers: Record<string, string> = {
+    ...options.headers,
     'x-client-version': config.clientPlatform === 'mobile' ? 'pilot-mobile' : 'pilot-web',
     'x-client-platform': config.clientPlatform,
   };
@@ -165,11 +172,18 @@ const request = async <TResponse>(
 
   if (response.status === 401 && options.skipAuth !== true && options._retried !== true) {
     const refreshed = await refreshAccessToken();
-    if (refreshed) {
-      return request<TResponse>(method, path, body, { ...options, _retried: true });
-    }
+    if (refreshed) return send(method, path, body, { ...options, _retried: true });
   }
+  return response;
+};
 
+const request = async <TResponse>(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
+  path: string,
+  body?: unknown,
+  options: RequestOptions = {},
+): Promise<TResponse> => {
+  const response = await send(method, path, body, options);
   if (!response.ok) await throwApiError(response);
   return (await response.json()) as TResponse;
 };
@@ -423,6 +437,21 @@ export const api = {
       ),
     dietPlanPdf: (planId: string): Promise<Blob> =>
       requestBlob(`/v1/meal-plans/${planId}/diet-plan.pdf`),
+  },
+
+  today: () => request<T.Today>('GET', '/v1/today'),
+
+  /** The pulse, or `null` when the server answers 304 to `etag` (nothing changed). */
+  pulse: async (etag?: string): Promise<T.Pulse | null> => {
+    const response = await send(
+      'GET',
+      '/v1/pulse',
+      undefined,
+      etag === undefined ? {} : { headers: { 'if-none-match': etag } },
+    );
+    if (response.status === 304) return null;
+    if (!response.ok) await throwApiError(response);
+    return (await response.json()) as T.Pulse;
   },
 
   notifications: {

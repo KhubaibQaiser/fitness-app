@@ -299,6 +299,39 @@ export type DueCheckIn = {
   overdueDays: number;
 };
 
+/** Why a client is on Today, as data for the UI to phrase. Dates are YYYY-MM-DD; `since` is ISO 8601 with an offset. */
+export type TodayReason =
+  | { kind: 'RED_FLAG'; since: string }
+  | { kind: 'PLAN_NEEDS_REVIEW'; planId: string; planVersion: number }
+  | { kind: 'CHECKIN_OVERDUE'; checkInId: string; scheduledFor: string; daysOverdue: number }
+  | { kind: 'CHECKIN_DUE'; checkInId: string; scheduledFor: string }
+  | { kind: 'DRAFT_AWAITING_PUBLISH'; planId: string; planVersion: number };
+
+export type TodayItem = {
+  clientId: string;
+  clientName: string;
+  /** Latest weigh-in; `at` is ISO 8601 with an offset. */
+  lastWeight: { kg: number; at: string } | null;
+  reason: TodayReason;
+};
+
+/** GET /v1/today. Groups come in urgency order; overdue is sorted by days, most first. */
+export type Today = {
+  groups: {
+    redFlags: TodayItem[];
+    plansBlocked: TodayItem[];
+    overdue: TodayItem[];
+    dueToday: TodayItem[];
+    drafts: TodayItem[];
+  };
+  counts: TodayCounts;
+};
+
+export type TodayCounts = Record<keyof Today['groups'], number>;
+
+/** GET /v1/pulse. `etag` equals the ETag header; send it back as If-None-Match. */
+export type Pulse = { unreadCount: number; counts: TodayCounts; etag: string };
+
 export type Verdict = {
   type:
     | 'INSUFFICIENT_DATA'
