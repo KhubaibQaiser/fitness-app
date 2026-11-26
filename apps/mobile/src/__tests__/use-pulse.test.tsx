@@ -19,9 +19,9 @@ const pulse = (etag: string): Pulse => ({
 });
 
 let appStateListener: ((state: AppStateStatus) => void) | undefined;
-const setAppState = (state: AppStateStatus) => {
+const setAppState = async (state: AppStateStatus) => {
   Object.assign(AppState, { currentState: state });
-  act(() => appStateListener?.(state));
+  await act(() => appStateListener?.(state));
 };
 
 const advance = (ms: number) =>
@@ -29,13 +29,14 @@ const advance = (ms: number) =>
     await jest.advanceTimersByTimeAsync(ms);
   });
 
-const mount = () => {
+// RNTL 14 (U3): renderHook, act and unmount are async.
+const mount = async () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return { invalidate, ...renderHook(() => usePulse(), { wrapper }) };
+  return { invalidate, ...(await renderHook(() => usePulse(), { wrapper })) };
 };
 
 beforeEach(() => {
@@ -60,7 +61,7 @@ afterEach(() => {
 describe('usePulse', () => {
   it('polls every 30 s with the last ETag and stops when unmounted', async () => {
     const poll = jest.spyOn(api, 'pulse').mockResolvedValue(pulse('"a"'));
-    const { result, unmount } = mount();
+    const { result, unmount } = await mount();
     await advance(0);
     expect(poll).toHaveBeenCalledTimes(1);
     expect(poll).toHaveBeenLastCalledWith(undefined, undefined);
@@ -75,7 +76,7 @@ describe('usePulse', () => {
     // Once the second poll has rendered, the third is scheduled; unmounting must clear it.
     await waitFor(() => expect(result.current.dataUpdatedAt).toBeGreaterThan(firstAt));
 
-    unmount();
+    await unmount();
     expect(appStateListener).toBeUndefined();
     await advance(10 * 60_000);
     expect(poll).toHaveBeenCalledTimes(2);
@@ -83,15 +84,15 @@ describe('usePulse', () => {
 
   it('pauses in the background, polls at once on return, then backs off while idle', async () => {
     const poll = jest.spyOn(api, 'pulse').mockResolvedValue(pulse('"a"'));
-    mount();
+    await mount();
     await advance(0);
     expect(poll).toHaveBeenCalledTimes(1);
 
-    setAppState('background');
+    await setAppState('background');
     await advance(6 * 60_000);
     expect(poll).toHaveBeenCalledTimes(1);
 
-    setAppState('active');
+    await setAppState('active');
     await advance(0);
     expect(poll).toHaveBeenCalledTimes(2);
 
@@ -108,7 +109,7 @@ describe('usePulse', () => {
       .mockResolvedValueOnce(pulse('"a"'))
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(pulse('"b"'));
-    const { invalidate, result } = mount();
+    const { invalidate, result } = await mount();
     await advance(0);
     await waitFor(() => expect(result.current.data?.pulse.etag).toBe('"a"'));
     await advance(30_000);
