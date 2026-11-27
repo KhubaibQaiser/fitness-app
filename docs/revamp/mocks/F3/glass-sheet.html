@@ -730,6 +730,7 @@
         border: 6px solid var(--bgInverse);
         background: var(--bgCanvas);
         isolation: isolate;
+        container-type: inline-size;
       }
       .phone.short {
         height: 440px;
@@ -810,7 +811,7 @@
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        border-radius: 999px;
+        border-radius: var(--radiusSm);
         padding: 2px 8px;
         font-size: 12px;
         font-weight: 600;
@@ -856,10 +857,17 @@
       }
       .glass.sheet {
         background: var(--glassColorSheet);
-        /* Phone budget: blur at most 20px, so the 32px sheet token is capped here. */
+        /* Phone budget: blur at most 20px below 744px wide, so the 32px sheet token is capped there. */
         -webkit-backdrop-filter: blur(min(var(--glassBlurSheet), 20px))
           saturate(var(--glassSaturate));
         backdrop-filter: blur(min(var(--glassBlurSheet), 20px)) saturate(var(--glassSaturate));
+      }
+      /* Each frame is an app window: from 744px wide the sheet uses the 32px token */
+      @container (min-width: 744px) {
+        .glass.sheet {
+          -webkit-backdrop-filter: blur(var(--glassBlurSheet)) saturate(var(--glassSaturate));
+          backdrop-filter: blur(var(--glassBlurSheet)) saturate(var(--glassSaturate));
+        }
       }
       /* Fallback, forced for the labelled fallback frames */
       .glass.solid {
@@ -1070,8 +1078,12 @@
         font-weight: 400;
         font-size: 15px;
       }
+      .field span.input.ph {
+        color: var(--fgFaint);
+      }
+      /* On sheet glass, links are fg.primary with an underline: passes for every tenant brand */
       .link {
-        color: var(--brandText);
+        color: var(--fgPrimary);
         text-decoration: underline;
         font-size: 14px;
         font-weight: 600;
@@ -1155,6 +1167,117 @@
         border: 1px solid var(--borderSubtle);
         background: var(--bgCanvas);
         isolation: isolate;
+        container-type: inline-size;
+      }
+      .desk.wide {
+        height: 420px;
+      }
+      /* At phone widths the never-glass panel grows so every card shows */
+      @media (max-width: 743px) {
+        #c-s6 .desk {
+          height: auto;
+        }
+        #c-s6 .desk .screen {
+          position: relative;
+        }
+      }
+      .glass.sheet.side {
+        inset: 58px 0 0 auto;
+        width: min(480px, 100%);
+        border-radius: 22px 0 0 0;
+        align-content: start;
+        padding-top: 16px;
+      }
+      .glass.palette-scrim {
+        inset: 0;
+        z-index: 3;
+        background: var(--scrim);
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .palette {
+        position: absolute;
+        z-index: 4;
+        top: 72px;
+        inset-inline: 0;
+        margin: 0 auto;
+        width: min(520px, calc(100% - 32px));
+        background: var(--bgRaised);
+        border: 1px solid var(--borderSubtle);
+        border-radius: 14px;
+        padding: 12px;
+        display: grid;
+        gap: 6px;
+        box-shadow: var(--glassShadow);
+      }
+      .palette .opt {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 10px;
+        border-radius: 10px;
+      }
+      .palette .opt.on {
+        background: var(--bgHover);
+      }
+      .card h3 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: var(--fgSecondary);
+        font-weight: 600;
+      }
+      .samples {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .sample {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--borderSubtle);
+      }
+      .sample .patch {
+        position: relative;
+        padding: 14px;
+        min-height: 64px;
+        font-weight: 600;
+        text-decoration: underline;
+      }
+      .sample .body {
+        padding: 8px 12px;
+        background: var(--bgSurface);
+        font-size: 13px;
+      }
+      @media (max-width: 743px) {
+        table.stack {
+          min-width: 0;
+        }
+        table.stack > thead {
+          display: none;
+        }
+        table.stack,
+        table.stack > tbody,
+        table.stack > tbody > tr,
+        table.stack > tbody > tr > td {
+          display: block;
+          width: 100%;
+        }
+        table.stack > tbody > tr {
+          border-bottom: 1px solid var(--borderControl);
+          padding: 8px 10px;
+        }
+        table.stack > tbody > tr > td {
+          border: 0;
+          padding: 2px 0;
+        }
+        table.stack > tbody > tr > td[data-label]::before {
+          content: attr(data-label) ': ';
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--fgSecondary);
+        }
       }
       .desk .screen {
         padding: 72px 16px 24px;
@@ -1235,6 +1358,13 @@
           tokens, so the legibility numbers hold.
         </p>
         <div class="grid" id="g-s2"></div>
+        <h3 style="margin-top: 24px">Web at tablet and desktop width</h3>
+        <p class="small">
+          From 744 px wide the sheet uses its 32 px blur token; below that it is capped at 20 px.
+          Each frame keeps to two glass layers or fewer. Tablet and desktop shells are F6's mock;
+          this sheet covers chrome glass only.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr" id="g-s2-wide"></div>
       </section>
 
       <section id="s3" aria-labelledby="h-s3">
@@ -1242,7 +1372,8 @@
         <p class="muted">
           Every trigger switches the chrome to the solid <code>glass.fallback</code> (light
           <code>bg.surface</code>, dark <code>bg.raised</code>). High contrast also draws
-          <code>border.control</code> edges. Sheets fall back the same way.
+          <code>border.control</code> edges. The last two frames show the sticky header and the
+          sheet in the fallback.
         </p>
         <div class="grid" id="g-s3"></div>
         <div class="live" id="live" aria-live="polite"></div>
@@ -1264,8 +1395,8 @@
               </li>
               <li>
                 <strong>Blur at most 20 px on phones.</strong> Chrome uses
-                <code>glass.blur.chrome</code> (20 px). The sheet token is 32 px, so phones cap it
-                at 20 px.
+                <code>glass.blur.chrome</code> (20 px). The sheet token is 32 px, so below 744 px
+                wide it is capped at 20 px; from 744 px up the sheet uses 32 px (section 2).
               </li>
               <li>
                 <strong>Never on a scrolling list.</strong> The list rows and cards are solid
@@ -1293,14 +1424,16 @@
           46 solid backdrops (black, white, and steps 300, 500, 700 and 900 of every colour family,
           per tokens.md §9.3). A blurred backdrop is an average of what is behind it, so the solid
           patches bound it. Chrome needs 7:1 for <code>fg.primary</code>; sheet text needs 4.5:1.
+          Ratios show two decimals; pass or fail uses the unrounded value. Dark
+          <code>fg.secondary</code> passes on the sheet with almost no headroom.
         </p>
-        <div
-          class="tablewrap"
-          tabindex="0"
-          role="region"
-          aria-label="Legibility table, scrolls sideways"
-        >
-          <table>
+        <p class="small">
+          Rule: <code>fg.faint</code> and placeholder text never sit directly on sheet glass.
+          Placeholders sit inside the opaque <code>bg.field</code> of an input, as in the Log weight
+          sheet's Note field.
+        </p>
+        <div class="tablewrap" tabindex="0" role="region" aria-label="Legibility table">
+          <table class="stack">
             <caption class="small" style="text-align: start; padding: 8px 10px">
               Worst case per token, both modes
             </caption>
@@ -1320,6 +1453,12 @@
           </table>
         </div>
         <div class="live" id="fails"></div>
+        <h3 style="margin-top: 20px">Links on sheet glass: the options</h3>
+        <p class="small">
+          <code>glass.*</code> is never tenant-overridable, so one sheet alpha must hold for every
+          brand. Each sample is the light sheet over a black patch, the worst backdrop.
+        </p>
+        <div class="samples" id="link-samples"></div>
       </section>
 
       <section id="s6" aria-labelledby="h-s6">
@@ -1406,7 +1545,7 @@
         };
       };
       const lum = (c) => {
-        const l = c.map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        const l = c.map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
         return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
       };
       const contrast = (a, b) => {
@@ -1414,7 +1553,8 @@
         const y = lum(b);
         return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
       };
-      const fmt = (r) => (Math.floor(r * 100) / 100).toFixed(2) + ':1';
+      // Same luminance and rounding as F1's page: two decimals shown, pass or fail on the unrounded value
+      const fmt = (r) => r.toFixed(2) + ':1';
 
       // Token values per mode, read from the theme variables (never typed here)
       function tokens(mode) {
@@ -1430,8 +1570,11 @@
           fg: {
             'fg.primary': parseColor(v('fgPrimary')).rgb,
             'fg.secondary': parseColor(v('fgSecondary')).rgb,
-            'link (Sunflower brand text)': parseColor(v('brandText')).rgb,
+            'link (fg.primary, underlined)': parseColor(v('fgPrimary')).rgb,
           },
+          faint: parseColor(v('fgFaint')).rgb,
+          brandText: parseColor(v('brandText')).rgb,
+          fallback: parseColor(v('glassColorFallback')).rgb,
         };
       }
       const BACKDROPS = (() => {
@@ -1517,6 +1660,7 @@
       const sheet = (cls) =>
         `<div class="glass sheet ${cls}"><span class="grab"></span><h5>Log weight</h5><span class="sec">Demo client 14 · last entry 3 days ago</span>
           <span class="field">Weight (kg)<span class="input num">78.4</span></span>
+          <span class="field">Note<span class="input ph">Optional note</span></span>
           <span class="link">See weight history</span><span class="btn">Save entry</span></div>`;
 
       // kind 'list' = top bar + tab bar; 'hub' = sticky header + sheet (tab bar under the scrim, solid)
@@ -1534,7 +1678,8 @@
         let chrome;
         if (kind === 'list') chrome = topbar(g, title) + tabbar(g);
         else chrome = hubhead(g, focus) + tabbar('solid') + `<div class="scrim"></div>` + sheet(g);
-        return `<div class="phone p-${p}${short ? ' short' : ''}" role="img" aria-label="${label}"><div class="screen" aria-hidden="true">${busy()}</div><div aria-hidden="true">${chrome}</div></div>`;
+        const said = kind === 'list' ? 'Clients tab selected.' : 'Severe allergy chip: Peanut.';
+        return `<div class="phone p-${p}${short ? ' short' : ''}" role="img" aria-label="${label}. ${said}"><div class="screen" aria-hidden="true">${busy()}</div><div aria-hidden="true">${chrome}</div></div>`;
       }
       const caption = (title, tags, body) =>
         `<div class="cap"><h3>${title}${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</h3>${body ? `<p class="small">${body}</p>` : ''}</div>`;
@@ -1579,10 +1724,24 @@
           'Solid <code>glass.fallback</code>. Never the unblurred tint, which would fail legibility.',
         ],
       ];
-      $('#g-s2').innerHTML = PLATFORMS.map(
-        ([p, name, tags, body]) =>
-          `<div class="cell">${caption(name, tags, body)}${frame({ p, kind: 'list', solid: p === 'android30', short: true, label: `${name}: client list with ${p === 'android30' ? 'solid' : 'glass'} top bar and tab bar` })}</div>`,
-      ).join('');
+      $('#g-s2').innerHTML =
+        PLATFORMS.map(
+          ([p, name, tags, body]) =>
+            `<div class="cell">${caption(name, tags, body)}${frame({ p, kind: 'list', solid: p === 'android30', short: true, label: `${name}: client list with ${p === 'android30' ? 'solid' : 'glass'} top bar and tab bar` })}</div>`,
+        ).join('') +
+        `<div class="cell">${caption('iOS before 26, client hub', [APPROX], 'System sheet (<code>expo-blur</code> material) under the glass sticky header.')}${frame({ p: 'ios', kind: 'hub', label: 'iOS client hub with a glass sticky header and a system sheet' })}</div>` +
+        `<div class="cell">${caption('Android below API 31, client hub', [APPROX, 'Solid'], 'Sticky header and sheet both solid <code>glass.fallback</code>.')}${frame({ p: 'android30', kind: 'hub', solid: true, label: 'Android below API 31 client hub with a solid sticky header and a solid sheet' })}</div>`;
+
+      // Wide web frames: window at least 744 px, so the sheet uses the 32 px token
+      $('#g-s2-wide').innerHTML =
+        `<div class="cell">${caption('Side sheet', [`${icon('layers')}2 glass layers`], 'Glass top bar and a 480 px glass side sheet. Sheet blur 32 px when the frame is 744 px wide or more.')}
+          <div class="desk wide p-web" role="img" aria-label="Wide web window with a glass top bar and a glass side sheet over the client list"><div class="screen" aria-hidden="true">${chart()}${list()}${stripe()}</div>
+          <div aria-hidden="true">${topbar('', 'Clients')}${sheet('side')}</div></div></div>` +
+        `<div class="cell">${caption('Command palette', [`${icon('layers')}1 glass layer`], 'The palette scrim is glass (tint <code>scrim</code>, blur <code>glass.blur.chrome</code>, as no scrim blur token exists). The top bar under it turns solid; the palette list itself is solid.')}
+          <div class="desk wide p-web" role="img" aria-label="Wide web window with the command palette open over a glass scrim"><div class="screen" aria-hidden="true">${chart()}${list()}${stripe()}</div>
+          <div aria-hidden="true">${topbar('solid', 'Clients')}<div class="glass palette-scrim"></div>
+          <div class="palette"><span class="field">Search<span class="input ph">Jump to a client or tool</span></span>
+          <span class="opt on">${icon('clients')}Demo client 14</span><span class="opt">${icon('clients')}Demo client 7</span><span class="opt">${icon('tools')}Macro calculator</span></div></div></div></div>`;
 
       // ---------- section 3
       const FALLBACKS = [
@@ -1623,10 +1782,13 @@
           false,
         ],
       ];
-      $('#g-s3').innerHTML = FALLBACKS.map(
-        ([p, name, body, hc]) =>
-          `<div class="cell">${caption(name, ['Solid fallback'], body)}${frame({ p: p === 'web' ? 'web-forced' : p, kind: 'list', solid: true, hc, short: true, label: `${name}: client list with solid top bar and tab bar` })}</div>`,
-      ).join('');
+      $('#g-s3').innerHTML =
+        FALLBACKS.map(
+          ([p, name, body, hc]) =>
+            `<div class="cell">${caption(name, ['Solid fallback'], body)}${frame({ p: p === 'web' ? 'web-forced' : p, kind: 'list', solid: true, hc, short: true, label: `${name}: client list with solid top bar and tab bar` })}</div>`,
+        ).join('') +
+        `<div class="cell">${caption('Client hub, solid fallback', ['Solid fallback'], 'Reduce Transparency, no <code>backdrop-filter</code>, Android below 31 and "Solid bars": the sticky header and the sheet both turn solid <code>glass.fallback</code>.')}${frame({ p: 'web-forced', kind: 'hub', solid: true, label: 'Client hub with a solid sticky header and a solid sheet' })}</div>` +
+        `<div class="cell">${caption('Client hub, high contrast', ['Solid fallback'], 'Solid header and sheet with <code>border.control</code> edges.')}${frame({ p: 'web-forced', kind: 'hub', solid: true, hc: true, label: 'Client hub in high contrast with a solid sticky header and a solid sheet with control-colour edges' })}</div>`;
 
       function renderLive() {
         const sup =
@@ -1648,8 +1810,8 @@
       $('#c-s4').innerHTML =
         caption('Client hub, annotated', [`${icon('layers')}2 glass layers`], '') +
         `<div style="position:relative;max-width:360px">${frame({ kind: 'hub', focus: true, label: 'Client hub with numbered markers for the five budget rules' })}
-          <span class="badge-n" style="bottom:262px;inset-inline-start:18px" aria-hidden="true">1</span>
-          <span class="badge-n" style="bottom:226px;inset-inline-end:18px" aria-hidden="true">2</span>
+          <span class="badge-n" style="bottom:336px;inset-inline-start:18px" aria-hidden="true">1</span>
+          <span class="badge-n" style="bottom:300px;inset-inline-end:18px" aria-hidden="true">2</span>
           <span class="badge-n" style="top:170px;inset-inline-end:18px" aria-hidden="true">3</span>
           <span class="badge-n" style="top:64px;inset-inline-start:236px" aria-hidden="true">4</span>
           <span class="badge-n" style="top:10px;inset-inline-start:250px" aria-hidden="true">5</span></div>`;
@@ -1658,16 +1820,16 @@
       $('#c-s6').innerHTML =
         `<div class="desk p-web" role="region" aria-label="Solid content next to glass chrome">
         <div class="screen">
-          <div class="card"><h4>Table <span class="tag solid-tag">Solid</span></h4>
+          <div class="card"><h3>Table <span class="tag solid-tag">Solid</span></h3>
             <table><thead><tr><th scope="col">Client</th><th scope="col">Weight (kg)</th><th scope="col">Change</th></tr></thead>
             <tbody><tr><td>Demo client 14</td><td class="num">78.4</td><td class="num">−0.6</td></tr>
             <tr><td>Demo client 7</td><td class="num">64.1</td><td class="num">−0.2</td></tr>
             <tr><td>Demo client 22</td><td class="num">91.0</td><td class="num">+0.3</td></tr></tbody></table></div>
-          <div class="card"><h4>Form <span class="tag solid-tag">Solid</span></h4>
+          <div class="card"><h3>Form <span class="tag solid-tag">Solid</span></h3>
             <div class="form-grid"><span class="field">Waist (cm)<span class="input num">84</span></span>
             <span class="field">Sleep (hours)<span class="input num">7.5</span></span>
             <span class="field">Notes<span class="input">Felt strong on squats</span></span></div></div>
-          <div class="card"><h4>Data card <span class="tag solid-tag">Solid</span></h4>
+          <div class="card"><h3>Data card <span class="tag solid-tag">Solid</span></h3>
             <div class="stat">82%</div><p class="small">Plan adherence, last 14 days</p>${stripe()}</div>
         </div>
         <div aria-hidden="true">${topbar('', 'Demo client 14 · Progress')}</div></div>`;
@@ -1695,17 +1857,66 @@
                 );
               }
               rows.push(
-                `<tr><td>${mode === 'light' ? 'Light' : 'Dark'}</td><td>${tier === 'chrome' ? 'Chrome' : 'Sheet'}</td><td><code>${name}</code></td><td class="num">${tint.a.toFixed(2)}</td><td class="num">${fmt(w.r)}</td><td><code>${w.name}</code></td><td class="num">${NEED[tier]}:1</td><td>${badge(ok)}</td></tr>`,
+                `<tr><td data-label="Mode">${mode === 'light' ? 'Light' : 'Dark'}</td><td data-label="Surface">${tier === 'chrome' ? 'Chrome' : 'Sheet'}</td><td data-label="Token"><code>${name}</code></td><td data-label="Tint alpha" class="num">${tint.a.toFixed(2)}</td><td data-label="Worst ratio" class="num">${fmt(w.r)}</td><td data-label="Worst backdrop"><code>${w.name}</code></td><td data-label="Needs" class="num">${NEED[tier]}:1</td><td data-label="Result">${badge(ok)}</td></tr>`,
               );
             }
           }
-          // Context row: why secondary text is not allowed on chrome glass
-          const s = worst(t.fg['fg.secondary'], t.chrome.rgb, t.chrome.a);
-          rows.push(
-            `<tr><td>${mode === 'light' ? 'Light' : 'Dark'}</td><td>Chrome</td><td><code>fg.secondary</code> (not allowed)</td><td class="num">${t.chrome.a.toFixed(2)}</td><td class="num">${fmt(s.r)}</td><td><code>${s.name}</code></td><td>Not used</td><td><span class="res">${icon('info')}Why chrome is fg.primary only</span></td></tr>`,
-          );
+          // Context rows: tokens kept off glass, with the reason
+          const ctx = [
+            [
+              'Chrome',
+              'fg.secondary (not allowed)',
+              t.fg['fg.secondary'],
+              t.chrome,
+              'Why chrome is fg.primary only',
+            ],
+            ['Sheet', 'fg.faint (not allowed)', t.faint, t.sheet, 'Placeholders sit in bg.field'],
+            [
+              'Sheet',
+              'brand text link (not used)',
+              t.brandText,
+              t.sheet,
+              'Why links are fg.primary',
+            ],
+          ];
+          for (const [surf, name, fg, tint, why] of ctx) {
+            const w = worst(fg, tint.rgb, tint.a);
+            rows.push(
+              `<tr><td data-label="Mode">${mode === 'light' ? 'Light' : 'Dark'}</td><td data-label="Surface">${surf}</td><td data-label="Token"><code>${name}</code></td><td data-label="Tint alpha" class="num">${tint.a.toFixed(2)}</td><td data-label="Worst ratio" class="num">${fmt(w.r)}</td><td data-label="Worst backdrop"><code>${w.name}</code></td><td data-label="Needs">Not used</td><td data-label="Result"><span class="res">${icon('info')}${why}</span></td></tr>`,
+            );
+          }
         }
         $('#legib').innerHTML = rows.join('');
+        // Link options, light sheet over the worst (black) backdrop
+        const L = tokens('light');
+        const black = [0, 0, 0];
+        const sample = (title, fg, bgRgb, verdictText, body) => {
+          const r = contrast(fg, bgRgb);
+          const css = (c) => `rgb(${c.map((x) => Math.round(x * 255)).join(',')})`;
+          return `<div class="sample"><div class="patch" style="background:${css(bgRgb)};color:${css(fg)}">See weight history</div><div class="body"><strong>${title}</strong><br>${fmt(r)} ${badge(r >= 4.5)} ${verdictText}<br><span class="small">${body}</span></div></div>`;
+        };
+        $('#link-samples').innerHTML =
+          sample(
+            'Recommended: fg.primary, underlined',
+            L.fg['fg.primary'],
+            over(L.sheet.rgb, L.sheet.a, black),
+            '',
+            'Passes for every tenant. Tokens and ADR-0019 stay as they are.',
+          ) +
+          sample(
+            'Alternative: brand link at alpha 0.97',
+            L.brandText,
+            over(L.sheet.rgb, 0.97, black),
+            '',
+            'Passes for Sunflower only, and changes ADR-0019 decision 6.',
+          ) +
+          sample(
+            'Alternative: solid light sheet',
+            L.brandText,
+            L.fallback,
+            '',
+            'Brand link on glass.fallback. No glass on light sheets.',
+          );
         $('#fails').innerHTML = failures.length
           ? `<h3>${badge(false, `${failures.length} failing pair${failures.length > 1 ? 's' : ''}`)}</h3><ul>${failures.map((f) => `<li>${f}</li>`).join('')}</ul>`
           : `<h3>${badge(true, 'Every pair passes')}</h3>`;
@@ -1720,15 +1931,20 @@
           throw new Error(`Expected 46 backdrops, got ${BACKDROPS.length}`);
         let maxLayers = 0;
         let maxBlur = 0;
-        for (const ph of $$('.phone')) {
+        let wideBlur = 0;
+        for (const ph of $$('.phone, .desk')) {
           const layers = $$('.glass:not(.solid)', ph).length;
           maxLayers = Math.max(maxLayers, layers);
           if (layers > 2) throw new Error(`A frame has ${layers} glass layers`);
+          const wide = ph.clientWidth >= 744; // the frame is the app window
           for (const el of $$('.glass', ph)) {
             const m = getComputedStyle(el).backdropFilter.match(/blur\(([\d.]+)px\)/);
             if (m) {
-              maxBlur = Math.max(maxBlur, Number(m[1]));
-              if (Number(m[1]) > 20) throw new Error(`Blur ${m[1]}px on a phone frame`);
+              const b = Number(m[1]);
+              if (wide) wideBlur = Math.max(wideBlur, b);
+              else maxBlur = Math.max(maxBlur, b);
+              if (b > (wide ? 32 : 20))
+                throw new Error(`Blur ${b}px in a ${wide ? 'wide' : 'phone-width'} frame`);
             }
           }
           const scroller = $('.screen', ph);
@@ -1744,7 +1960,7 @@
         out.push(`${badge(maxLayers <= 2)} Glass layers per frame: at most ${maxLayers}`);
         out.push(
           sup
-            ? `${badge(maxBlur > 0 && maxBlur <= 20)} Largest blur on a phone frame: ${maxBlur} px`
+            ? `${badge(maxBlur > 0 && maxBlur <= 20)} Largest blur below 744 px wide: ${maxBlur} px${wideBlur ? `; from 744 px up: ${wideBlur} px` : ''}`
             : `${badge(true)} No backdrop-filter in this browser, so no blur at all`,
         );
         out.push(`${badge(true)} No scrolling list has a backdrop filter`);
