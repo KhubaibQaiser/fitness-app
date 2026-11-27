@@ -33,7 +33,10 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     resetDeps,
   } = bind;
 
-  /** The per-IP limit, or the route's shared cap when the caller has no trusted IP. */
+  /** The per-account login key: the email as typed, normalised, whether or not an account exists. */
+  const loginAccountKey = (email: string): string => `login:account:${email.trim().toLowerCase()}`;
+
+  /** The per-IP limit, or the route's shared cap when the caller has no client IP. */
   const withinIpLimit = (c: AppContext, route: string, perIp: RateLimiter): Promise<boolean> => {
     const ip = clientIp(c);
     return ip === null
@@ -46,8 +49,7 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, password }');
     }
-    // Keyed on the email as typed (normalised), whether or not an account exists.
-    const accountKey = `login:account:${parsed.data.email.trim().toLowerCase()}`;
+    const accountKey = loginAccountKey(parsed.data.email);
     if (
       !(await withinIpLimit(c, 'login', loginLimiter)) ||
       !(await loginAccountLimiter.attempt(accountKey))
@@ -230,6 +232,8 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
       const mapped = map[result.error.reason] ?? { status: 401 as const, title: 'Reset failed' };
       return problemResponse(c, mapped.status, result.error.reason, mapped.title);
     }
+    // A completed reset also clears the account's sign-in back-off.
+    await loginAccountLimiter.reset(loginAccountKey(parsed.data.email));
     return c.json({ ok: true });
   });
 };

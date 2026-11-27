@@ -6,7 +6,7 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 import { Hono } from 'hono';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { schema as s, seed, type Db } from '@gymos/db';
-import { hashPassword } from '@gymos/modules/identity';
+import { createMemoryEmailSender, hashPassword, setUserPassword } from '@gymos/modules/identity';
 import {
   resetManifestCache,
   resetRegistryCache,
@@ -33,6 +33,8 @@ const manifest = tenantManifestSchema.parse(
 );
 
 let db: Db;
+let coachUserId = '';
+const mail = createMemoryEmailSender();
 /** VERCEL=1: the client IP is `x-real-ip`. */
 let onVercel: App;
 /** RENDER=true: no client IP, so the per-account limit and the route-wide cap apply. */
@@ -62,13 +64,13 @@ beforeAll(async () => {
     migrationsFolder: path.resolve(import.meta.dirname, '../../../packages/db/migrations'),
   });
   db = pglite as unknown as Db;
-  await seed(db, {
+  ({ coachUserId } = await seed(db, {
     coachPasswordHash: await hashPassword(PASSWORD),
     tenantManifest: manifest as unknown as Record<string, unknown>,
     tenantSlug: manifest.slug,
-  });
+  }));
   const env = { JWT_ACCESS_SECRET: JWT_SECRET, AI_MODE: 'fallback' as const };
-  onVercel = buildApp({ db, manifest, env: { ...env, VERCEL: '1' } });
+  onVercel = buildApp({ db, manifest, env: { ...env, VERCEL: '1' }, mail });
   onRender = buildApp({ db, manifest, env: { ...env, RENDER: 'true' } });
   noClientIp = buildApp({ db, manifest, env });
 });
@@ -259,5 +261,71 @@ describe('rateLimitKey', () => {
     ['zone id is dropped', 'fe80::1%eth0', 'fe80:0:0:0::/64'],
   ])('%s', (_label, ip, key) => {
     expect(rateLimitKey(ip)).toBe(key);
+  });
+});
+
+describe('password reset and the sign-in back-off', () => {
+  const NEW_PASSWORD = 'login-throttle-new-password';
+  const post = (pathName: string, body: Record<string, string>) =>
+    onVercel.request(pathName, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...ip(30) },
+      body: JSON.stringify(body),
+    });
+  /** Asks for a reset code for the coach and returns the code that was emailed. */
+  const resetCode = async (): Promise<string> => {
+    expect((await post('/v1/auth/password/forgot', { email: COACH })).status).toBe(200);
+    const sent = mail.sent.at(-1);
+    if (sent?.to !== COACH) throw new Error('no reset email was sent');
+    return sent.code;
+  };
+
+  afterEach(async () => {
+    await setUserPassword(db, coachUserId, PASSWORD);
+  });
+
+  it('clears the back-off on a completed reset, so the new password signs in at once', async () => {
+    for (let k = 0; k < 5; k += 1) await login(onVercel, COACH, 'nope-nope-1', ip(k));
+    expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(429);
+
+    const code = await resetCode();
+    const reset = await post('/v1/auth/password/reset', {
+      email: COACH.toUpperCase(),
+      code,
+      newPassword: NEW_PASSWORD,
+    });
+    expect(reset.status).toBe(200);
+    expect((await login(onVercel, COACH, NEW_PASSWORD, ip(9))).status).toBe(200);
+  });
+
+  it('keeps the back-off after a failed or expired reset', async () => {
+    // Into the 15-minute back-off: 5 failures, then one more as each back-off ends.
+    let at = Date.parse('2026-11-26T09:00:00Z');
+    vi.setSystemTime(at);
+    for (let k = 0; k < 5; k += 1) await login(onVercel, COACH, 'nope-nope-1', ip(k));
+    for (const minutes of [1, 2, 4, 8]) {
+      at += minutes * 60_000 + 1_000;
+      vi.setSystemTime(at);
+      expect((await login(onVercel, COACH, 'nope-nope-1', ip(9))).status).toBe(401);
+    }
+
+    const code = await resetCode();
+    const wrong = await post('/v1/auth/password/reset', {
+      email: COACH,
+      code: code === '000000' ? '111111' : '000000',
+      newPassword: NEW_PASSWORD,
+    });
+    expect(wrong.status).toBe(401);
+    expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(429);
+
+    vi.setSystemTime(at + 11 * 60_000);
+    const expired = await post('/v1/auth/password/reset', {
+      email: COACH,
+      code,
+      newPassword: NEW_PASSWORD,
+    });
+    expect(expired.status).toBe(401);
+    expect(((await expired.json()) as { code: string }).code).toBe('OTP_EXPIRED');
+    expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(429);
   });
 });
