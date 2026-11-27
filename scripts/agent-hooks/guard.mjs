@@ -431,6 +431,10 @@ const checkInstall = (cmd) => {
 };
 
 const SECRETS = '(.env, SSH or AWS keys, PEM, Terraform state)';
+// The one command that may name a secrets file: a lone echo or printf appending to a file named
+// .gitignore (or dir/.gitignore), as in "echo .env >> .gitignore". Nothing else rides along.
+const IGNORE_APPEND =
+  /^\s*(?:echo|printf)\s[^;&|<>`$()\n]*>>[ \t]*(['"]?)(?:[\w./-]*\/)?\.gitignore\1[ \t]*$/;
 const words = (s) => s.split(/[\s'"`=<>|;&()@:]+/).filter(Boolean);
 
 const decide = ({ command: written, paths, globs = [], writing = false, cwd }, depth = 0) => {
@@ -453,7 +457,7 @@ const decide = ({ command: written, paths, globs = [], writing = false, cwd }, d
   const structural = blanked.replace(GIT_GLOBAL_OPTS, 'git');
 
   const tokens = [...words(command), ...words(unquoted)];
-  if (!/\.gitignore\b/.test(command)) {
+  if (!IGNORE_APPEND.test(raw)) {
     const found = tokens.map(secretToken);
     if (found.includes('secret')) return ['deny', `touching a secrets file ${SECRETS}`];
     if (found.includes('unknown')) {
