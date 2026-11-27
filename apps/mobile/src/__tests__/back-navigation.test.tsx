@@ -21,9 +21,9 @@ beforeEach(() => {
   mockReplace.mockClear();
 });
 
-it('replaces to the parent screen when the stack has no history', () => {
+it('replaces to the parent screen when the stack has no history', async () => {
   mockCanGoBack = false;
-  const { result } = renderHook(() => useBackOr('/clients/c1'));
+  const { result } = await renderHook(() => useBackOr('/clients/c1'));
 
   result.current();
 
@@ -31,9 +31,9 @@ it('replaces to the parent screen when the stack has no history', () => {
   expect(mockBack).not.toHaveBeenCalled();
 });
 
-it('goes back when the stack has a screen to return to', () => {
+it('goes back when the stack has a screen to return to', async () => {
   mockCanGoBack = true;
-  const { result } = renderHook(() => useBackOr('/clients/c1'));
+  const { result } = await renderHook(() => useBackOr('/clients/c1'));
 
   result.current();
 

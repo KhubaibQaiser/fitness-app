@@ -6,8 +6,8 @@ import { Text } from 'react-native';
  * Keeps the Jest/Expo preset honest in CI.
  */
 describe('RNTL smoke', () => {
-  it('renders a basic native text node', () => {
-    render(<Text>GymOS Coach</Text>);
+  it('renders a basic native text node', async () => {
+    await render(<Text>GymOS Coach</Text>);
     expect(screen.getByText('GymOS Coach')).toBeTruthy();
   });
 });

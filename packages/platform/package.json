@@ -14,15 +14,15 @@
   "dependencies": {
     "@gymos/ui": "workspace:^",
     "@react-native-async-storage/async-storage": "^2.2.0",
-    "expo-file-system": "~57.0.0",
-    "expo-sharing": "~57.0.0",
-    "react": "^19.2.8",
-    "react-native": "^0.86.2",
-    "react-native-safe-area-context": "^5.6.0",
+    "expo-file-system": "~58.0.14",
+    "expo-sharing": "~58.0.23",
+    "react": "^19.3.0",
+    "react-native": "^0.88.1",
+    "react-native-safe-area-context": "^5.11.1",
     "tamagui": "^2.7.2"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "typescript": "^5.9.3"
   }
 }

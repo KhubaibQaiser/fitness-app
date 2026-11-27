@@ -50,7 +50,7 @@ afterEach(() => {
 describe('one press owner per control', () => {
   it('a roster row card owns its press and opens the client once', async () => {
     const user = userEvent.setup();
-    renderWithTheme(
+    await renderWithTheme(
       <RosterRow
         desktop={false}
         client={{
@@ -76,7 +76,7 @@ describe('one press owner per control', () => {
 
   it('the hub more-menu button opens the menu, and a menu row closes it and navigates once', async () => {
     const user = userEvent.setup();
-    renderWithTheme(
+    await renderWithTheme(
       <ClientHubMoreMenu clientId="client-1" signed pdfPending={false} onDownloadPdf={jest.fn()} />,
     );
 
@@ -99,9 +99,9 @@ describe('one press owner per control', () => {
   });
 
   it('an external link opens the URL instead of pushing a route', async () => {
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     const user = userEvent.setup();
-    renderWithTheme(
+    await renderWithTheme(
       <Link href="https://wa.me/923001234567" target="_blank">
         <IconButton aria-label="Open WhatsApp" />
       </Link>,
@@ -129,7 +129,7 @@ describe('one press owner per control', () => {
       const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
       const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       const user = userEvent.setup();
-      renderWithTheme(
+      await renderWithTheme(
         <Link href="https://wa.me/923001234567" target="_blank">
           <IconButton aria-label="Open WhatsApp" />
         </Link>,
@@ -153,7 +153,7 @@ describe('one press owner per control', () => {
     const calls: string[] = [];
     mockPush.mockImplementation(() => calls.push('navigate'));
     const user = userEvent.setup();
-    renderWithTheme(
+    await renderWithTheme(
       <Link href="/tools/targets">
         <Card interactive onPress={() => calls.push('card')}>
           <Text>How targets are calculated</Text>
@@ -170,25 +170,33 @@ describe('one press owner per control', () => {
 
   it.each(['/tools/targets', 'https://wa.me/923001234567'])(
     'does not open %s when the child prevents the default',
-    (href) => {
-      const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
-      renderWithTheme(
+    async (href) => {
+      const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+      let childSawPrevented: boolean | undefined;
+      await renderWithTheme(
         <Link href={href}>
-          <Card interactive onPress={(e) => e.preventDefault()}>
+          <Card
+            interactive
+            onPress={(e) => {
+              e.preventDefault();
+              childSawPrevented = e.defaultPrevented;
+            }}
+          >
             <Text>How targets are calculated</Text>
           </Card>
         </Link>,
       );
 
-      // The shape of RN's press event: preventDefault() sets defaultPrevented.
+      // The shape of RN's press event: preventDefault() sets defaultPrevented. RNTL 14 copies these
+      // props onto the event it builds, so the check reads the event the child received.
       const event = {
         defaultPrevented: false,
         preventDefault() {
           this.defaultPrevented = true;
         },
       };
-      fireEvent.press(screen.getByText('How targets are calculated'), event);
-      expect(event.defaultPrevented).toBe(true);
+      await fireEvent.press(screen.getByText('How targets are calculated'), event);
+      expect(childSawPrevented).toBe(true);
       expect(mockPush).not.toHaveBeenCalled();
       expect(openURL).not.toHaveBeenCalled();
     },
@@ -197,9 +205,9 @@ describe('one press owner per control', () => {
   it.each([
     ['disabled', { disabled: true }],
     ['aria-disabled', { 'aria-disabled': true }],
-  ])('does not navigate from a %s child', (_name, disabledProps) => {
+  ])('does not navigate from a %s child', async (_name, disabledProps) => {
     const onPress = jest.fn();
-    renderWithTheme(
+    await renderWithTheme(
       <Link href="/clients/client-1/plan">
         <Card interactive onPress={onPress} {...disabledProps}>
           <Text>Open plan</Text>
@@ -207,7 +215,7 @@ describe('one press owner per control', () => {
       </Link>,
     );
 
-    fireEvent.press(screen.getByText('Open plan'));
+    await fireEvent.press(screen.getByText('Open plan'));
     expect(mockPush).not.toHaveBeenCalled();
   });
 });

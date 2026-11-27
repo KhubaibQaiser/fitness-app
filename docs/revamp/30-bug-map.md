@@ -50,26 +50,26 @@ Every problem the audit found has one owning task, so nothing is fixed twice or 
 
 ## Cross-cutting (critique §6, top 10, perf)
 
-| Finding                                                          | Owner                                                                                               |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Status chip and banner contrast (2.07–3.44:1)                    | F1                                                                                                  |
-| Placeholder contrast 2.56:1                                      | F1, F5                                                                                              |
-| Pre-disabled submits at 1.97:1                                   | F5 (buttons), every form screen                                                                     |
-| 15 px inputs zoom iOS Safari                                     | F2, F5                                                                                              |
-| No skip link                                                     | F6                                                                                                  |
-| Colour-only dietary selection                                    | F5 (checkbox chip), S09                                                                             |
-| No RTL readiness                                                 | F2                                                                                                  |
-| Toast exists but unused; silent successes                        | F4 (toast), each screen's success state                                                             |
-| Task screens lose the client                                     | F10                                                                                                 |
-| Hub verbs behind a hamburger                                     | F10                                                                                                 |
-| Raw system language                                              | F2 (status words), each screen's copy                                                               |
-| Roster renders every client (5,795 nodes)                        | F7.2, S03                                                                                           |
-| Tamagui runtime style cost (55% of roster script)                | F5 (static row styles), re-measured after U4                                                        |
-| `formatChartDate` 200 ms and forced layout 61 ms                 | F9                                                                                                  |
-| Icons 1.23 MB of the iOS bundle                                  | U4                                                                                                  |
-| libphonenumber, date picker deps, `@tamagui/themes`              | F2, F5, F1                                                                                          |
-| Client pages fetch after hydration; `config/public` late         | F7.3                                                                                                |
-| `icon.png` 385 KB, `hero.jpg` 435 KB                             | F8                                                                                                  |
-| Pollers multiply requests                                        | F7.1 (pulse)                                                                                        |
-| Next.js 16.4.3 vulnerability                                     | U1                                                                                                  |
-| 2 of about 39 generations solver-infeasible on synthetic clients | Not a UI bug: product follow-up for the meal-planner track; S06 only renders the failure state well |
+| Finding                                                          | Owner                                                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Status chip and banner contrast (2.07–3.44:1)                    | F1                                                                                                |
+| Placeholder contrast 2.56:1                                      | F1, F5                                                                                            |
+| Pre-disabled submits at 1.97:1                                   | F5 (buttons), every form screen                                                                   |
+| 15 px inputs zoom iOS Safari                                     | F2, F5                                                                                            |
+| No skip link                                                     | F6                                                                                                |
+| Colour-only dietary selection                                    | F5 (checkbox chip), S09                                                                           |
+| No RTL readiness                                                 | F2                                                                                                |
+| Toast exists but unused; silent successes                        | F4 (toast), each screen's success state                                                           |
+| Task screens lose the client                                     | F10                                                                                               |
+| Hub verbs behind a hamburger                                     | F10                                                                                               |
+| Raw system language                                              | F2 (status words), each screen's copy                                                             |
+| Roster renders every client (5,795 nodes)                        | F7.2, S03                                                                                         |
+| Tamagui runtime style cost (55% of roster script)                | F5 (static row styles), re-measured after U4                                                      |
+| `formatChartDate` 200 ms and forced layout 61 ms                 | F9                                                                                                |
+| Icons 1.23 MB of the iOS bundle                                  | U4                                                                                                |
+| libphonenumber, date picker deps, `@tamagui/themes`              | F2, F5, F1                                                                                        |
+| Client pages fetch after hydration; `config/public` late         | F7.3                                                                                              |
+| `icon.png` 385 KB, `hero.jpg` 435 KB                             | F8                                                                                                |
+| Pollers multiply requests                                        | F7.1 (pulse)                                                                                      |
+| Next.js 16.4.3 vulnerability                                     | U1                                                                                                |
+| 2 of about 39 generations solver-infeasible on synthetic clients | Not a UI bug: tracked in #137 for the meal-planner track; S06 only renders the failure state well |
