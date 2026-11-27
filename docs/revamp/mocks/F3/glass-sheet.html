@@ -1,0 +1,1774 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>F3 glass sheet</title>
+    <!-- Theme variables machine-copied from F1's generated #theme-vars (docs/revamp/mocks/F1/token-sheet.html on origin/docs/mock-f1 at 72f5dfc).
+         They are tokens.floodlight.json with F1's proposals and the Sunflower derivation applied. Provisional until the owner approves F1. -->
+    <style id="theme-vars">
+      :root {
+        --radiusXs: 4px;
+        --radiusSm: 6px;
+        --radiusMd: 10px;
+        --radiusLg: 14px;
+        --radiusXl: 20px;
+        --radiusFull: 999px;
+      }
+      :root,
+      .t-light {
+        --bgCanvas: #f3f6fa;
+        --bgSurface: #fcfdff;
+        --bgRaised: #fcfdff;
+        --bgSunken: #eaeef3;
+        --bgHover: #eaeef3;
+        --bgField: #fcfdff;
+        --bgInverse: #171b28;
+        --fgPrimary: #171b28;
+        --fgSecondary: #505660;
+        --fgFaint: #656b74;
+        --fgDisabled: #a8aeb8;
+        --fgInverse: #f3f6fa;
+        --borderSubtle: #dbe0e7;
+        --borderControl: #868d96;
+        --actionBg: #3953f2;
+        --actionBgHover: #2f3fc4;
+        --actionBgPressed: #242f95;
+        --actionFg: #ffffff;
+        --actionText: #3953f2;
+        --actionWash: #e5eeff;
+        --actionWashText: #2f3fc4;
+        --focusRing: #3953f2;
+        --scrim: rgba(23, 27, 40, 0.4);
+        --statusSuccessSolid: #008054;
+        --statusSuccessOnSolid: #ffffff;
+        --statusSuccessText: #008054;
+        --statusSuccessWash: #d8f7e4;
+        --statusSuccessWashText: #006643;
+        --statusSuccessBorder: #009864;
+        --statusWarningSolid: #d78600;
+        --statusWarningOnSolid: #171b28;
+        --statusWarningText: #9b5a00;
+        --statusWarningWash: #ffebcf;
+        --statusWarningWashText: #7d4600;
+        --statusWarningBorder: #b56d00;
+        --statusDangerSolid: #c51c2e;
+        --statusDangerOnSolid: #ffffff;
+        --statusDangerText: #c51c2e;
+        --statusDangerWash: #ffe8e5;
+        --statusDangerWashText: #9f1123;
+        --statusDangerBorder: #e2333e;
+        --statusInfoSolid: #0572ac;
+        --statusInfoOnSolid: #ffffff;
+        --statusInfoText: #0572ac;
+        --statusInfoWash: #ddf1ff;
+        --statusInfoWashText: #025a8b;
+        --statusInfoBorder: #1d88c6;
+        --accentAquaFill: #24cdcd;
+        --accentAquaOnFill: #171b28;
+        --accentAquaStrong: #009395;
+        --accentAquaText: #007b7e;
+        --accentAquaWashText: #006265;
+        --accentAquaWash: #d4f6f4;
+        --vizGrid: #dbe0e7;
+        --vizAxis: #a8aeb8;
+        --vizAxisLabel: #505660;
+        --vizTrendLine: #171b28;
+        --vizGoalBand: #d4f6f4;
+        --vizGoalLine: #007b7e;
+        --vizCategorical1: #3858ff;
+        --vizCategorical2: #7b9a00;
+        --vizCategorical3: #881090;
+        --vizCategorical4: #00a0a2;
+        --vizCategorical5: #6631a9;
+        --vizCategorical6: #b45000;
+        --vizMacroProtein: #3858ff;
+        --vizMacroCarbs: #7b9a00;
+        --vizMacroFat: #881090;
+        --vizMacroFiber: #00a0a2;
+        --vizSequential1: #e5eeff;
+        --vizSequential2: #d0e0ff;
+        --vizSequential3: #b4ccff;
+        --vizSequential4: #91b2ff;
+        --vizSequential5: #6e95ff;
+        --vizSequential6: #4a70ff;
+        --vizSequential7: #3953f2;
+        --vizDiverging1: #3953f2;
+        --vizDiverging2: #6e95ff;
+        --vizDiverging3: #b4ccff;
+        --vizDiverging4: #dbe0e7;
+        --vizDiverging5: #bedb66;
+        --vizDiverging6: #88ab00;
+        --vizDiverging7: #5a7800;
+        --glassColorChrome: rgba(252, 253, 255, 0.66);
+        --glassColorSheet: rgba(252, 253, 255, 0.91);
+        --glassColorBorder: rgba(255, 255, 255, 0.55);
+        --glassColorEdge: rgba(22, 26, 32, 0.1);
+        --glassColorFallback: #fcfdff;
+        --glassBlurChrome: 20px;
+        --glassBlurSheet: 32px;
+        --glassSaturate: 1.6;
+        --glassHighlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        --glassShadow: 0 8px 32px -12px rgba(22, 26, 32, 0.28);
+        --glassNoiseOpacity: 0.035;
+        --brandFill: #facc15;
+        --brandOn: #171b28;
+        --brandHover: #ebbf00;
+        --brandPressed: #dcb300;
+        --brandText: #886d00;
+        --brandWash: #fceec3;
+        --brandWashText: #836900;
+        --brandBorder: #886d00;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bgCanvas: #0c0f19;
+          --bgSurface: #171b28;
+          --bgRaised: #242935;
+          --bgSunken: #0c0f19;
+          --bgHover: #242935;
+          --bgField: #0c0f19;
+          --bgInverse: #f3f6fa;
+          --fgPrimary: #f3f6fa;
+          --fgSecondary: #a8aeb8;
+          --fgFaint: #868d96;
+          --fgDisabled: #505660;
+          --fgInverse: #171b28;
+          --borderSubtle: #333844;
+          --borderControl: #656b74;
+          --actionBg: #3953f2;
+          --actionBgHover: #2f3fc4;
+          --actionBgPressed: #242f95;
+          --actionFg: #ffffff;
+          --actionText: #91b2ff;
+          --actionWash: #181e66;
+          --actionWashText: #b4ccff;
+          --focusRing: #91b2ff;
+          --scrim: rgba(12, 15, 25, 0.6);
+          --statusSuccessSolid: #008054;
+          --statusSuccessOnSolid: #ffffff;
+          --statusSuccessText: #4fd093;
+          --statusSuccessWash: #003320;
+          --statusSuccessWashText: #88e3b2;
+          --statusSuccessBorder: #00b879;
+          --statusWarningSolid: #d78600;
+          --statusWarningOnSolid: #171b28;
+          --statusWarningText: #f1a12e;
+          --statusWarningWash: #422000;
+          --statusWarningWashText: #fcbf71;
+          --statusWarningBorder: #d78600;
+          --statusDangerSolid: #c51c2e;
+          --statusDangerOnSolid: #ffffff;
+          --statusDangerText: #ff9089;
+          --statusDangerWash: #520810;
+          --statusDangerWashText: #ffb7b1;
+          --statusDangerBorder: #ff5b5b;
+          --statusInfoSolid: #0572ac;
+          --statusInfoOnSolid: #ffffff;
+          --statusInfoText: #67bef7;
+          --statusInfoWash: #052d48;
+          --statusInfoWashText: #96d5ff;
+          --statusInfoBorder: #40a5e3;
+          --accentAquaFill: #24cdcd;
+          --accentAquaOnFill: #171b28;
+          --accentAquaStrong: #00b1b3;
+          --accentAquaText: #77e0df;
+          --accentAquaWashText: #77e0df;
+          --accentAquaWash: #003134;
+          --vizGrid: #333844;
+          --vizAxis: #505660;
+          --vizAxisLabel: #a8aeb8;
+          --vizTrendLine: #f3f6fa;
+          --vizGoalBand: #003134;
+          --vizGoalLine: #24cdcd;
+          --vizCategorical1: #4870ff;
+          --vizCategorical2: #83a200;
+          --vizCategorical3: #b74bc2;
+          --vizCategorical4: #00a9aa;
+          --vizCategorical5: #8f61db;
+          --vizCategorical6: #c55f1b;
+          --vizMacroProtein: #4870ff;
+          --vizMacroCarbs: #83a200;
+          --vizMacroFat: #b74bc2;
+          --vizMacroFiber: #00a9aa;
+          --vizSequential1: #242f95;
+          --vizSequential2: #2f3fc4;
+          --vizSequential3: #3953f2;
+          --vizSequential4: #4a70ff;
+          --vizSequential5: #6e95ff;
+          --vizSequential6: #91b2ff;
+          --vizSequential7: #b4ccff;
+          --vizDiverging1: #b4ccff;
+          --vizDiverging2: #6e95ff;
+          --vizDiverging3: #3953f2;
+          --vizDiverging4: #333844;
+          --vizDiverging5: #5a7800;
+          --vizDiverging6: #88ab00;
+          --vizDiverging7: #bedb66;
+          --glassColorChrome: rgba(23, 27, 40, 0.76);
+          --glassColorSheet: rgba(23, 27, 40, 0.83);
+          --glassColorBorder: rgba(255, 255, 255, 0.1);
+          --glassColorEdge: rgba(0, 0, 0, 0.45);
+          --glassColorFallback: #242935;
+          --glassBlurChrome: 20px;
+          --glassBlurSheet: 32px;
+          --glassSaturate: 1.3;
+          --glassHighlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          --glassShadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
+          --glassNoiseOpacity: 0.05;
+          --brandFill: #facc15;
+          --brandOn: #171b28;
+          --brandHover: #ebbf00;
+          --brandPressed: #dcb300;
+          --brandText: #facc15;
+          --brandWash: #362a02;
+          --brandWashText: #facc15;
+          --brandBorder: transparent;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bgCanvas: #0c0f19;
+        --bgSurface: #171b28;
+        --bgRaised: #242935;
+        --bgSunken: #0c0f19;
+        --bgHover: #242935;
+        --bgField: #0c0f19;
+        --bgInverse: #f3f6fa;
+        --fgPrimary: #f3f6fa;
+        --fgSecondary: #a8aeb8;
+        --fgFaint: #868d96;
+        --fgDisabled: #505660;
+        --fgInverse: #171b28;
+        --borderSubtle: #333844;
+        --borderControl: #656b74;
+        --actionBg: #3953f2;
+        --actionBgHover: #2f3fc4;
+        --actionBgPressed: #242f95;
+        --actionFg: #ffffff;
+        --actionText: #91b2ff;
+        --actionWash: #181e66;
+        --actionWashText: #b4ccff;
+        --focusRing: #91b2ff;
+        --scrim: rgba(12, 15, 25, 0.6);
+        --statusSuccessSolid: #008054;
+        --statusSuccessOnSolid: #ffffff;
+        --statusSuccessText: #4fd093;
+        --statusSuccessWash: #003320;
+        --statusSuccessWashText: #88e3b2;
+        --statusSuccessBorder: #00b879;
+        --statusWarningSolid: #d78600;
+        --statusWarningOnSolid: #171b28;
+        --statusWarningText: #f1a12e;
+        --statusWarningWash: #422000;
+        --statusWarningWashText: #fcbf71;
+        --statusWarningBorder: #d78600;
+        --statusDangerSolid: #c51c2e;
+        --statusDangerOnSolid: #ffffff;
+        --statusDangerText: #ff9089;
+        --statusDangerWash: #520810;
+        --statusDangerWashText: #ffb7b1;
+        --statusDangerBorder: #ff5b5b;
+        --statusInfoSolid: #0572ac;
+        --statusInfoOnSolid: #ffffff;
+        --statusInfoText: #67bef7;
+        --statusInfoWash: #052d48;
+        --statusInfoWashText: #96d5ff;
+        --statusInfoBorder: #40a5e3;
+        --accentAquaFill: #24cdcd;
+        --accentAquaOnFill: #171b28;
+        --accentAquaStrong: #00b1b3;
+        --accentAquaText: #77e0df;
+        --accentAquaWashText: #77e0df;
+        --accentAquaWash: #003134;
+        --vizGrid: #333844;
+        --vizAxis: #505660;
+        --vizAxisLabel: #a8aeb8;
+        --vizTrendLine: #f3f6fa;
+        --vizGoalBand: #003134;
+        --vizGoalLine: #24cdcd;
+        --vizCategorical1: #4870ff;
+        --vizCategorical2: #83a200;
+        --vizCategorical3: #b74bc2;
+        --vizCategorical4: #00a9aa;
+        --vizCategorical5: #8f61db;
+        --vizCategorical6: #c55f1b;
+        --vizMacroProtein: #4870ff;
+        --vizMacroCarbs: #83a200;
+        --vizMacroFat: #b74bc2;
+        --vizMacroFiber: #00a9aa;
+        --vizSequential1: #242f95;
+        --vizSequential2: #2f3fc4;
+        --vizSequential3: #3953f2;
+        --vizSequential4: #4a70ff;
+        --vizSequential5: #6e95ff;
+        --vizSequential6: #91b2ff;
+        --vizSequential7: #b4ccff;
+        --vizDiverging1: #b4ccff;
+        --vizDiverging2: #6e95ff;
+        --vizDiverging3: #3953f2;
+        --vizDiverging4: #333844;
+        --vizDiverging5: #5a7800;
+        --vizDiverging6: #88ab00;
+        --vizDiverging7: #bedb66;
+        --glassColorChrome: rgba(23, 27, 40, 0.76);
+        --glassColorSheet: rgba(23, 27, 40, 0.83);
+        --glassColorBorder: rgba(255, 255, 255, 0.1);
+        --glassColorEdge: rgba(0, 0, 0, 0.45);
+        --glassColorFallback: #242935;
+        --glassBlurChrome: 20px;
+        --glassBlurSheet: 32px;
+        --glassSaturate: 1.3;
+        --glassHighlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --glassShadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
+        --glassNoiseOpacity: 0.05;
+        --brandFill: #facc15;
+        --brandOn: #171b28;
+        --brandHover: #ebbf00;
+        --brandPressed: #dcb300;
+        --brandText: #facc15;
+        --brandWash: #362a02;
+        --brandWashText: #facc15;
+        --brandBorder: transparent;
+        color-scheme: dark;
+      }
+      .t-light {
+        --bgCanvas: #f3f6fa;
+        --bgSurface: #fcfdff;
+        --bgRaised: #fcfdff;
+        --bgSunken: #eaeef3;
+        --bgHover: #eaeef3;
+        --bgField: #fcfdff;
+        --bgInverse: #171b28;
+        --fgPrimary: #171b28;
+        --fgSecondary: #505660;
+        --fgFaint: #656b74;
+        --fgDisabled: #a8aeb8;
+        --fgInverse: #f3f6fa;
+        --borderSubtle: #dbe0e7;
+        --borderControl: #868d96;
+        --actionBg: #3953f2;
+        --actionBgHover: #2f3fc4;
+        --actionBgPressed: #242f95;
+        --actionFg: #ffffff;
+        --actionText: #3953f2;
+        --actionWash: #e5eeff;
+        --actionWashText: #2f3fc4;
+        --focusRing: #3953f2;
+        --scrim: rgba(23, 27, 40, 0.4);
+        --statusSuccessSolid: #008054;
+        --statusSuccessOnSolid: #ffffff;
+        --statusSuccessText: #008054;
+        --statusSuccessWash: #d8f7e4;
+        --statusSuccessWashText: #006643;
+        --statusSuccessBorder: #009864;
+        --statusWarningSolid: #d78600;
+        --statusWarningOnSolid: #171b28;
+        --statusWarningText: #9b5a00;
+        --statusWarningWash: #ffebcf;
+        --statusWarningWashText: #7d4600;
+        --statusWarningBorder: #b56d00;
+        --statusDangerSolid: #c51c2e;
+        --statusDangerOnSolid: #ffffff;
+        --statusDangerText: #c51c2e;
+        --statusDangerWash: #ffe8e5;
+        --statusDangerWashText: #9f1123;
+        --statusDangerBorder: #e2333e;
+        --statusInfoSolid: #0572ac;
+        --statusInfoOnSolid: #ffffff;
+        --statusInfoText: #0572ac;
+        --statusInfoWash: #ddf1ff;
+        --statusInfoWashText: #025a8b;
+        --statusInfoBorder: #1d88c6;
+        --accentAquaFill: #24cdcd;
+        --accentAquaOnFill: #171b28;
+        --accentAquaStrong: #009395;
+        --accentAquaText: #007b7e;
+        --accentAquaWashText: #006265;
+        --accentAquaWash: #d4f6f4;
+        --vizGrid: #dbe0e7;
+        --vizAxis: #a8aeb8;
+        --vizAxisLabel: #505660;
+        --vizTrendLine: #171b28;
+        --vizGoalBand: #d4f6f4;
+        --vizGoalLine: #007b7e;
+        --vizCategorical1: #3858ff;
+        --vizCategorical2: #7b9a00;
+        --vizCategorical3: #881090;
+        --vizCategorical4: #00a0a2;
+        --vizCategorical5: #6631a9;
+        --vizCategorical6: #b45000;
+        --vizMacroProtein: #3858ff;
+        --vizMacroCarbs: #7b9a00;
+        --vizMacroFat: #881090;
+        --vizMacroFiber: #00a0a2;
+        --vizSequential1: #e5eeff;
+        --vizSequential2: #d0e0ff;
+        --vizSequential3: #b4ccff;
+        --vizSequential4: #91b2ff;
+        --vizSequential5: #6e95ff;
+        --vizSequential6: #4a70ff;
+        --vizSequential7: #3953f2;
+        --vizDiverging1: #3953f2;
+        --vizDiverging2: #6e95ff;
+        --vizDiverging3: #b4ccff;
+        --vizDiverging4: #dbe0e7;
+        --vizDiverging5: #bedb66;
+        --vizDiverging6: #88ab00;
+        --vizDiverging7: #5a7800;
+        --glassColorChrome: rgba(252, 253, 255, 0.66);
+        --glassColorSheet: rgba(252, 253, 255, 0.91);
+        --glassColorBorder: rgba(255, 255, 255, 0.55);
+        --glassColorEdge: rgba(22, 26, 32, 0.1);
+        --glassColorFallback: #fcfdff;
+        --glassBlurChrome: 20px;
+        --glassBlurSheet: 32px;
+        --glassSaturate: 1.6;
+        --glassHighlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        --glassShadow: 0 8px 32px -12px rgba(22, 26, 32, 0.28);
+        --glassNoiseOpacity: 0.035;
+        --brandFill: #facc15;
+        --brandOn: #171b28;
+        --brandHover: #ebbf00;
+        --brandPressed: #dcb300;
+        --brandText: #886d00;
+        --brandWash: #fceec3;
+        --brandWashText: #836900;
+        --brandBorder: #886d00;
+        color-scheme: light;
+      }
+      .t-dark {
+        --bgCanvas: #0c0f19;
+        --bgSurface: #171b28;
+        --bgRaised: #242935;
+        --bgSunken: #0c0f19;
+        --bgHover: #242935;
+        --bgField: #0c0f19;
+        --bgInverse: #f3f6fa;
+        --fgPrimary: #f3f6fa;
+        --fgSecondary: #a8aeb8;
+        --fgFaint: #868d96;
+        --fgDisabled: #505660;
+        --fgInverse: #171b28;
+        --borderSubtle: #333844;
+        --borderControl: #656b74;
+        --actionBg: #3953f2;
+        --actionBgHover: #2f3fc4;
+        --actionBgPressed: #242f95;
+        --actionFg: #ffffff;
+        --actionText: #91b2ff;
+        --actionWash: #181e66;
+        --actionWashText: #b4ccff;
+        --focusRing: #91b2ff;
+        --scrim: rgba(12, 15, 25, 0.6);
+        --statusSuccessSolid: #008054;
+        --statusSuccessOnSolid: #ffffff;
+        --statusSuccessText: #4fd093;
+        --statusSuccessWash: #003320;
+        --statusSuccessWashText: #88e3b2;
+        --statusSuccessBorder: #00b879;
+        --statusWarningSolid: #d78600;
+        --statusWarningOnSolid: #171b28;
+        --statusWarningText: #f1a12e;
+        --statusWarningWash: #422000;
+        --statusWarningWashText: #fcbf71;
+        --statusWarningBorder: #d78600;
+        --statusDangerSolid: #c51c2e;
+        --statusDangerOnSolid: #ffffff;
+        --statusDangerText: #ff9089;
+        --statusDangerWash: #520810;
+        --statusDangerWashText: #ffb7b1;
+        --statusDangerBorder: #ff5b5b;
+        --statusInfoSolid: #0572ac;
+        --statusInfoOnSolid: #ffffff;
+        --statusInfoText: #67bef7;
+        --statusInfoWash: #052d48;
+        --statusInfoWashText: #96d5ff;
+        --statusInfoBorder: #40a5e3;
+        --accentAquaFill: #24cdcd;
+        --accentAquaOnFill: #171b28;
+        --accentAquaStrong: #00b1b3;
+        --accentAquaText: #77e0df;
+        --accentAquaWashText: #77e0df;
+        --accentAquaWash: #003134;
+        --vizGrid: #333844;
+        --vizAxis: #505660;
+        --vizAxisLabel: #a8aeb8;
+        --vizTrendLine: #f3f6fa;
+        --vizGoalBand: #003134;
+        --vizGoalLine: #24cdcd;
+        --vizCategorical1: #4870ff;
+        --vizCategorical2: #83a200;
+        --vizCategorical3: #b74bc2;
+        --vizCategorical4: #00a9aa;
+        --vizCategorical5: #8f61db;
+        --vizCategorical6: #c55f1b;
+        --vizMacroProtein: #4870ff;
+        --vizMacroCarbs: #83a200;
+        --vizMacroFat: #b74bc2;
+        --vizMacroFiber: #00a9aa;
+        --vizSequential1: #242f95;
+        --vizSequential2: #2f3fc4;
+        --vizSequential3: #3953f2;
+        --vizSequential4: #4a70ff;
+        --vizSequential5: #6e95ff;
+        --vizSequential6: #91b2ff;
+        --vizSequential7: #b4ccff;
+        --vizDiverging1: #b4ccff;
+        --vizDiverging2: #6e95ff;
+        --vizDiverging3: #3953f2;
+        --vizDiverging4: #333844;
+        --vizDiverging5: #5a7800;
+        --vizDiverging6: #88ab00;
+        --vizDiverging7: #bedb66;
+        --glassColorChrome: rgba(23, 27, 40, 0.76);
+        --glassColorSheet: rgba(23, 27, 40, 0.83);
+        --glassColorBorder: rgba(255, 255, 255, 0.1);
+        --glassColorEdge: rgba(0, 0, 0, 0.45);
+        --glassColorFallback: #242935;
+        --glassBlurChrome: 20px;
+        --glassBlurSheet: 32px;
+        --glassSaturate: 1.3;
+        --glassHighlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --glassShadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
+        --glassNoiseOpacity: 0.05;
+        --brandFill: #facc15;
+        --brandOn: #171b28;
+        --brandHover: #ebbf00;
+        --brandPressed: #dcb300;
+        --brandText: #facc15;
+        --brandWash: #362a02;
+        --brandWashText: #facc15;
+        --brandBorder: transparent;
+        color-scheme: dark;
+      }
+    </style>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bgCanvas);
+        color: var(--fgPrimary);
+        font:
+          15px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        overflow-wrap: anywhere;
+      }
+      code,
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12.5px;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+      :focus-visible {
+        outline: 2px solid var(--brandText);
+        outline-offset: 2px;
+      }
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 16px 48px;
+      }
+      header.page {
+        padding: 24px 0 8px;
+      }
+      h1 {
+        font-size: 26px;
+        line-height: 1.2;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      h3 {
+        font-size: 15px;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 8px;
+      }
+      .muted {
+        color: var(--fgSecondary);
+      }
+      .small {
+        font-size: 13px;
+        color: var(--fgSecondary);
+      }
+      .note {
+        border: 1px solid var(--statusWarningBorder);
+        background: var(--statusWarningWash);
+        color: var(--statusWarningWashText);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .ic {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+      section {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px solid var(--borderSubtle);
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--borderControl);
+        border-radius: 999px;
+        padding: 2px;
+        margin: 8px 0;
+      }
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .seg label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 14px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .seg input:checked + label {
+        background: var(--brandWash);
+        color: var(--brandWashText);
+        font-weight: 600;
+      }
+      .seg input:focus-visible + label {
+        outline: 2px solid var(--brandText);
+        outline-offset: 2px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+        gap: 24px 20px;
+        margin-top: 12px;
+      }
+      .cell {
+        min-width: 0;
+      }
+      .cap {
+        margin-bottom: 8px;
+      }
+      .cap h3 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--borderControl);
+        border-radius: 999px;
+        padding: 1px 8px;
+        color: var(--fgSecondary);
+      }
+      .tag .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .res {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .res .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .res.pass {
+        color: var(--statusSuccessText);
+      }
+      .res.fail {
+        color: var(--statusDangerText);
+      }
+      .err {
+        display: none;
+        margin: 12px 0;
+        padding: 12px;
+        border-radius: 10px;
+        background: var(--statusDangerSolid);
+        color: var(--statusDangerOnSolid);
+        font-weight: 600;
+      }
+
+      /* ---------- phone frame and busy content */
+      .phone {
+        position: relative;
+        width: 100%;
+        max-width: 360px;
+        height: 600px;
+        overflow: hidden;
+        border-radius: 32px;
+        border: 6px solid var(--bgInverse);
+        background: var(--bgCanvas);
+        isolation: isolate;
+      }
+      .phone.short {
+        height: 440px;
+      }
+      .phone.p-ios,
+      .phone.p-ios26 {
+        border-radius: 44px;
+      }
+      .phone.p-android,
+      .phone.p-android30 {
+        border-radius: 26px;
+      }
+      .screen {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        scrollbar-width: none;
+        padding: 70px 12px 96px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .screen::-webkit-scrollbar {
+        display: none;
+      }
+      .card {
+        background: var(--bgSurface);
+        border: 1px solid var(--borderSubtle);
+        border-radius: 14px;
+        padding: 10px 12px;
+      }
+      .card h4 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: var(--fgSecondary);
+        font-weight: 600;
+      }
+      .stripe {
+        display: flex;
+        gap: 4px;
+        height: 72px;
+        align-items: flex-end;
+      }
+      .stripe i {
+        flex: 1;
+        border-radius: 4px 4px 0 0;
+      }
+      .chart svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 56px;
+      }
+      .av {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        flex: none;
+      }
+      .row .who {
+        flex: 1;
+        min-width: 0;
+      }
+      .row .who b {
+        display: block;
+        font-size: 14px;
+      }
+      .row .who span {
+        font-size: 12px;
+        color: var(--fgSecondary);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chip .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .chip.warn {
+        background: var(--statusWarningWash);
+        color: var(--statusWarningWashText);
+      }
+      .chip.ok {
+        color: var(--statusSuccessText);
+      }
+      .chip.danger {
+        background: var(--statusDangerSolid);
+        color: var(--statusDangerOnSolid);
+      }
+
+      /* ---------- glass chrome (web reference: tokens exact) */
+      .glass {
+        position: absolute;
+        z-index: 2;
+        color: var(--fgPrimary);
+        background: var(--glassColorChrome);
+        -webkit-backdrop-filter: blur(var(--glassBlurChrome)) saturate(var(--glassSaturate));
+        backdrop-filter: blur(var(--glassBlurChrome)) saturate(var(--glassSaturate));
+        box-shadow:
+          inset 0 0 0 1px var(--glassColorBorder),
+          var(--glassHighlight),
+          var(--glassShadow);
+      }
+      .glass::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: var(--glassNoiseOpacity);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      .glass.sheet {
+        background: var(--glassColorSheet);
+        /* Phone budget: blur at most 20px, so the 32px sheet token is capped here. */
+        -webkit-backdrop-filter: blur(min(var(--glassBlurSheet), 20px))
+          saturate(var(--glassSaturate));
+        backdrop-filter: blur(min(var(--glassBlurSheet), 20px)) saturate(var(--glassSaturate));
+      }
+      /* Fallback, forced for the labelled fallback frames */
+      .glass.solid {
+        background: var(--glassColorFallback);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: 0 0 0 1px var(--borderSubtle);
+      }
+      .glass.solid::after {
+        display: none;
+      }
+      .glass.solid.hc {
+        box-shadow: 0 0 0 1px var(--borderControl);
+      }
+      /* Live web rules: the real fallbacks, applied to the web frames only */
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .p-web .glass {
+          background: var(--glassColorFallback);
+          box-shadow: 0 0 0 1px var(--borderSubtle);
+        }
+        .p-web .glass::after {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .p-web .glass {
+          background: var(--glassColorFallback);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+          box-shadow: 0 0 0 1px var(--borderSubtle);
+        }
+        .p-web .glass::after {
+          display: none;
+        }
+      }
+      @media (prefers-contrast: more) {
+        .p-web .glass {
+          background: var(--glassColorFallback);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+          box-shadow: 0 0 0 1px var(--borderControl);
+        }
+        .p-web .glass::after {
+          display: none;
+        }
+      }
+
+      .topbar {
+        inset: 0 0 auto 0;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px;
+        border-radius: 0;
+      }
+      .topbar .title {
+        flex: 1;
+        font-weight: 700;
+        font-size: 17px;
+        text-align: center;
+      }
+      .p-android .topbar .title,
+      .p-android30 .topbar .title {
+        text-align: start;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .p-android .topbar,
+      .p-android30 .topbar {
+        height: 64px;
+      }
+      .iconbtn {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+      }
+      .iconbtn .ic {
+        width: 22px;
+        height: 22px;
+      }
+      /* Focus on glass: focus ring plus a 2px surface halo */
+      .is-focus {
+        box-shadow:
+          0 0 0 2px var(--bgSurface),
+          0 0 0 4px var(--brandText);
+      }
+      .tabbar {
+        inset: auto 0 0 0;
+        height: 74px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-around;
+        padding: 6px 4px 0;
+        border-radius: 0;
+      }
+      .p-ios26 .tabbar {
+        inset: auto 12px 14px 12px;
+        height: 62px;
+        border-radius: 999px;
+        align-items: center;
+        padding: 0 4px;
+      }
+      .p-ios26 .glass:not(.solid) {
+        box-shadow:
+          inset 0 1px 0 var(--glassColorBorder),
+          inset 0 -1px 0 var(--glassColorBorder),
+          inset 0 0 0 1px var(--glassColorBorder),
+          var(--glassShadow);
+      }
+      .p-android .tabbar,
+      .p-android30 .tabbar {
+        height: 80px;
+        padding-top: 10px;
+      }
+      .tab {
+        display: grid;
+        justify-items: center;
+        gap: 1px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--fgPrimary);
+        min-width: 64px;
+        min-height: 44px;
+        padding: 4px 8px;
+        border-radius: 14px;
+      }
+      .tab .ic {
+        width: 22px;
+        height: 22px;
+      }
+      .tab.on {
+        background: var(--brandWash);
+        color: var(--brandWashText);
+        font-weight: 700;
+      }
+      .p-ios26 .tab.on {
+        border-radius: 999px;
+      }
+      /* Sticky client header */
+      .hubhead {
+        inset: 0 0 auto 0;
+        z-index: 5; /* stays above the sheet's scrim, so it is one of the two visible glass layers */
+        min-height: 96px;
+        padding: 6px 8px 10px;
+        display: grid;
+        gap: 4px;
+        border-radius: 0;
+      }
+      .hubhead .line1 {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .hubhead .name {
+        flex: 1;
+        font-weight: 700;
+        font-size: 17px;
+      }
+      .hubhead .line2 {
+        padding-inline-start: 12px;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        background: var(--scrim);
+      }
+      .sheet {
+        inset: auto 0 0 0;
+        z-index: 4;
+        border-radius: 22px 22px 0 0;
+        padding: 8px 16px 20px;
+        display: grid;
+        gap: 8px;
+      }
+      .sheet .grab {
+        width: 40px;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--borderControl);
+        justify-self: center;
+      }
+      .sheet h5 {
+        margin: 0;
+        font-size: 17px;
+      }
+      .sheet .sec {
+        font-size: 13px;
+        color: var(--fgSecondary);
+      }
+      .field {
+        display: grid;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .field span.input {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 12px;
+        border-radius: 10px;
+        background: var(--bgField);
+        border: 1px solid var(--borderControl);
+        font-weight: 400;
+        font-size: 15px;
+      }
+      .link {
+        color: var(--brandText);
+        text-decoration: underline;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border-radius: 12px;
+        background: var(--brandFill);
+        color: var(--brandOn);
+        border: 1px solid var(--brandBorder);
+        font-weight: 700;
+      }
+      .badge-n {
+        position: absolute;
+        z-index: 6;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 800;
+        background: var(--bgInverse);
+        color: var(--fgInverse);
+        box-shadow: 0 0 0 2px var(--bgSurface);
+      }
+      ol.rules {
+        padding-inline-start: 20px;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: start;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--borderSubtle);
+        vertical-align: top;
+        overflow-wrap: normal;
+      }
+      .tablewrap table {
+        min-width: 720px;
+      }
+      th {
+        font-size: 12px;
+        color: var(--fgSecondary);
+        font-weight: 600;
+      }
+      td.num {
+        font-variant-numeric: tabular-nums;
+      }
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--borderSubtle);
+        border-radius: 12px;
+        background: var(--bgSurface);
+      }
+      .live {
+        display: grid;
+        gap: 4px;
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--bgSurface);
+        border: 1px solid var(--borderSubtle);
+      }
+      /* ---------- never glass panel */
+      .desk {
+        position: relative;
+        height: 560px;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid var(--borderSubtle);
+        background: var(--bgCanvas);
+        isolation: isolate;
+      }
+      .desk .screen {
+        padding: 72px 16px 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+        gap: 14px;
+      }
+      .desk .topbar .title {
+        text-align: start;
+        padding-inline-start: 8px;
+      }
+      .solid-tag {
+        float: inline-end;
+      }
+      .form-grid {
+        display: grid;
+        gap: 10px;
+      }
+      .stat {
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .probe {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page">
+        <h1>F3 glass sheet</h1>
+        <p class="muted">
+          Glass chrome for the GymOS revamp (ADR-0019 decision 6, rulings R2). Glass covers only the
+          top bar, tab bar, sticky client header and sheets, on iOS, web and Android. Everything is
+          synthetic demo data.
+        </p>
+        <p class="note" role="note">
+          <span data-icon="alert"></span>
+          <span
+            ><strong>Provisional.</strong> Colours come from F1's proposed token set (F1 token
+            sheet, PR #140, not yet approved by the owner). This sheet changes if F1 changes.</span
+          >
+        </p>
+        <div class="seg" role="radiogroup" aria-label="Theme">
+          <input type="radio" name="theme" id="th-system" value="system" checked /><label
+            for="th-system"
+            ><span data-icon="monitor"></span>System</label
+          >
+          <input type="radio" name="theme" id="th-light" value="light" /><label for="th-light"
+            ><span data-icon="sun"></span>Light</label
+          >
+          <input type="radio" name="theme" id="th-dark" value="dark" /><label for="th-dark"
+            ><span data-icon="moon"></span>Dark</label
+          >
+        </div>
+        <div class="err" id="err" role="alert"></div>
+      </header>
+
+      <section id="s1" aria-labelledby="h-s1">
+        <h2 id="h-s1">1. The four chrome surfaces over busy content</h2>
+        <p class="muted">
+          Web reference, tokens exact. The client list and weight chart scroll under the chrome.
+          Chrome glass carries <code>fg.primary</code> text and icons only. Sheet glass may carry
+          secondary text, a link and an input.
+        </p>
+        <div class="grid" id="g-s1"></div>
+      </section>
+
+      <section id="s2" aria-labelledby="h-s2">
+        <h2 id="h-s2">2. Per platform</h2>
+        <p class="muted">
+          Same screen on each platform. The iOS and Android looks are browser approximations: real
+          screenshots come from the iOS simulator and the owner's Android kit. All use the same tint
+          tokens, so the legibility numbers hold.
+        </p>
+        <div class="grid" id="g-s2"></div>
+      </section>
+
+      <section id="s3" aria-labelledby="h-s3">
+        <h2 id="h-s3">3. Each fallback</h2>
+        <p class="muted">
+          Every trigger switches the chrome to the solid <code>glass.fallback</code> (light
+          <code>bg.surface</code>, dark <code>bg.raised</code>). High contrast also draws
+          <code>border.control</code> edges. Sheets fall back the same way.
+        </p>
+        <div class="grid" id="g-s3"></div>
+        <div class="live" id="live" aria-live="polite"></div>
+      </section>
+
+      <section id="s4" aria-labelledby="h-s4">
+        <h2 id="h-s4">4. Budget rules</h2>
+        <p class="muted">
+          The numbered markers point at each rule. The checks under the list run in this page.
+        </p>
+        <div class="grid">
+          <div class="cell" id="c-s4"></div>
+          <div class="cell">
+            <ol class="rules">
+              <li>
+                <strong>At most two glass layers per viewport.</strong> Here the sticky header and
+                the sheet. The tab bar sits under the scrim and turns solid, because it would be a
+                third layer.
+              </li>
+              <li>
+                <strong>Blur at most 20 px on phones.</strong> Chrome uses
+                <code>glass.blur.chrome</code> (20 px). The sheet token is 32 px, so phones cap it
+                at 20 px.
+              </li>
+              <li>
+                <strong>Never on a scrolling list.</strong> The list rows and cards are solid
+                <code>bg.surface</code>; only the chrome over them is glass.
+              </li>
+              <li>
+                <strong>Chips inside glass sit on an opaque pill.</strong> The severe-allergy chip
+                is solid <code>status.danger.solid</code> with an icon and words, never glass, never
+                tenant-coloured.
+              </li>
+              <li>
+                <strong>Focus on glass gets a 2 px surface halo.</strong> The focused "More" button
+                shows the focus ring with a 2 px <code>bg.surface</code> halo inside it.
+              </li>
+            </ol>
+            <div class="live" id="checks"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s5" aria-labelledby="h-s5">
+        <h2 id="h-s5">5. Legibility numbers</h2>
+        <p class="muted">
+          Computed in this page: each text token over the tint at its token alpha, laid over each of
+          46 solid backdrops (black, white, and steps 300, 500, 700 and 900 of every colour family,
+          per tokens.md §9.3). A blurred backdrop is an average of what is behind it, so the solid
+          patches bound it. Chrome needs 7:1 for <code>fg.primary</code>; sheet text needs 4.5:1.
+        </p>
+        <div
+          class="tablewrap"
+          tabindex="0"
+          role="region"
+          aria-label="Legibility table, scrolls sideways"
+        >
+          <table>
+            <caption class="small" style="text-align: start; padding: 8px 10px">
+              Worst case per token, both modes
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Mode</th>
+                <th scope="col">Surface</th>
+                <th scope="col">Token</th>
+                <th scope="col">Tint alpha</th>
+                <th scope="col">Worst ratio</th>
+                <th scope="col">Worst backdrop</th>
+                <th scope="col">Needs</th>
+                <th scope="col">Result</th>
+              </tr>
+            </thead>
+            <tbody id="legib"></tbody>
+          </table>
+        </div>
+        <div class="live" id="fails"></div>
+      </section>
+
+      <section id="s6" aria-labelledby="h-s6">
+        <h2 id="h-s6">6. Where glass is never used</h2>
+        <p class="muted">
+          A table, a form and a data card stay solid, next to glass chrome. Anything the coach reads
+          closely, compares or types into is solid.
+        </p>
+        <div id="c-s6"></div>
+      </section>
+    </div>
+    <div class="probe t-light" id="probe-light" aria-hidden="true"></div>
+    <div class="probe t-dark" id="probe-dark" aria-hidden="true"></div>
+
+    <script type="application/json" id="backdrops">
+      {
+        "neutral": { "300": "#C7CDD5", "500": "#868D96", "700": "#505660", "900": "#171B28" },
+        "ultra": { "300": "#B4CCFF", "500": "#6E95FF", "700": "#3953F2", "900": "#242F95" },
+        "volt": { "300": "#BEDB66", "500": "#88AB00", "700": "#5A7800", "900": "#324800" },
+        "aqua": { "300": "#77E0DF", "500": "#00B1B3", "700": "#007B7E", "900": "#004A4C" },
+        "emerald": { "300": "#88E3B2", "500": "#00B879", "700": "#008054", "900": "#004D32" },
+        "amber": { "300": "#FCBF71", "500": "#D78600", "700": "#9B5A00", "900": "#603200" },
+        "red": { "300": "#FFB7B1", "500": "#FF5B5B", "700": "#C51C2E", "900": "#780D1A" },
+        "sky": { "300": "#96D5FF", "500": "#40A5E3", "700": "#0572AC", "900": "#064469" },
+        "orchid": { "300": "#F7ADFF", "500": "#D568E0", "700": "#9F38A7", "900": "#611E64" },
+        "iris": { "300": "#D2C1FF", "500": "#AA7EFB", "700": "#7B4EBF", "900": "#4A2C74" },
+        "apricot": { "300": "#FFBA94", "500": "#E47B3C", "700": "#AB4C05", "900": "#682B04" }
+      }
+    </script>
+    <script>
+      'use strict';
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+      function fail(msg) {
+        const e = $('#err');
+        e.style.display = 'block';
+        e.textContent = 'Self-check failed: ' + msg;
+        console.error(msg);
+      }
+
+      const ICONS = {
+        back: '<path d="m15 18-6-6 6-6"/>',
+        search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+        more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+        today: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        clients:
+          '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.8 3 2.6 3.5 5.2"/>',
+        tools:
+          '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5Z"/>',
+        account: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.2-6 8-6s7 2 8 6"/>',
+        octagon:
+          '<path stroke-linejoin="miter" d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9Z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+        alert:
+          '<path stroke-linejoin="miter" d="M12 3 2 21h20Z"/><path d="M12 10v4"/><path d="M12 17h.01"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        check: '<path d="M20 6 9 17l-5-5"/>',
+        pass: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+        fail: '<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
+        info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+        moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/>',
+        monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+        layers: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
+      };
+      const icon = (name, cls = 'ic') =>
+        `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+      const badge = (ok, word) =>
+        `<span class="res ${ok ? 'pass' : 'fail'}">${icon(ok ? 'pass' : 'fail')}${word || (ok ? 'Pass' : 'Fail')}</span>`;
+
+      // ---------- colour maths (WCAG 2.x relative luminance)
+      const parseHex = (h) => {
+        if (!/^#[0-9a-f]{6}$/i.test(h)) throw new Error(`Not a 6-digit hex: ${h}`);
+        return [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+      };
+      const parseColor = (s) => {
+        s = s.trim();
+        if (s.startsWith('#')) return { rgb: parseHex(s), a: 1 };
+        const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/);
+        if (!m) throw new Error(`Unexpected colour value: ${s}`);
+        return {
+          rgb: [m[1], m[2], m[3]].map((n) => Number(n) / 255),
+          a: m[4] === undefined ? 1 : Number(m[4]),
+        };
+      };
+      const lum = (c) => {
+        const l = c.map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+      };
+      const contrast = (a, b) => {
+        const x = lum(a);
+        const y = lum(b);
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+      };
+      const fmt = (r) => (Math.floor(r * 100) / 100).toFixed(2) + ':1';
+
+      // Token values per mode, read from the theme variables (never typed here)
+      function tokens(mode) {
+        const cs = getComputedStyle($('#probe-' + mode));
+        const v = (n) => {
+          const x = cs.getPropertyValue('--' + n).trim();
+          if (!x) throw new Error(`Missing theme variable --${n} (${mode})`);
+          return x;
+        };
+        return {
+          chrome: parseColor(v('glassColorChrome')),
+          sheet: parseColor(v('glassColorSheet')),
+          fg: {
+            'fg.primary': parseColor(v('fgPrimary')).rgb,
+            'fg.secondary': parseColor(v('fgSecondary')).rgb,
+            'link (Sunflower brand text)': parseColor(v('brandText')).rgb,
+          },
+        };
+      }
+      const BACKDROPS = (() => {
+        const j = JSON.parse($('#backdrops').textContent);
+        const list = [
+          ['white', [1, 1, 1]],
+          ['black', [0, 0, 0]],
+        ];
+        for (const [fam, steps] of Object.entries(j)) {
+          for (const st of ['300', '500', '700', '900']) {
+            if (!steps[st]) throw new Error(`Backdrop ${fam}.${st} missing`);
+            list.push([`${fam}.${st}`, parseHex(steps[st])]);
+          }
+        }
+        return list;
+      })();
+      const over = (tint, alpha, back) => back.map((c, i) => alpha * tint[i] + (1 - alpha) * c);
+      function worst(fg, tint, alpha) {
+        let w = null;
+        for (const [name, back] of BACKDROPS) {
+          const r = contrast(fg, over(tint, alpha, back));
+          if (!w || r < w.r) w = { r, name };
+        }
+        return w;
+      }
+      // Lowest alpha (to 0.01) at which the token passes over every backdrop
+      function minAlpha(fg, tint, need) {
+        for (let a = 0; a <= 100; a++) if (worst(fg, tint, a / 100).r >= need) return a / 100;
+        return null;
+      }
+
+      // ---------- frame building blocks
+      const SWATCHES = [1, 2, 3, 4, 5, 6].map((i) => `var(--vizCategorical${i})`);
+      const stripe = () =>
+        `<div class="card"><h4>Week at a glance</h4><div class="stripe">${[
+          90, 60, 75, 45, 100, 70, 85, 55, 95, 65, 80, 50,
+        ]
+          .map((h, i) => `<i style="background:${SWATCHES[i % 6]};height:${h}%"></i>`)
+          .join('')}</div></div>`;
+      const chart = () =>
+        `<div class="card chart"><h4>Weight, Demo client 14 (kg)</h4><svg viewBox="0 0 300 110" aria-hidden="true">
+          <rect x="0" y="34" width="300" height="26" fill="var(--vizGoalBand)"/>
+          <line x1="0" y1="47" x2="300" y2="47" stroke="var(--vizGoalLine)" stroke-dasharray="4 4" stroke-width="1.5"/>
+          ${[20, 55, 90].map((y) => `<line x1="0" y1="${y}" x2="300" y2="${y}" stroke="var(--vizGrid)"/>`).join('')}
+          <polyline fill="none" stroke="var(--vizCategorical1)" stroke-width="3" points="0,95 30,90 60,86 90,88 120,78 150,72 180,70 210,62 240,58 270,52 300,49"/>
+          <polyline fill="none" stroke="var(--vizCategorical3)" stroke-width="2" points="0,30 40,40 80,28 120,44 160,36 200,50 240,42 300,56"/>
+          ${[0, 60, 120, 180, 240, 300].map((x, i) => `<circle cx="${x}" cy="${[95, 86, 78, 70, 58, 49][i]}" r="4" fill="var(--vizCategorical1)"/>`).join('')}
+        </svg></div>`;
+      const CLIENTS = [
+        [14, 'Check-in overdue 3 days', 'warn'],
+        [7, 'Plan published today', 'ok'],
+        [22, 'Check-in overdue 1 day', 'warn'],
+        [3, 'On track', 'ok'],
+        [18, 'Check-in overdue 5 days', 'warn'],
+        [9, 'On track', 'ok'],
+        [11, 'Check-in overdue 2 days', 'warn'],
+      ];
+      const list = () =>
+        `<div class="card">${CLIENTS.map(
+          ([n, sub, st], i) =>
+            `<div class="row"><span class="av" style="background:${SWATCHES[i % 6]}"></span><span class="who"><b>Demo client ${n}</b><span>${sub}</span></span>${
+              st === 'warn'
+                ? `<span class="chip warn">${icon('clock')}Overdue</span>`
+                : `<span class="chip ok">${icon('check')}On track</span>`
+            }</div>`,
+        ).join('')}</div>`;
+      const busy = () => stripe() + chart() + list() + stripe() + list();
+
+      const topbar = (cls, title) =>
+        `<div class="glass topbar ${cls}"><span class="iconbtn">${icon('back')}</span><span class="title">${title}</span><span class="iconbtn">${icon('search')}</span></div>`;
+      const TABS = [
+        ['today', 'Today'],
+        ['clients', 'Clients'],
+        ['tools', 'Tools'],
+        ['account', 'Account'],
+      ];
+      const tabbar = (cls) =>
+        `<div class="glass tabbar ${cls}">${TABS.map(
+          ([k, w]) => `<span class="tab${k === 'clients' ? ' on' : ''}">${icon(k)}${w}</span>`,
+        ).join('')}</div>`;
+      const hubhead = (cls, focus) =>
+        `<div class="glass hubhead ${cls}"><div class="line1"><span class="iconbtn">${icon('back')}</span><span class="name">Demo client 14</span><span class="iconbtn${focus ? ' is-focus' : ''}">${icon('more')}</span></div><div class="line2"><span class="chip danger">${icon('octagon')}Severe allergy · Peanut</span></div></div>`;
+      const sheet = (cls) =>
+        `<div class="glass sheet ${cls}"><span class="grab"></span><h5>Log weight</h5><span class="sec">Demo client 14 · last entry 3 days ago</span>
+          <span class="field">Weight (kg)<span class="input num">78.4</span></span>
+          <span class="link">See weight history</span><span class="btn">Save entry</span></div>`;
+
+      // kind 'list' = top bar + tab bar; 'hub' = sticky header + sheet (tab bar under the scrim, solid)
+      function frame({
+        p = 'web',
+        kind = 'list',
+        solid = false,
+        hc = false,
+        short = false,
+        focus = false,
+        label,
+      }) {
+        const g = solid ? `solid${hc ? ' hc' : ''}` : '';
+        const title = kind === 'list' ? 'Clients' : '';
+        let chrome;
+        if (kind === 'list') chrome = topbar(g, title) + tabbar(g);
+        else chrome = hubhead(g, focus) + tabbar('solid') + `<div class="scrim"></div>` + sheet(g);
+        return `<div class="phone p-${p}${short ? ' short' : ''}" role="img" aria-label="${label}"><div class="screen" aria-hidden="true">${busy()}</div><div aria-hidden="true">${chrome}</div></div>`;
+      }
+      const caption = (title, tags, body) =>
+        `<div class="cap"><h3>${title}${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</h3>${body ? `<p class="small">${body}</p>` : ''}</div>`;
+      const APPROX = `${icon('info')}Browser approximation`;
+
+      // ---------- section 1
+      $('#g-s1').innerHTML = [
+        `<div class="cell">${caption('Client list', [`${icon('layers')}2 glass layers`], 'Top bar and tab bar (Today · Clients · Tools · Account). Selected tab label on an opaque <code>action.wash</code> pill (Sunflower wash).')}${frame({ kind: 'list', label: 'Client list with a glass top bar and glass tab bar over a colourful list and chart' })}</div>`,
+        `<div class="cell">${caption('Client hub with a sheet', [`${icon('layers')}2 glass layers`], 'Sticky client header with the severe-allergy chip on its own opaque pill, and the Log weight sheet with secondary text, an input and a link.')}${frame({ kind: 'hub', label: 'Client hub with a glass sticky header and a glass sheet open over the content' })}</div>`,
+      ].join('');
+
+      // ---------- section 2
+      const PLATFORMS = [
+        [
+          'ios26',
+          'iOS 26',
+          [APPROX],
+          '<code>GlassView</code> from <code>expo-glass-effect</code> when <code>isLiquidGlassAvailable()</code>. Floating capsule tab bar.',
+        ],
+        [
+          'ios',
+          'iOS before 26',
+          [APPROX],
+          '<code>expo-blur</code> system material (<code>systemChromeMaterial</code>), edge to edge.',
+        ],
+        [
+          'web',
+          'Web',
+          ['Tokens exact'],
+          '<code>backdrop-filter</code> and <code>-webkit-backdrop-filter</code>, blur 20 px, noise texture, with the <code>@supports</code> solid fallback.',
+        ],
+        [
+          'android',
+          'Android API 31 and up',
+          [APPROX],
+          '<code>expo-blur</code> inside <code>BlurTargetView</code>, <code>blurMethod: dimezisBlurViewSdk31Plus</code>.',
+        ],
+        [
+          'android30',
+          'Android below API 31',
+          [APPROX, 'Solid'],
+          'Solid <code>glass.fallback</code>. Never the unblurred tint, which would fail legibility.',
+        ],
+      ];
+      $('#g-s2').innerHTML = PLATFORMS.map(
+        ([p, name, tags, body]) =>
+          `<div class="cell">${caption(name, tags, body)}${frame({ p, kind: 'list', solid: p === 'android30', short: true, label: `${name}: client list with ${p === 'android30' ? 'solid' : 'glass'} top bar and tab bar` })}</div>`,
+      ).join('');
+
+      // ---------- section 3
+      const FALLBACKS = [
+        [
+          'ios',
+          'Reduce Transparency (iOS)',
+          '<code>AccessibilityInfo.isReduceTransparencyEnabled()</code> with the live <code>reduceTransparencyChanged</code> listener.',
+          false,
+        ],
+        [
+          'web',
+          'prefers-reduced-transparency',
+          '<code>@media (prefers-reduced-transparency: reduce)</code> on web, where the browser supports it.',
+          false,
+        ],
+        [
+          'web',
+          'High contrast',
+          '<code>prefers-contrast: more</code> on web, iOS <code>isDarkerSystemColorsEnabled()</code>, Android <code>isHighTextContrastEnabled()</code>. Solid with <code>border.control</code> edges.',
+          true,
+        ],
+        [
+          'web',
+          'No backdrop-filter support',
+          '<code>@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))</code>.',
+          false,
+        ],
+        [
+          'android30',
+          'Android below API 31',
+          'No RenderNode blur, so solid. Never an unblurred tint.',
+          false,
+        ],
+        [
+          'web',
+          '"Solid bars" Account preference',
+          'Effect only. S11 builds the toggle; the value is stored through <code>packages/platform</code> storage. Same on every platform.',
+          false,
+        ],
+      ];
+      $('#g-s3').innerHTML = FALLBACKS.map(
+        ([p, name, body, hc]) =>
+          `<div class="cell">${caption(name, ['Solid fallback'], body)}${frame({ p: p === 'web' ? 'web-forced' : p, kind: 'list', solid: true, hc, short: true, label: `${name}: client list with solid top bar and tab bar` })}</div>`,
+      ).join('');
+
+      function renderLive() {
+        const sup =
+          CSS.supports('backdrop-filter', 'blur(1px)') ||
+          CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
+        const rt = matchMedia('(prefers-reduced-transparency: reduce)').matches;
+        const hc = matchMedia('(prefers-contrast: more)').matches;
+        const solid = !sup || rt || hc;
+        $('#live').innerHTML = `<h3>Your browser right now</h3>
+          <p class="small">The web frames in sections 1, 2 and 4 use the real rules, so they follow these.</p>
+          <p class="small">backdrop-filter supported: <strong>${sup ? 'yes' : 'no'}</strong> · reduced transparency: <strong>${rt ? 'on' : 'off'}</strong> · more contrast: <strong>${hc ? 'on' : 'off'}</strong></p>
+          <p>Web chrome renders: <strong>${solid ? 'solid fallback' : 'glass'}</strong></p>`;
+      }
+      renderLive();
+      for (const q of ['(prefers-reduced-transparency: reduce)', '(prefers-contrast: more)'])
+        matchMedia(q).addEventListener('change', renderLive);
+
+      // ---------- section 4
+      $('#c-s4').innerHTML =
+        caption('Client hub, annotated', [`${icon('layers')}2 glass layers`], '') +
+        `<div style="position:relative;max-width:360px">${frame({ kind: 'hub', focus: true, label: 'Client hub with numbered markers for the five budget rules' })}
+          <span class="badge-n" style="bottom:262px;inset-inline-start:18px" aria-hidden="true">1</span>
+          <span class="badge-n" style="bottom:226px;inset-inline-end:18px" aria-hidden="true">2</span>
+          <span class="badge-n" style="top:170px;inset-inline-end:18px" aria-hidden="true">3</span>
+          <span class="badge-n" style="top:64px;inset-inline-start:236px" aria-hidden="true">4</span>
+          <span class="badge-n" style="top:10px;inset-inline-start:250px" aria-hidden="true">5</span></div>`;
+
+      // ---------- section 6
+      $('#c-s6').innerHTML =
+        `<div class="desk p-web" role="region" aria-label="Solid content next to glass chrome">
+        <div class="screen">
+          <div class="card"><h4>Table <span class="tag solid-tag">Solid</span></h4>
+            <table><thead><tr><th scope="col">Client</th><th scope="col">Weight (kg)</th><th scope="col">Change</th></tr></thead>
+            <tbody><tr><td>Demo client 14</td><td class="num">78.4</td><td class="num">−0.6</td></tr>
+            <tr><td>Demo client 7</td><td class="num">64.1</td><td class="num">−0.2</td></tr>
+            <tr><td>Demo client 22</td><td class="num">91.0</td><td class="num">+0.3</td></tr></tbody></table></div>
+          <div class="card"><h4>Form <span class="tag solid-tag">Solid</span></h4>
+            <div class="form-grid"><span class="field">Waist (cm)<span class="input num">84</span></span>
+            <span class="field">Sleep (hours)<span class="input num">7.5</span></span>
+            <span class="field">Notes<span class="input">Felt strong on squats</span></span></div></div>
+          <div class="card"><h4>Data card <span class="tag solid-tag">Solid</span></h4>
+            <div class="stat">82%</div><p class="small">Plan adherence, last 14 days</p>${stripe()}</div>
+        </div>
+        <div aria-hidden="true">${topbar('', 'Demo client 14 · Progress')}</div></div>`;
+
+      // ---------- section 5: legibility
+      const NEED = { chrome: 7, sheet: 4.5 };
+      const failures = [];
+      function renderLegibility() {
+        const rows = [];
+        failures.length = 0;
+        for (const mode of ['light', 'dark']) {
+          const t = tokens(mode);
+          const tiers = [
+            ['chrome', t.chrome, { 'fg.primary': t.fg['fg.primary'] }],
+            ['sheet', t.sheet, t.fg],
+          ];
+          for (const [tier, tint, fgs] of tiers) {
+            for (const [name, fg] of Object.entries(fgs)) {
+              const w = worst(fg, tint.rgb, tint.a);
+              const ok = w.r >= NEED[tier];
+              if (!ok) {
+                const a = minAlpha(fg, tint.rgb, NEED[tier]);
+                failures.push(
+                  `${mode} ${tier}: ${name} reaches ${fmt(w.r)} over ${w.name}, needs ${NEED[tier]}:1. It would pass at a tint alpha of ${a === null ? 'no value' : a.toFixed(2)} (token ${tint.a.toFixed(2)}).`,
+                );
+              }
+              rows.push(
+                `<tr><td>${mode === 'light' ? 'Light' : 'Dark'}</td><td>${tier === 'chrome' ? 'Chrome' : 'Sheet'}</td><td><code>${name}</code></td><td class="num">${tint.a.toFixed(2)}</td><td class="num">${fmt(w.r)}</td><td><code>${w.name}</code></td><td class="num">${NEED[tier]}:1</td><td>${badge(ok)}</td></tr>`,
+              );
+            }
+          }
+          // Context row: why secondary text is not allowed on chrome glass
+          const s = worst(t.fg['fg.secondary'], t.chrome.rgb, t.chrome.a);
+          rows.push(
+            `<tr><td>${mode === 'light' ? 'Light' : 'Dark'}</td><td>Chrome</td><td><code>fg.secondary</code> (not allowed)</td><td class="num">${t.chrome.a.toFixed(2)}</td><td class="num">${fmt(s.r)}</td><td><code>${s.name}</code></td><td>Not used</td><td><span class="res">${icon('info')}Why chrome is fg.primary only</span></td></tr>`,
+          );
+        }
+        $('#legib').innerHTML = rows.join('');
+        $('#fails').innerHTML = failures.length
+          ? `<h3>${badge(false, `${failures.length} failing pair${failures.length > 1 ? 's' : ''}`)}</h3><ul>${failures.map((f) => `<li>${f}</li>`).join('')}</ul>`
+          : `<h3>${badge(true, 'Every pair passes')}</h3>`;
+      }
+
+      // ---------- self-checks: each one fails loudly (banner and console error)
+      function checks() {
+        const out = [];
+        if (Math.abs(contrast([1, 1, 1], [0, 0, 0]) - 21) > 1e-9)
+          throw new Error('White on black is not 21:1');
+        if (BACKDROPS.length !== 46)
+          throw new Error(`Expected 46 backdrops, got ${BACKDROPS.length}`);
+        let maxLayers = 0;
+        let maxBlur = 0;
+        for (const ph of $$('.phone')) {
+          const layers = $$('.glass:not(.solid)', ph).length;
+          maxLayers = Math.max(maxLayers, layers);
+          if (layers > 2) throw new Error(`A frame has ${layers} glass layers`);
+          for (const el of $$('.glass', ph)) {
+            const m = getComputedStyle(el).backdropFilter.match(/blur\(([\d.]+)px\)/);
+            if (m) {
+              maxBlur = Math.max(maxBlur, Number(m[1]));
+              if (Number(m[1]) > 20) throw new Error(`Blur ${m[1]}px on a phone frame`);
+            }
+          }
+          const scroller = $('.screen', ph);
+          if (getComputedStyle(scroller).backdropFilter !== 'none')
+            throw new Error('Glass on a scrolling list');
+          for (const chip of $$('.glass .chip', ph))
+            if (parseColor(getComputedStyle(chip).backgroundColor).a < 1)
+              throw new Error('Chip inside glass is not opaque');
+        }
+        const sup =
+          CSS.supports('backdrop-filter', 'blur(1px)') ||
+          CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
+        out.push(`${badge(maxLayers <= 2)} Glass layers per frame: at most ${maxLayers}`);
+        out.push(
+          sup
+            ? `${badge(maxBlur > 0 && maxBlur <= 20)} Largest blur on a phone frame: ${maxBlur} px`
+            : `${badge(true)} No backdrop-filter in this browser, so no blur at all`,
+        );
+        out.push(`${badge(true)} No scrolling list has a backdrop filter`);
+        out.push(`${badge(true)} Every chip inside glass is opaque`);
+        $('#checks').innerHTML =
+          `<h3>Checked in this page</h3>${out.map((o) => `<p class="small">${o}</p>`).join('')}`;
+      }
+
+      // ---------- theme control
+      for (const r of $$('input[name=theme]'))
+        r.addEventListener('change', () => {
+          document.documentElement.dataset.theme = r.value;
+        });
+
+      for (const el of $$('[data-icon]')) el.outerHTML = icon(el.dataset.icon);
+      // Scroll each list so the colourful content sits under the chrome
+      for (const sc of $$('.phone .screen')) sc.scrollTop = 40;
+
+      try {
+        renderLegibility();
+        checks();
+      } catch (e) {
+        fail(e.message);
+      }
+    </script>
+  </body>
+</html>
