@@ -31,6 +31,7 @@ import { registerCronRoutes } from './routes/cron';
 import { registerMeRoutes } from './routes/me';
 import { registerNotificationRoutes } from './routes/notifications';
 import { registerPlanRoutes } from './routes/plans';
+import { registerTodayRoutes } from './routes/today';
 import { registerVitalsGoalRoutes } from './routes/vitals-goals';
 
 export type { AppDeps } from './app-deps';
@@ -321,6 +322,7 @@ export const buildApp = ({ db, manifest: bootstrapManifest, env, mail: mailOverr
   registerCheckInRoutes(app, bind);
   registerPlanRoutes(app, bind);
   registerCoachInstructionsRoutes(app, bind);
+  registerTodayRoutes(app, bind);
   registerCronRoutes(app, bind);
 
   app.doc('/openapi.json', {
