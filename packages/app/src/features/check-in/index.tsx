@@ -29,24 +29,24 @@ import { adherenceBarTone, adherencePctToRating } from './adherence';
 import { VERDICT_COPY } from './verdict-copy';
 
 const VERDICT_ICON_BG = {
-  success: '$successMuted',
-  warning: '$warningMuted',
-  danger: '$dangerMuted',
-  neutral: '$elevatedBg',
+  success: 'successMuted',
+  warning: 'warningMuted',
+  danger: 'dangerMuted',
+  neutral: 'elevatedBg',
 } as const;
 
 const VERDICT_ICON_FG = {
-  success: '$success',
-  warning: '$warning',
-  danger: '$danger',
-  neutral: '$textMuted',
+  success: 'success',
+  warning: 'warning',
+  danger: 'danger',
+  neutral: 'textMuted',
 } as const;
 
 const BAR_COLOR = {
-  success: '$success',
-  warning: '$warning',
-  danger: '$danger',
-  primary: '$primary',
+  success: 'success',
+  warning: 'warning',
+  danger: 'danger',
+  primary: 'primary',
 } as const;
 
 /** Weekly check-in: capture → deterministic verdict → one-tap apply. */
@@ -100,7 +100,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
     return (
       <AppScreen>
         <PageHeader title="Check-in verdict" />
-        <Card gap="$4" tone={copy.tone === 'danger' ? 'danger' : 'default'} alignItems="center">
+        <Card gap="4" alignItems="center" tone={copy.tone === 'danger' ? 'danger' : 'default'}>
           <YStack
             width={72}
             height={72}
@@ -111,7 +111,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           >
             <VerdictIcon size={32} color={iconFg} />
           </YStack>
-          <YStack gap="$3" width="100%" alignItems="stretch">
+          <YStack gap="3" width="100%" alignItems="stretch">
             <Row>
               <Body fontWeight="800" fontSize={17} flex={1}>
                 {displayTitle}
@@ -139,7 +139,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
                 ))
               : null}
             {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
-              <YStack gap="$2">
+              <YStack gap="2">
                 <SectionTitle>Proposed targets</SectionTitle>
                 <Body fontWeight="700">
                   {verdict.newTargets.kcal} kcal (
@@ -161,14 +161,14 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
                   {apply.isPending ? 'Re-solving plan…' : 'Apply and draft an adjusted plan'}
                 </PrimaryButton>
                 {apply.isError ? (
-                  <Body color="$danger" role="alert">
+                  <Body color="danger" role="alert">
                     {apply.error.message}
                   </Body>
                 ) : null}
               </YStack>
             ) : null}
             {verdict.type === 'REFER_REVIEW' ? (
-              <Body color="$danger">
+              <Body color="danger">
                 Automatic adjustments are paused. Review the client (and involve a physician where
                 appropriate) before changing anything. This is not medical advice.
               </Body>
@@ -195,7 +195,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
     >
       <PageHeader title="Weekly check-in" subtitle="Capture → verdict → optional apply" />
       {chain.toolbar}
-      <Card gap="$4">
+      <Card gap="4">
         <FormField
           label="Today's weight"
           unit="kg"
@@ -210,7 +210,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           {...chain.bind('weight')}
         />
 
-        <YStack gap="$2">
+        <YStack gap="2">
           <FormField
             label="Plan adherence"
             unit="%"
@@ -224,7 +224,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
           <YStack
             height={8}
             width="100%"
-            backgroundColor="$elevatedBg"
+            backgroundColor="elevatedBg"
             borderRadius={999}
             overflow="hidden"
             role="progressbar"
@@ -247,7 +247,7 @@ export const CheckInScreen = ({ clientId }: { clientId: string }) => {
         />
 
         {complete.isError ? (
-          <Body color="$danger" role="alert">
+          <Body color="danger" role="alert">
             {complete.error.message}
           </Body>
         ) : null}

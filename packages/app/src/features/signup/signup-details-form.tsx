@@ -58,7 +58,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
   };
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <FormField
         label="Full name"
@@ -119,7 +119,7 @@ export const SignupDetailsForm = ({ busy, error, onSubmit }: SignupDetailsFormPr
         {...chain.bind('joinCode')}
       />
       {error && !error.field ? (
-        <Body color="$danger" fontSize={12} fontWeight="600" role="alert">
+        <Body color="danger" fontSize={12} fontWeight="600" role="alert">
           {error.message}
         </Body>
       ) : null}

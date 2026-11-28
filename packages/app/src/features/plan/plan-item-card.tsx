@@ -70,10 +70,10 @@ export const PlanItemCard = ({
   const chain = useFocusChain(['kcal', 'proteinG', 'fatG', 'carbsG'], { onSubmit: applyOverride });
 
   return (
-    <Card padding="$3" gap="$2">
+    <Card padding="3" gap="2">
       <Row>
-        <YStack flex={1} gap="$1" minWidth={0}>
-          <XStack gap="$2" alignItems="center" flexWrap="wrap">
+        <YStack flex={1} gap="1" minWidth={0}>
+          <XStack gap="2" alignItems="center" flexWrap="wrap">
             <Body fontWeight="700">{item.foodName}</Body>
             {item.macrosSource === 'coach_override' ? (
               <Badge tone="warning" label="Override" />
@@ -84,11 +84,11 @@ export const PlanItemCard = ({
             {item.macros.carbsG}g
           </Muted>
         </YStack>
-        <Text fontFamily="$mono" fontWeight="600" fontSize={14} color="$color">
+        <Text fontFamily="mono" fontWeight="600" fontSize={14} color="color">
           {item.macros.kcal}
         </Text>
         {editable ? (
-          <XStack gap="$1.5">
+          <XStack gap="1-5">
             <IconButton tone="ghost" onPress={() => step(-1)} aria-label="Smaller portion">
               −
             </IconButton>
@@ -102,7 +102,7 @@ export const PlanItemCard = ({
         <Muted fontSize={12}>{item.prepNotes}</Muted>
       ) : null}
       {editable ? (
-        <XStack gap="$2" flexWrap="wrap">
+        <XStack gap="2" flexWrap="wrap">
           <GhostButton
             disabled={busy}
             onPress={() => {
@@ -134,7 +134,7 @@ export const PlanItemCard = ({
         <PlanFoodPicker busy={busy} excludeFoodId={item.foodId} onSelect={swapTo} />
       ) : null}
       {overrideOpen ? (
-        <YStack gap="$2">
+        <YStack gap="2">
           {chain.toolbar}
           <Muted fontSize={12}>Coach-entered macros (audited). Food stays the same.</Muted>
           <FormField

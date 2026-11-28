@@ -20,12 +20,7 @@ import { DIETARY_ALLERGENS, DIETARY_RELIGIOUS } from './dietary-catalog';
 
 const ChipBone = ({ code }: { code: string }) => (
   <Skeleton>
-    <GhostButton
-      disabled
-      backgroundColor="$elevatedBg"
-      borderColor="$elevatedBg"
-      color="$elevatedBg"
-    >
+    <GhostButton disabled backgroundColor="elevatedBg" borderColor="elevatedBg" color="elevatedBg">
       {formatRestrictionLabel(code)}
     </GhostButton>
   </Skeleton>
@@ -48,11 +43,11 @@ export const DietarySkeleton = ({ clientId }: { clientId: string }) => {
         </StickyFormFooter>
       }
     >
-      <SkeletonRegion label="Loading dietary profile" gap="$4">
+      <SkeletonRegion label="Loading dietary profile" gap="4">
         <PageHeader
           title="Dietary profile"
           subtitle={
-            <XStack alignItems="center" gap="$2">
+            <XStack alignItems="center" gap="2">
               <Muted fontSize={13}>Version</Muted>
               <Skeleton width={16} height={18} />
               <Muted fontSize={13}>· changes re-validate the live plan</Muted>
@@ -60,37 +55,25 @@ export const DietarySkeleton = ({ clientId }: { clientId: string }) => {
           }
         />
 
-        <Card padding="$4">
-          <Text
-            fontFamily="$heading"
-            fontSize={14}
-            fontWeight="500"
-            color="$danger"
-            marginBottom="$2"
-          >
+        <Card padding="4">
+          <Text fontFamily="heading" fontSize={14} fontWeight="500" color="danger" marginBottom="2">
             Severe allergies
           </Text>
-          <XStack gap="$2" flexWrap="wrap">
+          <XStack gap="2" flexWrap="wrap">
             {DIETARY_ALLERGENS.map((a) => (
               <ChipBone key={a} code={`allergen:${a}`} />
             ))}
           </XStack>
-          <Muted fontSize={12} marginTop="$3">
+          <Muted fontSize={12} marginTop="3">
             Severe allergies are hard blocks in the meal engine.
           </Muted>
         </Card>
 
-        <Card padding="$4">
-          <Text
-            fontFamily="$heading"
-            fontSize={14}
-            fontWeight="500"
-            color="$color"
-            marginBottom="$2"
-          >
+        <Card padding="4">
+          <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color" marginBottom="2">
             Religious / lifestyle
           </Text>
-          <XStack gap="$2" flexWrap="wrap">
+          <XStack gap="2" flexWrap="wrap">
             {DIETARY_RELIGIOUS.map((r) => (
               <ChipBone key={r} code={`religious:${r}`} />
             ))}

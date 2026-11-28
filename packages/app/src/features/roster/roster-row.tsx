@@ -37,16 +37,16 @@ export const RosterRow = ({ client, desktop }: Props) => {
   if (!desktop) {
     return (
       <Link href={`/clients/${client.id}`}>
-        <Card interactive paddingHorizontal="$4" paddingVertical="$3.5" gap="$2">
-          <XStack alignItems="center" gap="$3">
+        <Card interactive paddingHorizontal="4" paddingVertical="3-5" gap="2">
+          <XStack alignItems="center" gap="3">
             <Avatar name={client.name} size={32} tone={attention ? 'primary' : 'accent'} />
             <YStack flex={1} minWidth={0} gap={2}>
-              <XStack alignItems="center" gap="$2" flexWrap="wrap">
+              <XStack alignItems="center" gap="2" flexWrap="wrap">
                 <Text
-                  fontFamily="$heading"
+                  fontFamily="heading"
                   fontWeight="600"
                   fontSize={13.5}
-                  color="$color"
+                  color="color"
                   numberOfLines={1}
                 >
                   {client.name}
@@ -60,10 +60,10 @@ export const RosterRow = ({ client, desktop }: Props) => {
                 {client.goalPreset ? ` · ${goalText}` : ''}
               </Muted>
             </YStack>
-            <ChevronRight size={14} color="$textMuted" />
+            <ChevronRight size={14} color="textMuted" />
           </XStack>
           {reasonBadges.length > 0 ? (
-            <XStack gap="$1" flexWrap="wrap">
+            <XStack gap="1" flexWrap="wrap">
               {reasonBadges.map((r) => (
                 <Badge key={r.code} tone="danger" label={r.code.replaceAll('_', ' ')} />
               ))}
@@ -79,26 +79,26 @@ export const RosterRow = ({ client, desktop }: Props) => {
       <Card
         interactive
         borderRadius={0}
-        backgroundColor="$surface"
+        backgroundColor="surface"
         borderWidth={0}
         borderBottomWidth={1}
-        borderBottomColor="$borderColor"
-        paddingHorizontal="$4"
-        paddingVertical="$3"
+        borderBottomColor="border-color"
+        paddingHorizontal="4"
+        paddingVertical="3"
         flexDirection="row"
         alignItems="center"
-        gap="$4"
+        gap="4"
         shadowOpacity={0}
       >
         {/* Client — flex 1 */}
-        <XStack flex={1} alignItems="center" gap="$3" minWidth={0}>
+        <XStack flex={1} alignItems="center" gap="3" minWidth={0}>
           <Avatar name={client.name} size={32} tone={attention ? 'primary' : 'accent'} />
           <YStack flex={1} minWidth={0} gap={2}>
             <Text
-              fontFamily="$heading"
+              fontFamily="heading"
               fontWeight="600"
               fontSize={13.5}
-              color="$color"
+              color="color"
               numberOfLines={1}
             >
               {client.name}
@@ -113,7 +113,7 @@ export const RosterRow = ({ client, desktop }: Props) => {
         <XStack width={COL.weight} alignItems="baseline" gap={2} flexShrink={0}>
           {client.latestWeightKg !== null ? (
             <>
-              <Text fontFamily="$mono" fontWeight="600" fontSize={13} color="$color">
+              <Text fontFamily="mono" fontWeight="600" fontSize={13} color="color">
                 {client.latestWeightKg}
               </Text>
               <Muted fontSize={12}>kg</Muted>
@@ -129,7 +129,7 @@ export const RosterRow = ({ client, desktop }: Props) => {
         </YStack>
 
         {/* Status — fixed 160 */}
-        <YStack width={COL.status} gap="$1" flexShrink={0} alignItems="flex-start">
+        <YStack width={COL.status} gap="1" flexShrink={0} alignItems="flex-start">
           {attention ? <Badge tone="danger" label="Needs attention" /> : null}
           {neu ? <Badge tone="warning" label="New" /> : null}
           {!attention && !neu ? <Badge tone="success" label="On track" /> : null}

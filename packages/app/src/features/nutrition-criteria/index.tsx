@@ -31,7 +31,7 @@ export const NutritionCriteriaScreen = () => {
         subtitle="Plain-language guide to the live nutrition engine"
         leading={
           <Link href="/tools">
-            <IconButton icon={<ArrowLeft size={22} color="$color" />} aria-label="Back to tools" />
+            <IconButton icon={<ArrowLeft size={22} color="color" />} aria-label="Back to tools" />
           </Link>
         }
         action={<Badge tone="primary" label="Layer 1" />}
@@ -44,7 +44,7 @@ export const NutritionCriteriaScreen = () => {
         ariaLabel="Nutrition criteria sections"
       />
 
-      <YStack key={tab} gap="$4">
+      <YStack key={tab} gap="4">
         {tab === 'overview' ? <OverviewPanel /> : null}
         {tab === 'calories' ? <CaloriesPanel /> : null}
         {tab === 'goals' ? <GoalsPanel /> : null}

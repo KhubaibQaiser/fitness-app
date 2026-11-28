@@ -28,13 +28,12 @@ export const NotificationRow = ({
     <XStack
       alignItems="center"
       gap={12}
-      paddingHorizontal="$2"
-      paddingVertical="$2.5"
+      paddingHorizontal="2"
+      paddingVertical="2-5"
       borderRadius={12}
-      backgroundColor={high ? '$alertWash' : unread ? '$surfaceHover' : 'transparent'}
-      // High priority also carries a rail and a wash, so it never reads by hue alone.
+      backgroundColor={high ? 'alertWash' : unread ? 'surfaceHover' : 'transparent'}
       borderLeftWidth={high ? 3 : 0}
-      borderLeftColor="$danger"
+      borderLeftColor="danger"
       minHeight={44}
       accessibilityLabel={`${high ? 'High priority. ' : ''}${unread ? 'Unread. ' : ''}${title}. ${time}`}
     >
@@ -45,33 +44,33 @@ export const NotificationRow = ({
         alignItems="center"
         justifyContent="center"
         flexShrink={0}
-        backgroundColor={high ? '$dangerMuted' : '$coachAccentWash'}
+        backgroundColor={high ? 'dangerMuted' : 'coachAccentWash'}
       >
         {icon}
       </YStack>
       <YStack flex={1} minWidth={0} gap={2}>
         <Text
-          fontFamily="$heading"
+          fontFamily="heading"
           fontSize={14}
-          lineHeight={20}
+          lineHeight="20px"
           fontWeight={unread ? '600' : '500'}
-          color="$color"
+          color="color"
           numberOfLines={1}
         >
           {title}
         </Text>
         {subtitle ? (
           <Text
-            fontFamily="$body"
+            fontFamily="body"
             fontSize={12}
-            lineHeight={16}
-            color="$textMuted"
+            lineHeight="16px"
+            color="textMuted"
             numberOfLines={1}
           >
             {subtitle}
           </Text>
         ) : null}
-        <Text fontFamily="$body" fontSize={12} lineHeight={16} color="$textFaint" numberOfLines={1}>
+        <Text fontFamily="body" fontSize={12} lineHeight="16px" color="textFaint" numberOfLines={1}>
           {time}
         </Text>
       </YStack>
@@ -81,7 +80,7 @@ export const NotificationRow = ({
           width={8}
           height={8}
           borderRadius={999}
-          backgroundColor="$primary"
+          backgroundColor="primary"
           flexShrink={0}
           accessibilityLabel="Unread"
         />

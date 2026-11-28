@@ -10,7 +10,7 @@ export const StepMedical = ({
   draft: OnboardingDraft;
   onPatch: (partial: Partial<OnboardingDraft>) => void;
 }) => (
-  <YStack gap="$4">
+  <YStack gap="4">
     <FormField
       label="Medical conditions / diseases"
       value={draft.medicalConditions}
@@ -21,7 +21,7 @@ export const StepMedical = ({
       hint="Optional: One per line or comma-separated"
     />
 
-    <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="$3">
+    <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="3">
       <Body flex={1}>Physician clearance required?</Body>
       <IosSwitch
         checked={draft.physicianClearanceRequired}
@@ -31,7 +31,7 @@ export const StepMedical = ({
     </XStack>
 
     {draft.sex === 'F' ? (
-      <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="$3">
+      <XStack alignItems="center" justifyContent="space-between" minHeight={48} gap="3">
         <Body flex={1}>Currently pregnant</Body>
         <IosSwitch
           checked={draft.pregnant}

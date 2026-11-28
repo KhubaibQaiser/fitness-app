@@ -25,8 +25,8 @@ const ToolButton = ({
     style={{ minWidth: 44, minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}
   >
     <Text
-      color={disabled ? '$textMuted' : '$primary'}
-      fontFamily="$heading"
+      color={disabled ? 'textMuted' : 'primary'}
+      fontFamily="heading"
       fontWeight={bold ? '700' : '500'}
       fontSize={16}
     >
@@ -51,10 +51,10 @@ export const KeyboardToolbar = ({
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the dated note above
   <InputAccessoryView nativeID={nativeID}>
     <XStack
-      backgroundColor="$elevatedBg"
+      backgroundColor="elevatedBg"
       borderTopWidth={1}
-      borderTopColor="$borderColor"
-      paddingHorizontal="$1"
+      borderTopColor="border-color"
+      paddingHorizontal="1"
       alignItems="center"
       justifyContent="space-between"
       minHeight={44}

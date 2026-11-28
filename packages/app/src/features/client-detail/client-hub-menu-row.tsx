@@ -24,23 +24,24 @@ export const ClientHubMenuRow = ({
     aria-disabled={disabled}
     tabIndex={disabled ? -1 : 0}
     alignItems="center"
-    gap="$3"
+    gap="3"
     minHeight={44}
-    paddingHorizontal="$3"
-    borderRadius="$radiusControl"
+    paddingHorizontal="3"
+    borderRadius="radiusControl"
     opacity={disabled ? 0.45 : 1}
     cursor={disabled ? 'default' : 'pointer'}
     {...(disabled
       ? {}
       : {
-          hoverStyle: { backgroundColor: '$elevatedBg' },
-          pressStyle: { backgroundColor: '$elevatedBg', opacity: 1 },
+          backgroundColor: 'hover:elevatedBg press:elevatedBg',
           onPress,
         })}
-    focusVisibleStyle={{ outlineWidth: 2, outlineColor: '$focusRing', outlineStyle: 'solid' }}
+    outlineWidth="focus-visible:2px"
+    outlineColor="focus-visible:focusRing"
+    outlineStyle="focus-visible:solid"
   >
     {icon}
-    <Text fontSize={14} fontWeight="500" color={tone === 'danger' ? '$danger' : '$color'}>
+    <Text fontSize={14} fontWeight="500" color={tone === 'danger' ? 'danger' : 'color'}>
       {label}
     </Text>
   </XStack>

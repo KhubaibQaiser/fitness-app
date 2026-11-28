@@ -25,7 +25,7 @@ export const SignupOtpStep = ({
   const chain = useFocusChain(['code'], { onSubmit: onConfirm, submitKey: 'go' });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <OtpCodeField
         value={code}

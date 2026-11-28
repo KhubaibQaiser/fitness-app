@@ -86,7 +86,7 @@ export const ClientHubOverview = ({
     goal?.targetWeightKg != null ? formatWeight(goal.targetWeightKg, weightUnit) : null;
 
   return (
-    <YStack gap="$5" width="100%">
+    <YStack gap="5" width="100%">
       {!signed ? (
         <AlertBanner tone="warning" title="Onboarding incomplete">
           Complete intake to unlock meal planning, check-ins, and credential PDF.
@@ -97,7 +97,7 @@ export const ClientHubOverview = ({
         <AlertBanner
           tone="danger"
           title="Medical note"
-          icon={<ShieldAlert size={18} color="$danger" />}
+          icon={<ShieldAlert size={18} color="danger" />}
         >
           {medicalParts.join(' · ')}
         </AlertBanner>
@@ -107,31 +107,31 @@ export const ClientHubOverview = ({
         <AlertBanner
           tone="danger"
           title="Severe allergies"
-          icon={<ShieldAlert size={18} color="$danger" />}
+          icon={<ShieldAlert size={18} color="danger" />}
         >
           {severeAllergies.map((r) => formatRestrictionLabel(r.code)).join(', ')}
         </AlertBanner>
       ) : null}
 
-      <XStack flexWrap="wrap" gap="$3" width="100%">
-        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+      <XStack flexWrap="wrap" gap="3" width="100%">
+        <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
           <StatPill
             label="Current weight"
             value={currentShown !== null ? String(currentShown.value) : '-'}
             suffix={currentShown !== null ? ` ${currentShown.unit}` : ''}
           />
         </YStack>
-        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+        <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
           <StatPill
             label="Goal progress"
             value={goalProgressPct !== null ? String(goalProgressPct) : '-'}
             suffix={goalProgressPct !== null ? '%' : ''}
           />
         </YStack>
-        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+        <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
           <StatPill label="BMI" value={bmi !== null ? bmi.toFixed(1) : '-'} />
         </YStack>
-        <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+        <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
           <StatPill
             label="Pace"
             value={pace.value}
@@ -140,7 +140,7 @@ export const ClientHubOverview = ({
         </YStack>
       </XStack>
 
-      <XStack flexWrap="wrap" gap="$3" width="100%" alignItems="stretch">
+      <XStack flexWrap="wrap" gap="3" width="100%" alignItems="stretch">
         {goal !== null ? (
           <YStack flex={1} flexBasis={280} minWidth={280}>
             <ClientWeightJourneyChart
@@ -154,8 +154,8 @@ export const ClientHubOverview = ({
         ) : null}
         {goalProgressPct !== null && goal !== null ? (
           <Card
-            gap="$3"
-            padding="$5"
+            gap="3"
+            padding="5"
             alignItems="center"
             justifyContent="center"
             flex={1}
@@ -174,25 +174,25 @@ export const ClientHubOverview = ({
               role="coach"
             >
               <Text
-                fontFamily="$mono"
+                fontFamily="mono"
                 fontSize={24}
-                lineHeight={28}
+                lineHeight="28px"
                 fontWeight="600"
-                color="$color"
+                color="color"
               >
                 {Math.round(goalProgressPct)}%
               </Text>
             </GradientRing>
-            <XStack gap="$6">
+            <XStack gap="6">
               <YStack alignItems="center">
                 <Muted fontSize={11}>Start</Muted>
-                <Text fontFamily="$mono" fontWeight="700">
+                <Text fontFamily="mono" fontWeight="700">
                   {startShown !== null ? `${startShown.value} ${startShown.unit}` : '-'}
                 </Text>
               </YStack>
               <YStack alignItems="center">
                 <Muted fontSize={11}>Target</Muted>
-                <Text fontFamily="$mono" fontWeight="700">
+                <Text fontFamily="mono" fontWeight="700">
                   {targetShown !== null ? `${targetShown.value} ${targetShown.unit}` : '-'}
                 </Text>
               </YStack>

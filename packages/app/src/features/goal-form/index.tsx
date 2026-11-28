@@ -192,7 +192,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
           {medicalSummary}. Use clinical judgment. GymOS is not medical advice.
         </AlertBanner>
       ) : null}
-      <Card gap="$4">
+      <Card gap="4">
         {chain.toolbar}
         <GoalFields
           value={value}
@@ -205,7 +205,7 @@ export const GoalFormScreen = ({ clientId }: { clientId: string }) => {
         />
 
         {errors.form ? (
-          <Body color="$danger" role="alert">
+          <Body color="danger" role="alert">
             {errors.form}
           </Body>
         ) : null}

@@ -17,14 +17,14 @@ export const OverridePrompt = ({
 
   return (
     <YStack
-      gap="$3"
+      gap="3"
       borderWidth={2}
-      borderColor="$danger"
+      borderColor="danger"
       borderRadius={14}
-      padding="$4"
-      backgroundColor="$cardBg"
+      padding="4"
+      backgroundColor="cardBg"
     >
-      <Body fontWeight="800" color="$danger">
+      <Body fontWeight="800" color="danger">
         Safety gate: {detail || 'this client requires a coach override'}
       </Body>
       <Muted>
@@ -53,8 +53,8 @@ export const OverridePrompt = ({
           }
           onConfirm(reason.trim());
         }}
-        backgroundColor="$danger"
-        color="$dangerFg"
+        backgroundColor="danger"
+        color="dangerFg"
       >
         {busy ? 'Generating…' : 'Override and generate'}
       </PrimaryButton>

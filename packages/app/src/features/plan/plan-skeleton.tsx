@@ -26,9 +26,9 @@ const DAY_OPTIONS = [
 ] as const;
 
 const MealCardSkeleton = () => (
-  <Card gap="$2">
-    <XStack alignItems="center" justifyContent="space-between" gap="$3">
-      <YStack flex={1} gap="$1">
+  <Card gap="2">
+    <XStack alignItems="center" justifyContent="space-between" gap="3">
+      <YStack flex={1} gap="1">
         <Skeleton width="48%" height={22} />
         <Skeleton width="72%" height={18} />
       </YStack>
@@ -39,16 +39,16 @@ const MealCardSkeleton = () => (
 /** Twin of PlanEditor chrome — back + title, targets, day switcher, 3 meals. */
 export const PlanSkeleton = ({ clientId }: { clientId: string }) => (
   <AppScreen>
-    <SkeletonRegion label="Loading meal plan" gap="$4">
-      <XStack alignItems="flex-start" gap="$2" width="100%">
+    <SkeletonRegion label="Loading meal plan" gap="4">
+      <XStack alignItems="flex-start" gap="2" width="100%">
         <Link href={`/clients/${clientId}`}>
-          <IconButton aria-label="Back to client" icon={<ArrowLeft size={20} color="$color" />} />
+          <IconButton aria-label="Back to client" icon={<ArrowLeft size={20} color="color" />} />
         </Link>
         <XStack
           flex={1}
           alignItems="flex-start"
           justifyContent="space-between"
-          gap="$3"
+          gap="3"
           minWidth={0}
         >
           <YStack flex={1} gap={2} minWidth={0}>
@@ -59,14 +59,14 @@ export const PlanSkeleton = ({ clientId }: { clientId: string }) => (
       </XStack>
 
       <Card>
-        <XStack alignItems="center" justifyContent="space-between" gap="$3">
+        <XStack alignItems="center" justifyContent="space-between" gap="3">
           <Skeleton width="42%" height={22} />
           <Skeleton width={56} height={22} borderRadius={999} />
         </XStack>
         <Skeleton width="78%" height={18} />
       </Card>
 
-      <YStack gap="$2">
+      <YStack gap="2">
         <SegmentedControl
           ariaLabel="Plan day"
           options={[...DAY_OPTIONS]}
@@ -77,7 +77,7 @@ export const PlanSkeleton = ({ clientId }: { clientId: string }) => (
       </YStack>
 
       {(['Breakfast', 'Lunch', 'Dinner'] as const).map((slot) => (
-        <YStack key={slot} gap="$2">
+        <YStack key={slot} gap="2">
           <SectionTitle>{slot}</SectionTitle>
           <MealCardSkeleton />
         </YStack>

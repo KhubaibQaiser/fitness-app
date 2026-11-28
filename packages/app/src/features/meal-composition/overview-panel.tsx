@@ -13,12 +13,12 @@ const SLOT_LABEL: Record<MealSlot, string> = {
 
 /** Day structure for each meal-count option. */
 export const OverviewPanel = () => (
-  <YStack gap="$4">
-    <Card gap="$3" tone="accent">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+  <YStack gap="4">
+    <Card gap="3" tone="accent">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         What this page is
       </Body>
-      <Muted lineHeight={20}>
+      <Muted lineHeight="20px">
         Layer 2 builds each day from fixed meal templates, not AI guesses. The coach picks 3, 4, or
         5 meals when generating a plan. Food pools are slot-filtered so breakfast stays breakfast.
       </Muted>
@@ -30,24 +30,24 @@ export const OverviewPanel = () => (
     />
 
     {([3, 4, 5] as const).map((count) => (
-      <Card key={count} gap="$3">
-        <Body fontFamily="$heading" fontWeight="700">
+      <Card key={count} gap="3">
+        <Body fontFamily="heading" fontWeight="700">
           {count === 3
             ? '3 meals (default)'
             : count === 4
               ? '4 meals, one snack'
               : '5 meals, two snacks'}
         </Body>
-        <XStack flexWrap="wrap" gap="$2">
+        <XStack flexWrap="wrap" gap="2">
           {MEAL_TEMPLATES[count].map((meal, index) => (
             <YStack
               key={`${count}-${index}-${meal.slot}`}
-              backgroundColor="$elevatedBg"
+              backgroundColor="elevatedBg"
               borderRadius={10}
-              paddingHorizontal="$3"
-              paddingVertical="$2"
+              paddingHorizontal="3"
+              paddingVertical="2"
               borderWidth={1}
-              borderColor="$borderColor"
+              borderColor="border-color"
             >
               <Body fontSize={13} fontWeight="700">
                 {SLOT_LABEL[meal.slot]}

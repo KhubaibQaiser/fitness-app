@@ -46,9 +46,9 @@ const RATE_LABELS: Record<GoalRate, string> = {
 };
 
 const paceColor = (delta: number): string => {
-  if (delta < 0) return '$danger';
-  if (delta > 0) return '$success';
-  return '$color';
+  if (delta < 0) return 'danger';
+  if (delta > 0) return 'success';
+  return 'color';
 };
 
 /** Goal presets × pace — stacked cards so columns stay aligned on narrow screens. */
@@ -57,14 +57,14 @@ export const GoalsPanel = () => {
   const hasTenantOverrides = config.data?.nutrition?.weeklyDeltaKg !== undefined;
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       <PanelHeading
         title="Goal calories"
         subtitle="TDEE is nudged by the goal you pick and how fast you want to move."
       />
 
-      <Card gap="$3">
-        <Muted lineHeight={19}>
+      <Card gap="3">
+        <Muted lineHeight="19px">
           {hasTenantOverrides
             ? 'This tenant may set Lose/Gain as a desired kg/week. Named ticks (Gentle / Standard / Aggressive) still clamp to the safety band; displayed kg/week is derived from that safe target. Dragging Pace past those ticks warns instead of clamping, including below the sex floor down to 800 kcal.'
             : 'Named ticks set target calories from TDEE × (1 + adjustment), then clamp to safety floors. Negative = deficit, positive = surplus. Dragging Pace past those ticks warns instead of blocking, down to 800 kcal.'}
@@ -87,7 +87,7 @@ export const GoalsPanel = () => {
         />
       </Card>
 
-      <YStack gap="$3">
+      <YStack gap="3">
         {PRESET_ORDER.map((preset) => (
           <GoalDeltaCard
             key={preset}
@@ -114,8 +114,8 @@ export const GoalsPanel = () => {
         ))}
       </YStack>
 
-      <Card gap="$2">
-        <Muted fontSize={12} lineHeight={18}>
+      <Card gap="2">
+        <Muted fontSize={12} lineHeight="18px">
           {hasTenantOverrides
             ? 'Example: TDEE 2,270 kcal · Lose · Aggressive (−2 kg/wk intent) → clamp to 1,703 kcal/day (−0.52 kg/wk), not 70.'
             : 'Example: TDEE 2,500 kcal · Lose · Standard → 2,500 × 0.80 = 2,000 kcal/day.'}

@@ -17,14 +17,8 @@ export const AuthFormColumn = ({
   enterClass,
   setPanel,
 }: AuthFormColumnProps) => (
-  <YStack
-    flex={1}
-    minHeight={0}
-    overflow="hidden"
-    backgroundColor="$screenBg"
-    $md={{ maxWidth: 560 }}
-  >
-    <XStack justifyContent="flex-end" paddingTop="$3" paddingRight="$3">
+  <YStack flex={1} minHeight={0} overflow="hidden" backgroundColor="screenBg" maxWidth="md:560px">
+    <XStack justifyContent="flex-end" paddingTop="3" paddingRight="3">
       <AuthThemeToggle />
     </XStack>
     <YStack flex={1} minHeight={0} overflow="hidden" position="relative">

@@ -23,8 +23,8 @@ export const PageHeader = ({
   strip?: boolean;
 }) => {
   const inner = (
-    <XStack alignItems="flex-start" justifyContent="space-between" gap="$3" width="100%">
-      <XStack flex={1} gap="$3" alignItems="center" minWidth={0}>
+    <XStack alignItems="flex-start" justifyContent="space-between" gap="3" width="100%">
+      <XStack flex={1} gap="3" alignItems="center" minWidth={0}>
         {leading}
         <YStack flex={1} gap={2} minWidth={0}>
           {eyebrow ? (
@@ -38,10 +38,10 @@ export const PageHeader = ({
           ) : null}
           {isPlainText(title) ? (
             <Text
-              fontFamily="$heading"
+              fontFamily="heading"
               fontWeight="700"
               fontSize={strip ? 22 : 20}
-              color="$color"
+              color="color"
               letterSpacing={-0.3}
               numberOfLines={2}
             >
@@ -69,12 +69,11 @@ export const PageHeader = ({
 
   return (
     <YStack
-      paddingHorizontal={16}
-      paddingTop="$6"
-      paddingBottom="$5"
+      paddingHorizontal="16px md:24px"
+      paddingTop="6 md:7"
+      paddingBottom="5"
       width="100%"
       alignSelf="stretch"
-      $md={{ paddingHorizontal: 24, paddingTop: '$7' }}
     >
       {inner}
     </YStack>

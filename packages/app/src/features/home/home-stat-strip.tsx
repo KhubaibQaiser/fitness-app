@@ -15,19 +15,18 @@ export const HomeStatStrip = ({
   highAlerts: number;
 }) => (
   <YStack
-    backgroundColor="$cardBg"
+    backgroundColor="cardBg"
     borderBottomWidth={1}
-    borderBottomColor="$borderColor"
-    paddingHorizontal="$5"
-    paddingVertical="$5"
+    borderBottomColor="border-color"
+    paddingHorizontal="5 md:8"
+    paddingVertical="5"
     width="100%"
-    $md={{ paddingHorizontal: '$8' }}
   >
-    <XStack flexWrap="wrap" gap="$6" $md={{ gap: '$10' }}>
-      <YStack flexBasis="40%" flexGrow={1} minWidth={120} $md={{ flexBasis: '20%' }}>
+    <XStack flexWrap="wrap" gap="6 md:10">
+      <YStack flexBasis="40% md:20%" flexGrow={1} minWidth={120}>
         <Stat label="Total clients" value={String(totalClients)} hint="Active caseload" />
       </YStack>
-      <YStack flexBasis="40%" flexGrow={1} minWidth={120} $md={{ flexBasis: '20%' }}>
+      <YStack flexBasis="40% md:20%" flexGrow={1} minWidth={120}>
         <Stat
           label="Need attention"
           value={String(needAttention)}
@@ -35,10 +34,10 @@ export const HomeStatStrip = ({
           {...(needAttention > 0 ? { tone: 'danger' as const } : {})}
         />
       </YStack>
-      <YStack flexBasis="40%" flexGrow={1} minWidth={120} $md={{ flexBasis: '20%' }}>
+      <YStack flexBasis="40% md:20%" flexGrow={1} minWidth={120}>
         <Stat label="On track" value={String(onTrack)} hint="This week" tone="success" />
       </YStack>
-      <YStack flexBasis="40%" flexGrow={1} minWidth={120} $md={{ flexBasis: '20%' }}>
+      <YStack flexBasis="40% md:20%" flexGrow={1} minWidth={120}>
         <Stat
           label="High alerts"
           value={String(highAlerts)}

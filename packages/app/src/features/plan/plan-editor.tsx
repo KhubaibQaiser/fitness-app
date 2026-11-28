@@ -188,7 +188,7 @@ export const PlanEditor = ({
 
   const generateControls = (label: string) => (
     <>
-      <YStack gap="$2">
+      <YStack gap="2">
         <Muted fontSize={13}>Meals per day</Muted>
         <SegmentedControl
           ariaLabel="Meals per day"
@@ -209,7 +209,7 @@ export const PlanEditor = ({
         </PrimaryButton>
       )}
       {generateError && !generateBlocked ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {generateError.message}
         </Body>
       ) : null}
@@ -218,9 +218,9 @@ export const PlanEditor = ({
 
   return (
     <AppScreen>
-      <XStack alignItems="flex-start" gap="$2" width="100%">
+      <XStack alignItems="flex-start" gap="2" width="100%">
         <Link href={`/clients/${clientId}`}>
-          <IconButton aria-label="Back to client" icon={<ArrowLeft size={20} color="$color" />} />
+          <IconButton aria-label="Back to client" icon={<ArrowLeft size={20} color="color" />} />
         </Link>
         <YStack flex={1} minWidth={0}>
           <PlanTitleHeader
@@ -235,7 +235,7 @@ export const PlanEditor = ({
       </XStack>
 
       {plans.length > 1 ? (
-        <YStack gap="$2">
+        <YStack gap="2">
           <Muted fontSize={13}>Versions</Muted>
           <SegmentedControl
             ariaLabel="Plan version"
@@ -256,7 +256,7 @@ export const PlanEditor = ({
 
       {status === 'NEEDS_REVIEW' ? (
         <Card tone="danger">
-          <Body color="$danger" fontWeight="700">
+          <Body color="danger" fontWeight="700">
             Dietary profile changed. Do not follow this plan. Review and re-publish (or regenerate)
             first.
           </Body>
@@ -264,7 +264,7 @@ export const PlanEditor = ({
       ) : null}
 
       {status === 'DRAFT' && empty ? (
-        <Card tone="accent" gap="$3">
+        <Card tone="accent" gap="3">
           <Body fontWeight="800">This draft has no meals yet</Body>
           <Muted>
             Generate meals creates draft v{nextVersion} from the client&apos;s targets. Or add food
@@ -279,7 +279,7 @@ export const PlanEditor = ({
           </GhostButton>
         </Card>
       ) : editable ? (
-        <Card tone="accent" gap="$2">
+        <Card tone="accent" gap="2">
           <Body fontWeight="800">AI suggestion. Review before publish</Body>
           <Muted>
             Same meals every day by default. Edit any day, or apply one day to the whole week.
@@ -290,7 +290,7 @@ export const PlanEditor = ({
 
       {status !== 'DRAFT' ? (
         <>
-          <XStack gap="$2" flexWrap="wrap">
+          <XStack gap="2" flexWrap="wrap">
             <GhostButton
               flex={1}
               minWidth={140}
@@ -309,13 +309,13 @@ export const PlanEditor = ({
             </GhostButton>
           </XStack>
           {pdfError ? (
-            <Body color="$danger" role="alert">
+            <Body color="danger" role="alert">
               {pdfError}
             </Body>
           ) : null}
 
           {regenOpen ? (
-            <Card gap="$3" tone="accent">
+            <Card gap="3" tone="accent">
               <Body fontWeight="800">Create draft v{nextVersion}</Body>
               <Muted>
                 {hasPublished
@@ -329,28 +329,28 @@ export const PlanEditor = ({
       ) : null}
 
       <Card>
-        <XStack alignItems="flex-end" gap="$3" flexWrap="wrap">
+        <XStack alignItems="flex-end" gap="3" flexWrap="wrap">
           <YStack flex={1} minWidth={72} gap={4}>
             <Muted fontSize={12}>kcal</Muted>
-            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+            <Text fontFamily="mono" fontWeight="600" fontSize={18}>
               {Math.round(dayTotals.kcal)}/{targets.kcal}
             </Text>
           </YStack>
           <YStack flex={1} minWidth={72} gap={4}>
             <Muted fontSize={12}>Protein</Muted>
-            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+            <Text fontFamily="mono" fontWeight="600" fontSize={18}>
               {Math.round(dayTotals.proteinG)}/{targets.proteinG}g
             </Text>
           </YStack>
           <YStack flex={1} minWidth={72} gap={4}>
             <Muted fontSize={12}>Fat</Muted>
-            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+            <Text fontFamily="mono" fontWeight="600" fontSize={18}>
               {Math.round(dayTotals.fatG)}/{targets.fatG}g
             </Text>
           </YStack>
           <YStack flex={1} minWidth={72} gap={4}>
             <Muted fontSize={12}>Carbs</Muted>
-            <Text fontFamily="$mono" fontWeight="600" fontSize={18}>
+            <Text fontFamily="mono" fontWeight="600" fontSize={18}>
               {Math.round(dayTotals.carbsG)}/{targets.carbsG}g
             </Text>
           </YStack>
@@ -361,7 +361,7 @@ export const PlanEditor = ({
         </XStack>
       </Card>
 
-      <YStack gap="$2">
+      <YStack gap="2">
         <SegmentedControl
           ariaLabel="Plan day"
           options={[...DAY_OPTIONS]}
@@ -384,10 +384,10 @@ export const PlanEditor = ({
       </YStack>
 
       {meals.map(([mealIndex, mealSlot]) => (
-        <YStack key={mealIndex} gap="$2">
+        <YStack key={mealIndex} gap="2">
           <Row>
             <SectionTitle>{SLOT_LABEL[mealSlot]}</SectionTitle>
-            <Muted fontSize={12} fontFamily="$mono">
+            <Muted fontSize={12} fontFamily="mono">
               {Math.round(mealKcal(dayItems, mealIndex))} kcal
             </Muted>
           </Row>
@@ -403,8 +403,8 @@ export const PlanEditor = ({
               />
             ))}
           {editable ? (
-            <YStack gap="$2">
-              <XStack gap="$2" flexWrap="wrap">
+            <YStack gap="2">
+              <XStack gap="2" flexWrap="wrap">
                 <GhostButton
                   flex={1}
                   minWidth={140}
@@ -450,13 +450,13 @@ export const PlanEditor = ({
       ))}
 
       {patch.isError ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {patch.error.message}
         </Body>
       ) : null}
 
       {regenerateMeal.isError ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {regenerateMeal.error.message}
         </Body>
       ) : null}
@@ -470,7 +470,7 @@ export const PlanEditor = ({
       ) : null}
       {publish.isError &&
       !(publish.error instanceof ApiError && publish.error.code === 'DRIFT_ACK_REQUIRED') ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {publish.error.message}
         </Body>
       ) : null}

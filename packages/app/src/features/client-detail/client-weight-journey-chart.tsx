@@ -25,9 +25,9 @@ const trackBadge = (status: JourneyTrackStatus): { tone: BadgeTone; label: strin
 };
 
 export const ClientWeightJourneyChartSkeleton = () => (
-  <Card padding="$4" gap="$3" width="100%">
-    <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
-      <YStack gap="$1.5" flex={1} minWidth={0}>
+  <Card padding="4" gap="3" width="100%">
+    <XStack justifyContent="space-between" alignItems="flex-start" gap="3">
+      <YStack gap="1-5" flex={1} minWidth={0}>
         <Skeleton width={96} height={12} />
         <Skeleton width={88} height={24} />
         <Skeleton width={72} height={22} borderRadius={999} />
@@ -72,24 +72,24 @@ export const ClientWeightJourneyChart = ({
   const badge = trackBadge(model.trackStatus);
 
   return (
-    <Card padding="$4" gap="$3" width="100%">
-      <XStack justifyContent="space-between" alignItems="flex-start" gap="$3">
-        <YStack gap="$1.5" flex={1} minWidth={0}>
+    <Card padding="4" gap="3" width="100%">
+      <XStack justifyContent="space-between" alignItems="flex-start" gap="3">
+        <YStack gap="1-5" flex={1} minWidth={0}>
           <Muted fontSize={12} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
             Weight journey
           </Muted>
-          <XStack alignItems="baseline" gap="$2" flexWrap="wrap">
+          <XStack alignItems="baseline" gap="2" flexWrap="wrap">
             <Text
-              fontFamily="$mono"
+              fontFamily="mono"
               fontSize={20}
-              lineHeight={26}
+              lineHeight="26px"
               fontWeight="600"
-              color="$color"
+              color="color"
               letterSpacing={-0.3}
             >
               {model.current.weightKg.toFixed(1)}
             </Text>
-            <Text fontFamily="$body" fontSize={14} color="$textMuted">
+            <Text fontFamily="body" fontSize={14} color="textMuted">
               {model.unitLabel}
             </Text>
           </XStack>

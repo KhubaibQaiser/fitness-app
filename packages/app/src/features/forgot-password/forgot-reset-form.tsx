@@ -32,7 +32,7 @@ export const ForgotResetForm = ({
   const chain = useFocusChain(['code', 'password'], { onSubmit: submit, submitKey: 'go' });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       {info !== null ? (
         <Muted fontSize={13} textAlign="center">

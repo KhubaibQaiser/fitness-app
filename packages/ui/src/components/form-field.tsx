@@ -103,8 +103,8 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
     },
   }));
 
-  const borderColor = (error ? '$danger' : '$borderColor') as ColorTokens;
-  const focusBorder = (error ? '$danger' : '$focusRing') as ColorTokens;
+  const borderColor = (error ? 'danger' : 'borderColor') as ColorTokens;
+  const focusBorder = (error ? 'danger' : 'focusRing') as ColorTokens;
   const keyboardType = keyboardTypeForInputMode(inputMode);
   const autoComplete = defaultAutoComplete({
     inputMode,
@@ -153,22 +153,23 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
     ...(onFocus !== undefined ? { onFocus } : {}),
   };
 
+  // Tamagui 3 takes the focus state as flat clauses on each property, not a focusStyle object.
   const focusStyle = {
-    borderColor: focusBorder,
-    outlineWidth: 2,
-    outlineColor: '$focusRing',
-    outlineStyle: 'solid' as const,
-  };
+    borderColor: `${borderColor} focus:${focusBorder}`,
+    outlineWidth: 'focus:2',
+    outlineColor: 'focus:focusRing',
+    outlineStyle: 'focus:solid',
+  } as const;
 
   return (
-    <YStack gap="$1.5" width="100%">
+    <YStack gap="1-5" width="100%">
       <Label
         htmlFor={id}
-        fontFamily="$heading"
+        fontFamily="heading"
         fontWeight="500"
         fontSize={12}
-        color="$textMuted"
-        lineHeight={16}
+        color="textMuted"
+        lineHeight="16px"
       >
         {label}
         {required ? ' *' : ''}
@@ -180,19 +181,18 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
           onChangeText={onChangeText}
           placeholder={placeholder}
           disabled={disabled}
-          size="$4"
+          size="4"
           borderWidth={1}
-          borderColor={borderColor}
-          backgroundColor="$surface"
-          color="$color"
-          placeholderTextColor="$placeholderColor"
+          backgroundColor="surface"
+          color="color"
+          placeholderTextColor="placeholder-color"
           borderRadius={12}
-          paddingHorizontal="$3"
-          fontFamily="$body"
+          paddingHorizontal="3"
+          fontFamily="body"
           numberOfLines={numberOfLines}
           {...a11y}
           {...keyboardProps}
-          focusStyle={focusStyle}
+          {...focusStyle}
         />
       ) : (
         <XStack position="relative" alignItems="center" width="100%">
@@ -202,22 +202,20 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
             onChangeText={onChangeText}
             placeholder={placeholder}
             disabled={disabled}
-            size="$4"
+            size="4"
             minHeight={48}
             height={48}
             flex={1}
             width="100%"
             borderWidth={1}
-            borderColor={borderColor}
-            backgroundColor="$surface"
-            color="$color"
-            placeholderTextColor="$placeholderColor"
+            backgroundColor="surface"
+            color="color"
+            placeholderTextColor="placeholder-color"
             borderRadius={12}
-            paddingHorizontal="$3"
+            paddingHorizontal="3"
             paddingRight={unit ? 44 : undefined}
-            fontFamily="$body"
+            fontFamily="body"
             fontSize={15}
-            secureTextEntry={secureTextEntry}
             {...(secureTextEntry
               ? { type: 'password' as const }
               : inputMode === 'email'
@@ -225,15 +223,16 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
                 : {})}
             {...a11y}
             {...keyboardProps}
-            focusStyle={focusStyle}
+            {...focusStyle}
+            secureTextEntry={secureTextEntry}
           />
           {unit ? (
             <Text
               position="absolute"
               right={12}
-              fontFamily="$mono"
+              fontFamily="mono"
               fontSize={14}
-              color="$textMuted"
+              color="textMuted"
               pointerEvents="none"
             >
               {unit}
@@ -242,7 +241,7 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
         </XStack>
       )}
       {error ? (
-        <Body id={errorId} color="$danger" fontSize={12} fontWeight="600" role="alert">
+        <Body id={errorId} color="danger" fontSize={12} fontWeight="600" role="alert">
           {error}
         </Body>
       ) : hint ? (
@@ -255,14 +254,14 @@ export const FormField = forwardRef<FormFieldHandle, FormFieldProps>(function Fo
 });
 
 export const FormSection = ({ title, children }: { title: string; children: ReactNode }) => (
-  <YStack gap="$3" width="100%" aria-label={title}>
+  <YStack gap="3" width="100%" aria-label={title}>
     <Text
-      fontFamily="$heading"
+      fontFamily="heading"
       fontWeight="600"
       fontSize={11}
       textTransform="uppercase"
       letterSpacing={1.4}
-      color="$textMuted"
+      color="textMuted"
     >
       {title}
     </Text>

@@ -1,5 +1,5 @@
-import { defaultConfig } from '@tamagui/config/v4';
 import { createFont, isWeb } from 'tamagui';
+import { v4BodyFont, v4HeadingLetterSpacing } from './config-v4-values';
 
 /**
  * Cross-platform font faces.
@@ -29,7 +29,7 @@ const monoWeb = 'var(--font-mono), "Roboto Mono", ui-monospace, monospace';
 const monoNative = 'RobotoMono';
 
 const uiSizes = {
-  ...defaultConfig.fonts.body.size,
+  ...v4BodyFont.size,
   displayLarge: 30,
   title: 20,
   headline: 16,
@@ -40,7 +40,7 @@ const uiSizes = {
 } as const;
 
 const uiLineHeights = {
-  ...defaultConfig.fonts.body.lineHeight,
+  ...v4BodyFont.lineHeight,
   displayLarge: 36,
   title: 26,
   headline: 22,
@@ -51,7 +51,7 @@ const uiLineHeights = {
 } as const;
 
 const uiWeights = {
-  ...defaultConfig.fonts.body.weight,
+  ...v4BodyFont.weight,
   displayLarge: '700',
   title: '700',
   headline: '600',
@@ -62,7 +62,7 @@ const uiWeights = {
 } as const;
 
 const monoSizes = {
-  ...defaultConfig.fonts.body.size,
+  ...v4BodyFont.size,
   caption: 12,
   body: 14,
   statMd: 18,
@@ -71,7 +71,7 @@ const monoSizes = {
 } as const;
 
 const monoLineHeights = {
-  ...defaultConfig.fonts.body.lineHeight,
+  ...v4BodyFont.lineHeight,
   caption: 16,
   body: 20,
   statMd: 24,
@@ -80,7 +80,7 @@ const monoLineHeights = {
 } as const;
 
 const monoWeights = {
-  ...defaultConfig.fonts.body.weight,
+  ...v4BodyFont.weight,
   caption: '400',
   body: '500',
   statMd: '600',
@@ -93,7 +93,7 @@ export const headingFont = createFont({
   size: uiSizes,
   lineHeight: uiLineHeights,
   weight: uiWeights,
-  letterSpacing: defaultConfig.fonts.heading.letterSpacing,
+  letterSpacing: v4HeadingLetterSpacing,
   face: interFace,
 });
 
@@ -102,7 +102,7 @@ export const bodyFont = createFont({
   size: uiSizes,
   lineHeight: uiLineHeights,
   weight: uiWeights,
-  letterSpacing: defaultConfig.fonts.body.letterSpacing,
+  letterSpacing: v4BodyFont.letterSpacing,
   face: interFace,
 });
 
@@ -111,6 +111,6 @@ export const monoFont = createFont({
   size: monoSizes,
   lineHeight: monoLineHeights,
   weight: monoWeights,
-  letterSpacing: defaultConfig.fonts.body.letterSpacing,
+  letterSpacing: v4BodyFont.letterSpacing,
   face: monoFace,
 });

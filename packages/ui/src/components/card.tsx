@@ -2,27 +2,26 @@ import { styled, YStack } from 'tamagui';
 
 export const Card = styled(YStack, {
   name: 'Card',
-  backgroundColor: '$cardBg',
+  backgroundColor: 'cardBg',
   borderRadius: 16,
-  padding: '$4',
-  gap: '$2',
+  padding: '4',
+  gap: '2',
   borderWidth: 1,
-  borderColor: '$borderColor',
+  borderColor: 'border-color',
   shadowColor: 'rgba(0,0,0,0.06)',
   shadowOffset: { width: 0, height: 1 },
   shadowRadius: 3,
   shadowOpacity: 1,
-
   variants: {
     interactive: {
       true: {
         cursor: 'pointer',
-        pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
-        focusVisibleStyle: {
-          outlineWidth: 2,
-          outlineColor: '$focusRing',
-          outlineStyle: 'solid',
-        },
+        backgroundColor: 'press:elevatedBg',
+        opacity: 'press:1',
+        scale: 'press:1',
+        outlineWidth: 'focus-visible:2px',
+        outlineColor: 'focus-visible:focusRing',
+        outlineStyle: 'focus-visible:solid',
       },
     },
     elevated: {
@@ -35,15 +34,14 @@ export const Card = styled(YStack, {
     tone: {
       default: {},
       danger: {
-        backgroundColor: '$dangerMuted',
-        borderColor: '$danger',
+        backgroundColor: 'dangerMuted',
+        borderColor: 'danger',
       },
       accent: {
-        backgroundColor: '$elevatedBg',
+        backgroundColor: 'elevatedBg',
       },
     },
   } as const,
-
   defaultVariants: {
     tone: 'default',
   },

@@ -32,7 +32,7 @@ const MissedMark = () => (
       height={RING}
       borderRadius={999}
       borderWidth={1}
-      borderColor="$borderColor"
+      borderColor="border-color"
     />
     <YStack
       position="absolute"
@@ -40,7 +40,7 @@ const MissedMark = () => (
       height={MID}
       borderRadius={999}
       borderWidth={1}
-      borderColor="$primary"
+      borderColor="primary"
       opacity={0.4}
     />
     <YStack
@@ -49,14 +49,14 @@ const MissedMark = () => (
       height={MID}
       borderRadius={999}
       opacity={0.08}
-      backgroundColor="$primary"
+      backgroundColor="primary"
     />
     <YStack
       position="absolute"
       width={CORE}
       height={CORE}
       borderRadius={999}
-      backgroundColor="$elevatedBg"
+      backgroundColor="elevatedBg"
     />
     <YStack
       position="absolute"
@@ -64,36 +64,36 @@ const MissedMark = () => (
       width={8}
       height={8}
       borderRadius={999}
-      backgroundColor="$primary"
+      backgroundColor="primary"
     />
     <XStack alignItems="baseline" gap={2}>
       <Text
-        fontFamily="$mono"
+        fontFamily="mono"
         fontSize={48}
         fontWeight="700"
-        color="$color"
+        color="color"
         letterSpacing={-1.2}
-        lineHeight={52}
+        lineHeight="52px"
       >
         4
       </Text>
       <Text
-        fontFamily="$mono"
+        fontFamily="mono"
         fontSize={48}
         fontWeight="700"
-        color="$primary"
+        color="primary"
         letterSpacing={-1.2}
-        lineHeight={52}
+        lineHeight="52px"
       >
         0
       </Text>
       <Text
-        fontFamily="$mono"
+        fontFamily="mono"
         fontSize={48}
         fontWeight="700"
-        color="$color"
+        color="color"
         letterSpacing={-1.2}
-        lineHeight={52}
+        lineHeight="52px"
       >
         4
       </Text>
@@ -105,16 +105,16 @@ const NotFoundBody = () => {
   const router = useRouter();
 
   return (
-    <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
-      <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
+    <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="screenBg">
+      <YStack gap="6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="4">
         <FadeIn>
-          <YStack gap="$6" alignItems="center" width="100%">
-            <YStack gap="$2" alignItems="center">
+          <YStack gap="6" alignItems="center" width="100%">
+            <YStack gap="2" alignItems="center">
               <Text
-                fontFamily="$heading"
+                fontFamily="heading"
                 fontWeight="800"
                 fontSize={28}
-                color="$color"
+                color="color"
                 letterSpacing={-0.5}
               >
                 GymOS
@@ -126,7 +126,7 @@ const NotFoundBody = () => {
 
             <MissedMark />
 
-            <YStack gap="$3" alignItems="center" width="100%">
+            <YStack gap="3" alignItems="center" width="100%">
               <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={1.4}>
                 Off the floor
               </Muted>
@@ -139,12 +139,12 @@ const NotFoundBody = () => {
               </Muted>
             </YStack>
 
-            <YStack gap="$3" width="100%" alignItems="center">
+            <YStack gap="3" width="100%" alignItems="center">
               <PrimaryButton onPress={() => router.replace('/')} width="100%">
                 Back to home
               </PrimaryButton>
               <Link href="/clients">
-                <Muted fontSize={13} color="$accent">
+                <Muted fontSize={13} color="accent">
                   View clients
                 </Muted>
               </Link>

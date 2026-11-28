@@ -5,11 +5,11 @@ import { Body, Card, Muted } from '@gymos/ui';
 
 /** Persistent coach callout — Stevia + olive oil defaults. */
 export const PrepPreferencesBanner = () => (
-  <Card gap="$2" tone="accent">
-    <Body fontFamily="$heading" fontWeight="700" fontSize={14}>
+  <Card gap="2" tone="accent">
+    <Body fontFamily="heading" fontWeight="700" fontSize={14}>
       Prep defaults
     </Body>
-    <Muted fontSize={13} lineHeight={19}>
+    <Muted fontSize={13} lineHeight="19px">
       {PREP_PREFERENCES.summary}
     </Muted>
   </Card>

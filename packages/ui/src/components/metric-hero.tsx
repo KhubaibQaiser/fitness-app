@@ -19,33 +19,33 @@ export const MetricHero = ({
 }) => {
   const valueColor =
     tone === 'danger'
-      ? '$danger'
+      ? 'danger'
       : tone === 'success'
-        ? '$success'
+        ? 'success'
         : tone === 'warning'
-          ? '$warning'
+          ? 'warning'
           : tone === 'primary'
-            ? '$primary'
-            : '$color';
+            ? 'primary'
+            : 'color';
 
   return (
-    <YStack gap="$1.5" alignItems="flex-start">
+    <YStack gap="1-5" alignItems="flex-start">
       <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
         {label}
       </Muted>
-      <XStack alignItems="baseline" gap="$2" flexWrap="wrap">
+      <XStack alignItems="baseline" gap="2" flexWrap="wrap">
         <Text
-          fontFamily="$mono"
+          fontFamily="mono"
           fontSize={38}
           fontWeight="700"
           color={valueColor}
           letterSpacing={-0.8}
-          lineHeight={44}
+          lineHeight="44px"
         >
           {value}
         </Text>
         {unit ? (
-          <Text fontFamily="$body" fontSize={16} color="$textMuted" fontWeight="400">
+          <Text fontFamily="body" fontSize={16} color="textMuted" fontWeight="400">
             {unit}
           </Text>
         ) : null}

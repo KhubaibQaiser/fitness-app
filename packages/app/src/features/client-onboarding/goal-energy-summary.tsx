@@ -10,9 +10,9 @@ export const GoalEnergySummary = ({ preview }: { preview: GoalPreview }) => {
   const energyLabel = isDeficit ? 'Daily deficit' : isSurplus ? 'Daily surplus' : 'Energy balance';
 
   return (
-    <Card backgroundColor="$elevatedBg" padding="$4" gap="$4">
-      <XStack flexWrap="wrap" gap="$5" alignItems="flex-start">
-        <YStack flexGrow={1} minWidth={180} gap="$2">
+    <Card backgroundColor="elevatedBg" padding="4" gap="4">
+      <XStack flexWrap="wrap" gap="5" alignItems="flex-start">
+        <YStack flexGrow={1} minWidth={180} gap="2">
           <MetricHero
             label="Daily calorie target"
             value={preview.targetKcal.toLocaleString()}
@@ -30,24 +30,18 @@ export const GoalEnergySummary = ({ preview }: { preview: GoalPreview }) => {
           />
         </YStack>
 
-        <YStack flexGrow={1} minWidth={180} gap="$2">
+        <YStack flexGrow={1} minWidth={180} gap="2">
           <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={1}>
             Expected timeline
           </Muted>
-          <Text fontFamily="$heading" fontSize={24} fontWeight="800" color="$color">
+          <Text fontFamily="heading" fontSize={24} fontWeight="800" color="color">
             {formatGoalEta(preview.etaWeeks)}
           </Text>
           <Muted>{formatPreviewDate(preview.estimatedTargetDate)}</Muted>
         </YStack>
       </XStack>
 
-      <XStack
-        borderTopWidth={1}
-        borderColor="$borderColor"
-        paddingTop="$3"
-        gap="$4"
-        flexWrap="wrap"
-      >
+      <XStack borderTopWidth={1} borderColor="border-color" paddingTop="3" gap="4" flexWrap="wrap">
         <YStack flexGrow={1} minWidth={120}>
           <Stat label="BMR" value={preview.bmrKcal.toLocaleString()} unit="kcal" hint="At rest" />
         </YStack>

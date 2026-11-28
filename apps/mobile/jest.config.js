@@ -3,6 +3,8 @@ module.exports = {
   preset: 'jest-expo',
   testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  // Tamagui 3 ships some ESM as .mjs (e.g. @tamagui/style-grammar), which jest-expo's transform skips.
+  transform: { '^.+\\.mjs$': 'babel-jest' },
   // pnpm nests packages under .pnpm/*/node_modules — allow transforming RN/Expo.
   // standard-navigation: ESM-only dependency of expo-router 58 (jest-expo 58's own list has it).
   transformIgnorePatterns: [

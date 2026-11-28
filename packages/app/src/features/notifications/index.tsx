@@ -67,7 +67,7 @@ export const NotificationsScreen = () => {
       {items.length === 0 ? (
         <EmptyState title="No alerts" hint="Check-in reminders and safety flags land here." />
       ) : (
-        <Card padding="$2" gap={0}>
+        <Card padding="2" gap={0}>
           {items.map(({ alert: n, time }) => {
             const clientName =
               typeof n.payload.clientName === 'string' ? n.payload.clientName : null;
@@ -82,9 +82,9 @@ export const NotificationsScreen = () => {
                 priority={high ? 'high' : 'normal'}
                 icon={
                   high ? (
-                    <ShieldAlert size={14} color="$danger" />
+                    <ShieldAlert size={14} color="danger" />
                   ) : (
-                    <Bell size={14} color="$coachAccentText" />
+                    <Bell size={14} color="coachAccentText" />
                   )
                 }
                 {...(high ? { trailing: <Badge tone="alert" label="HIGH" /> } : {})}

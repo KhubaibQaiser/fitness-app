@@ -23,18 +23,18 @@ export const ToolsScreen = () => (
   <AppScreen avoidKeyboard>
     <PageHeader title="Tools" subtitle="Nutrition utility calculators" />
 
-    <YStack gap="$3">
+    <YStack gap="3">
       {TOOLS.map((tool) => (
         <Link key={tool.href} href={tool.href}>
-          <Card interactive gap="$2" minHeight={56} justifyContent="center">
-            <XStack alignItems="center" justifyContent="space-between" gap="$3">
+          <Card interactive gap="2" minHeight={56} justifyContent="center">
+            <XStack alignItems="center" justifyContent="space-between" gap="3">
               <YStack flex={1} gap={2} minWidth={0}>
-                <Body fontFamily="$heading" fontWeight="700">
+                <Body fontFamily="heading" fontWeight="700">
                   {tool.title}
                 </Body>
                 <Muted fontSize={13}>{tool.subtitle}</Muted>
               </YStack>
-              <ChevronRight size={20} color="$textMuted" />
+              <ChevronRight size={20} color="textMuted" />
             </XStack>
           </Card>
         </Link>

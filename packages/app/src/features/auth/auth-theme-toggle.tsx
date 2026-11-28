@@ -12,7 +12,7 @@ export const AuthThemeToggle = () => {
       tone="ghost"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       onPress={toggle}
-      icon={dark ? <Sun size={18} color="$color" /> : <Moon size={18} color="$color" />}
+      icon={dark ? <Sun size={18} color="color" /> : <Moon size={18} color="color" />}
     />
   );
 };

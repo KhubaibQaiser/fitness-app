@@ -60,10 +60,10 @@ export const ProgressRing = ({
       </Svg>
       <YStack position="absolute" alignItems="center" gap={2}>
         <Text
-          fontFamily="$mono"
+          fontFamily="mono"
           fontSize={size > 100 ? 24 : 18}
           fontWeight="700"
-          color="$color"
+          color="color"
           letterSpacing={-0.5}
         >
           {Math.round(pct * 100)}%

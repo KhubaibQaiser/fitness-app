@@ -313,7 +313,7 @@ export const WeightChart = ({
   const a11yGoal = goalWeightKg !== null ? goalWeightKg.toFixed(1) : 'none';
 
   return (
-    <YStack width="100%" gap="$3">
+    <YStack width="100%" gap="3">
       <YStack
         width="100%"
         aspectRatio={CHART_VIEW_WIDTH / height}
@@ -572,13 +572,13 @@ export const WeightChart = ({
             left={`${Math.min(72, Math.max(4, (activePoint.x / viewWidth) * 100 - 14))}%`}
             top={`${Math.max(2, (activePoint.y / viewHeight) * 100 - 28)}%`}
             pointerEvents="none"
-            backgroundColor="$cardBg"
+            backgroundColor="cardBg"
             borderWidth={1}
-            borderColor="$borderColor"
+            borderColor="border-color"
             borderRadius={12}
-            paddingHorizontal="$2.5"
-            paddingVertical="$2"
-            gap="$1"
+            paddingHorizontal="2-5"
+            paddingVertical="2"
+            gap="1"
             minWidth={132}
             shadowColor="rgba(0,0,0,0.18)"
             shadowOffset={{ width: 0, height: 8 }}
@@ -586,7 +586,7 @@ export const WeightChart = ({
             shadowOpacity={1}
           >
             <Muted fontSize={13}>{formatChartDate(activePoint.t)}</Muted>
-            <Text fontFamily="$mono" fontSize={16} fontWeight="600" color="$color">
+            <Text fontFamily="mono" fontSize={16} fontWeight="600" color="color">
               {activePoint.weightKg.toFixed(1)} {unitLabel}
             </Text>
             {expectedAtActive !== null ? (
@@ -602,30 +602,30 @@ export const WeightChart = ({
       <XStack
         justifyContent="space-between"
         alignItems="center"
-        gap="$3"
+        gap="3"
         flexWrap="wrap"
         minHeight={22}
       >
         <Muted>
           {formatChartDate(tMin)} → {formatChartDate(tMax)}
         </Muted>
-        <XStack alignItems="center" gap="$3" flexWrap="wrap">
-          <XStack alignItems="center" gap="$1.5">
-            <YStack width={14} height={3} borderRadius={999} backgroundColor="$primary" />
+        <XStack alignItems="center" gap="3" flexWrap="wrap">
+          <XStack alignItems="center" gap="1-5">
+            <YStack width={14} height={3} borderRadius={999} backgroundColor="primary" />
             <Muted>Weigh-ins</Muted>
           </XStack>
-          <XStack alignItems="center" gap="$1.5">
+          <XStack alignItems="center" gap="1-5">
             <XStack alignItems="center" gap={3}>
-              <YStack width={5} height={2} borderRadius={999} backgroundColor="$textMuted" />
-              <YStack width={5} height={2} borderRadius={999} backgroundColor="$textMuted" />
+              <YStack width={5} height={2} borderRadius={999} backgroundColor="textMuted" />
+              <YStack width={5} height={2} borderRadius={999} backgroundColor="textMuted" />
             </XStack>
             <Muted>Expected</Muted>
           </XStack>
           {goalWeightKg !== null ? (
-            <XStack alignItems="center" gap="$1.5">
+            <XStack alignItems="center" gap="1-5">
               <XStack alignItems="center" gap={3}>
-                <YStack width={5} height={2} borderRadius={999} backgroundColor="$accent" />
-                <YStack width={5} height={2} borderRadius={999} backgroundColor="$accent" />
+                <YStack width={5} height={2} borderRadius={999} backgroundColor="accent" />
+                <YStack width={5} height={2} borderRadius={999} backgroundColor="accent" />
               </XStack>
               <Muted>
                 Goal {goalWeightKg.toFixed(1)} {unitLabel}

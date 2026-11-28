@@ -1,5 +1,7 @@
 'use client';
 
+import { createElement, type ReactElement } from 'react';
+import { MenuLines as MenuLinesRaw } from './components/menu-lines';
 import {
   Activity as ActivityRaw,
   AlertTriangle as AlertTriangleRaw,
@@ -28,9 +30,7 @@ import {
   Utensils as UtensilsRaw,
   Wrench as WrenchRaw,
   X as XRaw,
-} from '@tamagui/lucide-icons-2';
-import { createElement, type ReactElement } from 'react';
-import { MenuLines as MenuLinesRaw } from './components/menu-lines';
+} from './icon-set';
 
 /**
  * Minimal icon props — keep this shallow. Deep Tamagui `IconProps` generics
@@ -45,8 +45,8 @@ export type GymosIconProps = {
 export type GymosIcon = (props: GymosIconProps) => ReactElement | null;
 
 /**
- * Lucide's published .d.ts uses bare `JSX.Element`. Normalize to GymosIcon at
- * this package boundary so feature code never sees those declarations.
+ * The generated icons (`./icon-set`, Lucide glyphs via `tamagui icons add`) type their props as
+ * Tamagui `IconProps`. Normalize to GymosIcon at this package boundary so feature code never sees them.
  */
 const fromLucide =
   (Raw: GymosIcon): GymosIcon =>

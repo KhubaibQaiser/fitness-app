@@ -75,25 +75,25 @@ export const ClientHubPlan = ({
       : null;
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {goal === null ? (
-        <Card gap="$3">
+        <Card gap="3">
           <Body>Set a goal first. Targets and plans are computed from it.</Body>
           <Link href={`/clients/${clientId}/goal/new`}>
             <PrimaryButton>Set a goal</PrimaryButton>
           </Link>
         </Card>
       ) : (
-        <Card gap="$4" padding="$4">
+        <Card gap="4" padding="4">
           <Row>
-            <Text fontFamily="$heading" fontWeight="700" fontSize={13} color="$color">
+            <Text fontFamily="heading" fontWeight="700" fontSize={13} color="color">
               Active goal
             </Text>
             <Link href={`/clients/${clientId}/goal/new`}>
               <GhostButton>Edit goal</GhostButton>
             </Link>
           </Row>
-          <XStack flexWrap="wrap" gap="$4">
+          <XStack flexWrap="wrap" gap="4">
             {(
               [
                 { label: 'Objective', value: GOAL_LABEL[goal.preset] },
@@ -123,9 +123,9 @@ export const ClientHubPlan = ({
                 },
               ] as const
             ).map((row) => (
-              <YStack key={row.label} width="45%" $md={{ width: '30%' }} gap={2}>
+              <YStack key={row.label} width="45% md:30%" gap={2}>
                 <Muted fontSize={11}>{row.label}</Muted>
-                <Text fontFamily="$body" fontWeight="600" fontSize={13.5} color="$color">
+                <Text fontFamily="body" fontWeight="600" fontSize={13.5} color="color">
                   {row.value}
                 </Text>
               </YStack>
@@ -134,9 +134,9 @@ export const ClientHubPlan = ({
         </Card>
       )}
 
-      <Card gap="$3" padding="$4">
+      <Card gap="3" padding="4">
         <Row>
-          <Text fontFamily="$heading" fontWeight="700" fontSize={13} color="$color">
+          <Text fontFamily="heading" fontWeight="700" fontSize={13} color="color">
             Dietary profile
           </Text>
           <Link href={`/clients/${clientId}/dietary`}>
@@ -145,11 +145,11 @@ export const ClientHubPlan = ({
         </Row>
 
         {severe.length > 0 ? (
-          <YStack gap="$2">
-            <Muted fontSize={11} fontWeight="700" color="$danger" textTransform="uppercase">
+          <YStack gap="2">
+            <Muted fontSize={11} fontWeight="700" color="danger" textTransform="uppercase">
               Severe allergens, excluded from all plans
             </Muted>
-            <XStack gap="$2" flexWrap="wrap">
+            <XStack gap="2" flexWrap="wrap">
               {severe.map((r) => (
                 <Badge
                   key={`${r.type}:${r.code}`}
@@ -162,11 +162,11 @@ export const ClientHubPlan = ({
         ) : null}
 
         {other.length > 0 ? (
-          <YStack gap="$2">
+          <YStack gap="2">
             <Muted fontSize={11} fontWeight="600">
               Preferences & restrictions
             </Muted>
-            <XStack gap="$2" flexWrap="wrap">
+            <XStack gap="2" flexWrap="wrap">
               {other.map((r) => (
                 <Badge
                   key={`${r.type}:${r.code}`}
@@ -179,11 +179,11 @@ export const ClientHubPlan = ({
         ) : null}
 
         {preferred.length > 0 ? (
-          <YStack gap="$2">
+          <YStack gap="2">
             <Muted fontSize={11} fontWeight="600">
               Preferred foods
             </Muted>
-            <XStack gap="$2" flexWrap="wrap">
+            <XStack gap="2" flexWrap="wrap">
               {preferred.map((r) => (
                 <Badge
                   key={`${r.type}:${r.code}`}
@@ -204,7 +204,7 @@ export const ClientHubPlan = ({
 
       {currentPlan === undefined ? (
         goal !== null ? (
-          <Card gap="$3" padding="$5" alignItems="center">
+          <Card gap="3" padding="5" alignItems="center">
             <Body fontWeight="700">No meal plan yet</Body>
             <Muted textAlign="center" fontSize={12}>
               Generate a 7-day plan from the goal targets and dietary profile.
@@ -216,10 +216,10 @@ export const ClientHubPlan = ({
         ) : null
       ) : (
         <Link href={`/clients/${clientId}/plan`}>
-          <Card interactive gap="$3" padding="$4">
+          <Card interactive gap="3" padding="4">
             <Row>
               <YStack gap={2} flex={1} minWidth={0}>
-                <Text fontFamily="$heading" fontWeight="700" fontSize={13} color="$color">
+                <Text fontFamily="heading" fontWeight="700" fontSize={13} color="color">
                   Meal plan
                 </Text>
                 <Muted fontSize={11}>
@@ -233,10 +233,10 @@ export const ClientHubPlan = ({
             </Row>
 
             <XStack
-              gap="$2"
-              backgroundColor="$elevatedBg"
+              gap="2"
+              backgroundColor="elevatedBg"
               borderRadius={12}
-              padding="$3"
+              padding="3"
               justifyContent="space-between"
             >
               {(
@@ -249,7 +249,7 @@ export const ClientHubPlan = ({
                 ] as const
               ).map((m) => (
                 <YStack key={m.label} alignItems="center" flex={1} gap={4}>
-                  <Text fontFamily="$mono" fontWeight="600" fontSize={14} color="$color">
+                  <Text fontFamily="mono" fontWeight="600" fontSize={14} color="color">
                     {m.value}
                   </Text>
                   <Muted fontSize={12}>{m.label}</Muted>

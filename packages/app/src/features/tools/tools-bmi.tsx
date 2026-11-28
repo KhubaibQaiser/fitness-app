@@ -52,9 +52,9 @@ export const ToolsBmi = () => {
   const chain = useFocusChain(names);
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
-      <XStack gap="$3" flexWrap="wrap">
+      <XStack gap="3" flexWrap="wrap">
         <YStack flex={1} minWidth={140}>
           <FormField
             label="Weight"

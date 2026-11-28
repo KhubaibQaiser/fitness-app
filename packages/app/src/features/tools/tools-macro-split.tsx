@@ -46,9 +46,9 @@ export const ToolsMacroSplit = () => {
   const chain = useFocusChain(['kcal']);
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
-      <YStack gap="$2">
+      <YStack gap="2">
         {PRESETS.map((p) => {
           const selected = p.id === preset.id;
           return (
@@ -60,11 +60,11 @@ export const ToolsMacroSplit = () => {
               accessibilityRole="button"
               accessibilityState={{ selected }}
             >
-              <XStack alignItems="center" justifyContent="space-between" gap="$3">
-                <Body fontFamily="$heading" fontWeight="700">
+              <XStack alignItems="center" justifyContent="space-between" gap="3">
+                <Body fontFamily="heading" fontWeight="700">
                   {p.label}
                 </Body>
-                <Muted fontFamily="$mono" fontSize={13}>
+                <Muted fontFamily="mono" fontSize={13}>
                   P {p.proteinPct}% · F {p.fatPct}% · C {p.carbPct}%
                 </Muted>
               </XStack>
@@ -84,7 +84,7 @@ export const ToolsMacroSplit = () => {
       />
 
       <Card>
-        <XStack gap="$4" flexWrap="wrap">
+        <XStack gap="4" flexWrap="wrap">
           <Stat
             label="Protein"
             value={proteinG !== null ? String(proteinG) : '-'}

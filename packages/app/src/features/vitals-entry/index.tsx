@@ -105,18 +105,18 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
   if (saved) {
     return (
       <AppScreen>
-        <YStack flex={1} alignItems="center" justifyContent="center" gap="$4" paddingVertical="$8">
+        <YStack flex={1} alignItems="center" justifyContent="center" gap="4" paddingVertical="8">
           <YStack
             width={72}
             height={72}
             borderRadius={999}
-            backgroundColor="$successMuted"
+            backgroundColor="successMuted"
             alignItems="center"
             justifyContent="center"
           >
-            <Check size={32} color="$success" />
+            <Check size={32} color="success" />
           </YStack>
-          <Body fontFamily="$heading" fontWeight="800" fontSize={20}>
+          <Body fontFamily="heading" fontWeight="800" fontSize={20}>
             Vitals saved
           </Body>
           <Muted textAlign="center">
@@ -189,25 +189,25 @@ export const VitalsEntryScreen = ({ clientId }: { clientId: string }) => {
         subtitle="Fill only what you measured. History is never overwritten."
       />
       {chain.toolbar}
-      <Card gap="$4">
+      <Card gap="4">
         <FormSection title="Body composition">{renderFields(BODY)}</FormSection>
       </Card>
-      <Card gap="$4">
+      <Card gap="4">
         <FormSection title="Circumferences">
           {renderFields(MEASURE)}
           {BILATERAL.map(([left, right]) => (
-            <XStack key={left.key} gap="$3" width="100%">
+            <XStack key={left.key} gap="3" width="100%">
               <YStack flex={1}>{renderField(left)}</YStack>
               <YStack flex={1}>{renderField(right)}</YStack>
             </XStack>
           ))}
         </FormSection>
       </Card>
-      <Card gap="$4">
+      <Card gap="4">
         <FormSection title="Cardio">{renderFields(VITALS)}</FormSection>
       </Card>
       {record.isError ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {record.error.message}
         </Body>
       ) : null}

@@ -54,8 +54,8 @@ export const SettingsScreen = () => {
     <AppScreen>
       <PageHeader title="Settings" subtitle="Workspace, appearance, units" />
 
-      <Card gap="$3">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+      <Card gap="3">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Appearance
         </Text>
         <Row minHeight={48}>
@@ -71,28 +71,28 @@ export const SettingsScreen = () => {
         </Row>
       </Card>
 
-      <Card gap="$4">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+      <Card gap="4">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Units
         </Text>
         {prefs === undefined ? (
-          <YStack gap="$4" width="100%">
-            <YStack gap="$2" width="100%">
+          <YStack gap="4" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Weight</Body>
-              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+              <Skeleton width="100%" height={36} borderRadius="radiusControl" />
             </YStack>
-            <YStack gap="$2" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Height</Body>
-              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+              <Skeleton width="100%" height={36} borderRadius="radiusControl" />
             </YStack>
-            <YStack gap="$2" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Measurements</Body>
-              <Skeleton width="100%" height={36} borderRadius="$radiusControl" />
+              <Skeleton width="100%" height={36} borderRadius="radiusControl" />
             </YStack>
           </YStack>
         ) : (
           <>
-            <YStack gap="$2" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Weight</Body>
               <SegmentedControl
                 ariaLabel="Weight unit"
@@ -107,7 +107,7 @@ export const SettingsScreen = () => {
                 ]}
               />
             </YStack>
-            <YStack gap="$2" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Height</Body>
               <SegmentedControl
                 ariaLabel="Height unit"
@@ -122,7 +122,7 @@ export const SettingsScreen = () => {
                 ]}
               />
             </YStack>
-            <YStack gap="$2" width="100%">
+            <YStack gap="2" width="100%">
               <Body fontWeight="700">Measurements</Body>
               <SegmentedControl
                 ariaLabel="Length unit"
@@ -140,7 +140,7 @@ export const SettingsScreen = () => {
           </>
         )}
         {updateMe.isError ? (
-          <Body color="$danger" role="alert" fontSize={13}>
+          <Body color="danger" fontSize={13} role="alert">
             {updateMe.error.message}
           </Body>
         ) : (
@@ -149,7 +149,7 @@ export const SettingsScreen = () => {
       </Card>
 
       <Card>
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Coach
         </Text>
         <Row>
@@ -163,7 +163,7 @@ export const SettingsScreen = () => {
       </Card>
 
       <Card>
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color" marginBottom="$2">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color" marginBottom="2">
           AI meal planner
         </Text>
         <Link href="/settings/meal-planner">
@@ -174,13 +174,13 @@ export const SettingsScreen = () => {
                 Your own instructions for how meals are named and described.
               </Muted>
             </YStack>
-            <ChevronRight size={20} color="$textMuted" />
+            <ChevronRight size={20} color="textMuted" />
           </Row>
         </Link>
       </Card>
 
-      <Card gap="$3">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+      <Card gap="3">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Account
         </Text>
         <GhostButton
@@ -218,7 +218,7 @@ export const SettingsScreen = () => {
       </Card>
 
       <Card>
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           About
         </Text>
         <Row>
@@ -227,12 +227,12 @@ export const SettingsScreen = () => {
         </Row>
         <Row>
           <Body>Version</Body>
-          <Muted fontFamily="$mono">0.1.0-pilot</Muted>
+          <Muted fontFamily="mono">0.1.0-pilot</Muted>
         </Row>
       </Card>
 
-      <Card gap="$2">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+      <Card gap="2">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Privacy & safety
         </Text>
         <Body fontSize={14}>

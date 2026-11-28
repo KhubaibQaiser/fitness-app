@@ -125,12 +125,12 @@ export const SignaturePad = ({ onChange }: SignaturePadProps) => {
   };
 
   return (
-    <YStack gap="$2" width="100%">
+    <YStack gap="2" width="100%">
       <Muted>Sign below with finger</Muted>
       <YStack
         height={140}
         borderWidth={1}
-        borderColor="$borderColor"
+        borderColor="border-color"
         borderRadius={12}
         overflow="hidden"
         backgroundColor="#ffffff"

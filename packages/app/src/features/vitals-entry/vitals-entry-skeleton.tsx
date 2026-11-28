@@ -18,12 +18,12 @@ import { useBackOr } from '../../lib/use-back-navigation';
 import { AppScreen } from '../shell/app-screen';
 
 const FieldBone = ({ label, unit }: { label: string; unit: string }) => (
-  <YStack gap="$1.5" width="100%">
+  <YStack gap="1-5" width="100%">
     <Text
-      fontFamily="$heading"
+      fontFamily="heading"
       fontWeight="500"
       fontSize={12}
-      color="$textMuted"
+      color="textMuted"
       textTransform="uppercase"
       letterSpacing={0.8}
     >
@@ -34,9 +34,9 @@ const FieldBone = ({ label, unit }: { label: string; unit: string }) => (
       <Text
         position="absolute"
         right={12}
-        fontFamily="$mono"
+        fontFamily="mono"
         fontSize={14}
-        color="$textMuted"
+        color="textMuted"
         pointerEvents="none"
       >
         {unit}
@@ -81,26 +81,26 @@ export const VitalsEntrySkeleton = ({ clientId }: { clientId: string }) => {
         </StickyFormFooter>
       }
     >
-      <SkeletonRegion label="Loading vitals" gap="$4">
+      <SkeletonRegion label="Loading vitals" gap="4">
         <PageHeader
           title="Record vitals"
           subtitle="Fill only what you measured. History is never overwritten."
         />
-        <Card gap="$4">
+        <Card gap="4">
           <FormSection title="Body composition">
             {BODY.map((field) => (
               <FieldBone key={field.label} {...field} />
             ))}
           </FormSection>
         </Card>
-        <Card gap="$4">
+        <Card gap="4">
           <FormSection title="Circumferences">
             {MEASURE.map((field) => (
               <FieldBone key={field.label} {...field} />
             ))}
           </FormSection>
         </Card>
-        <Card gap="$4">
+        <Card gap="4">
           <FormSection title="Cardio">
             {CARDIO.map((field) => (
               <FieldBone key={field.label} {...field} />

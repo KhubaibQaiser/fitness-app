@@ -114,14 +114,14 @@ export const SignupScreen = () => {
   return (
     <AppErrorBoundary>
       <FormKeyboardRoot asForm fill avoidKeyboard>
-        <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
-          <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
-            <YStack gap="$2" alignItems="center">
+        <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="screenBg">
+          <YStack gap="6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="4">
+            <YStack gap="2" alignItems="center">
               <Text
-                fontFamily="$heading"
+                fontFamily="heading"
                 fontWeight="800"
                 fontSize={28}
-                color="$color"
+                color="color"
                 letterSpacing={-0.5}
               >
                 GymOS
@@ -129,7 +129,7 @@ export const SignupScreen = () => {
               <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
                 Coach signup
               </Muted>
-              <Muted textAlign="center" fontSize={13} marginTop="$2">
+              <Muted textAlign="center" fontSize={13} marginTop="2">
                 {step === 'details'
                   ? 'Create your coaching workspace'
                   : `Enter the code sent to ${email}`}
@@ -151,7 +151,7 @@ export const SignupScreen = () => {
               )}
             </AuthFormCard>
             <Link href="/login">
-              <Muted fontSize={13} textAlign="center" color="$accent">
+              <Muted fontSize={13} textAlign="center" color="accent">
                 Already have an account? Sign in
               </Muted>
             </Link>

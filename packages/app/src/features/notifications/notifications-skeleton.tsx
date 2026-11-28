@@ -11,7 +11,7 @@ import {
 } from '@gymos/ui';
 
 const AlertRowSkeleton = () => (
-  <XStack alignItems="center" gap={12} paddingHorizontal="$2" paddingVertical="$2.5" minHeight={44}>
+  <XStack alignItems="center" gap={12} paddingHorizontal="2" paddingVertical="2-5" minHeight={44}>
     <SkeletonCircle size={32} />
     <YStack flex={1} minWidth={0} gap={2}>
       <Skeleton width="58%" height={16} />
@@ -23,13 +23,13 @@ const AlertRowSkeleton = () => (
 
 /** Inner twin of NotificationsScreen — real header, one card of rows. */
 export const NotificationsSkeleton = () => (
-  <SkeletonRegion label="Loading alerts" gap="$4">
+  <SkeletonRegion label="Loading alerts" gap="4">
     <PageHeader
       title="Notifications"
       subtitle="Check-ins, safety flags, plan blocks"
       action={<YStack width={1} height={48} />}
     />
-    <Card padding="$2" gap={0}>
+    <Card padding="2" gap={0}>
       <AlertRowSkeleton />
       <AlertRowSkeleton />
       <AlertRowSkeleton />

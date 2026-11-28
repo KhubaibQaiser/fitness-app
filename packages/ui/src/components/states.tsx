@@ -8,13 +8,13 @@ export const LoadingState = ({ label = 'Loading…' }: { label?: string }) => (
     flex={1}
     alignItems="center"
     justifyContent="center"
-    gap="$3"
-    paddingVertical="$10"
+    gap="3"
+    paddingVertical="10"
     role="status"
     aria-live="polite"
     aria-busy
   >
-    <Spinner size="large" color="$primary" />
+    <Spinner size="large" color="primary" />
     <Muted>{label}</Muted>
   </YStack>
 );
@@ -30,7 +30,7 @@ export const EmptyState = ({
   action?: ReactNode;
   icon?: ReactNode;
 }) => (
-  <YStack alignItems="center" paddingVertical="$8" gap="$3">
+  <YStack alignItems="center" paddingVertical="8" gap="3">
     {icon}
     <Title fontSize={16} textAlign="center" fontWeight="600">
       {title}
@@ -46,15 +46,15 @@ export const EmptyState = ({
 
 export const ErrorState = ({ message, retry }: { message: string; retry?: () => void }) => (
   <YStack
-    backgroundColor="$dangerMuted"
-    borderRadius="$radiusCard"
+    backgroundColor="dangerMuted"
+    borderRadius="radiusCard"
     alignItems="center"
-    paddingVertical="$6"
-    paddingHorizontal="$4"
-    gap="$3"
+    paddingVertical="6"
+    paddingHorizontal="4"
+    gap="3"
     role="alert"
   >
-    <Body color="$danger" textAlign="center" fontWeight="700">
+    <Body color="danger" textAlign="center" fontWeight="700">
       {message}
     </Body>
     {retry ? (

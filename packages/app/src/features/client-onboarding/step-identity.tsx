@@ -27,7 +27,7 @@ export const StepIdentity = ({
   const chain = useFocusChain(['name'], { onSubmit: onComplete });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <FormField
         label="Full name"
@@ -44,7 +44,7 @@ export const StepIdentity = ({
         {...chain.bind('name')}
       />
 
-      <YStack gap="$2">
+      <YStack gap="2">
         <SegmentedControl
           ariaLabel="Gender"
           options={[

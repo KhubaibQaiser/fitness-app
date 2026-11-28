@@ -4,9 +4,9 @@ import { Text, YStack } from '@gymos/ui';
 import { adherenceScoreTone } from './client-journey';
 
 const TONE = {
-  danger: { background: '$dangerMuted', foreground: '$danger', border: '$danger' },
-  warning: { background: '$warningMuted', foreground: '$warning', border: '$warning' },
-  success: { background: '$successMuted', foreground: '$success', border: '$success' },
+  danger: { background: 'dangerMuted', foreground: 'danger', border: 'danger' },
+  warning: { background: 'warningMuted', foreground: 'warning', border: 'warning' },
+  success: { background: 'successMuted', foreground: 'success', border: 'success' },
 } as const;
 
 export const JourneyAdherenceScore = ({ score }: { score: number }) => {
@@ -26,19 +26,19 @@ export const JourneyAdherenceScore = ({ score }: { score: number }) => {
         role="img"
       >
         <Text
-          fontFamily="$mono"
+          fontFamily="mono"
           fontWeight="700"
           fontSize={18}
-          lineHeight={22}
+          lineHeight="22px"
           color={tone.foreground}
         >
           {score}
         </Text>
         <Text
-          fontFamily="$mono"
+          fontFamily="mono"
           fontWeight="500"
           fontSize={9}
-          lineHeight={11}
+          lineHeight="11px"
           color={tone.foreground}
           opacity={0.8}
         >
@@ -46,13 +46,13 @@ export const JourneyAdherenceScore = ({ score }: { score: number }) => {
         </Text>
       </YStack>
       <Text
-        fontFamily="$body"
+        fontFamily="body"
         fontSize={9}
-        lineHeight={12}
+        lineHeight="12px"
         fontWeight="600"
         letterSpacing={0.4}
         textTransform="uppercase"
-        color="$textMuted"
+        color="textMuted"
       >
         Adherence
       </Text>

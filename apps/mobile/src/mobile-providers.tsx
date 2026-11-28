@@ -45,7 +45,7 @@ export const MobileProviders = ({ children }: { children: ReactNode }) => {
               bottom={0}
               left={0}
               zIndex={1000}
-              backgroundColor="$canvas"
+              backgroundColor="canvas"
             >
               <LoadingState label="Loading…" />
             </YStack>

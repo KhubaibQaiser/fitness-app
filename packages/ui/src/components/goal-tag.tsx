@@ -9,17 +9,17 @@ export const GoalTag = ({ goal }: GoalTagProps) => (
     alignSelf="flex-start"
     alignItems="center"
     maxWidth="100%"
-    backgroundColor="$elevatedBg"
+    backgroundColor="elevatedBg"
     borderRadius={999}
-    paddingHorizontal="$2"
-    paddingVertical="$0.5"
+    paddingHorizontal="2"
+    paddingVertical="0-5"
     accessibilityLabel={`Goal: ${goal}`}
   >
     <Text
-      color="$textMuted"
-      fontFamily="$heading"
+      color="textMuted"
+      fontFamily="heading"
       fontSize={12}
-      lineHeight={16}
+      lineHeight="16px"
       fontWeight="500"
       numberOfLines={1}
     >

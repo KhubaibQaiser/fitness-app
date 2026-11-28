@@ -26,7 +26,7 @@ export const ToolsCalculators = () => {
         onChange={(id) => setTab(id as TabId)}
         ariaLabel="Calculator type"
       />
-      <YStack key={tab} gap="$3">
+      <YStack key={tab} gap="3">
         {tab === 'tdee' ? <ToolsTdee /> : null}
         {tab === 'bmi' ? <ToolsBmi /> : null}
         {tab === 'macros' ? <ToolsMacroSplit /> : null}

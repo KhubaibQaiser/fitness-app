@@ -13,13 +13,13 @@ import { PanelHeading } from './panel-heading';
 
 /** Floors, weekly change estimate, adaptive note. */
 export const SafetyPanel = () => (
-  <YStack gap="$4">
+  <YStack gap="4">
     <PanelHeading
       title="Safety & progress"
       subtitle="Named ticks stay inside the safety band. A coach override warns instead of blocking."
     />
 
-    <XStack gap="$3" flexWrap="wrap">
+    <XStack gap="3" flexWrap="wrap">
       <Stat label="Women floor" value={`${CALORIE_FLOOR_KCAL.F}`} hint="kcal / day warning" />
       <Stat label="Men floor" value={`${CALORIE_FLOOR_KCAL.M}`} hint="kcal / day warning" />
       <Stat
@@ -39,11 +39,11 @@ export const SafetyPanel = () => (
       />
     </XStack>
 
-    <Card gap="$3">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         What happens if a target is unsafe?
       </Body>
-      <Muted lineHeight={19}>
+      <Muted lineHeight="19px">
         Named ticks (Gentle / Standard / Aggressive) are clamped into the safe band: sex floors, 25%
         deficit cap, 15% surplus cap, 1% body-weight/week. Only infeasible macros are refused.
         Dragging Pace past those ticks warns instead of clamping. Create and save stay enabled. The
@@ -53,11 +53,11 @@ export const SafetyPanel = () => (
       </Muted>
     </Card>
 
-    <Card gap="$3">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         Expected weekly weight change
       </Body>
-      <Muted lineHeight={19}>
+      <Muted lineHeight="19px">
         From the gap between target calories and TDEE, using ~{KCAL_PER_KG.toLocaleString()} kcal
         per kg.
       </Muted>
@@ -69,11 +69,11 @@ export const SafetyPanel = () => (
       />
     </Card>
 
-    <Card gap="$3">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         After the first target
       </Body>
-      <Muted lineHeight={19}>
+      <Muted lineHeight="19px">
         Weekly check-ins compare smoothed weight trend to the expected rate. If an adjustment is
         needed, protein stays fixed; carbs move first, then fat toward its floor. Suggested
         adjustments still clamp into the safety band; a stored coach override remains until the

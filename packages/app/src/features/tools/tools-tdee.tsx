@@ -87,10 +87,10 @@ export const ToolsTdee = () => {
   const chain = useFocusChain(names);
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <FormSection title="Inputs">
-        <XStack gap="$3" flexWrap="wrap">
+        <XStack gap="3" flexWrap="wrap">
           <YStack flex={1} minWidth={120}>
             <FormField
               label="Weight"
@@ -126,7 +126,7 @@ export const ToolsTdee = () => {
           </YStack>
         </XStack>
 
-        <YStack gap="$2" width="100%">
+        <YStack gap="2" width="100%">
           <Muted fontSize={12} fontWeight="600">
             Sex
           </Muted>
@@ -141,7 +141,7 @@ export const ToolsTdee = () => {
           />
         </YStack>
 
-        <YStack gap="$2" width="100%">
+        <YStack gap="2" width="100%">
           <Muted fontSize={12} fontWeight="600">
             Activity
           </Muted>
@@ -153,7 +153,7 @@ export const ToolsTdee = () => {
           />
         </YStack>
 
-        <YStack gap="$2" width="100%">
+        <YStack gap="2" width="100%">
           <Muted fontSize={12} fontWeight="600">
             Goal
           </Muted>
@@ -180,7 +180,7 @@ export const ToolsTdee = () => {
       </FormSection>
 
       <Card>
-        <XStack gap="$4" flexWrap="wrap">
+        <XStack gap="4" flexWrap="wrap">
           <Stat
             label="BMR"
             value={bmrValue !== null ? Math.round(bmrValue).toLocaleString() : '-'}

@@ -18,13 +18,13 @@ export const GymosToast = ({ show, children }: GymosToastProps) => {
       alignSelf="center"
       zIndex={40}
       alignItems="center"
-      gap="$2"
+      gap="2"
       borderRadius={999}
-      paddingHorizontal="$4"
-      paddingVertical="$2"
-      backgroundColor="$coachAccentWash"
+      paddingHorizontal="4"
+      paddingVertical="2"
+      backgroundColor="coachAccentWash"
       borderWidth={1}
-      borderColor="$borderColor"
+      borderColor="border-color"
       shadowColor="rgba(0,0,0,0.06)"
       shadowOffset={{ width: 0, height: 1 }}
       shadowRadius={3}
@@ -33,8 +33,8 @@ export const GymosToast = ({ show, children }: GymosToastProps) => {
       aria-live="polite"
       accessibilityLiveRegion="polite"
     >
-      <Check size={14} color="$coachAccentText" />
-      <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$coachAccentText">
+      <Check size={14} color="coachAccentText" />
+      <Text fontFamily="heading" fontSize={14} fontWeight="500" color="coachAccentText">
         {children}
       </Text>
     </XStack>

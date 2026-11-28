@@ -87,26 +87,26 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
             <Link href={`/clients/${clientId}`}>
               <IconButton
                 aria-label="Back to client"
-                icon={<ArrowLeft size={20} color="$color" />}
+                icon={<ArrowLeft size={20} color="color" />}
               />
             </Link>
           }
         />
         {detail.data.goal === null ? (
-          <Card gap="$3">
+          <Card gap="3">
             <Body>Set a goal first. The plan is generated from its targets.</Body>
             <Link href={`/clients/${clientId}/goal/new`}>
               <PrimaryButton>Set a goal</PrimaryButton>
             </Link>
           </Card>
         ) : (
-          <YStack gap="$3">
-            <Card gap="$3">
+          <YStack gap="3">
+            <Card gap="3">
               <Body>
                 Generate a 7-day plan for {detail.data.goal.initialTargets?.kcal ?? '-'} kcal
                 honoring every dietary restriction.
               </Body>
-              <YStack gap="$2">
+              <YStack gap="2">
                 <Muted fontSize={13}>Meals per day</Muted>
                 <SegmentedControl
                   ariaLabel="Meals per day"
@@ -130,7 +130,7 @@ export const PlanScreen = ({ clientId }: { clientId: string }) => {
                 </PrimaryButton>
               )}
               {generate.isError && !blocked ? (
-                <Body color="$danger" role="alert">
+                <Body color="danger" role="alert">
                   {generate.error.message}
                 </Body>
               ) : null}

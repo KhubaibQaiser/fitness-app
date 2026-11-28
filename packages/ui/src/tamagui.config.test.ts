@@ -11,11 +11,7 @@ const themeColor = (value: unknown): string => {
   return String(value);
 };
 
-const theme = (name: 'light' | 'dark') => {
-  const value = config.themes[name];
-  if (value === undefined) throw new Error(`Missing ${name} theme`);
-  return value;
-};
+const theme = (name: 'light' | 'dark') => config.themes[name];
 
 describe('GymOS design tokens', () => {
   it('maps coach primary to blue/700 in both themes', () => {
@@ -45,5 +41,21 @@ describe('GymOS design tokens', () => {
 
   it('keeps desktop breakpoint aligned with Tamagui md media', () => {
     expect(config.media.md.minWidth).toBe(DESKTOP_MIN_WIDTH_PX);
+  });
+
+  // U4: Tamagui 3 dropped config v4. These are the v4 values the app keeps, so the look holds.
+  it('keeps the config v4 size, space and radius scales', () => {
+    const value = (token: unknown) => Number(Reflect.get(Object(token), 'val') ?? token);
+    expect(value(config.tokens.size['4'])).toBe(44);
+    expect(value(config.tokens.space['4'])).toBe(18);
+    expect(value(config.tokens.space['1-5'])).toBe(4);
+    expect(value(config.tokens.radius['4'])).toBe(9);
+  });
+
+  it("gives Tamagui 3's skins kebab-case theme keys with the app's values", () => {
+    expect(themeColor(theme('light')['border-color'])).toBe('#E4E4E7');
+    expect(themeColor(theme('dark')['border-color'])).toBe('#27272A');
+    expect(themeColor(theme('light')['border-color-hover'])).toBe('#D4D4D8');
+    expect(themeColor(theme('light')['placeholder-color'])).toBe('#A1A1AA');
   });
 });

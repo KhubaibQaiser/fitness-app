@@ -63,27 +63,27 @@ export const PlanTitleHeader = ({
   };
 
   return (
-    <XStack alignItems="flex-start" justifyContent="space-between" gap="$3" width="100%">
+    <XStack alignItems="flex-start" justifyContent="space-between" gap="3" width="100%">
       <YStack flex={1} gap={2} minWidth={0}>
         {editing ? (
-          <XStack gap="$2.5" alignItems="center" width="100%">
+          <XStack gap="2-5" alignItems="center" width="100%">
             <Input
               flex={1}
+              fontFamily="heading"
+              fontWeight="700"
+              fontSize={20}
+              borderWidth={1}
+              borderColor="focusRing"
+              backgroundColor="cardBg"
+              color="color"
+              borderRadius="radiusControl"
+              paddingHorizontal="3"
+              height={36}
               value={draft}
               onChangeText={(t) => setDraft(t.slice(0, TITLE_MAX))}
               placeholder={`Plan v${version}`}
               autoFocus
               maxLength={TITLE_MAX}
-              fontFamily="$heading"
-              fontWeight="700"
-              fontSize={20}
-              borderWidth={1}
-              borderColor="$focusRing"
-              backgroundColor="$cardBg"
-              color="$color"
-              borderRadius="$radiusControl"
-              paddingHorizontal="$3"
-              height={36}
               onSubmitEditing={commit}
             />
             <IconButton
@@ -93,7 +93,7 @@ export const PlanTitleHeader = ({
               onPress={commit}
               aria-label="Save plan name"
             >
-              <Check size={11} color="$success" />
+              <Check size={11} color="success" />
             </IconButton>
             <IconButton
               density="xs"
@@ -102,13 +102,13 @@ export const PlanTitleHeader = ({
               onPress={cancel}
               aria-label="Cancel rename"
             >
-              <X size={11} color="$textMuted" />
+              <X size={11} color="textMuted" />
             </IconButton>
           </XStack>
         ) : (
-          <XStack gap="$2.5" alignItems="center" minWidth={0} flexWrap="wrap">
+          <XStack gap="2-5" alignItems="center" minWidth={0} flexWrap="wrap">
             <Body
-              fontFamily="$heading"
+              fontFamily="heading"
               fontWeight="700"
               fontSize={20}
               letterSpacing={-0.3}
@@ -127,13 +127,13 @@ export const PlanTitleHeader = ({
                 }}
                 aria-label="Rename plan"
               >
-                <Pencil size={11} color="$textMuted" />
+                <Pencil size={11} color="textMuted" />
               </IconButton>
             ) : null}
           </XStack>
         )}
         {editing ? (
-          <Body fontSize={12} color="$textMuted">
+          <Body fontSize={12} color="textMuted">
             {draft.length}/{TITLE_MAX}
           </Body>
         ) : null}

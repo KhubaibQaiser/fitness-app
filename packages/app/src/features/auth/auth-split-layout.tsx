@@ -20,7 +20,7 @@ export const AuthSplitLayout = ({ children }: AuthSplitLayoutProps) => {
   const { enterClass, pathname, setPanel } = useAuthPanelSlide();
 
   return (
-    <XStack width="100%" backgroundColor="$screenBg" overflow="hidden" style={fullViewport}>
+    <XStack width="100%" backgroundColor="screenBg" overflow="hidden" style={fullViewport}>
       <AuthHeroColumn />
       <AuthFormColumn pathname={pathname} enterClass={enterClass} setPanel={setPanel}>
         {children}

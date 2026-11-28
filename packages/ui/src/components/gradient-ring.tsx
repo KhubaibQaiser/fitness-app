@@ -80,7 +80,7 @@ export const GradientRing = ({
         {children !== undefined ? (
           children
         ) : (
-          <Text fontFamily="$mono" fontSize={size > 80 ? 18 : 14} fontWeight="600" color="$color">
+          <Text fontFamily="mono" fontSize={size > 80 ? 18 : 14} fontWeight="600" color="color">
             {Math.round(pct)}%
           </Text>
         )}

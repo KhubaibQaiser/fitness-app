@@ -60,7 +60,7 @@ export const StepGoal = ({
       : null;
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <GoalFields
         value={draft}

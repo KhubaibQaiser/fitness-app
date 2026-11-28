@@ -40,9 +40,9 @@ export const GoalFields = ({
   bind,
   pace = null,
 }: Props) => (
-  <YStack gap="$4">
-    <YStack gap="$2">
-      <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
+  <YStack gap="4">
+    <YStack gap="2">
+      <Body fontFamily="heading" fontWeight="700" fontSize={13}>
         Typical week
       </Body>
       <SegmentedControl
@@ -53,8 +53,8 @@ export const GoalFields = ({
       />
     </YStack>
 
-    <YStack gap="$2">
-      <Body fontFamily="$heading" fontWeight="700" fontSize={13}>
+    <YStack gap="2">
+      <Body fontFamily="heading" fontWeight="700" fontSize={13}>
         Goal
       </Body>
       <SegmentedControl

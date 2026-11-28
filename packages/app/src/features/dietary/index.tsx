@@ -127,31 +127,25 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
         subtitle={`Version ${profile?.version ?? 0} · changes re-validate the live plan`}
       />
 
-      <Card tone="danger" padding="$4">
-        <Text
-          fontFamily="$heading"
-          fontSize={14}
-          fontWeight="500"
-          color="$danger"
-          marginBottom="$2"
-        >
+      <Card tone="danger" padding="4">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="danger" marginBottom="2">
           Severe allergies
         </Text>
         <DietaryChips kind="allergens" selection={selection} onToggle={toggle} />
-        <Muted fontSize={12} marginTop="$3">
+        <Muted fontSize={12} marginTop="3">
           Severe allergies are hard blocks in the meal engine.
         </Muted>
       </Card>
 
-      <Card padding="$4">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color" marginBottom="$2">
+      <Card padding="4">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color" marginBottom="2">
           Religious / lifestyle
         </Text>
         <DietaryChips kind="religious" selection={selection} onToggle={toggle} />
       </Card>
 
-      <Card padding="$4" gap="$3">
-        <Text fontFamily="$heading" fontSize={14} fontWeight="500" color="$color">
+      <Card padding="4" gap="3">
+        <Text fontFamily="heading" fontSize={14} fontWeight="500" color="color">
           Preferred foods
         </Text>
         <Muted fontSize={12}>
@@ -159,7 +153,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
           allergy or exclusion above.
         </Muted>
         {preferredEntries.length > 0 ? (
-          <YStack gap="$1">
+          <YStack gap="1">
             {preferredEntries.map((r) => (
               <Row key={r.code} minHeight={44}>
                 <Body flex={1} minWidth={0}>
@@ -167,7 +161,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
                 </Body>
                 <IconButton
                   aria-label={`Remove ${r.note ?? formatRestrictionLabel(r.code)} from preferred foods`}
-                  icon={<X size={16} color="$color" />}
+                  icon={<X size={16} color="color" />}
                   onPress={() => removePreferred(r.code)}
                 />
               </Row>
@@ -191,7 +185,7 @@ export const DietaryScreen = ({ clientId }: { clientId: string }) => {
       ) : null}
 
       {put.isError ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {put.error.message}
         </Body>
       ) : null}

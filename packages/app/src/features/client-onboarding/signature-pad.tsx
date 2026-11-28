@@ -102,7 +102,7 @@ export const SignaturePad = ({ onChange }: SignaturePadProps) => {
   });
 
   return (
-    <YStack gap="$2" width="100%">
+    <YStack gap="2" width="100%">
       <Muted>Sign below with finger or mouse</Muted>
       {canvas}
       <XStack justifyContent="flex-end">

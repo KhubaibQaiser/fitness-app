@@ -1,15 +1,15 @@
 import { Button, styled } from 'tamagui';
 
+// Tamagui 3 takes state styles as flat clauses on each property, not focusVisibleStyle objects.
 const focusRing = {
-  outlineWidth: 2,
-  outlineColor: '$focusRing',
-  outlineStyle: 'solid',
-  outlineOffset: 2,
+  outlineWidth: 'focus-visible:2',
+  outlineColor: 'focus-visible:focusRing',
+  outlineStyle: 'focus-visible:solid',
+  outlineOffset: 'focus-visible:2',
 } as const;
 
 export const IconButton = styled(Button, {
   name: 'IconButton',
-  unstyled: true,
   role: 'button',
   tabIndex: 0,
   cursor: 'pointer',
@@ -26,25 +26,24 @@ export const IconButton = styled(Button, {
   alignItems: 'center',
   justifyContent: 'center',
   flexDirection: 'row',
-  backgroundColor: 'transparent',
+  backgroundColor: 'transparent hover:elevatedBg press:elevatedBg',
   borderWidth: 0,
   borderColor: 'transparent',
-  color: '$textMuted',
-  fontFamily: '$heading',
+  color: 'textMuted',
+  fontFamily: 'heading',
   fontWeight: '700',
   fontSize: 20,
-  hoverStyle: { backgroundColor: '$elevatedBg', opacity: 1 },
-  pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
-  focusVisibleStyle: focusRing,
-  disabledStyle: { opacity: 0.4 },
-
+  opacity: 'hover:1 press:1 disabled:0.4',
+  scale: 'press:1',
+  ...focusRing,
   variants: {
     tone: {
       ghost: {
         borderWidth: 1,
-        borderColor: '$borderColor',
-        hoverStyle: { backgroundColor: '$elevatedBg', borderColor: '$borderColorHover' },
-        pressStyle: { backgroundColor: '$elevatedBg', opacity: 1, scale: 1 },
+        borderColor: 'border-color hover:border-color-hover',
+        backgroundColor: 'transparent hover:elevatedBg press:elevatedBg',
+        opacity: 'press:1 disabled:0.4',
+        scale: 'press:1',
       },
       bare: {
         borderWidth: 0,
@@ -52,10 +51,10 @@ export const IconButton = styled(Button, {
     },
     active: {
       true: {
-        backgroundColor: '$primaryMuted',
-        color: '$primary',
-        hoverStyle: { backgroundColor: '$primaryMuted', opacity: 1 },
-        pressStyle: { backgroundColor: '$primaryMuted', opacity: 0.92, scale: 1 },
+        backgroundColor: 'primaryMuted hover:primaryMuted press:primaryMuted',
+        color: 'primary',
+        opacity: 'hover:1 press:0.92 disabled:0.4',
+        scale: 'press:1',
       },
       false: {},
     },
@@ -92,7 +91,6 @@ export const IconButton = styled(Button, {
       },
     },
   } as const,
-
   defaultVariants: {
     tone: 'bare',
     density: 'md',

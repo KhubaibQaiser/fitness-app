@@ -15,7 +15,7 @@ export const PaceField = ({
 }) => {
   const media = useMedia();
   return (
-    <YStack gap="$2" width="100%">
+    <YStack gap="2" width="100%">
       {pace !== null ? (
         <PaceSlider
           ariaLabel="Target calories"
@@ -34,7 +34,7 @@ export const PaceField = ({
           }
         />
       ) : (
-        <Body color="$textMuted" fontSize={13}>
+        <Body color="textMuted" fontSize={13}>
           {emptyHint}
         </Body>
       )}

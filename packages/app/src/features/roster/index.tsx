@@ -87,10 +87,10 @@ export const RosterScreen = () => {
         action={
           <Link href="/clients/new">
             <PrimaryButton
-              size="$3"
+              size="sm"
               height={36}
               minHeight={36}
-              icon={<Plus size={14} color="$primaryFg" />}
+              icon={<Plus size={14} color="primaryFg" />}
               aria-label="New client"
             >
               New client
@@ -100,38 +100,35 @@ export const RosterScreen = () => {
       />
 
       {/* Search + compact filter — kit sm:flex-row */}
-      <XStack
-        flexDirection="column"
-        gap="$3"
-        $sm={{ flexDirection: 'row', alignItems: 'center' }}
-        width="100%"
-      >
+      <XStack flexDirection="column sm:row" gap="3" alignItems="sm:center" width="100%">
         <Input
           flex={1}
+          height={36}
+          minHeight={36}
+          borderRadius="radiusControl"
+          borderWidth={1}
+          borderColor="border-color focus:focusRing"
+          backgroundColor="cardBg"
+          fontSize={13}
+          paddingHorizontal="3"
+          outlineWidth="focus:2px"
+          outlineColor="focus:focusRing"
           value={q}
           onChangeText={setQ}
           placeholder="Search by name…"
-          height={36}
-          minHeight={36}
-          borderRadius="$radiusControl"
-          borderWidth={1}
-          borderColor="$borderColor"
-          backgroundColor="$cardBg"
-          fontSize={13}
-          paddingHorizontal="$3"
           aria-label="Search clients"
           returnKeyType="search"
           enterKeyHint="search"
-          focusStyle={{ borderColor: '$focusRing', outlineWidth: 2, outlineColor: '$focusRing' }}
         />
         <XStack
-          width="100%"
+          width="100% sm:auto"
           borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius="$radiusControl"
-          backgroundColor="$elevatedBg"
+          borderColor="border-color"
+          borderRadius="radiusControl"
+          backgroundColor="elevatedBg"
           overflow="hidden"
-          $sm={{ width: 'auto', flexShrink: 0, alignSelf: 'center' }}
+          flexShrink="sm:0"
+          alignSelf="sm:center"
         >
           {FILTERS.map((f) => {
             const selected = filter === f.id;
@@ -140,31 +137,29 @@ export const RosterScreen = () => {
                 key={f.id}
                 role="tab"
                 aria-selected={selected}
-                flex={1}
+                flex="1 sm:0"
                 height={36}
-                paddingHorizontal="$3"
+                paddingHorizontal="3"
                 justifyContent="center"
-                backgroundColor={selected ? '$primary' : 'transparent'}
+                backgroundColor={`${selected ? 'primary' : 'transparent'} hover:${selected ? 'primary' : 'cardBg'}`}
                 cursor="pointer"
-                hoverStyle={{ backgroundColor: selected ? '$primary' : '$cardBg' }}
-                pressStyle={{ opacity: 0.9 }}
+                opacity="press:0.9"
                 onPress={() => {
                   startTransition(() => setFilter(f.id));
                 }}
-                $sm={{ flex: 0 }}
               >
                 <XStack alignItems="center" justifyContent="center" gap={6}>
                   <Text
                     fontSize={12}
                     fontWeight="500"
-                    color={selected ? '$primaryFg' : '$textMuted'}
+                    color={selected ? 'primaryFg' : 'textMuted'}
                     whiteSpace="nowrap"
                   >
                     {f.label}
                   </Text>
                   <Text
                     fontSize={10}
-                    color={selected ? '$primaryFg' : '$textMuted'}
+                    color={selected ? 'primaryFg' : 'textMuted'}
                     opacity={selected ? 0.7 : 1}
                   >
                     {clients.isPending ? '–' : counts[f.id]}
@@ -197,23 +192,23 @@ export const RosterScreen = () => {
           }
         />
       ) : (
-        <YStack gap="$1.5" width="100%">
-          <YStack width="100%" display="flex" $md={{ display: 'none' }} gap="$1.5">
+        <YStack gap="1-5" width="100%">
+          <YStack width="100%" display="flex md:none" gap="1-5">
             {filtered.map((client) => (
               <RosterRow key={client.id} client={client} desktop={false} />
             ))}
           </YStack>
-          <YStack width="100%" display="none" $md={{ display: 'flex' }}>
+          <YStack width="100%" display="none md:flex">
             <Card padding={0} gap={0} overflow="hidden">
-              <XStack paddingHorizontal="$4" paddingVertical="$3" gap="$4">
-                <Text flex={1} fontSize={13} fontWeight="500" color="$textMuted">
+              <XStack paddingHorizontal="4" paddingVertical="3" gap="4">
+                <Text flex={1} fontSize={13} fontWeight="500" color="textMuted">
                   Client
                 </Text>
                 <Text
                   width={COL.weight}
                   fontSize={13}
                   fontWeight="500"
-                  color="$textMuted"
+                  color="textMuted"
                   flexShrink={0}
                 >
                   Weight
@@ -222,7 +217,7 @@ export const RosterScreen = () => {
                   width={COL.goal}
                   fontSize={13}
                   fontWeight="500"
-                  color="$textMuted"
+                  color="textMuted"
                   flexShrink={0}
                 >
                   Goal
@@ -231,7 +226,7 @@ export const RosterScreen = () => {
                   width={COL.status}
                   fontSize={13}
                   fontWeight="500"
-                  color="$textMuted"
+                  color="textMuted"
                   flexShrink={0}
                 >
                   Status
@@ -240,7 +235,7 @@ export const RosterScreen = () => {
                   width={COL.progress}
                   fontSize={13}
                   fontWeight="500"
-                  color="$textMuted"
+                  color="textMuted"
                   flexShrink={0}
                 >
                   Progress

@@ -29,13 +29,13 @@ export const MacroDonut = ({
   }
 
   return (
-    <YStack height={height} justifyContent="center" gap="$3">
-      <XStack height={14} borderRadius={999} overflow="hidden" backgroundColor="$elevatedBg">
-        <YStack width={`${pPct}%`} backgroundColor="$primary" />
-        <YStack width={`${cPct}%`} backgroundColor="$accent" />
-        <YStack width={`${fPct}%`} backgroundColor="$warning" />
+    <YStack height={height} justifyContent="center" gap="3">
+      <XStack height={14} borderRadius={999} overflow="hidden" backgroundColor="elevatedBg">
+        <YStack width={`${pPct}%`} backgroundColor="primary" />
+        <YStack width={`${cPct}%`} backgroundColor="accent" />
+        <YStack width={`${fPct}%`} backgroundColor="warning" />
       </XStack>
-      <XStack justifyContent="space-between" flexWrap="wrap" gap="$2">
+      <XStack justifyContent="space-between" flexWrap="wrap" gap="2">
         <Muted fontSize={11}>P {proteinG}g</Muted>
         <Muted fontSize={11}>C {carbsG}g</Muted>
         <Muted fontSize={11}>F {fatG}g</Muted>

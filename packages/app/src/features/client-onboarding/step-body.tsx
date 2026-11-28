@@ -45,7 +45,7 @@ export const StepBody = ({
   const chain = useFocusChain(FIELD_ORDER, { onSubmit: onComplete });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <FormField
         label="Weight"
@@ -81,7 +81,7 @@ export const StepBody = ({
           />
         ))}
         {BILATERAL.map(([left, right]) => (
-          <XStack key={left[0]} gap="$3" width="100%">
+          <XStack key={left[0]} gap="3" width="100%">
             {([left, right] as const).map(([key, label]) => (
               <YStack key={key} flex={1}>
                 <FormField

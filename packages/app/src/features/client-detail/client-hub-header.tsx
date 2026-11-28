@@ -39,49 +39,48 @@ export const ClientHubHeader = ({
 
   return (
     <YStack
-      backgroundColor="$cardBg"
+      backgroundColor="cardBg"
       borderBottomWidth={1}
-      borderBottomColor="$borderColor"
-      paddingTop="$md"
+      borderBottomColor="border-color"
+      paddingTop="md"
       paddingBottom={0}
       width="100%"
       alignSelf="stretch"
     >
       <XStack
         alignItems="center"
-        gap="$2.5"
+        gap="2-5"
         width="100%"
-        paddingHorizontal={16}
-        paddingBottom="$md"
-        $md={{ paddingHorizontal: 24 }}
+        paddingHorizontal="16px md:24px"
+        paddingBottom="md"
       >
         <Avatar name={name} size={40} tone={status === 'attention' ? 'primary' : 'accent'} />
 
         <YStack flex={1} minWidth={0} gap={2}>
           <Text
-            fontFamily="$heading"
+            fontFamily="heading"
             fontWeight="600"
             fontSize={16}
-            lineHeight={22}
-            color="$color"
+            lineHeight="22px"
+            color="color"
             letterSpacing={-0.2}
             numberOfLines={1}
           >
             {name}
           </Text>
-          <XStack flexWrap="wrap" gap="$xs" alignItems="center">
+          <XStack flexWrap="wrap" gap="xs" alignItems="center">
             {phoneLabel ? (
-              <Muted fontSize={12} lineHeight={16} numberOfLines={1}>
+              <Muted fontSize={12} lineHeight="16px" numberOfLines={1}>
                 {phoneLabel}
               </Muted>
             ) : null}
             {phoneLabel && email ? (
-              <Muted fontSize={12} lineHeight={16}>
+              <Muted fontSize={12} lineHeight="16px">
                 ·
               </Muted>
             ) : null}
             {email ? (
-              <Muted fontSize={12} lineHeight={16} numberOfLines={1}>
+              <Muted fontSize={12} lineHeight="16px" numberOfLines={1}>
                 {email}
               </Muted>
             ) : null}
@@ -94,7 +93,7 @@ export const ClientHubHeader = ({
               <IconButton
                 density="xs"
                 aria-label="Open WhatsApp"
-                icon={<MessageCircle size={14} color="$primary" />}
+                icon={<MessageCircle size={14} color="primary" />}
               />
             </Link>
           ) : null}

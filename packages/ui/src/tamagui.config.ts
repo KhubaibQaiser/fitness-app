@@ -1,10 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access --
-   @tamagui/config/v4's deep theme types don't resolve under eslint's project service;
-   tsc verifies the resulting token types at every component use site. */
-import { defaultConfig } from '@tamagui/config/v4';
+import { animations } from '@tamagui/config/animations-css';
 import { createTamagui } from 'tamagui';
 import manifest from '../../../infra/tenants/pilot.json';
 import { DESKTOP_MIN_WIDTH_PX } from './breakpoints';
+import {
+  v4DarkTheme,
+  v4LightTheme,
+  v4Media,
+  v4Settings,
+  v4Shorthands,
+  v4Tokens,
+} from './config-v4-values';
 import { bodyFont, headingFont, monoFont } from './fonts';
 
 const brand = manifest.branding.colors;
@@ -201,18 +206,56 @@ export const elevationTokens = {
   overlay: '0 8px 24px -4px rgba(0, 0, 0, 0.18)',
 } as const;
 
+type BaseTheme = { [Key in keyof typeof v4LightTheme]: string };
+
+/** Tamagui 3's component skins read kebab-case theme keys; alias them to the values v2 read. */
+const v3SkinKeys = (theme: BaseTheme) => ({
+  background: theme.background,
+  'background-hover': theme.backgroundHover,
+  'background-press': theme.backgroundPress,
+  'background-focus': theme.backgroundFocus,
+  'border-color': theme.borderColor,
+  'border-color-hover': theme.borderColorHover,
+  'border-color-press': theme.borderColorPress,
+  'border-color-focus': theme.borderColorFocus,
+  'color-hover': theme.colorHover,
+  'color-press': theme.colorPress,
+  'color-focus': theme.colorFocus,
+  'placeholder-color': theme.placeholderColor,
+  'outline-color': theme.outlineColor,
+  'shadow-color': theme.shadowColor,
+  'accent-background': theme.accentBackground,
+  'accent-color': theme.accentColor,
+  'color-transparent': theme.colorTransparent,
+  // v3's 11-step ramp from v2's 12 steps (the upgrade guide's mapping; endpoints exact).
+  'color-1': theme.color1,
+  'color-2': theme.color2,
+  'color-3': theme.color3,
+  'color-4': theme.color4,
+  'color-5': theme.color5,
+  'color-6': theme.color6,
+  'color-7': theme.color8,
+  'color-8': theme.color9,
+  'color-9': theme.color10,
+  'color-10': theme.color11,
+  'color-11': theme.color12,
+});
+
+const withSkinKeys = <T extends BaseTheme>(theme: T) => ({ ...theme, ...v3SkinKeys(theme) });
+
 export const config = createTamagui({
-  ...defaultConfig,
+  animations,
+  shorthands: v4Shorthands,
   media: {
-    ...defaultConfig.media,
+    ...v4Media,
     md: { minWidth: DESKTOP_MIN_WIDTH_PX },
     maxMd: { maxWidth: DESKTOP_MIN_WIDTH_PX },
   },
   tokens: {
-    ...defaultConfig.tokens,
+    ...v4Tokens,
     color: primitiveColors,
     space: {
-      ...defaultConfig.tokens.space,
+      ...v4Tokens.space,
       '2xs': 2,
       xs: 4,
       sm: 6,
@@ -229,7 +272,7 @@ export const config = createTamagui({
       '9xl': 64,
     },
     radius: {
-      ...defaultConfig.tokens.radius,
+      ...v4Tokens.radius,
       md: 8,
       lg: 12,
       xl: 16,
@@ -246,21 +289,20 @@ export const config = createTamagui({
     mono: monoFont,
   },
   themes: {
-    ...defaultConfig.themes,
-    light: {
-      ...defaultConfig.themes.light,
+    light: withSkinKeys({
+      ...v4LightTheme,
       ...lightSemantics,
       ...coachLightRole,
       ...legacyAliases(lightSemantics, coachLightRole, 'light'),
       ...clientRoleAliases(clientLightRole),
-    },
-    dark: {
-      ...defaultConfig.themes.dark,
+    }),
+    dark: withSkinKeys({
+      ...v4DarkTheme,
       ...darkSemantics,
       ...coachDarkRole,
       ...legacyAliases(darkSemantics, coachDarkRole, 'dark'),
       ...clientRoleAliases(clientDarkRole),
-    },
+    }),
     light_coach: {
       ...coachLightRole,
       ...legacyAliases(lightSemantics, coachLightRole, 'light'),
@@ -279,7 +321,9 @@ export const config = createTamagui({
     },
   },
   settings: {
-    ...defaultConfig.settings,
+    ...v4Settings,
+    selectionStyles: (theme: Record<string, unknown>) =>
+      theme.color5 ? { backgroundColor: theme.color5, color: theme.color11 } : null,
     onlyAllowShorthands: false,
   },
 });

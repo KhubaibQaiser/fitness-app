@@ -26,15 +26,15 @@ export const PlanPublishConfirm = ({
   }
 
   return (
-    <Card gap="$3" tone="accent">
+    <Card gap="3" tone="accent">
       <Body fontWeight="800">Review before publish</Body>
       <Muted>
         Confirm you reviewed this AI suggestion. Same meals apply every day unless you customized a
         day. Clients only see published plans.
       </Muted>
       {needsDrift ? (
-        <Card tone="danger" gap="$2">
-          <Body color="$danger" fontWeight="700">
+        <Card tone="danger" gap="2">
+          <Body color="danger" fontWeight="700">
             Day totals are outside the usual tolerance
           </Body>
           <Muted>{error instanceof ApiError ? error.detail : null}</Muted>

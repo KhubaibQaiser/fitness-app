@@ -25,40 +25,40 @@ export const Stat = ({
 }) => {
   const valueColor =
     tone === 'danger'
-      ? '$danger'
+      ? 'danger'
       : tone === 'success'
-        ? '$success'
+        ? 'success'
         : tone === 'warning'
-          ? '$warning'
-          : '$color';
+          ? 'warning'
+          : 'color';
   const deltaColor =
-    deltaTone === 'danger' ? '$danger' : deltaTone === 'success' ? '$success' : '$textMuted';
+    deltaTone === 'danger' ? 'danger' : deltaTone === 'success' ? 'success' : 'textMuted';
   const valueFontSize = size === 'hero' ? 38 : 28;
   const valueLineHeight = size === 'hero' ? 44 : 34;
 
   return (
-    <YStack gap="$1" width="100%">
+    <YStack gap="1" width="100%">
       <Muted fontSize={11} textTransform="uppercase" letterSpacing={1.2} fontWeight="500">
         {label}
       </Muted>
-      <XStack alignItems="baseline" gap="$1.5" flexWrap="wrap">
+      <XStack alignItems="baseline" gap="1-5" flexWrap="wrap">
         <Text
-          fontFamily="$mono"
+          fontFamily="mono"
           fontSize={valueFontSize}
           fontWeight="700"
           color={valueColor}
           letterSpacing={-0.5}
-          lineHeight={valueLineHeight}
+          lineHeight={`${valueLineHeight}px`}
         >
           {value}
         </Text>
         {unit ? (
-          <Text fontFamily="$body" fontSize={14} color="$textMuted">
+          <Text fontFamily="body" fontSize={14} color="textMuted">
             {unit}
           </Text>
         ) : null}
         {delta ? (
-          <Text fontFamily="$body" fontSize={12} fontWeight="500" color={deltaColor}>
+          <Text fontFamily="body" fontSize={12} fontWeight="500" color={deltaColor}>
             {delta}
           </Text>
         ) : null}
@@ -82,18 +82,13 @@ export const DeltaChip = ({
   return (
     <XStack
       alignSelf="flex-start"
-      backgroundColor={isGood ? '$successMuted' : '$dangerMuted'}
+      backgroundColor={isGood ? 'successMuted' : 'dangerMuted'}
       borderRadius={999}
-      paddingHorizontal="$2.5"
-      paddingVertical="$1.5"
+      paddingHorizontal="2-5"
+      paddingVertical="1-5"
       accessibilityLabel={`Change ${arrow} ${Math.abs(delta).toFixed(1)} ${unit}`}
     >
-      <Text
-        color={isGood ? '$success' : '$danger'}
-        fontSize={12}
-        fontWeight="700"
-        fontFamily="$mono"
-      >
+      <Text color={isGood ? 'success' : 'danger'} fontSize={12} fontWeight="700" fontFamily="mono">
         {arrow} {Math.abs(delta).toFixed(1)} {unit}
       </Text>
     </XStack>
@@ -121,16 +116,16 @@ export const Avatar = ({
   const initials = avatarInitials(name);
   const bg =
     tone === 'neutral'
-      ? '$elevatedBg'
+      ? 'elevatedBg'
       : tone === 'client' || tone === 'accent'
-        ? '$accent'
-        : '$primary';
+        ? 'accent'
+        : 'primary';
   const fg =
     tone === 'neutral'
-      ? '$textMuted'
+      ? 'textMuted'
       : tone === 'client' || tone === 'accent'
-        ? '$accentFg'
-        : '$primaryFg';
+        ? 'accentFg'
+        : 'primaryFg';
   return (
     <XStack
       width={size}
@@ -142,7 +137,7 @@ export const Avatar = ({
       flexShrink={0}
       accessibilityLabel={`${name} avatar`}
     >
-      <Text color={fg} fontFamily="$heading" fontWeight="700" fontSize={size * 0.32}>
+      <Text color={fg} fontFamily="heading" fontWeight="700" fontSize={size * 0.32}>
         {initials || '?'}
       </Text>
     </XStack>
@@ -160,10 +155,10 @@ export const ListRow = ({
   trailing?: ReactNode;
   leading?: ReactNode;
 }) => (
-  <XStack alignItems="center" gap="$3" minHeight={56} width="100%">
+  <XStack alignItems="center" gap="3" minHeight={56} width="100%">
     {leading}
     <YStack flex={1} gap={2} minWidth={0}>
-      <Text fontFamily="$heading" fontWeight="600" fontSize={14} color="$color" numberOfLines={1}>
+      <Text fontFamily="heading" fontWeight="600" fontSize={14} color="color" numberOfLines={1}>
         {title}
       </Text>
       {subtitle ? (

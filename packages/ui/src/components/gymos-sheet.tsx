@@ -29,36 +29,33 @@ export const GymosSheet = ({ open, onClose, title, children }: GymosSheetProps) 
     transition={gymosSheetTransition}
   >
     <Sheet.Overlay
-      enterStyle={{ opacity: 0 }}
-      exitStyle={{ opacity: 0 }}
+      opacity="enter:0 exit:0"
       backgroundColor={gymosSheetOverlayColor}
       onPress={onClose}
     />
     <Sheet.Handle />
-    <Sheet.Frame
-      borderTopLeftRadius={gymosSheetFrameRadius}
-      borderTopRightRadius={gymosSheetFrameRadius}
+    <Sheet.Container
       role="dialog"
       aria-modal
       aria-label={title}
-      backgroundColor="$surface"
-      borderTopWidth={1}
-      borderColor="$borderColor"
-      padding="$5"
-      gap="$3"
+      padding="5"
+      gap="3"
       maxHeight="85%"
     >
-      <XStack alignItems="center" justifyContent="space-between" gap="$3">
-        <Text fontFamily="$heading" fontWeight="600" fontSize={16} color="$color" flex={1}>
+      <Sheet.Background
+        borderTopLeftRadius={gymosSheetFrameRadius}
+        borderTopRightRadius={gymosSheetFrameRadius}
+        backgroundColor="surface"
+        borderTopWidth={1}
+        borderColor="border-color"
+      />
+      <XStack alignItems="center" justifyContent="space-between" gap="3">
+        <Text fontFamily="heading" fontWeight="600" fontSize={16} color="color" flex={1}>
           {title}
         </Text>
-        <IconButton
-          aria-label="Close"
-          onPress={onClose}
-          icon={<X size={16} color="$textMuted" />}
-        />
+        <IconButton aria-label="Close" onPress={onClose} icon={<X size={16} color="textMuted" />} />
       </XStack>
       <YStack>{children}</YStack>
-    </Sheet.Frame>
+    </Sheet.Container>
   </Sheet>
 );

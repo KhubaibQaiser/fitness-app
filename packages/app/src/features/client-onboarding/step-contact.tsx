@@ -22,7 +22,7 @@ export const StepContact = ({
   const chain = useFocusChain(['phone', 'email'], { onSubmit: onComplete });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <PhoneField
         label="WhatsApp number"

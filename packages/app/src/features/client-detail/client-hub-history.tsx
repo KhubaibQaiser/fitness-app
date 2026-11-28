@@ -28,14 +28,14 @@ export const ClientHubHistory = ({ clientId, isPending, isError, items, onRetry 
   }
   if (items.length === 0) {
     return (
-      <YStack paddingVertical="$8" alignItems="center">
+      <YStack paddingVertical="8" alignItems="center">
         <Muted>No check-ins logged yet.</Muted>
       </YStack>
     );
   }
 
   return (
-    <YStack gap="$2.5">
+    <YStack gap="2-5">
       {items.map((checkIn) => {
         const href =
           checkIn.status === 'DUE'
@@ -49,9 +49,9 @@ export const ClientHubHistory = ({ clientId, isPending, isError, items, onRetry 
 
         return (
           <Link key={checkIn.id} href={href}>
-            <Card interactive gap="$2" padding="$4">
-              <XStack flexWrap="wrap" alignItems="center" gap="$2">
-                <Text fontFamily="$heading" fontWeight="700" fontSize={13.5} color="$color">
+            <Card interactive gap="2" padding="4">
+              <XStack flexWrap="wrap" alignItems="center" gap="2">
+                <Text fontFamily="heading" fontWeight="700" fontSize={13.5} color="color">
                   {checkIn.scheduledFor}
                 </Text>
                 <Badge
@@ -72,11 +72,11 @@ export const ClientHubHistory = ({ clientId, isPending, isError, items, onRetry 
                 />
               </XStack>
 
-              <XStack flexWrap="wrap" gap="$4">
+              <XStack flexWrap="wrap" gap="4">
                 {typeof weightKg === 'number' ? (
                   <Muted fontSize={12.5}>
                     Weight:{' '}
-                    <Text fontFamily="$mono" fontWeight="700" fontSize={12.5} color="$color">
+                    <Text fontFamily="mono" fontWeight="700" fontSize={12.5} color="color">
                       {weightKg} kg
                     </Text>
                   </Muted>
@@ -84,7 +84,7 @@ export const ClientHubHistory = ({ clientId, isPending, isError, items, onRetry 
                 {adherencePct !== null ? (
                   <Muted fontSize={12.5}>
                     Adherence:{' '}
-                    <Text fontFamily="$heading" fontWeight="700" fontSize={12.5} color="$color">
+                    <Text fontFamily="heading" fontWeight="700" fontSize={12.5} color="color">
                       ~{adherencePct}%
                     </Text>
                   </Muted>

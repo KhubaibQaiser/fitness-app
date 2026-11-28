@@ -51,7 +51,7 @@ const resolveHubStatus = ({
 const HubLayout = ({ header, children }: { header: ReactNode; children: ReactNode }) => (
   <StickyHeader header={header}>
     {(stickyHeader) => (
-      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0} flush>
+      <AppScreen gap="0" paddingTop={0} paddingHorizontal={0} flush>
         {stickyHeader}
         {children}
       </AppScreen>
@@ -151,7 +151,7 @@ export const ClientDetailScreen = ({
         />
       }
     >
-      <ScreenBody gap="$4">
+      <ScreenBody gap="4">
         {tab === 'overview' ? (
           <ClientHubOverview
             client={client}

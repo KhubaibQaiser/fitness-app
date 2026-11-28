@@ -94,7 +94,7 @@ export const SkeletonRegion = ({
 type SkeletonProps = {
   width?: number | `${number}%`;
   height?: number;
-  borderRadius?: number | '$radiusControl' | '$radiusCard';
+  borderRadius?: number | 'radiusControl' | 'radiusCard';
   flex?: number;
   children?: ReactNode;
 };
@@ -103,7 +103,7 @@ type SkeletonProps = {
 export const Skeleton = ({
   width,
   height,
-  borderRadius = '$radiusControl',
+  borderRadius = 'radiusControl',
   flex,
   children,
 }: SkeletonProps) => {
@@ -123,7 +123,7 @@ export const Skeleton = ({
           width={width}
           height={height}
           borderRadius={borderRadius}
-          backgroundColor="$elevatedBg"
+          backgroundColor="elevatedBg"
           flex={flex}
         />
       )}

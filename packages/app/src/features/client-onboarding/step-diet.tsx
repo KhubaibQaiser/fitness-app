@@ -54,30 +54,30 @@ export const StepDiet = ({
   };
 
   return (
-    <YStack gap="$4">
-      <Body fontSize={13} color="$textMuted">
+    <YStack gap="4">
+      <Body fontSize={13} color="textMuted">
         Optional: Severe allergies hard-block foods in the meal engine.
       </Body>
-      <YStack gap="$2">
+      <YStack gap="2">
         <SectionTitle>Severe allergies</SectionTitle>
         <Card>
           <DietaryChips kind="allergens" selection={selection} onToggle={onToggle} />
         </Card>
       </YStack>
-      <YStack gap="$2">
+      <YStack gap="2">
         <SectionTitle>Religious / lifestyle</SectionTitle>
         <Card>
           <DietaryChips kind="religious" selection={selection} onToggle={onToggle} />
         </Card>
       </YStack>
-      <YStack gap="$2">
+      <YStack gap="2">
         <SectionTitle>Preferred foods</SectionTitle>
-        <Card gap="$3">
+        <Card gap="3">
           <Muted fontSize={12}>
             Boosts these foods&apos; odds of being picked by the AI planner.
           </Muted>
           {preferredEntries.length > 0 ? (
-            <YStack gap="$1">
+            <YStack gap="1">
               {preferredEntries.map((r) => (
                 <Row key={r.code} minHeight={44}>
                   <Body flex={1} minWidth={0}>
@@ -85,7 +85,7 @@ export const StepDiet = ({
                   </Body>
                   <IconButton
                     aria-label={`Remove ${r.note ?? formatRestrictionLabel(r.code)} from preferred foods`}
-                    icon={<X size={16} color="$color" />}
+                    icon={<X size={16} color="color" />}
                     onPress={() => removePreferred(r.code)}
                   />
                 </Row>

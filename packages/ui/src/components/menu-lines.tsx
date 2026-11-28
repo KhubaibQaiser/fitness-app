@@ -9,7 +9,7 @@ type MenuLinesProps = {
 };
 
 /** Claude-style menu glyph: three left-aligned bars, longest to shortest. */
-export const MenuLines = ({ size = 20, color = '$color', opacity }: MenuLinesProps) => {
+export const MenuLines = ({ size = 20, color = 'color', opacity }: MenuLinesProps) => {
   const px = typeof size === 'number' ? size : 20;
   return (
     <YStack width={px} height={px} justifyContent="center" gap={3} opacity={opacity}>

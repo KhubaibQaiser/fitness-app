@@ -33,7 +33,7 @@ export const MealCompositionScreen = () => {
         subtitle="Slot templates and food pools from the live solver"
         leading={
           <Link href="/tools">
-            <IconButton icon={<ArrowLeft size={22} color="$color" />} aria-label="Back to tools" />
+            <IconButton icon={<ArrowLeft size={22} color="color" />} aria-label="Back to tools" />
           </Link>
         }
         action={<Badge tone="primary" label="Layer 2" />}
@@ -46,7 +46,7 @@ export const MealCompositionScreen = () => {
         ariaLabel="Meal composition sections"
       />
 
-      <YStack key={tab} gap="$4">
+      <YStack key={tab} gap="4">
         {tab === 'overview' ? <OverviewPanel /> : null}
         {tab === 'breakfast' ? <BreakfastPanel /> : null}
         {tab === 'lunch' ? <LunchPanel /> : null}

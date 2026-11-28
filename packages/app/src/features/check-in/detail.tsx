@@ -34,17 +34,17 @@ const asAdherence = (n: number | null): 1 | 2 | 3 | 4 | 5 | null =>
   n === 1 || n === 2 || n === 3 || n === 4 || n === 5 ? n : null;
 
 const VERDICT_ICON_BG = {
-  success: '$successMuted',
-  warning: '$warningMuted',
-  danger: '$dangerMuted',
-  neutral: '$elevatedBg',
+  success: 'successMuted',
+  warning: 'warningMuted',
+  danger: 'dangerMuted',
+  neutral: 'elevatedBg',
 } as const;
 
 const VERDICT_ICON_FG = {
-  success: '$success',
-  warning: '$warning',
-  danger: '$danger',
-  neutral: '$textMuted',
+  success: 'success',
+  warning: 'warning',
+  danger: 'danger',
+  neutral: 'textMuted',
 } as const;
 
 /** View / edit a completed check-in and re-run the adaptive engine. */
@@ -175,10 +175,10 @@ export const CheckInDetailScreen = ({
 
       {copy !== null && verdict !== null && displayTitle !== null ? (
         <Card
-          gap="$4"
-          tone={copy.tone === 'danger' ? 'danger' : 'default'}
-          marginBottom="$4"
+          gap="4"
+          marginBottom="4"
           alignItems="center"
+          tone={copy.tone === 'danger' ? 'danger' : 'default'}
         >
           <YStack
             width={72}
@@ -196,7 +196,7 @@ export const CheckInDetailScreen = ({
               <AlertTriangle size={32} color={VERDICT_ICON_FG[copy.tone]} />
             )}
           </YStack>
-          <YStack gap="$3" width="100%" alignItems="stretch">
+          <YStack gap="3" width="100%" alignItems="stretch">
             <Row>
               <Body fontWeight="800" fontSize={17} flex={1}>
                 {displayTitle}
@@ -224,7 +224,7 @@ export const CheckInDetailScreen = ({
                 ))
               : null}
             {verdict.type === 'ADJUST_TARGETS' && verdict.newTargets ? (
-              <YStack gap="$2">
+              <YStack gap="2">
                 <SectionTitle>Proposed targets</SectionTitle>
                 <Body fontWeight="700">
                   {verdict.newTargets.kcal} kcal (
@@ -248,7 +248,7 @@ export const CheckInDetailScreen = ({
                       {apply.isPending ? 'Re-solving plan…' : 'Apply and draft an adjusted plan'}
                     </PrimaryButton>
                     {apply.isError ? (
-                      <Body color="$danger" role="alert">
+                      <Body color="danger" role="alert">
                         {apply.error.message}
                       </Body>
                     ) : null}
@@ -257,7 +257,7 @@ export const CheckInDetailScreen = ({
               </YStack>
             ) : null}
             {verdict.type === 'REFER_REVIEW' ? (
-              <Body color="$danger">
+              <Body color="danger">
                 Automatic adjustments are paused. Review the client before changing anything. This
                 is not medical advice.
               </Body>
@@ -266,7 +266,7 @@ export const CheckInDetailScreen = ({
         </Card>
       ) : null}
 
-      <Card gap="$4">
+      <Card gap="4">
         <FormField
           label="Weight"
           unit="kg"
@@ -283,7 +283,7 @@ export const CheckInDetailScreen = ({
           {...chain.bind('weight')}
         />
 
-        <YStack gap="$3">
+        <YStack gap="3">
           <FormField
             label="Plan adherence"
             unit="%"
@@ -297,7 +297,7 @@ export const CheckInDetailScreen = ({
             disabled={!editable}
             {...chain.bind('adherence')}
           />
-          <XStack alignItems="center" gap="$3" justifyContent="space-between">
+          <XStack alignItems="center" gap="3" justifyContent="space-between">
             <ProgressRing
               value={pctNum}
               size={88}
@@ -340,7 +340,7 @@ export const CheckInDetailScreen = ({
         />
 
         {update.isError ? (
-          <Body color="$danger" role="alert">
+          <Body color="danger" role="alert">
             {update.error.message}
           </Body>
         ) : null}

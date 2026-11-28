@@ -23,7 +23,7 @@ export const AppScreen = ({ children, footer, avoidKeyboard, ...rest }: Props) =
 
   return (
     <FormKeyboardRoot fill avoidKeyboard={avoid}>
-      <YStack flex={1} minHeight={0} width="100%" backgroundColor="$coachCanvas">
+      <YStack flex={1} minHeight={0} width="100%" backgroundColor="coachCanvas">
         <ScrollView
           flex={1}
           minHeight={0}
@@ -33,7 +33,7 @@ export const AppScreen = ({ children, footer, avoidKeyboard, ...rest }: Props) =
           <UiScreen
             chrome={chrome}
             flex={0}
-            {...(footer !== undefined ? { paddingBottom: '$4' } : {})}
+            {...(footer !== undefined ? { paddingBottom: '4' } : {})}
             {...rest}
           >
             {children}

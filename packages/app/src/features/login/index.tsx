@@ -79,15 +79,15 @@ const LoginForm = () => {
 
   return (
     <FormKeyboardRoot asForm fill avoidKeyboard>
-      <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="$screenBg">
+      <Screen chrome="bare" justifyContent="center" minHeight="100%" backgroundColor="screenBg">
         {chain.toolbar}
-        <YStack gap="$6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="$4">
-          <YStack gap="$2" alignItems="center">
+        <YStack gap="6" maxWidth={400} width="100%" alignSelf="center" paddingHorizontal="4">
+          <YStack gap="2" alignItems="center">
             <Text
-              fontFamily="$heading"
+              fontFamily="heading"
               fontWeight="800"
               fontSize={28}
-              color="$color"
+              color="color"
               letterSpacing={-0.5}
             >
               GymOS
@@ -95,7 +95,7 @@ const LoginForm = () => {
             <Muted fontSize={11} fontWeight="500" textTransform="uppercase" letterSpacing={1.2}>
               Coach
             </Muted>
-            <Muted textAlign="center" fontSize={13} marginTop="$2">
+            <Muted textAlign="center" fontSize={13} marginTop="2">
               Sign in to your coaching workstation
             </Muted>
           </YStack>
@@ -112,7 +112,7 @@ const LoginForm = () => {
               {...chain.bind('email')}
             />
             {/* Same gap as the field's own error, so a non-credential failure sits where it always did. */}
-            <YStack gap="$1.5">
+            <YStack gap="1-5">
               <FormField
                 label="Password"
                 value={password}
@@ -126,7 +126,7 @@ const LoginForm = () => {
                 {...chain.bind('password')}
               />
               {view.alert !== null ? (
-                <Body color="$danger" fontSize={12} fontWeight="600" lineHeight={16} role="alert">
+                <Body color="danger" fontSize={12} fontWeight="600" lineHeight="16px" role="alert">
                   {view.alert}
                 </Body>
               ) : null}
@@ -138,14 +138,14 @@ const LoginForm = () => {
             >
               {view.buttonLabel}
             </PrimaryButton>
-            <YStack gap="$2" alignItems="center" marginTop="$2">
+            <YStack gap="2" alignItems="center" marginTop="2">
               <Link href="/signup">
-                <Muted fontSize={13} color="$accent">
+                <Muted fontSize={13} color="accent">
                   Create coach account
                 </Muted>
               </Link>
               <Link href="/forgot-password">
-                <Muted fontSize={13} color="$accent">
+                <Muted fontSize={13} color="accent">
                   Forgot password?
                 </Muted>
               </Link>

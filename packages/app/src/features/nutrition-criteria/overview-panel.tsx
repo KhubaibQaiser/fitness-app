@@ -31,19 +31,19 @@ const STEPS = [
 
 /** High-level flow — start here. */
 export const OverviewPanel = () => (
-  <YStack gap="$4">
-    <Card gap="$3" tone="accent">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+  <YStack gap="4">
+    <Card gap="3" tone="accent">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         What this page is
       </Body>
-      <Muted lineHeight={20}>
+      <Muted lineHeight="20px">
         GymOS sets calorie and macro targets with fixed formulas, not AI guesses. Use the tabs to
         inspect each step. Numbers on this screen come straight from the engine code.
       </Muted>
     </Card>
 
     <PanelHeading title="The path in five steps" subtitle="Every new goal follows this order." />
-    <Card gap="$0" paddingVertical="$4">
+    <Card gap="0" paddingVertical="4">
       {STEPS.map((step, index) => (
         <PipelineStep
           key={step.title}
@@ -55,8 +55,8 @@ export const OverviewPanel = () => (
       ))}
     </Card>
 
-    <Card gap="$2">
-      <Muted fontSize={12} lineHeight={18}>
+    <Card gap="2">
+      <Muted fontSize={12} lineHeight="18px">
         GymOS provides general fitness nutrition guidance, not medical advice. Use clinical judgment
         for clients with medical conditions.
       </Muted>

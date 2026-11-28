@@ -78,14 +78,14 @@ export const MealInstructionsScreen = () => {
         subtitle="Your own instructions for how the AI names and describes meals — never portions or macros"
       />
 
-      <Card gap="$3">
+      <Card gap="3">
         <SectionTitle>Instructions</SectionTitle>
         <Muted fontSize={12}>
           Applies to your generated plans only, taking precedence over any workspace defaults. Never
           affects calories, macros, or which foods are picked — only how meals are named and
           described.
         </Muted>
-        <XStack gap="$2" flexWrap="wrap">
+        <XStack gap="2" flexWrap="wrap">
           {TOOLBAR.map((tool) => (
             <GhostButton key={tool.label} onPress={() => setDraft(tool.snippet(draft))}>
               {tool.label}
@@ -103,7 +103,7 @@ export const MealInstructionsScreen = () => {
         />
       </Card>
 
-      <Card gap="$2">
+      <Card gap="2">
         <SectionTitle>Preview</SectionTitle>
         {draft.trim().length > 0 ? (
           <MarkdownSubsetPreview text={draft} />
@@ -113,13 +113,13 @@ export const MealInstructionsScreen = () => {
       </Card>
 
       {save.isError ? (
-        <Body color="$danger" role="alert">
+        <Body color="danger" role="alert">
           {save.error.message}
         </Body>
       ) : null}
 
       {savedResult ? (
-        <Card tone={savedResult.numericClaimWarning ? 'danger' : 'accent'} gap="$2">
+        <Card tone={savedResult.numericClaimWarning ? 'danger' : 'accent'} gap="2">
           <Body fontWeight="800">Saved</Body>
           {savedResult.numericClaimWarning ? (
             <Muted fontSize={12.5}>

@@ -131,12 +131,12 @@ export const DateField = ({
   };
 
   return (
-    <YStack gap="$1.5" width="100%">
+    <YStack gap="1-5" width="100%">
       <Label
-        fontFamily="$heading"
+        fontFamily="heading"
         fontWeight="500"
         fontSize={12}
-        color="$textMuted"
+        color="textMuted"
         textTransform="uppercase"
         letterSpacing={0.8}
       >
@@ -149,10 +149,10 @@ export const DateField = ({
             minHeight={48}
             height={48}
             borderWidth={1}
-            borderColor={error ? '$danger' : '$borderColor'}
-            backgroundColor="$cardBg"
-            borderRadius="$radiusControl"
-            paddingHorizontal="$3"
+            borderColor={error ? 'danger' : 'border-color'}
+            backgroundColor="cardBg"
+            borderRadius="radiusControl"
+            paddingHorizontal="3"
             justifyContent="center"
             cursor="pointer"
             role="button"
@@ -160,7 +160,7 @@ export const DateField = ({
             aria-expanded={open}
             aria-haspopup="dialog"
           >
-            <Text fontFamily="$body" fontSize={15} color={value ? '$color' : '$placeholderColor'}>
+            <Text fontFamily="body" fontSize={15} color={value ? 'color' : 'placeholder-color'}>
               {value ? formatDisplay(value) : 'Select date'}
             </Text>
           </YStack>
@@ -168,17 +168,16 @@ export const DateField = ({
 
         <Adapt when={isCompact}>
           <Sheet modal snapPointsMode="fit" dismissOnSnapToBottom>
-            <Sheet.Overlay backgroundColor="$shadowColor" />
+            <Sheet.Overlay backgroundColor="shadow-color" />
             <Sheet.Handle />
-            <Sheet.Frame
-              padding="$3"
-              paddingBottom="$5"
-              backgroundColor="$cardBg"
-              borderTopWidth={1}
-              borderColor="$borderColor"
-            >
+            <Sheet.Container paddingTop="3" paddingRight="3" paddingLeft="3" paddingBottom="5">
+              <Sheet.Background
+                backgroundColor="cardBg"
+                borderTopWidth={1}
+                borderColor="border-color"
+              />
               <Adapt.Contents />
-            </Sheet.Frame>
+            </Sheet.Container>
           </Sheet>
         </Adapt>
 
@@ -186,18 +185,17 @@ export const DateField = ({
           role="dialog"
           aria-label={label}
           borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius="$radiusControl"
-          backgroundColor="$cardBg"
-          padding="$2"
+          borderColor="border-color"
+          borderRadius="radiusControl"
+          backgroundColor="cardBg"
+          padding="2"
           minWidth={320}
-          elevation="$2"
           shadowColor="rgba(0,0,0,0.18)"
           shadowOffset={{ width: 0, height: 8 }}
           shadowRadius={24}
           shadowOpacity={1}
-          enterStyle={{ opacity: 0, scale: 0.96 }}
-          exitStyle={{ opacity: 0, scale: 0.96 }}
+          opacity="enter:0 exit:0"
+          scale="enter:0.96 exit:0.96"
         >
           <DateFieldCalendar
             value={value}
@@ -208,7 +206,7 @@ export const DateField = ({
         </Popover.Content>
       </Popover>
       {error ? (
-        <Body color="$danger" fontSize={12} fontWeight="600" role="alert">
+        <Body color="danger" fontSize={12} fontWeight="600" role="alert">
           {error}
         </Body>
       ) : hint ? (

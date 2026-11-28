@@ -14,15 +14,15 @@ export const StickyFormFooter = ({
   <YStack
     flexShrink={0}
     zIndex={20}
-    backgroundColor="$elevatedBg"
+    backgroundColor="elevatedBg"
     borderTopWidth={1}
-    borderTopColor="$borderColor"
-    paddingHorizontal="$4"
-    paddingTop="$3"
+    borderTopColor="border-color"
+    paddingHorizontal="4"
+    paddingTop="3"
     paddingBottom={Math.max(12, bottomInset)}
     width="100%"
   >
-    <XStack gap="$3" width="100%" maxWidth={560} alignSelf="center">
+    <XStack gap="3" width="100%" maxWidth={560} alignSelf="center">
       {children}
     </XStack>
   </YStack>

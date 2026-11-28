@@ -15,20 +15,20 @@ const ACTIVITY_LABELS: Record<(typeof ACTIVITY_LEVELS)[number], string> = {
 
 /** BMR + TDEE + activity multipliers. */
 export const CaloriesPanel = () => (
-  <YStack gap="$4">
+  <YStack gap="4">
     <PanelHeading
       title="How daily burn is estimated"
       subtitle="First resting metabolism (BMR), then activity (TDEE)."
     />
 
-    <Card gap="$3">
-      <XStack alignItems="center" justifyContent="space-between" gap="$2" flexWrap="wrap">
-        <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <XStack alignItems="center" justifyContent="space-between" gap="2" flexWrap="wrap">
+        <Body fontFamily="heading" fontWeight="800" fontSize={16}>
           Resting burn (BMR)
         </Body>
         <Muted fontSize={12}>Default formula</Muted>
       </XStack>
-      <Muted lineHeight={19}>
+      <Muted lineHeight="19px">
         Mifflin–St Jeor from weight, height, age, and sex. Used when body-fat % is not on file.
       </Muted>
       <FormulaBlock
@@ -36,14 +36,14 @@ export const CaloriesPanel = () => (
       />
     </Card>
 
-    <Card gap="$3">
-      <XStack alignItems="center" justifyContent="space-between" gap="$2" flexWrap="wrap">
-        <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <XStack alignItems="center" justifyContent="space-between" gap="2" flexWrap="wrap">
+        <Body fontFamily="heading" fontWeight="800" fontSize={16}>
           When body fat is known
         </Body>
         <Muted fontSize={12}>Alternate formula</Muted>
       </XStack>
-      <Muted lineHeight={19}>
+      <Muted lineHeight="19px">
         Switches to Katch–McArdle using lean mass instead of the Mifflin equation.
       </Muted>
       <FormulaBlock
@@ -51,28 +51,28 @@ export const CaloriesPanel = () => (
       />
     </Card>
 
-    <Card gap="$3">
-      <Body fontFamily="$heading" fontWeight="800" fontSize={16}>
+    <Card gap="3">
+      <Body fontFamily="heading" fontWeight="800" fontSize={16}>
         Daily burn (TDEE)
       </Body>
-      <Muted lineHeight={19}>Multiply BMR by the client’s typical weekly activity.</Muted>
+      <Muted lineHeight="19px">Multiply BMR by the client’s typical weekly activity.</Muted>
       <FormulaBlock lines={['TDEE = BMR × activity']} />
-      <YStack gap="$2" marginTop="$1">
+      <YStack gap="2" marginTop="1">
         {ACTIVITY_LEVELS.map((level) => (
           <XStack
             key={level}
             alignItems="center"
             justifyContent="space-between"
-            backgroundColor="$elevatedBg"
+            backgroundColor="elevatedBg"
             borderRadius={12}
             borderWidth={1}
-            borderColor="$borderColor"
-            paddingHorizontal="$3"
-            paddingVertical="$2.5"
+            borderColor="border-color"
+            paddingHorizontal="3"
+            paddingVertical="2-5"
             minHeight={44}
           >
             <Body fontWeight="600">{ACTIVITY_LABELS[level]}</Body>
-            <Text fontFamily="$heading" fontWeight="800" color="$primary">
+            <Text fontFamily="heading" fontWeight="800" color="primary">
               × {level}
             </Text>
           </XStack>

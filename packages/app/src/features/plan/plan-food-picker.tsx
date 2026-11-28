@@ -19,7 +19,7 @@ export const PlanFoodPicker = ({
   const foods = useFoods(query.length >= 2 ? query : undefined);
 
   return (
-    <YStack gap="$2">
+    <YStack gap="2">
       <FormField
         label="Search foods"
         value={query}

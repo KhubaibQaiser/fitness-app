@@ -31,17 +31,17 @@ export const OnboardingGoalSummary = ({
   const pace = formatWeight(Math.abs(preview.expectedWeeklyDeltaKg), prefs.weight, 2);
 
   return (
-    <YStack gap="$3">
-      <YStack gap="$1">
+    <YStack gap="3">
+      <YStack gap="1">
         <SectionTitle>Expected plan</SectionTitle>
-        <Text fontFamily="$heading" fontSize={22} fontWeight="800" color="$color">
+        <Text fontFamily="heading" fontSize={22} fontWeight="800" color="color">
           The path you’re agreeing to
         </Text>
         <Muted>These estimates set the starting direction and adapt at check-ins.</Muted>
       </YStack>
 
-      <Card padding="$4" gap="$4">
-        <XStack flexWrap="wrap" gap="$4">
+      <Card padding="4" gap="4">
+        <XStack flexWrap="wrap" gap="4">
           {[
             {
               label: 'Goal',
@@ -68,7 +68,7 @@ export const OnboardingGoalSummary = ({
               <Muted fontSize={11} fontWeight="600" textTransform="uppercase" letterSpacing={0.5}>
                 {item.label}
               </Muted>
-              <Text fontFamily="$body" fontSize={14} fontWeight="700" color="$color">
+              <Text fontFamily="body" fontSize={14} fontWeight="700" color="color">
                 {item.value}
               </Text>
             </YStack>

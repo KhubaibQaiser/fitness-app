@@ -21,21 +21,21 @@ export const ClientJourneyMap = ({
   subtitle?: string;
   emptyAction?: ReactNode;
 }) => (
-  <YStack gap="$5" width="100%" maxWidth={760} alignSelf="center">
+  <YStack gap="5" width="100%" maxWidth={760} alignSelf="center">
     {chrome === 'embedded' ? (
-      <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-        <YStack gap="$1" flex={1} minWidth={0}>
+      <XStack alignItems="flex-start" justifyContent="space-between" gap="3">
+        <YStack gap="1" flex={1} minWidth={0}>
           <SectionTitle>Journey</SectionTitle>
           <Text
-            fontFamily="$heading"
-            fontSize="$title"
-            lineHeight="$title"
+            fontFamily="heading"
+            fontSize="title"
+            lineHeight="title"
             fontWeight="700"
-            color="$color"
+            color="color"
           >
             {title}
           </Text>
-          <Muted fontSize="$bodyDefault" lineHeight="$bodyDefault">
+          <Muted fontSize="bodyDefault" lineHeight="bodyDefault">
             {subtitle}
           </Muted>
         </YStack>
@@ -45,13 +45,13 @@ export const ClientJourneyMap = ({
           borderRadius={999}
           alignItems="center"
           justifyContent="center"
-          backgroundColor="$primaryMuted"
+          backgroundColor="primaryMuted"
         >
-          <Activity size={20} color="$primary" />
+          <Activity size={20} color="primary" />
         </YStack>
       </XStack>
     ) : (
-      <Muted fontSize="$bodyDefault" lineHeight="$bodyDefault">
+      <Muted fontSize="bodyDefault" lineHeight="bodyDefault">
         {subtitle}
       </Muted>
     )}
@@ -64,7 +64,7 @@ export const ClientJourneyMap = ({
           bottom={JOURNEY_SPINE_INSET}
           left={JOURNEY_SPINE_LEFT}
           width={2}
-          backgroundColor="$track"
+          backgroundColor="track"
           zIndex={0}
         />
         {nodes.map((node, index) => (
@@ -88,9 +88,9 @@ export const ClientJourneyMap = ({
             borderRadius={999}
             alignItems="center"
             justifyContent="center"
-            backgroundColor="$elevatedBg"
+            backgroundColor="elevatedBg"
           >
-            <Activity size={20} color="$textMuted" />
+            <Activity size={20} color="textMuted" />
           </YStack>
         }
         action={emptyAction}

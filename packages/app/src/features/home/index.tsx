@@ -40,7 +40,7 @@ export const HomeScreen = () => {
 
   if (due.isPending || clients.isPending) {
     return (
-      <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+      <AppScreen gap="0" paddingTop={0} paddingHorizontal={0}>
         <HomeSkeleton />
       </AppScreen>
     );
@@ -71,7 +71,7 @@ export const HomeScreen = () => {
   const title = now === null ? `Hello, ${displayName}` : formatCoachTitle(now, displayName);
 
   return (
-    <AppScreen gap="$0" paddingTop={0} paddingHorizontal={0}>
+    <AppScreen gap="0" paddingTop={0} paddingHorizontal={0}>
       <PageHeader
         strip
         eyebrow={now === null ? '\u00a0' : formatCoachDate(now)}
@@ -83,59 +83,59 @@ export const HomeScreen = () => {
         }
       />
 
-      <ScreenBody gap="$4">
-        <XStack flexWrap="wrap" gap="$3" width="100%">
-          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+      <ScreenBody gap="4">
+        <XStack flexWrap="wrap" gap="3" width="100%">
+          <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
             <StatPill label="Needs attention" value={atRisk.length} />
           </YStack>
-          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
             <StatPill label="Total clients" value={allClients.length} />
           </YStack>
-          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
             <StatPill label="On track" value={onTrack} />
           </YStack>
-          <YStack flexBasis="47%" flexGrow={1} minWidth={140} $md={{ flexBasis: 0, flex: 1 }}>
+          <YStack flexBasis="47% md:0px" flexGrow={1} minWidth={140} flex="md:1">
             <StatPill label="High alerts" value={highAlerts} />
           </YStack>
         </XStack>
 
-        <YStack gap="$5">
-          <YStack gap="$3">
+        <YStack gap="5">
+          <YStack gap="3">
             <XStack alignItems="center" justifyContent="space-between">
-              <Text fontFamily="$heading" fontSize={14} fontWeight="600" color="$color">
+              <Text fontFamily="heading" fontSize={14} fontWeight="600" color="color">
                 Needs attention
               </Text>
               <Link href="/clients">
-                <Text fontSize={12} color="$primary" fontWeight="500">
+                <Text fontSize={12} color="primary" fontWeight="500">
                   All clients →
                 </Text>
               </Link>
             </XStack>
             {atRisk.length === 0 ? (
-              <Card padding="$4">
+              <Card padding="4">
                 <Muted textAlign="center" fontSize={13}>
                   No clients need attention.
                 </Muted>
               </Card>
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <XStack gap="$3">
+                <XStack gap="3">
                   {atRisk.map((client) => (
                     <Link key={client.id} href={`/clients/${client.id}`}>
-                      <Card interactive padding="$4" minWidth={240}>
-                        <XStack alignItems="flex-start" gap="$3">
+                      <Card interactive padding="4" minWidth={240}>
+                        <XStack alignItems="flex-start" gap="3">
                           <Avatar name={client.name} size={40} />
-                          <YStack flex={1} minWidth={0} gap="$1.5">
+                          <YStack flex={1} minWidth={0} gap="1-5">
                             <Text
-                              fontFamily="$heading"
+                              fontFamily="heading"
                               fontWeight="600"
                               fontSize={13.5}
-                              color="$color"
+                              color="color"
                               numberOfLines={1}
                             >
                               {client.name}
                             </Text>
-                            <XStack gap="$1" flexWrap="wrap">
+                            <XStack gap="1" flexWrap="wrap">
                               {client.attentionReasons.map((r) => (
                                 <Badge
                                   key={r.code}
@@ -145,7 +145,7 @@ export const HomeScreen = () => {
                               ))}
                             </XStack>
                           </YStack>
-                          <ChevronRight size={14} color="$textMuted" />
+                          <ChevronRight size={14} color="textMuted" />
                         </XStack>
                       </Card>
                     </Link>
@@ -155,9 +155,9 @@ export const HomeScreen = () => {
             )}
           </YStack>
 
-          <YStack gap="$3">
+          <YStack gap="3">
             <XStack alignItems="center" justifyContent="space-between">
-              <Text fontFamily="$heading" fontSize={14} fontWeight="600" color="$color">
+              <Text fontFamily="heading" fontSize={14} fontWeight="600" color="color">
                 Due today
               </Text>
               {dueItems.length > 0 ? (
@@ -173,26 +173,26 @@ export const HomeScreen = () => {
                     width={40}
                     height={40}
                     borderRadius={999}
-                    backgroundColor="$successMuted"
+                    backgroundColor="successMuted"
                     alignItems="center"
                     justifyContent="center"
                   >
-                    <Check size={18} color="$success" />
+                    <Check size={18} color="success" />
                   </YStack>
                 }
               />
             ) : (
               dueItems.map((item) => (
                 <Link key={item.id} href={`/clients/${item.clientId}/check-in`}>
-                  <Card interactive padding="$3.5">
-                    <XStack alignItems="center" gap="$3">
+                  <Card interactive padding="3-5">
+                    <XStack alignItems="center" gap="3">
                       <Avatar name={item.clientName} size={40} />
                       <YStack flex={1} minWidth={0} gap={2}>
                         <Text
-                          fontFamily="$heading"
+                          fontFamily="heading"
                           fontWeight="600"
                           fontSize={13.5}
-                          color="$color"
+                          color="color"
                           numberOfLines={1}
                         >
                           {item.clientName}
@@ -204,7 +204,7 @@ export const HomeScreen = () => {
                       ) : (
                         <Badge tone="warning" label="Due today" />
                       )}
-                      <ChevronRight size={14} color="$textMuted" />
+                      <ChevronRight size={14} color="textMuted" />
                     </XStack>
                   </Card>
                 </Link>

@@ -49,7 +49,7 @@ export const StepSign = ({
       : [];
 
   return (
-    <YStack gap="$7">
+    <YStack gap="7">
       {preview !== null ? (
         <>
           <StaggerItem index={0}>
@@ -84,7 +84,7 @@ export const StepSign = ({
                     ? 'Calorie target is beyond the recommended pace'
                     : 'Calorie target was overridden'
               }
-              icon={preview.belowSexFloor ? <AlertTriangle size={18} color="$danger" /> : undefined}
+              icon={preview.belowSexFloor ? <AlertTriangle size={18} color="danger" /> : undefined}
             >
               {preview.belowSexFloor
                 ? `Chosen ${preview.targetKcal.toLocaleString()} kcal is below the usual calorie floor (suggested ${preview.recommendedKcal.toLocaleString()} kcal). This may not be healthy. You can still create the client. Targets stay estimates and are reviewed at every check-in.`
@@ -95,7 +95,7 @@ export const StepSign = ({
             <AlertBanner
               tone="danger"
               title={preview.safetyIssue.title}
-              icon={<AlertTriangle size={18} color="$danger" />}
+              icon={<AlertTriangle size={18} color="danger" />}
             >
               {preview.safetyIssue.detail}
             </AlertBanner>
@@ -108,13 +108,13 @@ export const StepSign = ({
         </AlertBanner>
       )}
 
-      <YStack gap="$3" paddingTop="$2">
-        <YStack gap="$1">
+      <YStack gap="3" paddingTop="2">
+        <YStack gap="1">
           <SectionTitle>Client consent</SectionTitle>
-          <Text fontFamily="$heading" fontSize={22} fontWeight="800" color="$color">
+          <Text fontFamily="heading" fontSize={22} fontWeight="800" color="color">
             Review, then sign
           </Text>
-          <Body color="$textMuted">
+          <Body color="textMuted">
             The signature confirms the intake details and acknowledges that targets are estimates
             reviewed at every check-in.
           </Body>
@@ -126,7 +126,7 @@ export const StepSign = ({
           }}
         />
         {errors.signature ? (
-          <Body color="$danger" role="alert">
+          <Body color="danger" role="alert">
             {errors.signature}
           </Body>
         ) : null}

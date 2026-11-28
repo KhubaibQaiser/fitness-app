@@ -49,7 +49,7 @@ export const HeightFields = ({
   }
 
   return (
-    <XStack gap="$3" width="100%">
+    <XStack gap="3" width="100%">
       <YStack flex={1}>
         <FormField
           label="Height"

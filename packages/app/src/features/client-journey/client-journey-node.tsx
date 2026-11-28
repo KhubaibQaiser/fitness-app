@@ -76,25 +76,19 @@ const JourneyMetric = ({ label, value, unit }: { label: string; value: string; u
   <YStack gap={2} flex={1} minWidth={72}>
     <Muted
       fontSize={10}
-      lineHeight={12}
+      lineHeight="12px"
       fontWeight="600"
       textTransform="uppercase"
       letterSpacing={0.8}
     >
       {label}
     </Muted>
-    <XStack alignItems="baseline" gap="$1" flexWrap="wrap">
-      <Text
-        fontFamily="$mono"
-        fontSize="$statMd"
-        lineHeight="$statMd"
-        fontWeight="600"
-        color="$color"
-      >
+    <XStack alignItems="baseline" gap="1" flexWrap="wrap">
+      <Text fontFamily="mono" fontSize="statMd" lineHeight="statMd" fontWeight="600" color="color">
         {value}
       </Text>
       {unit !== undefined ? (
-        <Muted fontSize="$captionDefault" lineHeight="$captionDefault" fontWeight="500">
+        <Muted fontSize="captionDefault" lineHeight="captionDefault" fontWeight="500">
           {unit}
         </Muted>
       ) : null}
@@ -141,16 +135,16 @@ export const ClientJourneyNode = ({
   const hasMetrics = shownWeight !== null || actualDelta !== null || expectedDelta !== null;
   const isCurrent = node.state === 'current';
   const isPast = node.state === 'past';
-  const markerColor = isCurrent || isPast ? '$primary' : '$textMuted';
+  const markerColor = isCurrent || isPast ? 'primary' : 'textMuted';
   const linkHint = linkHintFor(node);
   const isDanger = node.verdictType === 'REFER_REVIEW';
   const content = (
     <Card
       interactive={node.href !== undefined}
-      backgroundColor={isCurrent ? '$primaryMuted' : '$cardBg'}
-      borderColor={isDanger ? '$danger' : isCurrent ? '$primary' : '$borderColor'}
+      backgroundColor={isCurrent ? 'primaryMuted' : 'cardBg'}
+      borderColor={isDanger ? 'danger' : isCurrent ? 'primary' : 'border-color'}
       borderStyle={node.projected ? 'dashed' : 'solid'}
-      gap="$3"
+      gap="3"
       width="100%"
       opacity={node.state === 'future' ? 0.88 : 1}
       accessibilityLabel={[
@@ -162,19 +156,19 @@ export const ClientJourneyNode = ({
         .filter((part): part is string => typeof part === 'string' && part.length > 0)
         .join(', ')}
     >
-      <XStack alignItems="flex-start" justifyContent="space-between" gap="$3">
-        <YStack gap="$1.5" flex={1} minWidth={0}>
+      <XStack alignItems="flex-start" justifyContent="space-between" gap="3">
+        <YStack gap="1-5" flex={1} minWidth={0}>
           <Text
-            fontFamily="$heading"
-            fontSize="$headline"
-            lineHeight="$headline"
+            fontFamily="heading"
+            fontSize="headline"
+            lineHeight="headline"
             fontWeight={isCurrent ? '700' : '600'}
-            color="$color"
+            color="color"
           >
             {node.title}
           </Text>
-          <XStack alignItems="center" flexWrap="wrap" gap="$2">
-            <Muted fontSize="$captionDefault" lineHeight="$captionDefault">
+          <XStack alignItems="center" flexWrap="wrap" gap="2">
+            <Muted fontSize="captionDefault" lineHeight="captionDefault">
               {formatDate(node.date)}
             </Muted>
             {badge !== null ? <Badge tone={badge.tone} label={badge.label} /> : null}
@@ -187,11 +181,11 @@ export const ClientJourneyNode = ({
 
       {hasMetrics ? (
         <XStack
-          backgroundColor="$elevatedBg"
+          backgroundColor="elevatedBg"
           borderRadius={12}
-          paddingHorizontal="$3"
-          paddingVertical="$2.5"
-          gap="$3"
+          paddingHorizontal="3"
+          paddingVertical="2-5"
+          gap="3"
           flexWrap="wrap"
         >
           {shownWeight !== null ? (
@@ -211,24 +205,24 @@ export const ClientJourneyNode = ({
       ) : null}
 
       {node.detail !== null ? (
-        <Muted fontSize="$bodyDefault" lineHeight="$bodyDefault">
+        <Muted fontSize="bodyDefault" lineHeight="bodyDefault">
           {node.detail}
         </Muted>
       ) : null}
 
       {linkHint !== null ? (
-        <XStack alignItems="center" justifyContent="flex-end" gap="$1">
-          <Muted fontSize="$captionDefault" lineHeight="$captionDefault" fontWeight="500">
+        <XStack alignItems="center" justifyContent="flex-end" gap="1">
+          <Muted fontSize="captionDefault" lineHeight="captionDefault" fontWeight="500">
             {linkHint}
           </Muted>
-          <ChevronRight size={14} color="$textMuted" />
+          <ChevronRight size={14} color="textMuted" />
         </XStack>
       ) : null}
     </Card>
   );
 
   return (
-    <XStack gap="$3" alignItems="stretch" width="100%" paddingBottom={last ? 0 : '$5'}>
+    <XStack gap="3" alignItems="stretch" width="100%" paddingBottom={last ? 0 : '5'}>
       <YStack width={JOURNEY_RAIL_WIDTH} alignItems="center" zIndex={1}>
         <YStack
           width={JOURNEY_MARKER_SIZE}
@@ -237,7 +231,7 @@ export const ClientJourneyNode = ({
           borderRadius={999}
           alignItems="center"
           justifyContent="center"
-          backgroundColor={isCurrent ? '$primaryMuted' : '$cardBg'}
+          backgroundColor={isCurrent ? 'primaryMuted' : 'cardBg'}
           borderWidth={isCurrent ? 3 : 2}
           borderColor={markerColor}
         >

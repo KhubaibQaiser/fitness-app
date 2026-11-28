@@ -21,7 +21,7 @@ export const ForgotRequestForm = ({ busy, error, onSubmit }: ForgotRequestFormPr
   const chain = useFocusChain(['email'], { onSubmit: submit, submitKey: 'go' });
 
   return (
-    <YStack gap="$4">
+    <YStack gap="4">
       {chain.toolbar}
       <FormField
         label="Email"

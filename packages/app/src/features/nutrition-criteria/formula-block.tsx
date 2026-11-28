@@ -11,12 +11,12 @@ export const FormulaBlock = ({
   lines: readonly string[];
 }) => (
   <YStack
-    backgroundColor="$elevatedBg"
+    backgroundColor="elevatedBg"
     borderRadius={12}
     borderWidth={1}
-    borderColor="$borderColor"
-    padding="$3"
-    gap="$2"
+    borderColor="border-color"
+    padding="3"
+    gap="2"
   >
     <Muted fontSize={11} textTransform="uppercase" letterSpacing={0.8} fontWeight="700">
       {label}
@@ -24,11 +24,11 @@ export const FormulaBlock = ({
     {lines.map((line) => (
       <Text
         key={line}
-        fontFamily="$body"
+        fontFamily="body"
         fontSize={13}
         fontWeight="600"
-        color="$color"
-        lineHeight={20}
+        color="color"
+        lineHeight="20px"
       >
         {line}
       </Text>

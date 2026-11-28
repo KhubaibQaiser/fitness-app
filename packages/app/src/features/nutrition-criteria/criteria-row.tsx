@@ -15,27 +15,27 @@ export const CriteriaRow = ({
   <XStack
     alignItems="center"
     justifyContent="space-between"
-    gap="$3"
+    gap="3"
     width="100%"
-    paddingVertical="$2.5"
+    paddingVertical="2-5"
     borderBottomWidth={1}
-    borderBottomColor="$borderColor"
+    borderBottomColor="border-color"
   >
     <YStack flex={1} minWidth={0} gap={2}>
       <Body fontWeight="600" fontSize={14}>
         {label}
       </Body>
       {hint ? (
-        <Muted fontSize={12} lineHeight={16}>
+        <Muted fontSize={12} lineHeight="16px">
           {hint}
         </Muted>
       ) : null}
     </YStack>
     <Text
-      fontFamily="$heading"
+      fontFamily="heading"
       fontWeight="800"
       fontSize={15}
-      color="$primary"
+      color="primary"
       textAlign="right"
       flexShrink={0}
     >

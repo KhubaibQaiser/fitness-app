@@ -24,11 +24,11 @@ export const SegmentedControl = <T extends string | number>({
     <XStack
       role="tablist"
       aria-label={ariaLabel}
-      gap="$0.5"
+      gap="0-5"
       flexWrap="wrap"
-      backgroundColor="$elevatedBg"
+      backgroundColor="elevatedBg"
       borderRadius={999}
-      padding="$1"
+      padding="1"
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -44,27 +44,24 @@ export const SegmentedControl = <T extends string | number>({
             alignItems="center"
             justifyContent="center"
             borderRadius={999}
-            paddingHorizontal="$2"
-            backgroundColor={selected ? '$surface' : 'transparent'}
+            paddingHorizontal="2"
+            backgroundColor={`${selected ? 'surface' : 'transparent'} hover:surface`}
             cursor="pointer"
-            hoverStyle={{ backgroundColor: '$surface' }}
-            pressStyle={{ opacity: 0.9 }}
-            focusVisibleStyle={{
-              outlineWidth: 2,
-              outlineColor: '$focusRing',
-              outlineStyle: 'solid',
-            }}
+            opacity="press:0.9"
+            outlineWidth="focus-visible:2px"
+            outlineColor="focus-visible:focusRing"
+            outlineStyle="focus-visible:solid"
             onPress={() => {
               startTransition(() => onChange(option.value));
             }}
             tabIndex={0}
           >
             <Text
-              fontFamily="$heading"
+              fontFamily="heading"
               fontWeight="500"
               fontSize={12}
-              lineHeight={16}
-              color={selected ? '$color' : '$textMuted'}
+              lineHeight="16px"
+              color={selected ? 'color' : 'textMuted'}
             >
               {option.label}
             </Text>
@@ -94,9 +91,9 @@ export const Tabs = ({
   <XStack
     role="tablist"
     aria-label={ariaLabel}
-    gap="$1"
+    gap="1"
     borderBottomWidth={1}
-    borderBottomColor="$borderColor"
+    borderBottomColor="border-color"
     width="100%"
   >
     {items.map((item) => {
@@ -111,26 +108,23 @@ export const Tabs = ({
           alignItems="center"
           justifyContent="center"
           borderBottomWidth={2}
-          borderBottomColor={selected ? '$primary' : 'transparent'}
+          borderBottomColor={selected ? 'primary' : 'transparent'}
           marginBottom={-1}
           cursor="pointer"
-          hoverStyle={{ opacity: 0.88 }}
-          pressStyle={{ opacity: 0.88 }}
-          focusVisibleStyle={{
-            outlineWidth: 2,
-            outlineColor: '$focusRing',
-            outlineStyle: 'solid',
-          }}
+          opacity="hover:0.88 press:0.88"
+          outlineWidth="focus-visible:2px"
+          outlineColor="focus-visible:focusRing"
+          outlineStyle="focus-visible:solid"
           onPress={() => {
             startTransition(() => onChange(item.id));
           }}
           tabIndex={0}
         >
           <Text
-            fontFamily="$heading"
+            fontFamily="heading"
             fontWeight={selected ? '800' : '500'}
             fontSize={14}
-            color={selected ? '$color' : '$textMuted'}
+            color={selected ? 'color' : 'textMuted'}
           >
             {item.label}
           </Text>

@@ -9,7 +9,7 @@ export const OnboardingProgress = ({ stepIndex }: { stepIndex: number }) => {
   const pct = Math.round(((stepIndex + 1) / total) * 100);
 
   return (
-    <YStack gap="$2" width="100%">
+    <YStack gap="2" width="100%">
       <XStack justifyContent="space-between" alignItems="baseline">
         <Muted>
           Step {stepIndex + 1} / {total}
@@ -19,7 +19,7 @@ export const OnboardingProgress = ({ stepIndex }: { stepIndex: number }) => {
       </XStack>
       <YStack
         height={8}
-        backgroundColor="$elevatedBg"
+        backgroundColor="elevatedBg"
         borderRadius={999}
         overflow="hidden"
         accessibilityRole="progressbar"
@@ -28,10 +28,10 @@ export const OnboardingProgress = ({ stepIndex }: { stepIndex: number }) => {
         aria-valuemax={100}
         aria-label="Onboarding progress"
       >
-        <YStack height="100%" width={`${pct}%`} backgroundColor="$primary" />
+        <YStack height="100%" width={`${pct}%`} backgroundColor="primary" />
       </YStack>
       {meta ? (
-        <Body fontFamily="$heading" fontWeight="700" fontSize={15}>
+        <Body fontFamily="heading" fontWeight="700" fontSize={15}>
           {meta.subtitle}
         </Body>
       ) : null}

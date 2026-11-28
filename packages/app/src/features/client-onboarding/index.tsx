@@ -161,7 +161,7 @@ export const ClientOnboardingScreen = () => {
       <OnboardingProgress stepIndex={stepIndex} />
 
       {stepId === 'sign' ? (
-        <YStack gap="$4">
+        <YStack gap="4">
           <StepSign
             draft={draft}
             errors={errors}
@@ -171,13 +171,13 @@ export const ClientOnboardingScreen = () => {
             onClearError={clearError}
           />
           {onboard.isError ? (
-            <Body color="$danger" role="alert">
+            <Body color="danger" role="alert">
               {onboard.error.message}
             </Body>
           ) : null}
         </YStack>
       ) : (
-        <Card gap="$4">
+        <Card gap="4">
           {stepId === 'identity' ? (
             <StepIdentity
               draft={draft}
@@ -230,7 +230,7 @@ export const ClientOnboardingScreen = () => {
           {stepId === 'medical' ? <StepMedical draft={draft} onPatch={patch} /> : null}
           {stepId === 'diet' ? <StepDiet draft={draft} onPatch={patch} /> : null}
           {onboard.isError ? (
-            <Body color="$danger" role="alert">
+            <Body color="danger" role="alert">
               {onboard.error.message}
             </Body>
           ) : null}
