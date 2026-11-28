@@ -970,6 +970,7 @@
       }
       .heroCol {
         flex: 1;
+        min-width: 0;
         position: relative;
         overflow: hidden;
       }
@@ -984,17 +985,25 @@
       }
       .formCol {
         flex: 1;
+        min-width: 0;
         max-width: 560px;
         background: var(--bgCanvas);
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 32px 48px;
+      }
+      /* Padding sits inside, so the column itself splits like today's flex={1} column. */
+      .formCol > .in {
+        display: flex;
+        flex-direction: column;
         gap: 14px;
+        padding: 32px 48px;
+      }
+      .formCol.solo > .in {
+        padding: 24px;
       }
       .formCol.solo {
         max-width: none;
-        padding: 24px;
         justify-content: flex-start;
       }
       .band {
@@ -1182,7 +1191,8 @@
         <h2 id="s3">3. Sized auth hero</h2>
         <p class="lede muted">
           Today's art next to the Floodlight login form, at the sizes S01's layout uses: on web at
-          768 px and wider the hero fills the space left of a form column capped at 560 px
+          768 px and wider the hero and form columns split the window 50/50 until the form reaches
+          its 560 px cap at 1120 px, then the hero takes the rest
           (<code>auth-split-layout.tsx</code>, <code>auth-form-column.tsx</code>), cropped to cover;
           below 768 px web hides it. Native gets a header band (S01 change 7). Frames below are
           scaled to fit.
@@ -1223,10 +1233,11 @@
               </table>
             </div>
             <p class="small muted" style="margin-top: 8px">
-              Proposed <code>sizes</code>: <code>max(calc(100vw - 560px), 75vh)</code>, because
-              <em>cover</em> on a tall window is set by height (the art is 3:4). Files go under
-              <code>apps/web/public/auth/</code>. Native ships one optimised file at 864 for the
-              band.
+              Proposed <code>sizes</code>: <code>max(50vw, calc(100vw - 560px), 75vh)</code>: the
+              column is half the window below 1120 px and the window minus the 560 px form above it,
+              and <em>cover</em> on a tall window is set by height (the art is 3:4). Files go under
+              <code>apps/web/public/auth/</code>. Native ships one file at 864 for the band; its
+              format is owner decision 10.
             </p>
             <p class="small muted">
               Finding: at 2× on tablets and laptops the column wants more than 864 px (for example
@@ -1255,8 +1266,8 @@
           <figure>
             <div class="frame" data-w="834" data-h="1194" id="f-tab-834-hero" inert></div>
             <figcaption>
-              834 × 1194: login. Today's split rule leaves a 274 px hero strip (see owner decision
-              6).
+              834 × 1194: login. Below 1120 px today's columns split 50/50: a 417 × 1194 hero column
+              (see owner decision 8).
             </figcaption>
           </figure>
           <figure>
@@ -1276,37 +1287,59 @@
         <h2 id="s5">5. For the owner to approve</h2>
         <ol class="tight" id="decisions">
           <li>
-            The six component names and their two props (<code>size</code>, <code>testID</code>),
-            fixed by a test.
-          </li>
-          <li>The icons: UserPlus, SearchX, ClipboardList, Inbox, Compass, CircleAlert.</li>
-          <li>
-            The tints: Sunflower wash for first run and no plan; neutral <code>bg.sunken</code> for
-            no matches and 404; success wash for Inbox clear; danger wash for the generic error.
-            Every disc carries a 1px <code>border.subtle</code> ring.
+            Component names: <code>IllustrationNoClients</code>, <code>IllustrationNoMatches</code>,
+            <code>IllustrationNoPlan</code>, <code>IllustrationInboxClear</code>,
+            <code>IllustrationNotFound</code>, <code>IllustrationError</code>, plus
+            <code>AuthHero</code>.
           </li>
           <li>
-            All six empty-state slots are decorative (empty <code>alt</code>, hidden from assistive
-            tech), because the title next to each says the same thing.
+            Props: <code>size?: 'regular' | 'compact'</code> and <code>testID?</code> for each slot;
+            <code>variant: 'column' | 'band'</code> and <code>testID?</code> for
+            <code>AuthHero</code>. A test fixes them.
+          </li>
+          <li>Icons: UserPlus, SearchX, ClipboardList, Inbox, Compass, CircleAlert.</li>
+          <li>
+            Tints: Sunflower wash for first run and no plan; neutral <code>bg.sunken</code> for no
+            matches and 404; <code>bg.sunken</code> with the icon in
+            <code>status.success.text</code> for Inbox clear, a calm state with no status fill
+            (ruling T6); danger wash for the generic error, which needs action. Each disc has a 1px
+            <code>border.subtle</code> ring.
+          </li>
+          <li>
+            Disc edges: in light the disc fills are about 1.1:1 against the surface, and in dark the
+            <code>bg.sunken</code> discs equal the canvas (1.00:1), so only the 1px ring separates
+            them. The slots are decorative, so WCAG 1.4.11's 3:1 does not apply. Options: keep the
+            faint disc plus ring, or use a stronger tint. Recommended: keep it, because the title
+            carries the meaning and a stronger tint would compete with the action.
+          </li>
+          <li>
+            All six slots are decorative (empty <code>alt</code>), since the title beside each says
+            the same thing.
           </li>
           <li>
             The auth hero becomes decorative too (empty <code>alt</code>). Today it has the label
             "Illustrated mat, dumbbells, bottle, and progress phone".
           </li>
           <li>
-            Tablet portrait login: keep today's split (a 274 px strip at 834) or use the header band
-            below 1024 px. Recommended: the band; S01 makes the call, and F8 ships both variants
-            (<code>AuthHero variant</code>).
+            Tablet login: keep today's 50/50 split (a 417 × 1194 hero column at 834 portrait), or
+            use the header band below 1024 px. Recommended: the band, because a tall 417 px column
+            crops the art to its middle third while a band keeps it legible above the form. S01
+            decides the layout; F8 only supplies the <code>column</code> and
+            <code>band</code> variants.
           </li>
           <li>
-            Hero widths 648 and 864 only, in AVIF and WebP with JPEG as the last fallback, and the
-            <code>sizes</code> rule above. A 432 file would serve no window at 768 px or wider, so
-            it is left out.
+            Hero files at 648 and 864 wide, in AVIF and WebP, with
+            <code>sizes="max(50vw, calc(100vw - 560px), 75vh)"</code>. No 432 file, since no window
+            at 768 px or wider would use it.
           </li>
           <li>
-            Today's "All clear" (S02) stays text only, as its spec says, rather than reusing the
-            Inbox clear slot.
+            Native hero file: PNG as F8 requirement 3 says (about 1.5 MB at 864, estimate), JPEG
+            (about 306 KB, estimate) or WebP (about 120 KB, estimate). Recommended: WebP, which both
+            platforms decode, because a PNG of this painted, photo-like art is about 13 times
+            heavier. Picking WebP or JPEG changes F8 requirement 3; the coordinator updates the spec
+            only after the owner decides.
           </li>
+          <li>Today's "All clear" (S02) stays text only, as its spec says.</li>
         </ol>
       </section>
     </div>
@@ -1383,10 +1416,10 @@
           id: 'inboxClear',
           comp: 'IllustrationInboxClear',
           icon: 'Inbox',
-          disc: 'statusSuccessWash',
-          fg: 'statusSuccessWashText',
-          discToken: 'status.success.wash',
-          fgToken: 'status.success.washText',
+          disc: 'bgSunken',
+          fg: 'statusSuccessText',
+          discToken: 'bg.sunken',
+          fgToken: 'status.success.text',
           used: 'S12 Inbox',
         },
         {
@@ -1596,7 +1629,7 @@
       }
       const heroImg = () => `<img src="${HERO_SRC}" alt="" />`;
       const loginForm = (solo) =>
-        `<div class="formCol${solo ? ' solo' : ''}"><h2 style="font-size:28px;margin:0">Sign in</h2><p class="muted" style="margin:0">Use the phone number your gym registered.</p><div><div class="lbl">Phone number</div><div class="fakeInput">Phone number</div></div><div><div class="lbl">Password</div><div class="fakeInput"><span>••••••••</span>${svg('Eye')}</div></div><div class="fakeBtn">Sign in</div><p style="margin:0"><a href="#s3">Forgot password?</a></p></div>`;
+        `<div class="formCol${solo ? ' solo' : ''}"><div class="in"><h2 style="font-size:28px;margin:0">Sign in</h2><p class="muted" style="margin:0">Use the phone number your gym registered.</p><div><div class="lbl">Phone number</div><div class="fakeInput">Phone number</div></div><div><div class="lbl">Password</div><div class="fakeInput"><span>••••••••</span>${svg('Eye')}</div></div><div class="fakeBtn">Sign in</div><p style="margin:0"><a href="#s3">Forgot password?</a></p></div></div>`;
       const marker = (txt, css) => `<span class="marker num" style="${css}">${txt}</span>`;
 
       const FRAMES = {
@@ -1605,7 +1638,7 @@
         'f-tab-1194-hero': () =>
           `<div class="heroCol">${heroImg()}${marker('634 × 834', 'left:16px;top:16px')}</div>${loginForm()}`,
         'f-tab-834-hero': () =>
-          `<div class="heroCol">${heroImg()}${marker('274 × 1194', 'left:12px;top:16px')}</div>${loginForm()}`,
+          `<div class="heroCol">${heroImg()}${marker('417 × 1194', 'left:12px;top:16px')}</div>${loginForm()}`,
         'f-hero-390': () =>
           `<div style="display:flex;flex-direction:column;width:100%"><div class="band">${heroImg()}${marker('390 × 220', 'left:12px;top:56px')}</div>${loginForm(true)}</div>`,
         'f-tab-834-slot': () =>
