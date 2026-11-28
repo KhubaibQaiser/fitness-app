@@ -86,7 +86,7 @@ export const DeltaChip = ({
       borderRadius={999}
       paddingHorizontal="2-5"
       paddingVertical="1-5"
-      accessibilityLabel={`Change ${arrow} ${Math.abs(delta).toFixed(1)} ${unit}`}
+      aria-label={`Change ${arrow} ${Math.abs(delta).toFixed(1)} ${unit}`}
     >
       <Text color={isGood ? 'success' : 'danger'} fontSize={12} fontWeight="700" fontFamily="mono">
         {arrow} {Math.abs(delta).toFixed(1)} {unit}
@@ -135,7 +135,7 @@ export const Avatar = ({
       alignItems="center"
       justifyContent="center"
       flexShrink={0}
-      accessibilityLabel={`${name} avatar`}
+      aria-label={`${name} avatar`}
     >
       <Text color={fg} fontFamily="heading" fontWeight="700" fontSize={size * 0.32}>
         {initials || '?'}

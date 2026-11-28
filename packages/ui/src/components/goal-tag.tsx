@@ -13,7 +13,7 @@ export const GoalTag = ({ goal }: GoalTagProps) => (
     borderRadius={999}
     paddingHorizontal="2"
     paddingVertical="0-5"
-    accessibilityLabel={`Goal: ${goal}`}
+    aria-label={`Goal: ${goal}`}
   >
     <Text
       color="textMuted"

@@ -19,13 +19,7 @@ const MID = 160;
 const CORE = 104;
 
 const MissedMark = () => (
-  <YStack
-    width={RING}
-    height={RING}
-    alignItems="center"
-    justifyContent="center"
-    accessibilityLabel="404"
-  >
+  <YStack width={RING} height={RING} alignItems="center" justifyContent="center" aria-label="404">
     <YStack
       position="absolute"
       width={RING}

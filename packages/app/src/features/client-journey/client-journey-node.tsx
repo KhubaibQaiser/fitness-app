@@ -147,7 +147,7 @@ export const ClientJourneyNode = ({
       gap="3"
       width="100%"
       opacity={node.state === 'future' ? 0.88 : 1}
-      accessibilityLabel={[
+      aria-label={[
         node.title,
         formatDate(node.date),
         shownWeight !== null ? `${shownWeight.value} ${shownWeight.unit}` : null,

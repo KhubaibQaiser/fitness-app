@@ -103,12 +103,7 @@ export const WeaveLine = ({
 
   if (mode === 'lost-signal') {
     return (
-      <YStack
-        width="100%"
-        height={height}
-        accessibilityRole="image"
-        accessibilityLabel="Relationship signal lost"
-      >
+      <YStack width="100%" height={height} role="img" aria-label="Relationship signal lost">
         <Svg viewBox="0 0 300 40" width="100%" height={height}>
           <Path d="M0,14 L300,14" stroke={lost} strokeWidth={2} fill="none" opacity={0.6} />
           <Path d="M0,26 L300,26" stroke={lost} strokeWidth={2} fill="none" opacity={0.6} />
@@ -118,12 +113,7 @@ export const WeaveLine = ({
   }
 
   return (
-    <YStack
-      width="100%"
-      height={height}
-      accessibilityRole="image"
-      accessibilityLabel="Coaching relationship weave"
-    >
+    <YStack width="100%" height={height} role="img" aria-label="Coaching relationship weave">
       <Animated.View style={{ opacity: pulse }}>
         <Svg viewBox="0 0 300 40" width="100%" height={height}>
           <Defs>

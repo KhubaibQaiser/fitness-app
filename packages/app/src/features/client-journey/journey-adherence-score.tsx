@@ -22,7 +22,7 @@ export const JourneyAdherenceScore = ({ score }: { score: number }) => {
         backgroundColor={tone.background}
         borderWidth={1.5}
         borderColor={tone.border}
-        accessibilityLabel={`Plan adherence ${score} out of 10`}
+        aria-label={`Plan adherence ${score} out of 10`}
         role="img"
       >
         <Text

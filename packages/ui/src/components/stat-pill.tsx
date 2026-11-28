@@ -21,7 +21,7 @@ export const StatPill = ({ label, value, suffix = '' }: StatPillProps) => (
     shadowOffset={{ width: 0, height: 1 }}
     shadowRadius={3}
     shadowOpacity={1}
-    accessibilityLabel={`${label}: ${value}${suffix}`}
+    aria-label={`${label}: ${value}${suffix}`}
   >
     <Text color="textMuted" fontFamily="body" fontSize={12} lineHeight="16px" numberOfLines={1}>
       {label}

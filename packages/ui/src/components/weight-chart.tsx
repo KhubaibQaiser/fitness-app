@@ -318,8 +318,8 @@ export const WeightChart = ({
         width="100%"
         aspectRatio={CHART_VIEW_WIDTH / height}
         overflow="visible"
-        accessibilityRole="image"
-        accessibilityLabel={`Weight journey from ${a11yStart} ${unitLabel} to goal ${a11yGoal} ${unitLabel}, currently ${a11yCurrent} ${unitLabel}`}
+        role="img"
+        aria-label={`Weight journey from ${a11yStart} ${unitLabel} to goal ${a11yGoal} ${unitLabel}, currently ${a11yCurrent} ${unitLabel}`}
         position="relative"
         onLayout={onChartLayout}
       >
@@ -561,8 +561,8 @@ export const WeightChart = ({
             onPress={() => setActive((current) => (current === index ? null : index))}
             onMouseEnter={() => setActive(index)}
             onMouseLeave={() => setActive(null)}
-            accessibilityRole="button"
-            accessibilityLabel={`${p.weightKg.toFixed(1)} ${unitLabel} on ${formatChartDate(p.t)}`}
+            role="button"
+            aria-label={`${p.weightKg.toFixed(1)} ${unitLabel} on ${formatChartDate(p.t)}`}
           />
         ))}
 

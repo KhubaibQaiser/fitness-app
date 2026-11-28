@@ -57,8 +57,8 @@ export const ToolsMacroSplit = () => {
               interactive
               tone={selected ? 'accent' : 'default'}
               onPress={() => setPresetId(p.id)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
+              role="button"
+              aria-selected={selected}
             >
               <XStack alignItems="center" justifyContent="space-between" gap="3">
                 <Body fontFamily="heading" fontWeight="700">

@@ -6,7 +6,7 @@ export const AuthHeroColumn = () => (
   <YStack display="none md:flex" flex={1} position="relative" overflow="hidden">
     <Image
       source={{ uri: '/auth/hero.jpg' }}
-      accessibilityLabel={HERO_ALT}
+      aria-label={HERO_ALT}
       resizeMode="cover"
       style={{
         position: 'absolute',

@@ -35,7 +35,7 @@ export const NotificationRow = ({
       borderLeftWidth={high ? 3 : 0}
       borderLeftColor="danger"
       minHeight={44}
-      accessibilityLabel={`${high ? 'High priority. ' : ''}${unread ? 'Unread. ' : ''}${title}. ${time}`}
+      aria-label={`${high ? 'High priority. ' : ''}${unread ? 'Unread. ' : ''}${title}. ${time}`}
     >
       <YStack
         width={32}
@@ -82,7 +82,7 @@ export const NotificationRow = ({
           borderRadius={999}
           backgroundColor="primary"
           flexShrink={0}
-          accessibilityLabel="Unread"
+          aria-label="Unread"
         />
       ) : null}
     </XStack>
