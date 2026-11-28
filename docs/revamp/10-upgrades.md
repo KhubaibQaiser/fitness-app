@@ -52,12 +52,12 @@ Serial. One PR each, in order, each rebased on the last. Measured breakage comes
 ## U4: Tamagui 3.3 and a project icon set
 
 - **Scope:**
-  - `tamagui`, `@tamagui/config` (v6), `@tamagui/next-plugin`, `@tamagui/helpers-icon` and `@tamagui/react-native-svg` to 3.3.x.
+  - `tamagui`, `@tamagui/config`, `@tamagui/next-plugin`, `@tamagui/helpers-icon` and `@tamagui/react-native-svg` to 3.3.x.
   - Replace `@tamagui/lucide-icons-2`, which has no v3, with a per-file icon set (`@tamagui/cli icons add`, or per-icon Lucide imports) so Metro bundles only the icons used.
 - **Steps:**
   1. `npx @tamagui/cli migrate --from v2`, then `npx @tamagui/codemod-flat-values --write` **per directory**. It crashes when pointed at `apps/web` as a whole.
   2. Fix the remaining errors (spike: 17 in 13 files):
-     - `@tamagui/config/v4` is removed: move to config v6 with kebab-case theme keys.
+     - `@tamagui/config/v4` is removed: keep today's values in an app-owned copy (sizes, spacing, radius, zIndex, media, font scales, base theme keys) and take v6 only where its values match (owner, 2026-11-28). Alias the kebab-case theme keys that Tamagui 3's components read.
      - `pressStyle`, `hoverStyle` and `unstyled` are no longer accepted as `styled()` options.
      - `focusStyle` typing in `form-field.tsx`.
      - Style-object typings in `date-field.tsx`, `pace-slider.tsx`, `client-hub-more-menu.tsx` and `auth-form-card.tsx`.
