@@ -18,6 +18,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   1. **Three layers:**
      - Primitives in `tokens.color`.
      - Semantic keys per theme (`bg`, `fg`, `border`, `action`, `focus`, `status.*`, `accent.*`, `viz.*`, `scrim`, `glass.*`), flattened for Tamagui (`$bgCanvas`, `$statusDangerWashText`).
+     - `border.controlStrong` (neutral.700 in light, neutral.400 in dark; `$borderControlStrong`) is the control border on `bg.raised` and on glass, and the edge the high-contrast fallback draws. `border.control` stays for controls on `bg.canvas`, `bg.surface` and `bg.field` (F1's approved follow-up, O55). F1 adds the key to the token JSON and to `tokens.md` §6.3, and its code PR proposes how a control picks it on those surfaces.
      - Component tokens. `tabBar.itemSelected` uses the wash-text tone on the wash pill, because the brand text on the wash is under 4.5:1 (F3's approved mock, O52).
 
      Values come from `tokens.floodlight.json`. No hand-typed hex outside the generated module.
@@ -46,10 +47,11 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   9. **Bundle:** import only the themes in use; `@tamagui/themes` (75 KB web) leaves the bundle if it's no longer needed.
   10. **Width ranges (rulings O8):** add tablet and desktop ranges to `packages/ui/src/breakpoints.ts` and the Tamagui media config, next to the existing `md` (kept until screens stop using it; Q5 removes it if unused). Approved with the token sheet (O52): phone below 744 px, tablet 744–1199 px, desktop 1200 px and up, so the iPad mini in portrait (744 pt) and the 11-inch iPad in landscape (1194 pt) both land in the tablet range. The owner approved these edges knowing their effects: web at 768–1199 px moves from today's desktop layout (`md` starts at 768 px today) to the tablet one, and the 12.9- and 13-inch iPads in landscape (1366 pt) get the desktop layout. The iPad Pro 11-inch (M4) in landscape (1210 pt) and a 1280 dp Android tablet in landscape get the desktop layout too.
   11. **Reference doc:** replace `docs/design-system-reference.md` with the Floodlight reference: layers, semantic table, usage rules (D1, glass where and where not, status never by colour alone), and how to add a tenant.
-- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves. Follow-up (rulings O53): the sheet adds the control-border pairs on raised and glass surfaces, and proposes a lighter border step for dark, where today's `border.control` is under 3:1 on `bg.raised`. The owner approves that line.
+- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves. Follow-up (rulings O53, approved in O55): the sheet checks control borders on raised and glass surfaces and adds `border.controlStrong`, because today's `border.control` is under 3:1 on dark `bg.raised` and on glass.
 - **Done when:**
   - The global conditions hold.
   - A contrast test computes every text and background pair in `tokens.md` §6.3–6.4 for light and dark: body text at least 4.5:1; placeholders at least 4.5:1; large text and graphics at least 3:1; dark cards distinguishable from the canvas by surface step.
+  - The same test computes each control border against the surface it sits on, at 3:1 or more: `border.control` on `bg.canvas`, `bg.surface` and `bg.field`, and `border.controlStrong` on `bg.raised` and on sheet and chrome glass at worst case. A glass figure rounds the blended colour to 8-bit channels before the ratio is taken (O55).
   - The `deriveBrandTheme` tests cover the sample tenants in `tokens.md` §2.4 (pilot, rose, sunflower, green, teal, blush, black, orange).
   - Screens still render through the legacy aliases (screenshot spot check of Home, hub and plan editor on web and iOS).
 - **Reviewer focus:** hand-typed colours, tenant overrides leaking into reserved tokens, a missing throw on an invalid hex, theme mode not following the system.
@@ -130,12 +132,12 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - So do `prefers-reduced-transparency`, `prefers-contrast: more`, iOS darker system colours and Android high text contrast.
      - So does the "Solid bars" preference, stored through `packages/platform` storage; S11 builds the toggle.
      - Focus rings on glass get a 2 px surface halo. The ring is the brand's text-safe tone.
-     - The high-contrast fallback draws `border.control` edges; the other fallbacks use `border.subtle`.
-     - Control boundaries on glass and raised surfaces fall under 3:1 in dark with today's `border.control`. F1's token sheet settles the border step (O53); F3 uses it.
+     - The high-contrast fallback draws `border.controlStrong` edges (O55); the other fallbacks use `border.subtle`.
+     - Controls on glass and on raised surfaces use `border.controlStrong` (O55), because `border.control` is under 3:1 on dark `bg.raised` and on glass. On sheet glass at worst case the strong border is 5.92:1 in light and 4.50:1 in dark.
 - **Mock:** glass sample sheet. Top bar, tab bar, sticky header and a sheet over busy content; light and dark; each fallback.
 - **Done when:**
   - The global conditions hold.
-  - A legibility test computes worst-case contrast at the token alphas over the `tokens.md` §9.3 backdrops: chrome `fg.primary` at least 7:1, sheet text at least 4.5:1.
+  - A legibility test computes worst-case contrast at the token alphas over the `tokens.md` §9.3 backdrops: chrome `fg.primary` at least 7:1, sheet text at least 4.5:1, and a control's `border.controlStrong` at least 3:1 on sheet and chrome glass. It rounds the blended colour to 8-bit channels before the ratio is taken (O55).
   - Playwright screenshots exist with `backdrop-filter` disabled and with reduced transparency emulated.
   - iOS screenshots exist with Reduce Transparency on and off.
   - Android API 31+ and below-31 screenshots are added when the owner runs the kit (the Android checklist, #139).
