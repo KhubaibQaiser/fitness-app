@@ -22,14 +22,14 @@ describe('describeLoginFailure (B3: login says what actually failed)', () => {
     expect(failure).toEqual({ message: WRONG_CREDENTIALS, credentials: true, retry: false });
   });
 
-  // The login route has no account lockout: its only throttle is the per-IP limiter
-  // (429 RATE_LIMITED, 10 attempts a minute), so this row also covers "account locked".
+  // 429 RATE_LIMITED comes from the per-IP limit (10 a minute) or the per-account back-off
+  // (1 to 15 minutes), so the message doesn't promise a minute.
   it('429: the wait message, which says when to try again', () => {
     const failure = describeLoginFailure(
       new ApiError(429, 'RATE_LIMITED', 'Too many attempts. Wait a minute'),
     );
     expect(failure).toEqual({
-      message: 'Too many attempts. Wait a minute and try again.',
+      message: 'Too many sign-in attempts. Try again in a few minutes.',
       credentials: false,
       retry: false,
     });
