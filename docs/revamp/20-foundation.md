@@ -18,7 +18,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   1. **Three layers:**
      - Primitives in `tokens.color`.
      - Semantic keys per theme (`bg`, `fg`, `border`, `action`, `focus`, `status.*`, `accent.*`, `viz.*`, `scrim`, `glass.*`), flattened for Tamagui (`$bgCanvas`, `$statusDangerWashText`).
-     - Component tokens.
+     - Component tokens. `tabBar.itemSelected` uses the wash-text tone on the wash pill, because the brand text on the wash is under 4.5:1 (F3's approved mock, O52).
 
      Values come from `tokens.floodlight.json`. No hand-typed hex outside the generated module.
 
@@ -39,14 +39,14 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - The GymOS default brand is also `#FACC15`.
      - A test asserts the derived values in ADR-0019: fill `#FACC15`, ink label at least 11:1, light text-safe at least 4.5:1, wash, border required on light. If the generated hex differs from the ADR, update the ADR in the same PR.
   7. **Rule D1:**
-     - No semantic UI token resolves to a volt step; volt appears only under `viz.*`.
-     - Warning fills use amber step 500 or darker.
+     - No semantic UI token resolves to a volt step; volt appears only under `viz.*`. The approved token sheet (rulings O52) drops the `accent.volt.*` keys, and the milestone highlight uses `accent.aqua.*`.
+     - Warning fills use amber step 500 or darker. Approved (O52): `status.warning.solid` is amber.500 in both modes, with a 1px `status.warning.border` on light surfaces. The light warning wash stays amber.100: it is a pale wash under an icon and a word, not a fill.
      - A test fails on violations.
   8. **Elevation tokens:** light uses border plus soft shadow; dark uses surface steps and no shadows; iOS uses no card shadows (fixes N9 when F5 applies them).
   9. **Bundle:** import only the themes in use; `@tamagui/themes` (75 KB web) leaves the bundle if it's no longer needed.
-  10. **Width ranges (rulings O8):** add tablet and desktop ranges to `packages/ui/src/breakpoints.ts` and the Tamagui media config, next to the existing `md` (kept until screens stop using it; Q5 removes it if unused). Proposed: phone below 744 px, tablet 744–1199 px, desktop 1200 px and up, so the iPad mini in portrait (744 pt) and the 11-inch iPad in landscape (1194 pt) both land in the tablet range. The owner approves the edges with the token sheet, knowing two effects: web at 768–1199 px moves from today's desktop layout (`md` starts at 768 px today) to the tablet one, and the 12.9- and 13-inch iPads in landscape (1366 pt) get the desktop layout.
+  10. **Width ranges (rulings O8):** add tablet and desktop ranges to `packages/ui/src/breakpoints.ts` and the Tamagui media config, next to the existing `md` (kept until screens stop using it; Q5 removes it if unused). Approved with the token sheet (O52): phone below 744 px, tablet 744–1199 px, desktop 1200 px and up, so the iPad mini in portrait (744 pt) and the 11-inch iPad in landscape (1194 pt) both land in the tablet range. The owner approved these edges knowing their effects: web at 768–1199 px moves from today's desktop layout (`md` starts at 768 px today) to the tablet one, and the 12.9- and 13-inch iPads in landscape (1366 pt) get the desktop layout. The iPad Pro 11-inch (M4) in landscape (1210 pt) and a 1280 dp Android tablet in landscape get the desktop layout too.
   11. **Reference doc:** replace `docs/design-system-reference.md` with the Floodlight reference: layers, semantic table, usage rules (D1, glass where and where not, status never by colour alone), and how to add a tenant.
-- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves.
+- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves. Follow-up (rulings O53): the sheet adds the control-border pairs on raised and glass surfaces, and proposes a lighter border step for dark, where today's `border.control` is under 3:1 on `bg.raised`. The owner approves that line.
 - **Done when:**
   - The global conditions hold.
   - A contrast test computes every text and background pair in `tokens.md` §6.3–6.4 for light and dark: body text at least 4.5:1; placeholders at least 4.5:1; large text and graphics at least 3:1; dark cards distinguishable from the canvas by surface step.
@@ -62,13 +62,13 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 - **Install:** Archivo static instances (width 112 and 125, weight 700) for native, Noto Nastaliq Urdu, Noto Naskh Arabic. Inter is already present.
 - **Requirements:**
   1. **Faces:**
-     - Inter: UI and numbers, with tabular figures on every number.
+     - Inter: UI and numbers, with tabular figures on the token set's tabular roles (hero numbers, stats and data) and in tables (approved type sheet, rulings O52).
      - Archivo expanded: display and hero numbers.
      - Noto Nastaliq Urdu: Urdu reading and headings.
      - Noto Naskh Arabic: dense Urdu UI.
      - Roboto Mono is removed (T8).
      - The Urdu fonts load only when the Urdu locale is active, so English users pay no bundle cost (web `unicode-range`; native on-demand load).
-  2. **Scale:** the role scale in `tokens.md` §10.3, per platform: web desktop and phone, iOS text styles with Dynamic Type, Android sp. Phone web inputs are 16 px, so iOS Safari doesn't zoom. Per-locale line height: Nastaliq reading 2.0×, headings 1.8×, Naskh UI 1.6×, chips 1.5×.
+  2. **Scale:** the role scale in `tokens.md` §10.3 plus the token set's `bodyStrong` role, per platform: web desktop and phone, iOS text styles with Dynamic Type, Android sp. Phone web inputs are 16 px, so iOS Safari doesn't zoom. Per-locale line height: Nastaliq reading 2.0×, headings 1.8×, Naskh UI 1.6×, chips 1.5×. Approved with the type sheet (O52): web below 744 px uses the phone sizes; from 744 px up, tablets included, it uses the desktop sizes, with 16 px inputs on touch screens. Chips stop growing at 1.6× on iOS and Android (the token set's `maxFontSizeMultiplier`). The Urdu size delta (+2) applies on native too, scaled with the text size.
   3. **Font gate (N8):** the first native screen renders in Inter. The splash holds until fonts load; a font load failure is logged and visible, not silent.
   4. **Label fit (N7):** text components never break mid-word. Controls that can't fit a label on one line at the default size switch layout (F5 handles segmented controls).
   5. **RTL-ready:**
@@ -90,7 +90,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - **Phone.**
        - International display through libphonenumber-js "min" metadata (perf: 148 KB web).
        - An unparseable number shows raw with a visible "Check number" note and a log line, not a silent fallback (bug 16).
-     - **Status words.** One exhaustive mapping from every engine enum to label, icon and tone: client status, check-in verdict, plan status, notification kind. Unknown values throw.
+     - **Status words.** One exhaustive mapping from every engine enum to label, icon and tone: client status, check-in verdict, plan status, notification kind. Unknown values throw. Words such as "Check-in" use a non-breaking hyphen, so a line never breaks after the hyphen (O52).
        - Examples: "Check-in 109 d overdue", "Not enough data yet", "On track", "Draft v2", "Needs review".
        - A client with no weigh-ins since the start reads "No weigh-ins since 6 Aug", not "Needs focus" (bug 13).
      - **Pace.** One label source for a goal's pace (Gentle · Standard · Faster · Custom) and its kg/week display, built on `lib/goal-pace.ts` and `lib/pace-control.ts`. The goal form, the Plan tab, intake and Tools all read it. Find why one client reads "Custom pace" on the goal form and "Standard · 0.51 kg/wk" on the Plan tab (bug 9) and fix the cause here; S09 and S06 switch their screens to this formatter.
@@ -116,12 +116,22 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - **Web:** `backdrop-filter` plus `-webkit-backdrop-filter`, the noise texture, and an `@supports not (backdrop-filter: blur(1px))` rule that switches to the solid fallback.
      - **Android:** API 31 and up uses blur with `BlurTargetView` (`dimezisBlurViewSdk31Plus`); below API 31 uses the solid `glass.fallback`, never an unblurred tint.
   2. **Allowed surfaces:** top bar, tab bar, sticky client header, sheets, command-palette scrim. Never on tables, lists, forms, data cards or status chips; chips inside glass sit on an opaque pill.
-  3. **Budget:** at most two glass layers per viewport; blur at most 20 px on phones; never on a scrolling list.
-  4. **Accessibility:**
+  3. **Budget:** at most two glass layers per viewport; blur at most 20 px on phones; never on a scrolling list. Approved with the glass sheet (rulings O52):
+     - The sheet blur is 20 px below 744 px wide and the 32 px token from 744 px up.
+     - With a sheet open, the sticky header stays glass above the scrim and the tab bar under the scrim turns solid.
+     - The web side sheet (480 px) has no scrim, and the top bar above it stays glass.
+     - The command-palette scrim is glass with the scrim tint and the chrome blur; the top bar under it turns solid.
+     - Tab bar: the selected label sits on an opaque wash pill in the wash-text tone, and unselected labels are `fg.primary` at weight 500, on every platform. On iOS 26 the tab bar is the system's floating glass capsule.
+  4. **Text on sheet glass** (O52):
+     - Links use `fg.primary` with an underline. Brand-coloured text never sits directly on glass, because one sheet tint must hold for every tenant. The selected tab label is no exception: it sits on an opaque wash pill.
+     - Faint and placeholder text never sits directly on sheet glass. Placeholders sit inside an input's opaque `bg.field`.
+  5. **Accessibility:**
      - Reduce Transparency (iOS, with a live listener) switches to solid.
      - So do `prefers-reduced-transparency`, `prefers-contrast: more`, iOS darker system colours and Android high text contrast.
      - So does the "Solid bars" preference, stored through `packages/platform` storage; S11 builds the toggle.
-     - Focus rings on glass get a 2 px surface halo.
+     - Focus rings on glass get a 2 px surface halo. The ring is the brand's text-safe tone.
+     - The high-contrast fallback draws `border.control` edges; the other fallbacks use `border.subtle`.
+     - Control boundaries on glass and raised surfaces fall under 3:1 in dark with today's `border.control`. F1's token sheet settles the border step (O53); F3 uses it.
 - **Mock:** glass sample sheet. Top bar, tab bar, sticky header and a sheet over busy content; light and dark; each fallback.
 - **Done when:**
   - The global conditions hold.
@@ -178,28 +188,28 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
 - **Install:** none expected. **Remove:** `react-native-ui-datepicker`, which pulls dayjs, tailwind-merge and lodash (about 113 KB web).
 - **Components:**
 
-  | Component          | Requirements                                                                                                                                                                                                |
-  | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | Buttons            | Primary uses the Sunflower fill, ink label and a 1px border on light surfaces. Secondary, ghost and destructive variants. Sizes. A loading state. Never pre-disabled (show what to fix instead).            |
-  | Form field         | Visible label; error and helper text; unit suffix placed with logical properties; 16 px on phone; placeholder contrast from F1.                                                                             |
-  | Segmented control  | Unmistakable selected state; selected looks raised in dark mode, not recessed (N11). On native it becomes a list or menu picker when there are 4–5 options or a label doesn't fit (N7).                     |
-  | Chips              | Filter chips. Status chips with icon plus word. Checkbox chips with fill, check icon, bold label and `aria-pressed`/`aria-checked`, because colour alone is never the selection signal (critique, dietary). |
-  | Card               | Surface steps in dark mode; no card shadows on iOS (N9).                                                                                                                                                    |
-  | Banner             | At most a 1px rail, with text that meets AA.                                                                                                                                                                |
-  | Rows               | Queue row (64 px desktop, 72 px phone; avatar, title, reason line, trailing action, whole row a link); list row with chevron; notification row.                                                             |
-  | Data table (web)   | Sticky header; sortable with `aria-sort`; built so S03 can virtualise it; static styles.                                                                                                                    |
-  | Sheets and dialogs | Web side sheet (480 px) and bottom sheet; confirm dialog. Native task sheets come from F10.                                                                                                                 |
-  | Menus              | Popover on desktop, bottom sheet on phone web, system context menu on iOS, dropdown on Android.                                                                                                             |
-  | Stepper            | Grams ±10 with a typed value allowed; `step` and `bound` haptics.                                                                                                                                           |
-  | Date field         | Platform date input on web, native picker on mobile.                                                                                                                                                        |
-  | Phone field        | Moved from `client-onboarding`.                                                                                                                                                                             |
-  | Height field       | Moved from `packages/app/src/features/height-fields.tsx` (used by intake and the Tools calculators); unit-aware through F2.                                                                                 |
-  | Signature pad      | Moved from `client-onboarding`; large, with Clear.                                                                                                                                                          |
-  | Avatar             | Initials; colour from a fixed set keyed by client id, never the brand.                                                                                                                                      |
-  | Icon               | Project icon set (U4) with a mirror-in-RTL flag.                                                                                                                                                            |
-  | Switch             | iOS switch on iOS, Material switch on Android and web.                                                                                                                                                      |
-  | Pace slider        | Labelled stops (Gentle · Standard · Faster) and a labelled floor marker; `select` and `bound` haptics.                                                                                                      |
-  | States             | Empty state with an F8 illustration slot; error with retry (`role="alert"`); loading (`role="status"`).                                                                                                     |
+  | Component          | Requirements                                                                                                                                                                                                                                                                                                          |
+  | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | Buttons            | Primary uses the Sunflower fill, ink label and a 1px border on light surfaces. Secondary, ghost and destructive variants. Sizes. A loading state. Never pre-disabled (show what to fix instead).                                                                                                                      |
+  | Form field         | Visible label; error and helper text; unit suffix placed with logical properties; 16 px on phone; placeholder contrast from F1.                                                                                                                                                                                       |
+  | Segmented control  | Unmistakable selected state; selected looks raised in dark mode, not recessed (N11). On native it becomes a list or menu picker when there are 4–5 options or a label doesn't fit (N7). The selected segment shows a check icon and a 600-weight label, and segments size to their labels (approved type sheet, O52). |
+  | Chips              | Filter chips. Status chips with icon plus word. Checkbox chips with fill, check icon, bold label and `aria-pressed`/`aria-checked`, because colour alone is never the selection signal (critique, dietary). A pressed filter chip has a fill, a check icon and a 600-weight label, against 500 unpressed (O52).       |
+  | Card               | Surface steps in dark mode; no card shadows on iOS (N9).                                                                                                                                                                                                                                                              |
+  | Banner             | At most a 1px rail, with text that meets AA.                                                                                                                                                                                                                                                                          |
+  | Rows               | Queue row (64 px desktop, 72 px phone; avatar, title, reason line, trailing action, whole row a link); list row with chevron; notification row.                                                                                                                                                                       |
+  | Data table (web)   | Sticky header; sortable with `aria-sort`; built so S03 can virtualise it; static styles.                                                                                                                                                                                                                              |
+  | Sheets and dialogs | Web side sheet (480 px) and bottom sheet; confirm dialog. Native task sheets come from F10.                                                                                                                                                                                                                           |
+  | Menus              | Popover on desktop, bottom sheet on phone web, system context menu on iOS, dropdown on Android.                                                                                                                                                                                                                       |
+  | Stepper            | Grams ±10 with a typed value allowed; `step` and `bound` haptics.                                                                                                                                                                                                                                                     |
+  | Date field         | Platform date input on web, native picker on mobile.                                                                                                                                                                                                                                                                  |
+  | Phone field        | Moved from `client-onboarding`.                                                                                                                                                                                                                                                                                       |
+  | Height field       | Moved from `packages/app/src/features/height-fields.tsx` (used by intake and the Tools calculators); unit-aware through F2.                                                                                                                                                                                           |
+  | Signature pad      | Moved from `client-onboarding`; large, with Clear.                                                                                                                                                                                                                                                                    |
+  | Avatar             | Initials; colour from a fixed set keyed by client id, never the brand.                                                                                                                                                                                                                                                |
+  | Icon               | Project icon set (U4) with a mirror-in-RTL flag.                                                                                                                                                                                                                                                                      |
+  | Switch             | iOS switch on iOS, Material switch on Android and web.                                                                                                                                                                                                                                                                |
+  | Pace slider        | Labelled stops (Gentle · Standard · Faster) and a labelled floor marker; `select` and `bound` haptics.                                                                                                                                                                                                                |
+  | States             | Empty state with an F8 illustration slot; error with retry (`role="alert"`); loading (`role="status"`).                                                                                                                                                                                                               |
 
 - **Kit-wide requirements:**
   - On web, `accessibilityLabel` and `accessibilityRole` reach the DOM as `aria-label` and `role` (bug 19).
@@ -300,22 +310,22 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
 - **Goal:** lighter images, and one illustration slot per use, filled with interim art until L1 redraws it after the track (rulings O6).
 - **Depends on:** F1.
 - **Requirements:**
-  1. Export an auth hero component from `packages/ui/src/illustrations/` that shows the current art (`apps/web/public/auth/hero.jpg`) at sized AVIF and WebP (item 3).
-  2. Export an empty-state illustration component per slot, each showing interim art (a kit icon on a token-tinted disc, light and dark). The slots:
-     - First run (no clients)
-     - No search matches
-     - No plan yet
-     - Inbox clear
-     - 404
-     - Generic error
-  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and optimised PNG for native. F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at the widths S01's layout uses, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
+  1. Export an auth hero component from `packages/ui/src/illustrations/` that shows the current art (`apps/web/public/auth/hero.jpg`) at sized AVIF and WebP (item 3). Approved (rulings O52): `AuthHero`, with `variant: 'column' | 'band'` and `testID?`. S01 decides which variant tablet portrait uses.
+  2. Export an empty-state illustration component per slot, each showing interim art (a kit icon on a token-tinted disc, light and dark). Approved (O52): each takes `size?: 'regular' | 'compact'` and `testID?`, and each disc has a 1px `border.subtle` ring. The slots, with their approved names:
+     - First run (no clients): `IllustrationNoClients`, Sunflower wash
+     - No search matches: `IllustrationNoMatches`, neutral disc
+     - No plan yet: `IllustrationNoPlan`, Sunflower wash
+     - Inbox clear: `IllustrationInboxClear`, neutral disc with a success-coloured icon and no status fill (T6)
+     - 404: `IllustrationNotFound`, neutral disc
+     - Generic error: `IllustrationError`, danger wash
+  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and WebP for native (approved, O52: a PNG of the painted hero is about 13 times heavier). F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at 648 and 864 px wide, the widths S01's layout uses, with `sizes="max(50vw, calc(100vw - 560px), 75vh)"` and no 432 px file, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
   4. Re-export the 512×512 app icon (`apps/web/app/icon.png`, 385 KB, fetched on every page; and `apps/mobile/assets/icon.png`) with the same artwork, optimised.
 - **Mock:** the interim slots and the sized hero on light and dark surfaces next to the Floodlight UI.
 - **Done when:**
   - The global conditions hold.
   - Byte sizes before and after are in the PR, for every image F8 replaces.
   - Lighthouse's "modern image formats" and "properly size images" audits no longer flag the app icon on Today. The login hero is S01's done condition.
-  - Every illustration has empty `alt` or an accessible label, as fits its role.
+  - Every illustration has empty `alt` or an accessible label, as fits its role. Approved (O52): all six slots and the auth hero are decorative, with an empty `alt`.
   - Each slot's export name and props are fixed by a test, so L1 can swap the art without touching a screen.
 
 ## F9: Charts
