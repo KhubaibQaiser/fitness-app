@@ -431,10 +431,11 @@ const checkInstall = (cmd) => {
 };
 
 const SECRETS = '(.env, SSH or AWS keys, PEM, Terraform state)';
-// The one command that may name a secrets file: a lone echo or printf appending to a file named
-// .gitignore (or dir/.gitignore), as in "echo .env >> .gitignore". Nothing else rides along.
+// The one command that may name a secrets file: a lone, single-line echo or printf appending to a
+// file named .gitignore (or dir/.gitignore), as in "echo .env >> .gitignore". Nothing else rides
+// along, and an escaped ">>" is not an append.
 const IGNORE_APPEND =
-  /^\s*(?:echo|printf)\s[^;&|<>`$()\n]*>>[ \t]*(['"]?)(?:[\w./-]*\/)?\.gitignore\1[ \t]*$/;
+  /^[ \t]*(?:echo|printf)[ \t][^;&|<>`$()\n]*(?<!\\)>>[ \t]*(['"]?)(?:[\w./-]*\/)?\.gitignore\1[ \t]*$/;
 const words = (s) => s.split(/[\s'"`=<>|;&()@:]+/).filter(Boolean);
 
 const decide = ({ command: written, paths, globs = [], writing = false, cwd }, depth = 0) => {

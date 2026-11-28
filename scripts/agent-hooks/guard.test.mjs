@@ -63,6 +63,13 @@ test('only an echo or printf append to a .gitignore skips the secrets-file check
   // A name that only contains .gitignore.
   assert.equal(decision(shell('echo .env >> x.gitignore.bak')), 'deny');
   assert.equal(decision(shell('echo .env >> .gitignore.bak')), 'deny');
+  // A command that spans more than one line.
+  assert.equal(decision(shell('echo\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('printf\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('\necho .env >> .gitignore')), 'deny');
+  // An escaped redirect; a \n inside the printf format is still the kept case.
+  assert.equal(decision(shell('echo .env \\>> .gitignore')), 'deny');
+  assert.equal(decision(shell("printf '%s\\n' .env .env.local >> .gitignore")), 'allow');
 });
 
 test('destructive commands', () => {
