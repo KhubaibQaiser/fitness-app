@@ -893,6 +893,10 @@
         color: var(--fgSecondary);
         font-size: 13px;
       }
+      /* Narrow screens scroll the table sideways instead of crushing its columns. */
+      .scroll table {
+        min-width: 960px;
+      }
       td:first-child code {
         white-space: nowrap;
       }
@@ -940,6 +944,9 @@
         .frames.two {
           grid-template-columns: repeat(2, 1fr);
         }
+      }
+      .frames > * {
+        min-width: 0;
       }
       figure {
         margin: 0;
