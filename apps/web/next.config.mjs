@@ -18,7 +18,6 @@ const nextConfig = {
     'react-native-web',
     'react-native-svg',
     'tamagui',
-    '@tamagui/lucide-icons-2',
     '@gymos/platform',
     '@gymos/ui',
     '@gymos/app',
