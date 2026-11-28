@@ -2037,7 +2037,7 @@
           );
         $('#fails').innerHTML = failures.length
           ? `<h3>${badge(false, `${failures.length} failing pair${failures.length > 1 ? 's' : ''}`)}</h3><ul>${failures.map((f) => `<li>${f}</li>`).join('')}</ul>`
-          : `<h3>${badge(true, 'Every pair passes')}</h3>`;
+          : `<h3>${badge(true, 'Every text pair passes')}</h3><p class="small">Control edges are a separate check: see the control boundaries table below.</p>`;
       }
 
       // ---------- self-checks: each one fails loudly (banner and console error)
