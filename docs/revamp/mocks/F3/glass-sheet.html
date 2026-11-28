@@ -1172,14 +1172,18 @@
       .desk.wide {
         height: 420px;
       }
-      /* At phone widths the never-glass panel grows so every card shows */
-      @media (max-width: 743px) {
-        #c-s6 .desk {
-          height: auto;
-        }
-        #c-s6 .desk .screen {
-          position: relative;
-        }
+      /* The never-glass panel grows at every width so every card shows */
+      #c-s6 .desk {
+        height: auto;
+      }
+      #c-s6 .desk .screen {
+        position: relative;
+      }
+      ol.approve {
+        padding-inline-start: 20px;
+        display: grid;
+        gap: 10px;
+        max-width: 80ch;
       }
       .glass.sheet.side {
         inset: 58px 0 0 auto;
@@ -1462,6 +1466,30 @@
           brand. Each sample is the light sheet over a black patch, the worst backdrop.
         </p>
         <div class="samples" id="link-samples"></div>
+        <h3 style="margin-top: 20px">Control boundaries</h3>
+        <p class="small">
+          Input edges are boundaries, not text, so they need 3:1 (WCAG 1.4.11). Worst case over the
+          same 46 backdrops for glass; the solid fallback is a single colour.
+        </p>
+        <div class="tablewrap" tabindex="0" role="region" aria-label="Control boundary table">
+          <table class="stack">
+            <caption class="small" style="text-align: start; padding: 8px 10px">
+              <code>border.control</code>
+              against the surface it sits on
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Mode</th>
+                <th scope="col">Surface</th>
+                <th scope="col">Worst ratio</th>
+                <th scope="col">Worst backdrop</th>
+                <th scope="col">Needs</th>
+                <th scope="col">Result</th>
+              </tr>
+            </thead>
+            <tbody id="bounds"></tbody>
+          </table>
+        </div>
       </section>
 
       <section id="s6" aria-labelledby="h-s6">
@@ -1471,6 +1499,71 @@
           closely, compares or types into is solid.
         </p>
         <div id="c-s6"></div>
+      </section>
+
+      <section id="s7" aria-labelledby="h-s7">
+        <h2 id="h-s7">7. For the owner to approve</h2>
+        <p class="muted">One line per decision. The same list is in the pull request.</p>
+        <ol class="approve" id="approve">
+          <li>
+            <strong>Links on sheet glass.</strong> Recommended: <code>fg.primary</code> with an
+            underline (13.77:1 light, 9.28:1 dark), which passes for every tenant and leaves the
+            tokens and ADR-0019 as they are. Alternatives, drawn as samples in section 5: the
+            brand-text link with the light sheet alpha raised to 0.97 (4.56:1; passes for Sunflower
+            only, and changes ADR-0019 decision 6); or a solid light sheet (4.87:1). At the token
+            alpha the Sunflower link reaches only 3.98:1.
+          </li>
+          <li>
+            <strong>Faint text rule.</strong> <code>fg.faint</code> and placeholder text never sit
+            directly on sheet glass (4.31:1 light, 3.00:1 dark). Placeholders sit inside the opaque
+            <code>bg.field</code> of an input.
+          </li>
+          <li>
+            <strong>Sheet blur</strong> is 20 px below 744 px wide and the 32 px token from 744 px
+            up. 744 px is F1's proposed phone and tablet edge, so this follows whatever edge the
+            owner approves on F1.
+          </li>
+          <li>
+            <strong>Web side sheet</strong> is 480 px wide, has no scrim, and the top bar above it
+            stays glass (two layers).
+          </li>
+          <li>
+            <strong>Command-palette scrim</strong> as glass with the <code>scrim</code> tint and
+            <code>glass.blur.chrome</code> (no scrim blur token exists); the top bar under it turns
+            solid.
+          </li>
+          <li>
+            <strong>Two glass layers when a sheet is open.</strong> The sticky header stays above
+            the scrim as glass; the tab bar under the scrim turns solid, so only two layers show.
+          </li>
+          <li>
+            <strong>iOS 26 tab bar</strong> as a floating glass capsule (browser approximation of
+            the system one).
+          </li>
+          <li>
+            <strong>Selected tab.</strong> The label sits on an opaque Sunflower wash pill in
+            <code>brandWashText</code>, not <code>action.text</code> as
+            <code>component.tabBar.itemSelected</code> says, because the brand text on the wash is
+            only 4.29:1. Unselected labels are <code>fg.primary</code> at weight 500, on every
+            platform.
+          </li>
+          <li>
+            <strong>High contrast</strong> fallback draws <code>border.control</code> edges; the
+            other fallbacks use <code>border.subtle</code>.
+          </li>
+          <li>
+            <strong>Focus on glass:</strong> focus ring in the Sunflower text colour with a 2 px
+            <code>bg.surface</code> halo.
+          </li>
+          <li>
+            <strong>Control boundaries under 3:1.</strong> An input's
+            <code>border.control</code> against sheet glass is 2.69:1 at worst in light and 1.87:1
+            in dark; on the dark solid fallback it is 2.71:1 against <code>bg.raised</code>, which
+            is also the high-contrast edge. Direction: a lighter border step for controls on raised
+            and glass surfaces in dark. This is a token question for F1's sheet (#140), not
+            something this mock settles.
+          </li>
+        </ol>
       </section>
     </div>
     <div class="probe t-light" id="probe-light" aria-hidden="true"></div>
@@ -1578,6 +1671,7 @@
           faint: parseColor(v('fgFaint')).rgb,
           brandText: parseColor(v('brandText')).rgb,
           fallback: parseColor(v('glassColorFallback')).rgb,
+          border: parseColor(v('borderControl')).rgb,
         };
       }
       const BACKDROPS = (() => {
@@ -1680,9 +1774,14 @@
         const title = kind === 'list' ? 'Clients' : '';
         let chrome;
         if (kind === 'list') chrome = topbar(g, title) + tabbar(g);
-        else chrome = hubhead(g, focus) + tabbar('solid') + `<div class="scrim"></div>` + sheet(g);
+        else
+          chrome =
+            hubhead(g, focus) +
+            tabbar(hc ? 'solid hc' : 'solid') +
+            `<div class="scrim"></div>` +
+            sheet(g);
         const said = kind === 'list' ? 'Clients tab selected.' : 'Severe allergy chip: Peanut.';
-        return `<div class="phone p-${p}${short ? ' short' : ''}" role="img" aria-label="${label}. ${said}"><div class="screen" aria-hidden="true">${busy()}</div><div aria-hidden="true">${chrome}</div></div>`;
+        return `<div class="phone p-${p}${short ? ' short' : ''}" role="img" aria-label="${`${label}. ${said}`.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"><div class="screen" aria-hidden="true">${busy()}</div><div aria-hidden="true">${chrome}</div></div>`;
       }
       const caption = (title, tags, body) =>
         `<div class="cap"><h3>${title}${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</h3>${body ? `<p class="small">${body}</p>` : ''}</div>`;
@@ -1780,7 +1879,7 @@
         ],
         [
           'web',
-          '"Solid bars" Account preference',
+          '‘Solid bars’ Account preference',
           'Effect only. S11 builds the toggle; the value is stored through <code>packages/platform</code> storage. Same on every platform.',
           false,
         ],
@@ -1890,6 +1989,22 @@
           }
         }
         $('#legib').innerHTML = rows.join('');
+        // Control boundaries: border.control against glass (worst backdrop) and the solid fallback
+        const brows = [];
+        for (const mode of ['light', 'dark']) {
+          const t = tokens(mode);
+          const M = mode === 'light' ? 'Light' : 'Dark';
+          const g = worst(t.border, t.sheet.rgb, t.sheet.a);
+          const s = contrast(t.border, t.fallback);
+          for (const [surf, r, back] of [
+            ['Sheet glass', g.r, g.name],
+            [`Solid fallback (${mode === 'light' ? 'bg.surface' : 'bg.raised'})`, s, 'none'],
+          ])
+            brows.push(
+              `<tr><td data-label="Mode">${M}</td><td data-label="Surface">${surf}</td><td data-label="Worst ratio" class="num">${fmt(r)}</td><td data-label="Worst backdrop"><code>${back}</code></td><td data-label="Needs" class="num">3:1</td><td data-label="Result">${badge(r >= 3)}</td></tr>`,
+            );
+        }
+        $('#bounds').innerHTML = brows.join('');
         // Link options, light sheet over the worst (black) backdrop
         const L = tokens('light');
         const black = [0, 0, 0];
@@ -1966,7 +2081,12 @@
             ? `${badge(maxBlur > 0 && maxBlur <= 20)} Largest blur below 744 px wide: ${maxBlur} px${wideBlur ? `; from 744 px up: ${wideBlur} px` : ''}`
             : `${badge(true)} No backdrop-filter in this browser, so no blur at all`,
         );
+        const imgs = $$('[role=img]');
+        for (const el of imgs)
+          if (!(el.getAttribute('aria-label') || '').trim())
+            throw new Error('A frame has no accessible name');
         out.push(`${badge(true)} No scrolling list has a backdrop filter`);
+        out.push(`${badge(true)} All ${imgs.length} frames have an accessible name`);
         out.push(`${badge(true)} Every chip inside glass is opaque`);
         $('#checks').innerHTML =
           `<h3>Checked in this page</h3>${out.map((o) => `<p class="small">${o}</p>`).join('')}`;
