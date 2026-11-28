@@ -315,4 +315,95 @@ export const problem = z
 export const objectList = z.object({ items: z.array(anyObject) });
 export const okResponse = z.object({ ok: z.boolean() });
 
+const isoInstant = z.iso.datetime({ offset: true });
+
+const clientScopeChoice = z.enum(['mine', 'all']).openapi('ClientScope', {
+  description:
+    "mine: the signed-in coach's assigned clients. all: every client the principal's roles may list (a COACH-only principal still gets only their own).",
+});
+
+export const clientScopeQuery = z.object({
+  scope: clientScopeChoice.optional().openapi({
+    description: 'Defaults to mine with a coach profile and all without one.',
+  }),
+});
+
+export const todayReasonSchema = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('RED_FLAG'), since: isoInstant }),
+    z.object({
+      kind: z.literal('PLAN_NEEDS_REVIEW'),
+      planId: z.uuid(),
+      planVersion: z.number().int(),
+    }),
+    z.object({
+      kind: z.literal('CHECKIN_OVERDUE'),
+      checkInId: z.uuid(),
+      scheduledFor: z.iso.date(),
+      daysOverdue: z.number().int().min(1),
+    }),
+    z.object({ kind: z.literal('CHECKIN_DUE'), checkInId: z.uuid(), scheduledFor: z.iso.date() }),
+    z.object({
+      kind: z.literal('DRAFT_AWAITING_PUBLISH'),
+      planId: z.uuid(),
+      planVersion: z.number().int(),
+    }),
+  ])
+  .openapi('TodayReason');
+
+export const todayItemSchema = z
+  .object({
+    clientId: z.uuid(),
+    clientName: z.string(),
+    lastWeight: z.object({ kg: z.number(), at: isoInstant }).nullable().openapi({
+      description: 'The latest weigh-in; null when there is none or the role may not read vitals.',
+    }),
+    reason: todayReasonSchema,
+  })
+  .openapi('TodayItem');
+
+export const todayCountsSchema = z
+  .object({
+    redFlags: z.number().int(),
+    plansBlocked: z.number().int(),
+    overdue: z.number().int(),
+    dueToday: z.number().int(),
+    drafts: z.number().int(),
+  })
+  .openapi('TodayCounts');
+
+export const todayResponse = z
+  .object({
+    scope: clientScopeChoice,
+    groups: z
+      .object({
+        redFlags: z.array(todayItemSchema),
+        plansBlocked: z.array(todayItemSchema),
+        overdue: z.array(todayItemSchema),
+        dueToday: z.array(todayItemSchema),
+        drafts: z.array(todayItemSchema),
+      })
+      .openapi({
+        description:
+          'In urgency order. Overdue is sorted by days overdue, most first; red flags by oldest flag. Items the role may not read (check-ins without checkin.read, plans without plan.read) are left out, and the counts follow.',
+      }),
+    counts: todayCountsSchema,
+    nextDueOn: z.iso.date().nullable().openapi({
+      description:
+        "The soonest check-in due after today in its outlet's calendar, for the all-clear state; null when none is scheduled.",
+    }),
+  })
+  .openapi('Today');
+
+export const pulseResponse = z
+  .object({
+    scope: clientScopeChoice,
+    unreadCount: z.number().int(),
+    counts: todayCountsSchema,
+    etag: z.string().openapi({
+      description: 'Same value as the ETag header; send it back as If-None-Match.',
+    }),
+  })
+  .openapi('Pulse');
+
 export type MacroTargets = z.infer<typeof macroTargetsSchema>;

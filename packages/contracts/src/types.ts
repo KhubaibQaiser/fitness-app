@@ -299,6 +299,54 @@ export type DueCheckIn = {
   overdueDays: number;
 };
 
+/** Why a client is on Today, as data for the UI to phrase. Dates are YYYY-MM-DD; `since` is ISO 8601 with an offset. */
+export type TodayReason =
+  | { kind: 'RED_FLAG'; since: string }
+  | { kind: 'PLAN_NEEDS_REVIEW'; planId: string; planVersion: number }
+  | { kind: 'CHECKIN_OVERDUE'; checkInId: string; scheduledFor: string; daysOverdue: number }
+  | { kind: 'CHECKIN_DUE'; checkInId: string; scheduledFor: string }
+  | { kind: 'DRAFT_AWAITING_PUBLISH'; planId: string; planVersion: number };
+
+export type TodayItem = {
+  clientId: string;
+  clientName: string;
+  /** Latest weigh-in (`at` is ISO 8601 with an offset); null when none or no vitals.read. */
+  lastWeight: { kg: number; at: string } | null;
+  reason: TodayReason;
+};
+
+/**
+ * Whose clients: `mine` (assigned to the signed-in coach) or `all` (every client the principal's
+ * roles may list). The server defaults to `mine` with a coach profile and `all` without one.
+ */
+export type ClientScope = 'mine' | 'all';
+
+/** GET /v1/today. Groups come in urgency order; overdue is sorted by days, most first. */
+export type Today = {
+  /** The scope the server applied. */
+  scope: ClientScope;
+  groups: {
+    redFlags: TodayItem[];
+    plansBlocked: TodayItem[];
+    overdue: TodayItem[];
+    dueToday: TodayItem[];
+    drafts: TodayItem[];
+  };
+  counts: TodayCounts;
+  /** The soonest check-in due after today (YYYY-MM-DD), for the all-clear state; null when none. */
+  nextDueOn: string | null;
+};
+
+export type TodayCounts = Record<keyof Today['groups'], number>;
+
+/** GET /v1/pulse. `etag` equals the ETag header; send it back as If-None-Match. */
+export type Pulse = {
+  scope: ClientScope;
+  unreadCount: number;
+  counts: TodayCounts;
+  etag: string;
+};
+
 export type Verdict = {
   type:
     | 'INSUFFICIENT_DATA'

@@ -113,7 +113,7 @@ The parent agent:
 - rebases waiting branches after each merge;
 - stops a builder that edits paths it does not own.
 
-Builder and reviewer briefs follow [`agents.md`](agents.md).
+Builder and reviewer briefs follow [`agents.md`](agents.md). The diagram shows R10's models; rulings O45 and O46 change them for now (builders on Fable, UI reviewers on Opus).
 
 ## 6. File ownership and change lanes (conflict prevention)
 
