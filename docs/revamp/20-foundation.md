@@ -308,7 +308,7 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
      - Inbox clear: `IllustrationInboxClear`, neutral disc with a success-coloured icon and no status fill (T6)
      - 404: `IllustrationNotFound`, neutral disc
      - Generic error: `IllustrationError`, danger wash
-  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and WebP for native (approved, O52: a PNG of the painted hero is about 13 times heavier). F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at 648 and 864 px wide, the widths S01's layout uses, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
+  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and WebP for native (approved, O52: a PNG of the painted hero is about 13 times heavier). F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at 648 and 864 px wide, the widths S01's layout uses, with `sizes="max(50vw, calc(100vw - 560px), 75vh)"` and no 432 px file, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
   4. Re-export the 512×512 app icon (`apps/web/app/icon.png`, 385 KB, fetched on every page; and `apps/mobile/assets/icon.png`) with the same artwork, optimised.
 - **Mock:** the interim slots and the sized hero on light and dark surfaces next to the Floodlight UI.
 - **Done when:**
