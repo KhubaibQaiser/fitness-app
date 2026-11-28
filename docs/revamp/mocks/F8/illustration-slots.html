@@ -894,7 +894,7 @@
         font-size: 13px;
       }
       /* Narrow screens scroll the table sideways instead of crushing its columns. */
-      .scroll table {
+      .scroll table.wide {
         min-width: 960px;
       }
       td:first-child code {
@@ -1071,6 +1071,56 @@
         flex-direction: column;
         min-width: 0;
       }
+      .ios-status {
+        height: 47px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        font-size: 16px;
+        font-weight: 600;
+        background: var(--bgCanvas);
+      }
+      .ios-status .sig {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .ios-status .bars {
+        display: flex;
+        gap: 2px;
+        align-items: flex-end;
+      }
+      .ios-status .bars i {
+        width: 3px;
+        background: var(--fgPrimary);
+        border-radius: 1px;
+      }
+      .ios-status .batt {
+        width: 25px;
+        height: 12px;
+        border: 1.5px solid var(--fgPrimary);
+        border-radius: 3px;
+        padding: 1px;
+      }
+      .ios-status .batt i {
+        display: block;
+        height: 100%;
+        width: 70%;
+        background: var(--fgPrimary);
+        border-radius: 1px;
+      }
+      .home-ind {
+        position: absolute;
+        left: 50%;
+        bottom: 8px;
+        width: 134px;
+        height: 5px;
+        margin-left: -67px;
+        border-radius: 3px;
+        background: var(--fgPrimary);
+      }
       .marker {
         position: absolute;
         background: var(--bgInverse);
@@ -1148,7 +1198,7 @@
           behind these names and props, so no screen changes. A test fixes each name and its props.
         </p>
         <div class="scroll">
-          <table>
+          <table class="wide">
             <thead>
               <tr>
                 <th scope="col">Component</th>
@@ -1176,7 +1226,7 @@
           the surface in luminance and differ mainly in hue.
         </p>
         <div class="scroll">
-          <table>
+          <table class="wide">
             <thead>
               <tr>
                 <th scope="col">Slot</th>
@@ -1215,7 +1265,8 @@
             <div class="frame phone" data-w="390" data-h="844" id="f-hero-390" inert></div>
             <figcaption>
               iOS 390 × 844: header band, 390 × 220 pt (proposed band height). Web at 390 hides the
-              hero today. Android uses the same band.
+              hero today. Android uses the same band. Full native chrome comes with the screen
+              mocks.
             </figcaption>
           </figure>
           <div>
@@ -1249,7 +1300,9 @@
             <p class="small muted">
               Finding: at 2× on tablets and laptops the column wants more than 864 px (for example
               1268 px at 1194 × 834), so those screens get the 864 file slightly upscaled, as today.
-              The saving comes from the format, not from sharper art. L1's redraw can export larger.
+              Phones too: the 390 × 220 pt native band needs 1170 px on a 3× iPhone, so the single
+              864 file is upscaled about 1.35× there (owner decision 10 picks its format). The
+              saving comes from the format, not from sharper art. L1's redraw can export larger.
             </p>
           </div>
         </div>
@@ -1260,21 +1313,28 @@
         <p class="lede muted">
           At 834 (iPad 11-inch portrait) and 1194 (landscape) the app uses the tablet layout under
           F1's proposed edges (744 to 1199). F6 designs the tablet shell, so navigation is a dashed
-          placeholder here. Slots stay centred in the content column at the regular size; the hero
-          keeps today's split rule.
+          placeholder here. Slots stay centred in the content column at the regular size. Login
+          shows both hero options for portrait.
         </p>
         <div class="frames two">
+          <figure>
+            <div class="frame" data-w="834" data-h="1194" id="f-tab-834-hero" inert></div>
+            <figcaption>
+              834 × 1194, option A (today): below 1120 px the columns split 50/50, a 417 × 1194 hero
+              column (owner decision 8).
+            </figcaption>
+          </figure>
+          <figure>
+            <div class="frame" data-w="834" data-h="1194" id="f-tab-834-band" inert></div>
+            <figcaption>
+              834 × 1194, option B (recommended): the header band, 834 × 360, over the form at its
+              560 px width.
+            </figcaption>
+          </figure>
           <figure>
             <div class="frame" data-w="834" data-h="1194" id="f-tab-834-slot" inert></div>
             <figcaption>
               834 × 1194: Clients, first run. Regular slot centred in the content area.
-            </figcaption>
-          </figure>
-          <figure>
-            <div class="frame" data-w="834" data-h="1194" id="f-tab-834-hero" inert></div>
-            <figcaption>
-              834 × 1194: login. Below 1120 px today's columns split 50/50: a 417 × 1194 hero column
-              (see owner decision 8).
             </figcaption>
           </figure>
           <figure>
@@ -1285,7 +1345,10 @@
           </figure>
           <figure>
             <div class="frame" data-w="1194" data-h="834" id="f-tab-1194-hero" inert></div>
-            <figcaption>1194 × 834: login. Hero column 634 px, form 560 px.</figcaption>
+            <figcaption>
+              1194 × 834: login. Hero column 634 px, form 560 px. Landscape tablets keep the split
+              under either option.
+            </figcaption>
           </figure>
         </div>
       </section>
@@ -1313,11 +1376,12 @@
             <code>border.subtle</code> ring.
           </li>
           <li>
-            Disc edges: in light the disc fills are about 1.1:1 against the surface, and in dark the
-            <code>bg.sunken</code> discs equal the canvas (1.00:1), so only the 1px ring separates
-            them. The slots are decorative, so WCAG 1.4.11's 3:1 does not apply. Options: keep the
-            faint disc plus ring, or use a stronger tint. Recommended: keep it, because the title
-            carries the meaning and a stronger tint would compete with the action.
+            Disc edges: every slot sits on a <code>bg.surface</code> panel. There, in light the
+            discs are 1.14 to 1.15:1 and the ring 1.30:1; in dark the <code>bg.sunken</code> discs
+            are 1.11:1 and the ring 1.46:1, so the ring does most of the separating. The slots are
+            decorative, so WCAG 1.4.11's 3:1 does not apply. Options: keep the faint disc plus ring,
+            or use a stronger tint. Recommended: keep it, because the title carries the meaning and
+            a stronger tint would compete with the action.
           </li>
           <li>
             All six slots are decorative (empty <code>alt</code>), since the title beside each says
@@ -1329,15 +1393,18 @@
           </li>
           <li>
             Tablet login: keep today's 50/50 split (a 417 × 1194 hero column at 834 portrait), or
-            use the header band below 1024 px. Recommended: the band, because a tall 417 px column
-            crops the art to its middle third while a band keeps it legible above the form. S01
-            decides the layout; F8 only supplies the <code>column</code> and
-            <code>band</code> variants.
+            use the header band whenever the window is in F1's tablet range (744 to 1199) and taller
+            than it is wide. Recommended: the band, because the 417 px column shows only about the
+            middle half (47%) of the art's width, while a band keeps it legible above the form; the
+            rule reuses F1's edges and the orientation F6 already tracks (O8). A 12.9-inch iPad in
+            portrait (1024 pt) is in that range, so it gets the band instead of a 512 px column;
+            landscape tablets keep the split. S01 decides the layout; F8 only supplies the
+            <code>column</code> and <code>band</code> variants.
           </li>
           <li>
             Hero files at 648 and 864 wide, in AVIF and WebP, with
-            <code>sizes="max(50vw, calc(100vw - 560px), 75vh)"</code>. No 432 file, since no window
-            at 768 px or wider would use it.
+            <code>sizes="max(50vw, calc(100vw - 560px), 75vh)"</code>. No 432 file: only rare short
+            1× windows (768 to 864 px wide and under 577 px tall) would pick it, so it is dropped.
           </li>
           <li>
             Native hero file: PNG as F8 requirement 3 says (about 1.5 MB at 864, estimate), JPEG
@@ -1647,7 +1714,9 @@
         'f-tab-834-hero': () =>
           `<div class="heroCol">${heroImg()}${marker('417 × 1194', 'left:12px;top:16px')}</div>${loginForm()}`,
         'f-hero-390': () =>
-          `<div style="display:flex;flex-direction:column;width:100%"><div class="band">${heroImg()}${marker('390 × 220', 'left:12px;top:56px')}</div>${loginForm(true)}</div>`,
+          `<div style="display:flex;flex-direction:column;width:100%"><div class="ios-status"><span class="num">9:41</span><span class="sig"><span class="bars"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i></span><span class="batt"><i></i></span></span></div><div class="band">${heroImg()}${marker('390 × 220', 'left:12px;top:12px')}</div>${loginForm(true)}</div><div class="home-ind"></div>`,
+        'f-tab-834-band': () =>
+          `<div style="display:flex;flex-direction:column;width:100%"><div class="band" style="height:360px">${heroImg()}${marker('834 × 360', 'left:12px;top:16px')}</div><div style="width:560px;max-width:100%;margin:0 auto;display:flex">${loginForm(true)}</div></div>`,
         'f-tab-834-slot': () =>
           `<div class="shell" style="flex-direction:column"><div class="navph top">Navigation (F6)</div><div class="content"><div class="bar"><span class="t">Clients</span></div>${empty('noClients', 'No clients yet', 'Add your first client to start their check-ins and plans.', btn('New client'))}</div></div>`,
         'f-tab-1194-slot': () =>
