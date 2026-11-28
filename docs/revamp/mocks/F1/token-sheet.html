@@ -367,6 +367,96 @@
       #s2-contrast {
         padding-top: 1px;
       }
+      /* 2b. control boundaries (rulings O53). --cb is the border colour of one sample control. */
+      .cb h4 {
+        margin: 24px 0 8px;
+      }
+      .cb ul,
+      .cb ol {
+        margin: 0 0 8px;
+        padding-left: 20px;
+        max-width: 72ch;
+      }
+      .cb li {
+        margin: 4px 0;
+      }
+      .cb .callout {
+        margin: 0 0 16px;
+      }
+      .cb .callout p,
+      .cb .callout ol {
+        margin: 6px 0 0;
+      }
+      .cb-raised {
+        background: var(--bgRaised);
+        border: 1px solid var(--borderSubtle);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+      .cb-pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: repeat(3, auto);
+        grid-auto-flow: column;
+        gap: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .cb-pair code {
+        font-size: 11px;
+      }
+      .cb-input,
+      .cb-btn {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid var(--cb);
+        border-radius: var(--radiusMd);
+        font-size: 15px;
+      }
+      .cb-input {
+        background: var(--bgField);
+        color: var(--fgFaint);
+        font-weight: 400;
+      }
+      .cb-btn {
+        background: var(--bgSurface);
+        color: var(--fgPrimary);
+        justify-content: center;
+      }
+      .frame.cb-frame {
+        height: 300px;
+      }
+      .cb-sheet {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 14px 12px;
+        border-radius: var(--radiusXl) var(--radiusXl) 0 0;
+        color: var(--fgPrimary);
+        background: var(--glassColorSheet);
+        /* Phone-sized frame: the sheet blur is capped at 20px, as in F3's approved sheet. */
+        -webkit-backdrop-filter: blur(min(var(--glassBlurSheet), 20px))
+          saturate(var(--glassSaturate));
+        backdrop-filter: blur(min(var(--glassBlurSheet), 20px)) saturate(var(--glassSaturate));
+        box-shadow:
+          inset 0 0 0 1px var(--glassColorBorder),
+          var(--glassHighlight),
+          var(--glassShadow);
+      }
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .cb-sheet {
+          background: var(--glassColorFallback);
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .cb-sheet {
+          background: var(--glassColorFallback);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+      }
       /* tables that turn into stacked rows on phones */
       @media (max-width: 743px) {
         table.stack > thead {
@@ -3686,8 +3776,9 @@
         }
         return hexOf(lin.map(toGam));
       }
-      function luminance(hex) {
-        const [r, g, b] = parseHex(hex).map(toLin);
+      // Takes a hex string, or fractional sRGB channels (a glass blend that is not rounded to 8-bit).
+      function luminance(c) {
+        const [r, g, b] = (Array.isArray(c) ? c : parseHex(c)).map(toLin);
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       }
       function contrast(a, b) {
@@ -4115,6 +4206,215 @@
         ['viz.goalLine', 'viz.goalBand', 3],
         ['fg.disabled', 'bg.surface', null],
       ];
+      // ---------- 2b. control boundaries (rulings O53): today's border.control, and a stronger step picked by computation
+      const CB_KEY = 'border.controlStrong';
+      const CB_NEED = 3;
+      // A bg.* semantic key, or a glass tier with its label
+      const CB_SURFACES = [
+        ['bg.canvas'],
+        ['bg.surface'],
+        ['bg.raised'],
+        ['bg.field'],
+        ['sheet', 'Sheet glass'],
+        ['chrome', 'Chrome glass'],
+      ];
+      function controlRows(mode, hex, exact) {
+        return CB_SURFACES.map(([k, glass]) => {
+          if (!glass)
+            return {
+              surface: k,
+              label: `<code>${k}</code>`,
+              bg: semHex(mode, k),
+              r: contrast(hex, semHex(mode, k)),
+            };
+          const w = worstGlass(mode, k, hex, exact);
+          return {
+            surface: k,
+            label: glass.toLowerCase(),
+            bg: w.hex,
+            r: w.r,
+            note: `tint at ${w.a}, over ${w.name}`,
+            n: w.n,
+          };
+        });
+      }
+      // The neutral step nearest today's border.control that reaches 3:1 on every row.
+      // Options, for the alternatives in the approve block: `free` skips the steps a text token already uses,
+      // `exact` keeps the glass blend as fractions, `skip` leaves one surface out.
+      function pickControlStep(mode, { free, exact, skip } = {}) {
+        const steps = leaves(T.primitive.color.neutral).map(([p]) => p);
+        const at = steps.indexOf(aliasLabel(sem(mode, 'border.control')).replace('neutral.', ''));
+        if (at < 0) throw new Error(`border.control is not a neutral step in ${mode}`);
+        const textHexes = leaves(T.semantic[mode].color.fg).map(([, tok]) => resolve(tok.$value));
+        const pick = steps
+          .map((_, i) => i)
+          .sort((a, b) => Math.abs(a - at) - Math.abs(b - at))
+          .find((i) => {
+            const hex = stepHex('neutral', steps[i]);
+            return (
+              i !== at &&
+              !(free && textHexes.includes(hex)) &&
+              controlRows(mode, hex, exact).every((row) => row.surface === skip || row.r >= CB_NEED)
+            );
+          });
+        if (pick === undefined)
+          throw new Error(`No neutral step reaches 3:1 on every control surface in ${mode}`);
+        // today's step, the steps passed over, then the pick
+        const path = steps.slice(Math.min(at, pick), Math.max(at, pick) + 1);
+        // the steps just as near on the other side of today's, nearest first
+        const mirror = path
+          .slice(1)
+          .map((_, j) => steps[at - Math.sign(pick - at) * (j + 1)])
+          .filter((st) => st !== undefined);
+        return {
+          step: steps[pick],
+          hex: stepHex('neutral', steps[pick]),
+          path: pick < at ? path.reverse() : path,
+          mirror,
+        };
+      }
+      function renderControlBoundaries(surfaceStepsOk) {
+        // The glass helper must reproduce the JSON's own worst-case numbers before it is used here.
+        let measured = 0;
+        for (const mode of MODES)
+          for (const tier of ['chrome', 'sheet'])
+            for (const [k, want] of Object.entries(T.glass[mode].measured[`${tier}WorstCase`])) {
+              const got = worstGlass(mode, tier, semHex(mode, k)).r;
+              if (got.toFixed(2) !== want.toFixed(2))
+                throw new Error(
+                  `glass.${mode}.measured ${tier} ${k} is ${want}, computed ${got.toFixed(4)}`,
+                );
+              measured++;
+            }
+        const d = {};
+        for (const mode of MODES) {
+          const pick = pickControlStep(mode);
+          const hex = semHex(mode, 'border.control');
+          d[mode] = {
+            pick,
+            free: pickControlStep(mode, { free: true }),
+            today: { hex, rows: controlRows(mode, hex) },
+            strong: { hex: pick.hex, rows: controlRows(mode, pick.hex) },
+          };
+        }
+        const both = (fn) => MODES.map((mode) => `${fn(mode)} in ${mode}`).join(', ');
+        const table = (label, which) =>
+          `<div role="table" aria-label="${label}"><div class="gt-row head" role="row"><span class="k" role="columnheader">Surface</span><span role="columnheader">${icon('sun')} Light</span><span role="columnheader">${icon('moon')} Dark</span></div>${CB_SURFACES.map(
+            ([k, glass], i) =>
+              `<div class="gt-row" role="row"><span class="k" role="rowheader">${glass ? `${glass} <span class="small muted">· <code>glass.${k}</code>, worst backdrop</span>` : `<code>${k}</code>`} <span class="small muted">· needs ${CB_NEED}:1</span></span>${MODES.map(
+                (mode) => {
+                  const { hex, rows } = d[mode][which];
+                  const row = rows[i];
+                  return `<span class="cell" role="cell" title="${hex} on ${row.bg}"><span class="sample" style="background:${row.bg};box-shadow:inset 0 0 0 3px ${hex}"></span><span>${fmt(row.r)} ${badge(verdict(row.r, CB_NEED))}${row.note ? `<br><span class="small muted">${row.note}</span>` : ''}</span></span>`;
+                },
+              ).join('')}</div>`,
+          ).join('')}</div>`;
+        const stepResult = (mode, st, name) => {
+          const rows = controlRows(mode, stepHex('neutral', st));
+          const fails = rows.filter((row) => row.r < CB_NEED);
+          if (!fails.length) return `<strong>${name} passes all ${rows.length}</strong>`;
+          if (fails.length === rows.length)
+            return `${name} fails all ${rows.length} rows (${fmt(Math.max(...rows.map((row) => row.r)))} at best)`;
+          return `${name} fails ${fails.map((f) => `${f.label} (${fmt(f.r)}${f.r.toFixed(2) === CB_NEED.toFixed(2) ? `, ${f.r.toFixed(4)} unrounded` : ''})`).join(', ')}`;
+        };
+        // the steps toward the pick, then the equally near steps on the other side of today's
+        const stepLine = (mode) => {
+          const { path, mirror } = d[mode].pick;
+          const near = path
+            .map((st, i) => stepResult(mode, st, `neutral.${st}${i ? '' : ' (today)'}`))
+            .join('; ');
+          const other = mirror.map((st) => stepResult(mode, st, `neutral.${st}`)).join('; ');
+          return other ? `${near}. Equally near on the other side: ${other}` : near;
+        };
+        const sharedTokens = (mode) =>
+          leaves(T.semantic[mode].color.fg)
+            .filter(([, tok]) => resolve(tok.$value) === d[mode].pick.hex)
+            .map(([p]) => `<code>fg.${p}</code>`)
+            .join(' and ');
+        const sharedText = (mode) =>
+          `neutral.${d[mode].pick.step} is ${sharedTokens(mode) ? `also the step behind ${sharedTokens(mode)}` : 'used by no text token'}`;
+        const against = (key) => both((mode) => fmt(contrast(d[mode].pick.hex, semHex(mode, key))));
+        const tightest = (mode) => {
+          const row = d[mode].strong.rows.reduce((a, b) => (b.r < a.r ? b : a));
+          return `${row.label} at ${fmt(row.r)}`;
+        };
+        const at = (key) => CB_SURFACES.findIndex(([k]) => k === key);
+        const change = (key) =>
+          both(
+            (mode) =>
+              `${fmt(d[mode].today.rows[at(key)].r)} to ${fmt(d[mode].strong.rows[at(key)].r)}`,
+          );
+        const line = `Add <code>${CB_KEY}</code> (${both((mode) => `neutral.${d[mode].pick.step}`)}) for control borders on <code>bg.raised</code> and on glass, and for high-contrast edges. On <code>bg.raised</code>: ${change('bg.raised')}. On sheet glass, worst case: ${change('sheet')}.`;
+        // The three choices inside the approve line. Every figure is computed, and the fixed wording throws if the data stops matching it.
+        for (const mode of MODES) {
+          const exactStep = pickControlStep(mode, { exact: true }).step;
+          if (exactStep !== d[mode].pick.step)
+            throw new Error(
+              `Choice 1 says "the same steps", but with fractions ${mode} picks neutral.${exactStep}`,
+            );
+        }
+        const exactSheet = both((mode) => {
+          const r = (hex) => controlRows(mode, hex, true)[at('sheet')].r;
+          return `${fmt(r(d[mode].today.hex))} to ${fmt(r(d[mode].pick.hex))}`;
+        });
+        if (!sharedTokens('light') || sharedTokens('light') !== sharedTokens('dark'))
+          throw new Error(
+            'Choice 2 names one text token for both modes, but the picked steps no longer share one',
+          );
+        const withoutChrome = MODES.map((mode) => {
+          const p = pickControlStep(mode, { skip: 'chrome' });
+          if (p.step === d[mode].pick.step) {
+            const exactToo = pickControlStep(mode, { skip: 'chrome', exact: true }).step === p.step;
+            return `${mode === 'light' ? 'Light' : 'Dark'} stays neutral.${p.step}${exactToo ? '' : ' under 8-bit rounding'}.`;
+          }
+          const rows = controlRows(mode, p.hex);
+          return `In ${mode} it is the only row that rules out neutral.${p.step}. Without it, ${mode} would be neutral.${p.step} (${fmt(rows[at('bg.raised')].r)} on <code>bg.raised</code>, ${fmt(rows[at('sheet')].r)} on sheet glass).`;
+        }).join(' ');
+        const choices = [
+          `<strong>How the glass blend is rounded.</strong> Recommended: to 8-bit channels, which reproduces the ${measured} measured glass values in the token data. The alternative keeps fractions, as F3's glass sheet does. On sheet glass the line would then read ${exactSheet}, with the same steps.`,
+          `<strong>The step is the one ${sharedTokens('light')} uses.</strong> Recommended: accept it. The alternative that no text token uses is ${both((mode) => `neutral.${d[mode].free.step}`)}. It is a heavier edge: ${both((mode) => fmt(contrast(d[mode].free.hex, semHex(mode, 'bg.raised'))))} on <code>bg.raised</code>.`,
+          `<strong>Chrome glass counts as a control surface.</strong> Recommended: yes, so the token also holds for a bordered control on a glass bar. ${withoutChrome}`,
+        ];
+        // samples: the component tokens' input (bg.field fill) and secondary button (bg.surface fill)
+        const col = (cap, key, hex) =>
+          `<span>${cap}<br><code>${key}</code></span><span class="cb-input" style="--cb:${hex}">Optional note</span><span class="cb-btn" style="--cb:${hex}">Cancel</span>`;
+        const pairOf = (mode, where) =>
+          `<div class="cb-pair" role="img" aria-label="An input and a secondary button ${where}: today's border.control on the left, the proposed ${CB_KEY} on the right">${col('Today', 'border.control', d[mode].today.hex)}${col('Proposed', CB_KEY, d[mode].pick.hex)}</div>`;
+        const bars = (mode, hs) =>
+          `<div class="stripe">${hs
+            .map(
+              (h, j) =>
+                `<i style="background:${semHex(mode, 'viz.categorical.' + ((j % 6) + 1))};height:${h}%"></i>`,
+            )
+            .join('')}</div>`;
+        const tall = [100, 82, 94, 76, 100, 88, 100, 82, 94, 76, 100, 88];
+        const mixed = [90, 60, 75, 45, 100, 70, 85, 55, 95, 65, 80, 50];
+        const samples = MODES.map(
+          (mode) =>
+            `<div class="panel t-${mode}">${modeTitle(mode)}<p class="small"><strong>On <code>bg.raised</code></strong></p><div class="cb-raised">${pairOf(mode, 'on bg.raised')}</div>
+            <p class="small"><strong>On sheet glass, over busy content</strong></p><div class="frame cb-frame"><div class="content" aria-hidden="true"><div class="ccard hero">${bars(mode, tall)}</div><div class="ccard">${bars(mode, mixed)}</div><div class="ccard">${bars(mode, tall)}</div><div class="ccard">${bars(mode, mixed)}</div></div><div class="cb-sheet">${pairOf(mode, 'on sheet glass')}</div></div></div>`,
+        ).join('');
+        return `<div class="cb" id="s2-control"><h3>Control boundaries</h3>
+          <div class="callout" id="cb-followup"><strong>Follow-up to approve (rulings O53)</strong><p id="cb-approve">${line}</p>
+          <p>Three choices sit inside this line. The line states the recommended one each time.</p>
+          <ol>${choices.map((c) => `<li>${c}</li>`).join('')}</ol></div>
+          <p class="muted small">A control's edge needs ${CB_NEED}:1 against the surface it sits on (WCAG 1.4.11). The ${PAIRS.length}-pair table further down checks <code>border.control</code> on <code>bg.surface</code>, <code>bg.field</code> and <code>bg.canvas</code>. F3's review found the gap: <code>bg.raised</code> and glass. A glass row lays the tint, at its token alpha, over each of ${d.light.today.rows[at('sheet')].n} solid backdrops (black, white, steps 300 to 900 of each family), rounds the blend to 8-bit (choice 1) and keeps the lowest ratio, as section 6 does. Pass or fail uses the ratio before it is rounded to two decimals.</p>
+          <h4>Today: <code>border.control</code></h4>${table('border.control against each surface a control can sit on', 'today')}
+          <h4>Proposal: <code>${CB_KEY}</code></h4>
+          <p>A second, stronger control border. It is for controls on <code>bg.raised</code> and on glass, and for the edges the high-contrast fallback draws. <code>border.control</code> stays for controls on <code>bg.canvas</code>, <code>bg.surface</code> and <code>bg.field</code>.</p>
+          <ul class="small"><li><strong>Name.</strong> It keeps the <code>border</code> group and the <code>control</code> role, and adds the strength as a suffix, the way <code>action.bgHover</code> and <code>accent.aqua.strong</code> do. It has no colour word. It names a strength, not one surface, so one key covers raised surfaces, glass and high-contrast edges. Flattened: <code>$${camel(CB_KEY)}</code>.</li>
+          <li><strong>Step.</strong> The neutral step nearest today's <code>border.control</code> that reaches ${CB_NEED}:1 on all ${CB_SURFACES.length} rows of its mode.</li>
+          ${MODES.map((mode) => `<li>${mode === 'light' ? 'Light' : 'Dark'}: ${stepLine(mode)}.</li>`).join('')}</ul>
+          <h4>Proposed: <code>${CB_KEY}</code> on the same surfaces</h4>${table(`${CB_KEY} against each surface a control can sit on`, 'strong')}
+          <h4>Checks on the proposed step</h4>
+          <ul class="small"><li><strong>Text tokens.</strong> Light: ${sharedText('light')}. Dark: ${sharedText('dark')}. A border and a text token never need contrast with each other: each is checked against its ground. Choice 2 has the alternative.</li>
+          <li><strong>Other tokens.</strong> Against <code>fg.faint</code>, the placeholder inside an input: ${against('fg.faint')}. Against <code>border.subtle</code>: ${against('border.subtle')}, so a control edge still reads apart from a divider. Against <code>border.control</code>: ${against('border.control')}.</li>
+          <li><strong>Dark surface steps.</strong> Unchanged. The proposal adds one border key and changes no <code>bg.*</code> value. ${badge(surfaceStepsOk ? { cls: 'pass', icon: 'pass' } : { cls: 'fail', icon: 'fail' }, surfaceStepsOk ? 'Pass: canvas, surface and raised still step up' : 'Fail: surfaces do not step up')}</li>
+          <li><strong>Tightest row.</strong> ${both(tightest)}.</li></ul>
+          <h4>Samples</h4>
+          <p class="muted small">An input and a secondary button, drawn from the component tokens: the input fills with <code>bg.field</code>, the button with <code>bg.surface</code>. Today's border is on the left, the proposed one on the right.</p>
+          <div class="two">${samples}</div></div>`;
+      }
       function renderSemantic() {
         const keys = leaves(T.semantic.light.color).filter(([p]) => !p.startsWith('viz.'));
         let html = `<div id="s2-swatches"><div class="gt-row head"><span class="k">Token</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>`;
@@ -4188,7 +4488,7 @@
           });
           rows += `<div class="gt-row"><span class="k"><code>${fgK}</code> on <code>${bgK}</code> <span class="small muted">· ${need === null ? 'exempt, disabled text' : 'needs ' + needLabel(need, fgK)}</span></span>${cells.join('')}</div>`;
         }
-        html += `</div><div id="s2-contrast"><h3>Contrast, every pair in tokens.md §6.3 and §6.4</h3>
+        html += `</div><div id="s2-contrast">${renderControlBoundaries(ordered)}<h3>Contrast, every pair in tokens.md §6.3 and §6.4</h3>
           <p class="muted small">WCAG 2.2 relative luminance. Ratios are rounded to two decimals, as tokens.md does. Pass or fail uses the unrounded value. <code>action.*</code> rows use the JSON's ultramarine. Sunflower's ratios are in section 3.</p>
           <p id="pair-summary"></p>
           <div class="gt-row head"><span class="k">Pair</span><span>${icon('sun')} Light</span><span>${icon('moon')} Dark</span></div>${rows}</div>`;
@@ -4577,10 +4877,13 @@
       }
 
       // ---------- 6. glass
-      function worstChrome(mode) {
-        const tintTok = T.glass[mode].color.chrome.$value;
+      // Lowest ratio of `fg` on a glass tint ('chrome' or 'sheet') over each solid backdrop.
+      // The blend is rounded to 8-bit: that is what reproduces the JSON's glass.*.measured values.
+      // `exact` keeps the blend as fractions, for the alternative in the control-boundary choices only.
+      function worstGlass(mode, tier, fg, exact) {
+        const tintTok = T.glass[mode].color[tier].$value;
         const m = tintTok.match(/^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/);
-        if (!m) throw new Error(`Unexpected glass chrome value: ${tintTok}`);
+        if (!m) throw new Error(`Unexpected glass ${tier} value: ${tintTok}`);
         const tint = [m[1], m[2], m[3]].map((n) => Number(n) / 255);
         const a = Number(m[4]);
         const backdrops = [
@@ -4592,12 +4895,12 @@
           for (const st of ['300', '500', '700', '900'])
             backdrops.push([`${fam}.${st}`, T.primitive.color[fam][st].$value]);
         }
-        const fg = semHex(mode, 'fg.primary');
         let worst = null;
         for (const [name, hex] of backdrops) {
-          const mixed = hexOf(parseHex(hex).map((c, i) => a * tint[i] + (1 - a) * c));
-          const r = contrast(fg, mixed);
-          if (!worst || r < worst.r) worst = { r, name, n: backdrops.length };
+          const blend = parseHex(hex).map((c, i) => a * tint[i] + (1 - a) * c);
+          const mixed = hexOf(blend);
+          const r = contrast(fg, exact ? blend : mixed);
+          if (!worst || r < worst.r) worst = { r, name, n: backdrops.length, hex: mixed, a };
         }
         return worst;
       }
@@ -4624,7 +4927,7 @@
             </div><div class="topbar ${kind}">${icon('back')}<span class="title">Clients</span>${icon('search')}</div></div>
             <p class="small" style="margin-top:6px"><strong>${kind === 'glass' ? 'Glass' : 'Solid fallback'}</strong> · ${kind === 'glass' ? `tint <span class="mono">${g.color.chrome.$value}</span>, blur ${g.blur.chrome.$value}, saturate ${g.saturate.$value}, noise ${g.noiseOpacity.$value}` : `<code>glass.fallback</code> = <code>${aliasLabel(g.color.fallback)}</code> <span class="mono">${resolve(g.color.fallback.$value)}</span>. Used for Reduce Transparency, high contrast, no backdrop-filter, Android below API 31.`}</p>`;
           };
-          const w = worstChrome(mode);
+          const w = worstGlass(mode, 'chrome', semHex(mode, 'fg.primary'));
           html += `<div class="panel t-${mode}">${modeTitle(mode)}<div class="two" style="gap:12px"><div>${frame('glass')}</div><div>${frame('solid')}</div></div>
             <p class="small" style="margin-top:8px"><code>fg.primary</code> on the glass tint, worst of ${w.n} solid backdrops (black, white, steps 300 to 900 of each family): ${fmt(w.r)} over ${w.name} · ${badge(verdict(w.r, 7), w.r >= 7 ? 'Pass, at least 7:1' : 'Fail, under 7:1')}</p></div>`;
         }
