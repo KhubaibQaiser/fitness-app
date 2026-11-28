@@ -300,22 +300,22 @@ The parent owns this lane. Each slice is its own small PR (`feature/data-<slice>
 - **Goal:** lighter images, and one illustration slot per use, filled with interim art until L1 redraws it after the track (rulings O6).
 - **Depends on:** F1.
 - **Requirements:**
-  1. Export an auth hero component from `packages/ui/src/illustrations/` that shows the current art (`apps/web/public/auth/hero.jpg`) at sized AVIF and WebP (item 3).
-  2. Export an empty-state illustration component per slot, each showing interim art (a kit icon on a token-tinted disc, light and dark). The slots:
-     - First run (no clients)
-     - No search matches
-     - No plan yet
-     - Inbox clear
-     - 404
-     - Generic error
-  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and optimised PNG for native. F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at the widths S01's layout uses, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
+  1. Export an auth hero component from `packages/ui/src/illustrations/` that shows the current art (`apps/web/public/auth/hero.jpg`) at sized AVIF and WebP (item 3). Approved (rulings O52): `AuthHero`, with `variant: 'column' | 'band'` and `testID?`. S01 decides which variant tablet portrait uses.
+  2. Export an empty-state illustration component per slot, each showing interim art (a kit icon on a token-tinted disc, light and dark). Approved (O52): each takes `size?: 'regular' | 'compact'` and `testID?`, and each disc has a 1px `border.subtle` ring. The slots, with their approved names:
+     - First run (no clients): `IllustrationNoClients`, Sunflower wash
+     - No search matches: `IllustrationNoMatches`, neutral disc
+     - No plan yet: `IllustrationNoPlan`, Sunflower wash
+     - Inbox clear: `IllustrationInboxClear`, neutral disc with a success-coloured icon and no status fill (T6)
+     - 404: `IllustrationNotFound`, neutral disc
+     - Generic error: `IllustrationError`, danger wash
+  3. Prefer theme-aware SVG. Where raster is needed, deliver AVIF or WebP at responsive sizes for web and WebP for native (approved, O52: a PNG of the painted hero is about 13 times heavier). F8 ships the sized variants as files (for the login hero, 435 KB today: AVIF and WebP at 648 and 864 px wide, the widths S01's layout uses, under `apps/web/public/auth/`). The screen that shows an image chooses where: S01 replaces the image at `auth-hero-column.tsx:8` with F8's hero component and adds no image files itself.
   4. Re-export the 512×512 app icon (`apps/web/app/icon.png`, 385 KB, fetched on every page; and `apps/mobile/assets/icon.png`) with the same artwork, optimised.
 - **Mock:** the interim slots and the sized hero on light and dark surfaces next to the Floodlight UI.
 - **Done when:**
   - The global conditions hold.
   - Byte sizes before and after are in the PR, for every image F8 replaces.
   - Lighthouse's "modern image formats" and "properly size images" audits no longer flag the app icon on Today. The login hero is S01's done condition.
-  - Every illustration has empty `alt` or an accessible label, as fits its role.
+  - Every illustration has empty `alt` or an accessible label, as fits its role. Approved (O52): all six slots and the auth hero are decorative, with an empty `alt`.
   - Each slot's export name and props are fixed by a test, so L1 can swap the art without touching a screen.
 
 ## F9: Charts
