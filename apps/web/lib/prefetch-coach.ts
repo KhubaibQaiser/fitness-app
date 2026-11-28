@@ -33,7 +33,7 @@ export type FetchLike = (
   init?: { headers?: Record<string, string>; cache?: RequestCache },
 ) => Promise<Response>;
 
-const defaultOrigin = (): string => process.env.API_ORIGIN ?? 'http://localhost:8080';
+export const defaultOrigin = (): string => process.env.API_ORIGIN ?? 'http://localhost:8080';
 
 export const serverApiGet = async (
   path: string,
