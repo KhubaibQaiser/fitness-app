@@ -3,7 +3,9 @@ import { type Db } from '@gymos/db';
 import { type Principal } from '@gymos/modules/identity';
 import { type TenantManifest } from '@gymos/modules/tenancy';
 import { type AppDeps } from './app-deps';
+import { type ClientIp } from './client-ip';
 import { type AppContext } from './http';
+import { type AccountLimiter } from './rate-limit';
 import { type asCoach, type authorize, type requireCoachId } from './rbac-http';
 
 export type RateLimiter = (key: string) => Promise<boolean>;
@@ -24,8 +26,10 @@ export type RouteBind = {
     userId: string,
     session: { sessionId: string; refreshToken: string; expiresAt: string },
   ) => Promise<Response>;
-  readonly clientIp: (c: AppContext) => string;
+  readonly clientIp: ClientIp;
   readonly loginLimiter: RateLimiter;
+  readonly loginAccountLimiter: AccountLimiter;
+  readonly unattributedLimiter: RateLimiter;
   readonly signupIpLimiter: RateLimiter;
   readonly signupEmailLimiter: RateLimiter;
   readonly forgotIpLimiter: RateLimiter;
