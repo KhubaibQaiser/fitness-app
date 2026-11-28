@@ -18,7 +18,7 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
   1. **Three layers:**
      - Primitives in `tokens.color`.
      - Semantic keys per theme (`bg`, `fg`, `border`, `action`, `focus`, `status.*`, `accent.*`, `viz.*`, `scrim`, `glass.*`), flattened for Tamagui (`$bgCanvas`, `$statusDangerWashText`).
-     - Component tokens.
+     - Component tokens. `tabBar.itemSelected` uses the wash-text tone on the wash pill, because the brand text on the wash is under 4.5:1 (F3's approved mock, O52).
 
      Values come from `tokens.floodlight.json`. No hand-typed hex outside the generated module.
 
@@ -39,14 +39,14 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - The GymOS default brand is also `#FACC15`.
      - A test asserts the derived values in ADR-0019: fill `#FACC15`, ink label at least 11:1, light text-safe at least 4.5:1, wash, border required on light. If the generated hex differs from the ADR, update the ADR in the same PR.
   7. **Rule D1:**
-     - No semantic UI token resolves to a volt step; volt appears only under `viz.*`.
-     - Warning fills use amber step 500 or darker.
+     - No semantic UI token resolves to a volt step; volt appears only under `viz.*`. The approved token sheet (rulings O52) drops the `accent.volt.*` keys, and the milestone highlight uses `accent.aqua.*`.
+     - Warning fills use amber step 500 or darker. Approved (O52): `status.warning.solid` is amber.500 in both modes, with a 1px `status.warning.border` on light surfaces. The light warning wash stays amber.100: it is a pale wash under an icon and a word, not a fill.
      - A test fails on violations.
   8. **Elevation tokens:** light uses border plus soft shadow; dark uses surface steps and no shadows; iOS uses no card shadows (fixes N9 when F5 applies them).
   9. **Bundle:** import only the themes in use; `@tamagui/themes` (75 KB web) leaves the bundle if it's no longer needed.
-  10. **Width ranges (rulings O8):** add tablet and desktop ranges to `packages/ui/src/breakpoints.ts` and the Tamagui media config, next to the existing `md` (kept until screens stop using it; Q5 removes it if unused). Proposed: phone below 744 px, tablet 744–1199 px, desktop 1200 px and up, so the iPad mini in portrait (744 pt) and the 11-inch iPad in landscape (1194 pt) both land in the tablet range. The owner approves the edges with the token sheet, knowing two effects: web at 768–1199 px moves from today's desktop layout (`md` starts at 768 px today) to the tablet one, and the 12.9- and 13-inch iPads in landscape (1366 pt) get the desktop layout.
+  10. **Width ranges (rulings O8):** add tablet and desktop ranges to `packages/ui/src/breakpoints.ts` and the Tamagui media config, next to the existing `md` (kept until screens stop using it; Q5 removes it if unused). Approved with the token sheet (O52): phone below 744 px, tablet 744–1199 px, desktop 1200 px and up, so the iPad mini in portrait (744 pt) and the 11-inch iPad in landscape (1194 pt) both land in the tablet range. The owner approved these edges knowing their effects: web at 768–1199 px moves from today's desktop layout (`md` starts at 768 px today) to the tablet one, and the 12.9- and 13-inch iPads in landscape (1366 pt) get the desktop layout. The iPad Pro 11-inch (M4) in landscape (1210 pt) and a 1280 dp Android tablet in landscape get the desktop layout too.
   11. **Reference doc:** replace `docs/design-system-reference.md` with the Floodlight reference: layers, semantic table, usage rules (D1, glass where and where not, status never by colour alone), and how to add a tenant.
-- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves.
+- **Mock:** token sheet. Scales; semantic swatches light and dark with contrast ratios; Sunflower action states; status chips; viz palette; one glass sample; the width ranges. Owner approves. Follow-up (rulings O53): the sheet adds the control-border pairs on raised and glass surfaces, and proposes a lighter border step for dark, where today's `border.control` is under 3:1 on `bg.raised`. The owner approves that line.
 - **Done when:**
   - The global conditions hold.
   - A contrast test computes every text and background pair in `tokens.md` §6.3–6.4 for light and dark: body text at least 4.5:1; placeholders at least 4.5:1; large text and graphics at least 3:1; dark cards distinguishable from the canvas by surface step.
