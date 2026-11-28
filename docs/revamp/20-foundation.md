@@ -121,14 +121,15 @@ Order: F1 first. Then F2, F3, F4 and F8 in parallel. F5 after F2–F4, F9 after 
      - With a sheet open, the sticky header stays glass above the scrim and the tab bar under the scrim turns solid.
      - The web side sheet (480 px) has no scrim, and the top bar above it stays glass.
      - The command-palette scrim is glass with the scrim tint and the chrome blur; the top bar under it turns solid.
+     - Tab bar: the selected label sits on an opaque wash pill in the wash-text tone, and unselected labels are `fg.primary` at weight 500, on every platform. On iOS 26 the tab bar is the system's floating glass capsule.
   4. **Text on sheet glass** (O52):
-     - Links use `fg.primary` with an underline. Brand-coloured text never sits on glass, because one sheet tint must hold for every tenant.
+     - Links use `fg.primary` with an underline. Brand-coloured text never sits directly on glass, because one sheet tint must hold for every tenant. The selected tab label is no exception: it sits on an opaque wash pill.
      - Faint and placeholder text never sits directly on sheet glass. Placeholders sit inside an input's opaque `bg.field`.
   5. **Accessibility:**
      - Reduce Transparency (iOS, with a live listener) switches to solid.
      - So do `prefers-reduced-transparency`, `prefers-contrast: more`, iOS darker system colours and Android high text contrast.
      - So does the "Solid bars" preference, stored through `packages/platform` storage; S11 builds the toggle.
-     - Focus rings on glass get a 2 px surface halo.
+     - Focus rings on glass get a 2 px surface halo. The ring is the brand's text-safe tone.
      - The high-contrast fallback draws `border.control` edges; the other fallbacks use `border.subtle`.
      - Control boundaries on glass and raised surfaces fall under 3:1 in dark with today's `border.control`. F1's token sheet settles the border step (O53); F3 uses it.
 - **Mock:** glass sample sheet. Top bar, tab bar, sticky header and a sheet over busy content; light and dark; each fallback.
