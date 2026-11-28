@@ -15,7 +15,7 @@ Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus)
    - its blocking rulings are answered;
    - for visual code, its mock is approved.
 
-   At most five builders run at once across both coordinators, each with its reviewer (rulings O28). Until U4 merges, Phase 1's coordinator runs U3, U4, F7.1 and F7.2 with at most three, and Phase 2's coordinator runs the mocks with at most two and owns `status.md` and `rulings.md` (O27). After the first wave of screens merges, report usage and rebase churn to the owner, who decides whether to raise it.
+   At most five builders run at once across both coordinators, each with its reviewer (rulings O28). For now each coordinator runs one agent at a time, builder or reviewer (rulings O54). Until U4 merges, Phase 1's coordinator runs U3, U4, F7.1 and F7.2 with at most three, and Phase 2's coordinator runs the mocks with at most two and owns `status.md` and `rulings.md` (O27). After the first wave of screens merges, report usage and rebase churn to the owner, who decides whether to raise it.
 
 2. **Create one worktree and branch per task,** off the latest `main`. Worktrees sit outside the main checkout and outside `/tmp` (macOS clears `/private/tmp`), for example `<workspace>/fitness-app-wt/<task-id>`.
 

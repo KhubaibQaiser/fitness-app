@@ -9,9 +9,10 @@ import {
   startCoachSignup,
 } from '@gymos/modules/identity';
 import { clearAuthCookies, readRefreshToken } from '../auth-cookies';
-import { type GymosApp } from '../http';
+import { rateLimitKey } from '../client-ip';
+import { type AppContext, type GymosApp } from '../http';
 import { problemResponse } from '../problems';
-import { type RouteBind } from '../route-bind';
+import { type RateLimiter, type RouteBind } from '../route-bind';
 import * as dto from '../schemas';
 
 export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
@@ -20,6 +21,8 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     respondWithTokens,
     clientIp,
     loginLimiter,
+    loginAccountLimiter,
+    unattributedLimiter,
     signupIpLimiter,
     signupEmailLimiter,
     forgotIpLimiter,
@@ -29,22 +32,38 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     signupDeps,
     resetDeps,
   } = bind;
+
+  /** The per-account login key: the email as typed, normalised, whether or not an account exists. */
+  const loginAccountKey = (email: string): string => `login:account:${email.trim().toLowerCase()}`;
+
+  /** The per-IP limit, or the route's shared cap when the caller has no client IP. */
+  const withinIpLimit = (c: AppContext, route: string, perIp: RateLimiter): Promise<boolean> => {
+    const ip = clientIp(c);
+    return ip === null
+      ? unattributedLimiter(`${route}:unattributed`)
+      : perIp(`${route}:ip:${rateLimitKey(ip)}`);
+  };
+
   app.post('/v1/auth/login', async (c) => {
     const parsed = dto.loginBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, password }');
     }
-    const ip = c.req.header('x-forwarded-for') ?? 'local';
-    if (!(await loginLimiter(ip))) {
+    const accountKey = loginAccountKey(parsed.data.email);
+    if (
+      !(await withinIpLimit(c, 'login', loginLimiter)) ||
+      !(await loginAccountLimiter.attempt(accountKey))
+    ) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait a minute');
     }
     const result = await loginWithPassword(db, parsed.data.email, parsed.data.password, {
       userAgent: c.req.header('user-agent'),
-      ip: ip === 'local' ? undefined : ip.split(',')[0]?.trim(),
+      ip: clientIp(c) ?? undefined,
     });
     if (!result.ok) {
       return problemResponse(c, 401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
     }
+    await loginAccountLimiter.reset(accountKey);
     return respondWithTokens(c, result.value.userId, result.value.session);
   });
 
@@ -56,11 +75,7 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     }
     const outcome = await rotateSessionByToken(db, refreshToken, {
       userAgent: c.req.header('user-agent'),
-      ip: (() => {
-        const raw = c.req.header('x-forwarded-for');
-        if (raw === undefined) return undefined;
-        return raw.split(',')[0]?.trim();
-      })(),
+      ip: clientIp(c) ?? undefined,
     });
 
     switch (outcome.kind) {
@@ -104,10 +119,9 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
         'Provide { name, email, phone, password }',
       );
     }
-    const ip = clientIp(c);
     const emailKey = parsed.data.email.trim().toLowerCase();
     if (
-      !(await signupIpLimiter(`signup:ip:${ip}`)) ||
+      !(await withinIpLimit(c, 'signup', signupIpLimiter)) ||
       !(await signupEmailLimiter(`signup:email:${emailKey}`))
     ) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
@@ -131,13 +145,12 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, code }');
     }
-    const ip = clientIp(c);
-    if (!(await confirmIpLimiter(`confirm:ip:${ip}`))) {
+    if (!(await withinIpLimit(c, 'confirm', confirmIpLimiter))) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await confirmCoachSignup(db, otpDeps, parsed.data, {
       userAgent: c.req.header('user-agent'),
-      ip: ip === 'local' ? undefined : ip,
+      ip: clientIp(c) ?? undefined,
     });
     if (!result.ok) {
       const map: Record<string, { status: 400 | 401 | 409; title: string }> = {
@@ -164,10 +177,9 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email }');
     }
-    const ip = clientIp(c);
     const emailKey = parsed.data.email.trim().toLowerCase();
     if (
-      !(await signupIpLimiter(`resend:ip:${ip}`)) ||
+      !(await withinIpLimit(c, 'resend', signupIpLimiter)) ||
       !(await signupEmailLimiter(`resend:email:${emailKey}`))
     ) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
@@ -189,10 +201,9 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email }');
     }
-    const ip = clientIp(c);
     const emailKey = parsed.data.email.trim().toLowerCase();
     if (
-      !(await forgotIpLimiter(`forgot:ip:${ip}`)) ||
+      !(await withinIpLimit(c, 'forgot', forgotIpLimiter)) ||
       !(await forgotEmailLimiter(`forgot:email:${emailKey}`))
     ) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
@@ -206,8 +217,7 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
     if (!parsed.success) {
       return problemResponse(c, 422, 'VALIDATION_FAILED', 'Provide { email, code, newPassword }');
     }
-    const ip = clientIp(c);
-    if (!(await confirmIpLimiter(`reset:ip:${ip}`))) {
+    if (!(await withinIpLimit(c, 'reset', confirmIpLimiter))) {
       return problemResponse(c, 429, 'RATE_LIMITED', 'Too many attempts. Wait and try again');
     }
     const result = await resetPasswordWithOtp(db, otpDeps, parsed.data);
@@ -222,6 +232,8 @@ export const registerAuthRoutes = (app: GymosApp, bind: RouteBind): void => {
       const mapped = map[result.error.reason] ?? { status: 401 as const, title: 'Reset failed' };
       return problemResponse(c, mapped.status, result.error.reason, mapped.title);
     }
+    // A completed reset also clears the account's sign-in back-off.
+    await loginAccountLimiter.reset(loginAccountKey(parsed.data.email));
     return c.json({ ok: true });
   });
 };
