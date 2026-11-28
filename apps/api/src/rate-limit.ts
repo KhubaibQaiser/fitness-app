@@ -1,6 +1,10 @@
 import { sql } from 'drizzle-orm';
 import { type Db } from '@gymos/db';
 
+/** An error from this module, with a code so the log line can name it without its message. */
+const storeError = (code: string): Error =>
+  Object.assign(new Error(`rate-limit: ${code}`), { code });
+
 /** postgres.js returns the rows; PGlite returns `{ rows }`. */
 const rowsOf = <T>(result: unknown): T[] => {
   if (Array.isArray(result)) return result as T[];
@@ -8,7 +12,37 @@ const rowsOf = <T>(result: unknown): T[] => {
     const { rows } = result;
     if (Array.isArray(rows)) return rows as T[];
   }
-  throw new Error('rate-limit: unexpected result shape from db.execute');
+  throw storeError('UNEXPECTED_RESULT_SHAPE');
+};
+
+const nameAndCode = (error: unknown): { name: string; code?: string } =>
+  error instanceof Error
+    ? {
+        // DrizzleQueryError keeps the default name, so fall back to the class name.
+        name: error.name === 'Error' ? error.constructor.name : error.name,
+        ...('code' in error && typeof error.code === 'string' ? { code: error.code } : {}),
+      }
+    : { name: typeof error };
+
+/**
+ * Logs a limiter store failure: the limiter (the key's fixed `<route>:<kind>` prefix), the
+ * operation, and the name and code of the error and of its cause. Never a message, a query or the
+ * key: a failed query's message lists its parameters, and the driver's may quote values.
+ */
+const logStoreFailure = (
+  key: string,
+  operation: 'count' | 'attempt' | 'clear',
+  outcome: string,
+  error: unknown,
+): void => {
+  console.error(`[rate-limit] ${operation} failed — ${outcome}`, {
+    limiter: key.split(':').slice(0, 2).join(':'),
+    operation,
+    error: nameAndCode(error),
+    ...(error instanceof Error && error.cause !== undefined
+      ? { cause: nameAndCode(error.cause) }
+      : {}),
+  });
 };
 
 /**
@@ -35,10 +69,10 @@ export const createDbRateLimiter = (db: Db, limit: number, windowMs: number) => 
         returning count
       `);
       const count = rowsOf<{ count: number }>(result)[0]?.count;
-      if (typeof count !== 'number') throw new Error('rate-limit: upsert returned no count');
+      if (typeof count !== 'number') throw storeError('NO_COUNT');
       return count <= limit;
     } catch (error) {
-      console.error('[rate-limit] store failed — allowing request', error);
+      logStoreFailure(key, 'count', 'allowing request', error);
       return true;
     }
   };
@@ -54,7 +88,7 @@ const BACKOFF = sql`least(interval '15 minutes', interval '1 minute' * power(2, 
 export type AccountLimiter = {
   /** Counts this attempt as a failure up front; false while the account is backing off. */
   attempt: (key: string, now?: number) => Promise<boolean>;
-  /** A successful sign-in clears the failures. */
+  /** A successful sign-in or password reset clears the failures. */
   reset: (key: string) => Promise<void>;
 };
 
@@ -86,7 +120,7 @@ export const createAccountLimiter = (db: Db): AccountLimiter => ({
       `);
       return rowsOf<{ count: number }>(result).length > 0;
     } catch (error) {
-      console.error('[rate-limit] account store failed — allowing request', error);
+      logStoreFailure(key, 'attempt', 'allowing request', error);
       return true;
     }
   },
@@ -94,8 +128,8 @@ export const createAccountLimiter = (db: Db): AccountLimiter => ({
     try {
       await db.execute(sql`delete from rate_limits where key = ${key}`);
     } catch (error) {
-      // The sign-in already succeeded; the failures left behind expire with the streak.
-      console.error('[rate-limit] account reset failed', error);
+      // The caller's sign-in or password reset already succeeded; the failures expire with the streak.
+      logStoreFailure(key, 'clear', 'failures kept', error);
     }
   },
 });

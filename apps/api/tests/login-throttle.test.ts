@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { inspect } from 'node:util';
 import { PGlite } from '@electric-sql/pglite';
+import { DrizzleQueryError, type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { Hono } from 'hono';
@@ -15,6 +18,7 @@ import {
 import { buildApp, type App } from '../src/app';
 import { createClientIpResolver, rateLimitKey } from '../src/client-ip';
 import { type GymosVars } from '../src/http';
+import { createAccountLimiter, createDbRateLimiter } from '../src/rate-limit';
 
 const JWT_SECRET = 'a-test-jwt-access-secret-that-is-long-enough';
 const PASSWORD = 'login-throttle-test-password';
@@ -327,5 +331,101 @@ describe('password reset and the sign-in back-off', () => {
     expect(expired.status).toBe(401);
     expect(((await expired.json()) as { code: string }).code).toBe('OTP_EXPIRED');
     expect((await login(onVercel, COACH, PASSWORD, ip(9))).status).toBe(429);
+  });
+});
+
+describe('limiter log lines', () => {
+  const EMAIL = 'someone@example.com';
+  /** A store whose every query fails the way drizzle reports it: message and params hold the key. */
+  const failingStore = {
+    execute: (query: SQL) => {
+      const { sql: text, params } = new PgDialect().sqlToQuery(query);
+      const cause = Object.assign(new Error(`connection lost while running ${text}`), {
+        code: '57P01',
+      });
+      return Promise.reject(new DrizzleQueryError(text, params, cause));
+    },
+  } as unknown as Db;
+
+  /** Every console.error argument, inspected in full (hidden properties and causes too). */
+  const logged = (spy: { mock: { calls: unknown[][] } }): string =>
+    spy.mock.calls.map((args) => inspect(args, { depth: Infinity, showHidden: true })).join('\n');
+
+  it.each([
+    [
+      'the shared limiter',
+      `signup:email:${EMAIL}`,
+      () => createDbRateLimiter(failingStore, 3, 60_000)(`signup:email:${EMAIL}`),
+      true,
+      { limiter: 'signup:email', operation: 'count' },
+    ],
+    [
+      'the account attempt',
+      `login:account:${EMAIL}`,
+      () => createAccountLimiter(failingStore).attempt(`login:account:${EMAIL}`),
+      true,
+      { limiter: 'login:account', operation: 'attempt' },
+    ],
+    [
+      'the account clear',
+      `login:account:${EMAIL}`,
+      () => createAccountLimiter(failingStore).reset(`login:account:${EMAIL}`),
+      undefined,
+      { limiter: 'login:account', operation: 'clear' },
+    ],
+  ] as const)(
+    '%s logs which limiter and operation failed, never the key or the email',
+    async (_label, key, run, result, fields) => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        expect(await run()).toBe(result);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy.mock.calls[0]?.[1]).toEqual({
+          ...fields,
+          error: { name: 'DrizzleQueryError' },
+          cause: { name: 'Error', code: '57P01' },
+        });
+        const text = logged(spy);
+        expect(text).not.toContain(EMAIL);
+        expect(text).not.toContain(key);
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
+
+  it('a failed clear after a completed reset keeps the reset, and logs without the email', async () => {
+    const realExecute = db.execute.bind(db);
+    const execute = vi.spyOn(db, 'execute').mockImplementation(((query: SQL) => {
+      const { sql: text } = new PgDialect().sqlToQuery(query);
+      return text.startsWith('delete from rate_limits')
+        ? failingStore.execute(query)
+        : realExecute(query);
+    }) as typeof db.execute);
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      for (let k = 0; k < 5; k += 1) await login(onVercel, COACH, 'nope-nope-1', ip(k));
+      const forgot = await onVercel.request('/v1/auth/password/forgot', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...ip(30) },
+        body: JSON.stringify({ email: COACH }),
+      });
+      expect(forgot.status).toBe(200);
+      const code = mail.sent.at(-1)?.code ?? '';
+      const reset = await onVercel.request('/v1/auth/password/reset', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...ip(30) },
+        body: JSON.stringify({ email: COACH, code, newPassword: 'login-throttle-new-password' }),
+      });
+      expect(reset.status).toBe(200);
+      expect(spy.mock.calls.map((args: unknown[]) => args[1])).toContainEqual(
+        expect.objectContaining({ limiter: 'login:account', operation: 'clear' }),
+      );
+      expect(logged(spy)).not.toContain(COACH);
+    } finally {
+      spy.mockRestore();
+      execute.mockRestore();
+      await setUserPassword(db, coachUserId, PASSWORD);
+    }
   });
 });
