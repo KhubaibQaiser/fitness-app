@@ -44,6 +44,36 @@ test('secrets files are denied, examples are allowed', () => {
   assert.equal(decision(read('/proj/src/environment.ts')), 'allow');
 });
 
+test('only an echo or printf append to a .gitignore skips the secrets-file check', () => {
+  // The kept case: adding an ignore rule for a secrets file.
+  assert.equal(decision(shell('echo .env >> .gitignore')), 'allow');
+  assert.equal(decision(shell("printf '%s\\n' .env.local >> .gitignore")), 'allow');
+  assert.equal(decision(shell('echo ".env" >> some/dir/.gitignore')), 'allow');
+  assert.equal(decision(shell("printf '.env\\n' >> 'apps/web/.gitignore'")), 'allow');
+  // Anything else that mentions .gitignore is checked like any other command.
+  assert.equal(decision(shell('echo .env >> .gitignore && cat .env')), 'deny');
+  assert.equal(decision(shell('cat .env; echo .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('echo .env >> .gitignore\ncat .env')), 'deny');
+  assert.equal(decision(shell('cat .gitignore .env')), 'deny');
+  // Writes to .gitignore by another tool.
+  assert.equal(decision(shell('cat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('tee -a .gitignore < .env')), 'deny');
+  assert.equal(decision(shell('cp .env .gitignore')), 'deny');
+  assert.equal(decision(shell("sed -i.bak '/^x/d' .env .gitignore")), 'deny');
+  // A name that only contains .gitignore.
+  assert.equal(decision(shell('echo .env >> x.gitignore.bak')), 'deny');
+  assert.equal(decision(shell('echo .env >> .gitignore.bak')), 'deny');
+  // A command that spans more than one line.
+  assert.equal(decision(shell('echo\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('printf\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('\necho .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('echo a \\\r\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('echo a \\\ncat .env >> .gitignore')), 'deny');
+  // An escaped redirect; a \n inside the printf format is still the kept case.
+  assert.equal(decision(shell('echo .env \\>> .gitignore')), 'deny');
+  assert.equal(decision(shell("printf '%s\\n' .env .env.local >> .gitignore")), 'allow');
+});
+
 test('destructive commands', () => {
   assert.equal(decision(shell('git push --force origin feature/x')), 'deny');
   assert.equal(decision(shell('git push -f')), 'deny');

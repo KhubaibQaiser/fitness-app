@@ -7,7 +7,7 @@
 
   The native `(auth)/_layout.tsx` belongs to F6.
 
-- **Depends on:** F6; F8 (the hero component with the current art, at sized files). L1 redraws the art after the track, behind the same component.
+- **Depends on:** F6; F8 (the hero component with the current art, at sized files; `AuthHero` has a `column` and a `band` variant). L1 redraws the art after the track, behind the same component.
 - **Evidence:** critique 01–03, §9.1 #3 and #4, N6 and N8; perf (login LCP 7.1 s, of which 6.6 s is render delay); `docs/specs/public-auth-split-layout.md`.
 
 ## Goal
@@ -39,7 +39,7 @@ Login LCP 2.5 s or less on a cold phone load (baseline 7.1 s). The LCP text must
 
 ## Mock
 
-Login, signup and forgot password with OTP; light and dark; web 1440 and 390; iOS. Include the error states.
+Login, signup and forgot password with OTP; light and dark; web 1440 and 390; iOS. Include the error states. For tablet portrait, the mock chooses between today's 50/50 split and the header band, which F8's approved mock draws with their crops (rulings O52).
 
 ## Done when
 
