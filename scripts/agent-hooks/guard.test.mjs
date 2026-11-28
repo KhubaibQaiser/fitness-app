@@ -67,6 +67,8 @@ test('only an echo or printf append to a .gitignore skips the secrets-file check
   assert.equal(decision(shell('echo\ncat .env >> .gitignore')), 'deny');
   assert.equal(decision(shell('printf\ncat .env >> .gitignore')), 'deny');
   assert.equal(decision(shell('\necho .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('echo a \\\r\ncat .env >> .gitignore')), 'deny');
+  assert.equal(decision(shell('echo a \\\ncat .env >> .gitignore')), 'deny');
   // An escaped redirect; a \n inside the printf format is still the kept case.
   assert.equal(decision(shell('echo .env \\>> .gitignore')), 'deny');
   assert.equal(decision(shell("printf '%s\\n' .env .env.local >> .gitignore")), 'allow');
