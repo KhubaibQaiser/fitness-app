@@ -7,6 +7,14 @@ a:visited {
   color: inherit;
 }
 
+/* Tamagui 2 gave every view and text these inherited defaults (config v4's default font size);
+   Tamagui 3 sets only the family. Kept so U4 changes no layout; :where() lets atomic styles win. */
+:where(.font_body, .font_heading, .font_mono, .is_View) {
+  line-height: 24px;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+
 html,
 body {
   height: 100%;
