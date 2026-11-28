@@ -1321,14 +1321,14 @@
             <div class="frame" data-w="834" data-h="1194" id="f-tab-834-hero" inert></div>
             <figcaption>
               834 × 1194, option A (today): below 1120 px the columns split 50/50, a 417 × 1194 hero
-              column (owner decision 8).
+              column showing about 47% of the art's width (owner decision 8).
             </figcaption>
           </figure>
           <figure>
             <div class="frame" data-w="834" data-h="1194" id="f-tab-834-band" inert></div>
             <figcaption>
-              834 × 1194, option B (recommended): the header band, 834 × 360, over the form at its
-              560 px width.
+              834 × 1194, option B: the header band, 834 × 360 (proposed height, for S01 to
+              confirm), showing about 32% of the art's height, over the form at its 560 px width.
             </figcaption>
           </figure>
           <figure>
@@ -1346,8 +1346,8 @@
           <figure>
             <div class="frame" data-w="1194" data-h="834" id="f-tab-1194-hero" inert></div>
             <figcaption>
-              1194 × 834: login. Hero column 634 px, form 560 px. Landscape tablets keep the split
-              under either option.
+              1194 × 834: login. Hero column 634 px, form 560 px. Landscape windows from 768 px keep
+              the split under either option.
             </figcaption>
           </figure>
         </div>
@@ -1392,14 +1392,17 @@
             "Illustrated mat, dumbbells, bottle, and progress phone".
           </li>
           <li>
-            Tablet login: keep today's 50/50 split (a 417 × 1194 hero column at 834 portrait), or
-            use the header band whenever the window is in F1's tablet range (744 to 1199) and taller
-            than it is wide. Recommended: the band, because the 417 px column shows only about the
-            middle half (47%) of the art's width, while a band keeps it legible above the form; the
-            rule reuses F1's edges and the orientation F6 already tracks (O8). A 12.9-inch iPad in
-            portrait (1024 pt) is in that range, so it gets the band instead of a 512 px column;
-            landscape tablets keep the split. S01 decides the layout; F8 only supplies the
-            <code>column</code> and <code>band</code> variants.
+            Tablet portrait login: F8 ships both <code>AuthHero</code> variants,
+            <code>column</code> and <code>band</code>, either way, so the owner approves the two
+            variants here, not the layout; S01's mock decides the layout. Option A, today's 50/50
+            split (a 417 × 1194 hero column at 834), shows about 47% of the art's width, keeps more
+            of the art and changes nothing. Option B, the header band when the window is in F1's
+            tablet range (744 to 1199) and taller than it is wide, shows about 32% of the art's
+            height at the proposed 834 × 360 band and gives the form the full width, like the phone
+            layout. The 360 px height is a proposal for S01 to confirm and is not yet defined for
+            wider portrait tablets: at 360 a 12.9-inch iPad in portrait (1024 pt) would show about
+            26% of the height. Under either option the split applies only from 768 px, where today's
+            web layout starts it; S01 decides 744 to 767.
           </li>
           <li>
             Hero files at 648 and 864 wide, in AVIF and WebP, with
