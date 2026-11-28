@@ -6,27 +6,12 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { api, type PlanOp, type Restriction } from '@gymos/contracts';
+import { api, type ClientScope, type PlanOp, type Restriction } from '@gymos/contracts';
+import { qk } from './query-keys';
 
-/** Query-key factory — the single vocabulary for cache identity. */
-export const qk = {
-  me: ['me'] as const,
-  mealInstructions: ['me', 'meal-instructions'] as const,
-  config: ['config'] as const,
-  clients: (q?: string) => ['clients', q ?? ''] as const,
-  clientDetail: (id: string) => ['clients', 'detail', id] as const,
-  vitals: (clientId: string) => ['vitals', clientId] as const,
-  dietary: (clientId: string) => ['dietary', clientId] as const,
-  goals: (clientId: string) => ['goals', clientId] as const,
-  dueCheckIns: ['check-ins', 'due'] as const,
-  clientCheckIns: (clientId: string) => ['check-ins', clientId] as const,
-  checkIn: (id: string) => ['check-ins', 'one', id] as const,
-  plans: (clientId: string) => ['plans', clientId] as const,
-  plan: (planId: string) => ['plan', planId] as const,
-  foods: (q?: string) => ['foods', q ?? ''] as const,
-  notifications: ['notifications'] as const,
-  unread: ['notifications', 'unread'] as const,
-};
+export { qk };
+export type { ClientScope } from '@gymos/contracts';
+export { usePulse } from './use-pulse';
 
 export const useMe = () =>
   useQuery({
@@ -117,6 +102,10 @@ export const useUnreadCount = () =>
     refetchInterval: 30_000,
   });
 
+/** The coach's Today queue. It doesn't poll: `usePulse` invalidates it when something changes. */
+export const useToday = (scope?: ClientScope) =>
+  useQuery({ queryKey: qk.today(scope), queryFn: () => api.today(scope) });
+
 const invalidateClient = (queryClient: ReturnType<typeof useQueryClient>, clientId: string) => {
   void queryClient.invalidateQueries({ queryKey: qk.clientDetail(clientId) });
   void queryClient.invalidateQueries({ queryKey: qk.clients() });
@@ -125,6 +114,8 @@ const invalidateClient = (queryClient: ReturnType<typeof useQueryClient>, client
   void queryClient.invalidateQueries({ queryKey: qk.clientCheckIns(clientId) });
   void queryClient.invalidateQueries({ queryKey: qk.dueCheckIns });
   void queryClient.invalidateQueries({ queryKey: qk.unread });
+  void queryClient.invalidateQueries({ queryKey: qk.today() });
+  void queryClient.invalidateQueries({ queryKey: qk.pulse() });
 };
 
 export const useCreateClient = () => {
@@ -270,6 +261,7 @@ export const useMarkAllRead = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.notifications });
       void queryClient.invalidateQueries({ queryKey: qk.unread });
+      void queryClient.invalidateQueries({ queryKey: qk.pulse() });
     },
   });
 };

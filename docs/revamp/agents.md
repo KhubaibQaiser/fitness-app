@@ -1,6 +1,6 @@
 # How agents deliver the revamp
 
-Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus) per task and one **reviewer** (Sonnet) per task (R10). This file is the operating manual for all three. It adds to `AGENTS.md` and never relaxes it. The one merge exception it relies on is written in `AGENTS.md` itself (rulings O12).
+Roles come from ADR-0018: a **parent** (the coordinator), one **builder** (Opus) per task and one **reviewer** (Sonnet) per task (R10). For now builders and coordinators run on Fable, until its weekly usage reaches 80% (rulings O45). Reviewers of UI-related changes, and agents that verify UI, run on Opus; reviewers of non-UI changes stay on Sonnet (rulings O46). This file is the operating manual for all three. It adds to `AGENTS.md` and never relaxes it. The one merge exception it relies on is written in `AGENTS.md` itself (rulings O12).
 
 ## Parent
 
